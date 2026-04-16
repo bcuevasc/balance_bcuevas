@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Bunker Digital SCADA v28.0 - Trans-Mes Edition</title>
+    <title>Bunker Digital SCADA v28.0 (Motor V30) - Trans-Mes Edition</title>
     
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
@@ -121,7 +121,7 @@
 <div id="login-screen">
     <div class="login-box">
         <h2 style="color:#fff; margin-bottom:10px;">BUNKER SCADA</h2>
-        <p style="color:var(--text-muted); font-size:0.8rem;">SISTEMA PRIVADO DE GESTIÓN TÁCTICA</p>
+        <p style="color:var(--text-muted); font-size:0.8rem;">SISTEMA PRIVADO DE GESTIÓN TÁCTICA V28</p>
         <button class="btn-google" onclick="loginWithGoogle()">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="20px" height="20px" style="margin-right:10px; vertical-align:middle;">
                 <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.7 17.74 9.5 24 9.5z"/>
@@ -212,7 +212,7 @@
                                 <th class="col-check hide-mobile"><input type="checkbox" id="checkAll" class="row-check" onchange="toggleAllChecks()"></th>
                                 <th onclick="sortTable('fecha')">Fecha</th>
                                 <th class="desc-col" onclick="sortTable('nombre')">Descripción</th>
-                                <th class="hide-mobile" onclick="sortTable('categoria')">Categoría</th>
+                                <th class="hide-mobile" onclick="sortTable('categoria')">Categoría V30</th>
                                 <th onclick="sortTable('monto')">Monto</th>
                                 <th id="thSaldoAcumulado" class="hide-mobile" style="text-align: right;">Saldo Hist.</th>
                                 <th class="hide-mobile" style="text-align: center;">Acciones</th>
@@ -230,7 +230,7 @@
                     <div id="burnDownAlert" style="text-align:center; font-size:0.75rem; font-weight:800; margin-top:5px; height:15px;"></div>
                 </div>
                 <div class="chart-box">
-                    <h5>Pareto de Gasto (80/20)</h5>
+                    <h5>Pareto de Gasto V30</h5>
                     <div class="canvas-container"><canvas id="chartPareto"></canvas></div>
                 </div>
             </div>
@@ -252,17 +252,20 @@
                 <input type="hidden" id="editId">
                 <div class="form-group"><label>Fecha</label><input type="datetime-local" id="inputFecha"></div>
                 <div class="form-group"><label>Flujo</label><select id="inputTipo"><option value="Gasto">Gasto Variable</option><option value="Gasto Fijo">Gasto Fijo</option><option value="Ingreso">Ingreso Extra</option><option value="Por Cobrar">Préstamo (CxC)</option></select></div>
-                <div class="form-group"><label>Categoría</label>
+                <div class="form-group"><label>Categoría V30</label>
                     <select id="inputCategoria">
                         <option value="Gastos Fijos (Búnker)">🏠 Gastos Fijos (Búnker)</option>
                         <option value="Suscripciones">📱 Suscripciones</option>
-                        <option value="Alimentación Esencial">🛒 Alimentación Esencial</option>
-                        <option value="Alimentación Extra (Dopamina)">🍕 Alimentación Extra (Dopamina)</option>
+                        <option value="Alimentación & Supermercado">🛒 Alimentación & Supermercado</option>
+                        <option value="Dopamina & Antojos">🍔 Dopamina & Antojos</option>
+                        <option value="Ocio & Experiencias">🎸 Ocio & Experiencias</option>
                         <option value="Transporte & Logística">🚗 Transporte & Log</option>
                         <option value="Mantenimiento Hardware (Salud)">💊 Salud</option>
                         <option value="Transferencia Propia / Ahorro">🏦 Transferencia Propia</option>
-                        <option value="Fuga / Imprevisto">🚨 Fuga / Imprevisto</option>
-                        <option value="Ingresos">💰 Ingresos</option>
+                        <option value="Hogar & Búnker">🛠️ Hogar & Búnker</option>
+                        <option value="Red de Apoyo (Familia)">🫂 Red de Apoyo</option>
+                        <option value="Gasto Tarjeta de Crédito">💳 Gasto TC</option>
+                        <option value="Ingreso Adicional">💰 Ingresos</option>
                         <option value="Sin Categoría">❓ Sin Categoría</option>
                     </select>
                 </div>
@@ -294,8 +297,9 @@
             <select id="massCategorySelect" class="custom-select" style="width:180px;">
                 <option value="">-- Recategorizar a --</option>
                 <option value="Gastos Fijos (Búnker)">🏠 Gastos Fijos</option>
-                <option value="Alimentación Esencial">🛒 Alimentación</option>
-                <option value="Alimentación Extra (Dopamina)">🍕 Dopamina</option>
+                <option value="Alimentación & Supermercado">🛒 Alimentación Base</option>
+                <option value="Dopamina & Antojos">🍔 Dopamina</option>
+                <option value="Ocio & Experiencias">🎸 Ocio Fino</option>
                 <option value="Transferencia Propia / Ahorro">🏦 Transferencia</option>
             </select>
             <button class="btn-sys" onclick="massCategorize()">APLICAR</button>
@@ -306,12 +310,14 @@
 
 <script>
     // ==========================================
-    // ⚙️ CONFIGURACIÓN V28.0 PASO 2 (Trend Tuning)
+    // ⚙️ CONFIGURACIÓN V28.0 PASO 2 + REGLAS V30
     // ==========================================
     const BYRON_EMAIL = "bvhcc94@gmail.com"; 
     const MASTER_KEY = "Byron_Secured_2026"; 
     const CREDIT_SETPOINT = -300000; 
-    const catEvitables = ["Alimentación Extra (Dopamina)", "Fuga / Imprevisto"]; 
+    
+    // 💡 NUEVAS REGLAS DE FUGA V30
+    const catEvitables = ["Dopamina & Antojos"]; 
 
     firebase.initializeApp({
         apiKey: "AIzaSyBiYETN_JipXWhMq9gKz-2Pap-Ce4ZJNAI",
@@ -326,10 +332,13 @@
     const auth = firebase.auth();
     const APPS_SCRIPT_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzhlxJ_pgky_KDhItJpQHch7HF4HLQhhdEcUfaweh9Eeg2x4XO6LSsuemoGF0sOY5XFZA/exec";
 
+    // 💡 NUEVO DICCIONARIO DE EMOJIS V30
     const catEmojis = {
-        "Gastos Fijos (Búnker)": "🏠", "Suscripciones": "📱", "Alimentación Esencial": "🛒",
-        "Alimentación Extra (Dopamina)": "🍕", "Transporte & Logística": "🚗", "Mantenimiento Hardware (Salud)": "💊",
-        "Transferencia Propia / Ahorro": "🏦", "Fuga / Imprevisto": "🚨", "Ingresos": "💰", "Ruido de Sistema": "⚙️"
+        "Gastos Fijos (Búnker)": "🏠", "Suscripciones": "📱", "Alimentación & Supermercado": "🛒",
+        "Dopamina & Antojos": "🍔", "Ocio & Experiencias": "🎸", "Transporte & Logística": "🚗", 
+        "Mantenimiento Hardware (Salud)": "💊", "Transferencia Propia / Ahorro": "🏦", "Hogar & Búnker": "🛠️",
+        "Red de Apoyo (Familia)": "🫂", "Gasto Tarjeta de Crédito": "💳",
+        "Ingreso Adicional": "💰", "Ruido de Sistema": "⚙️", "Sin Categoría": "❓"
     };
 
     let firestoreListener = null; 
@@ -454,7 +463,6 @@
         });
     }
 
-    // 💡 PASO 2: SINTONIZACIÓN FINA DEL BURN-DOWN
     function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0) {
         if(chartBD) chartBD.destroy(); if(chartP) chartP.destroy();
         const cT = getComputedStyle(document.body).getPropertyValue('--text-main').trim();
@@ -486,14 +494,13 @@
             if (acc < 0 && diaQ === null) diaQ = i;
             actual.push(i > limit ? null : acc);
 
-            // 💡 SMART LABELING & HITO DE TRANSICIÓN
             let d = new Date(T0);
             d.setDate(d.getDate() + (i - 1));
             let dayStr = String(d.getDate()).padStart(2, '0');
             
             if(d.getDate() === 1) {
                 labelsX.push(dayStr + ' ' + mesesStr[d.getMonth()]);
-                indexMes = i - 1; // Guardamos el índice donde cambia el mes
+                indexMes = i - 1; 
             } else {
                 labelsX.push(dayStr);
             }
@@ -535,9 +542,18 @@
             }
         });
 
+        // 💡 PARETO V30 COLORING LOGIC
         const sorted = Object.entries(cats).sort((a,b)=>b[1]-a[1]).slice(0,8);
         chartP = new Chart(document.getElementById('chartPareto'), {
-            type: 'bar', data: { labels: sorted.map(c => c[0]), datasets: [{ data: sorted.map(c => c[1]), backgroundColor: '#1f6feb', borderRadius: 4 }] },
+            type: 'bar', 
+            data: { 
+                labels: sorted.map(c => c[0].split(' ')[0]), // Acortar nombres
+                datasets: [{ 
+                    data: sorted.map(c => c[1]), 
+                    backgroundColor: sorted.map(c => c[0] === 'Dopamina & Antojos' ? '#ff5252' : '#1f6feb'), 
+                    borderRadius: 4 
+                }] 
+            },
             options: { maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{ x:{ticks:{color:cT, font:{size:9}}}, y:{ticks:{color:cT, callback:v=>'$'+(v/1000)+'k'}} } }
         });
     }
