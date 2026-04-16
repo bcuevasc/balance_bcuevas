@@ -463,7 +463,9 @@
             x.saldoCalculadoVista = saldoRelativo;
         });
 
-        const l = document.getElementById('listaDetalle'); l.innerHTML = '';
+        const l = document.getElementById('listaDetalle'); 
+        let htmlBuffer = ''; // 🟢 Buffer de inyección
+        
         datos.forEach(x => {
             const em = catEmojis[x.catV] || "❓";
             let d = new Date(x.fechaISO);
@@ -474,8 +476,7 @@
             let statusBadge = x.catV === 'Sin Categoría' ? `<span class="status-badge status-warn">REVISAR</span>` : `<span class="status-badge status-ok">OK</span>`;
             let bgEdicion = (document.getElementById('editId').value === x.firestoreId) ? 'background-color: rgba(210, 153, 34, 0.15); border-left: 3px solid var(--color-edit);' : '';
 
-            // ⚠️ EL BOTÓN ESTÁ DECLARADO AQUÍ CON FUNCIÓN GLOBAL
-            l.innerHTML += `<tr style="${bgEdicion}">
+            htmlBuffer += `<tr style="${bgEdicion}">
                 <td class="col-check hide-mobile"><input type="checkbox" class="row-check" value="${x.firestoreId}" onchange="updateMassActions()"></td>
                 <td class="hide-mobile" style="text-align:center; font-size:0.75rem; font-weight:800; color:var(--text-muted);">${x.indiceVista}</td>
                 <td style="font-size:0.75rem; color:var(--text-muted);">${dS}</td>
@@ -490,6 +491,7 @@
                 </td>
             </tr>`;
         });
+        l.innerHTML = htmlBuffer; // 🟢 Inyección única al DOM
     }
 
     function sortTable(column) {
