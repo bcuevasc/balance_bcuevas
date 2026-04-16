@@ -93,6 +93,54 @@
             h2 { font-size: 1rem; }
             .kpi-card .value { font-size: 1rem; }
         }
+        /* =======================================================
+           🖥️ MODO ESCRITORIO (PC) V30.0 - SIDEBAR INDUSTRIAL
+           ======================================================= */
+        @media (min-width: 768px) {
+            body { 
+                padding-bottom: 0; 
+            }
+            .app-container { 
+                margin-left: 110px; /* Empuja el contenido para hacer espacio al menú */
+                margin-top: 20px;
+                max-width: 1100px; 
+            }
+            
+            /* Transforma la barra inferior en un menú lateral fijo */
+            .bottom-nav {
+                top: 0; 
+                left: 0; 
+                bottom: 0; 
+                right: auto;
+                width: 90px; 
+                height: 100vh;
+                flex-direction: column;
+                justify-content: center;
+                border-top: none;
+                border-right: 1px solid var(--border-color);
+                background: var(--bg-panel);
+                gap: 40px;
+            }
+            
+            /* Ajustes estéticos para los botones en PC */
+            .nav-item { flex: none; gap: 8px; }
+            .nav-item span { font-size: 0.75rem; }
+            
+            /* Botón "+" estilo Dashboard */
+            .nav-add {
+                margin-top: 0; 
+                width: 50px; 
+                height: 50px; 
+                border: none; 
+                font-size: 2rem;
+                box-shadow: 0 4px 10px rgba(63, 185, 80, 0.4);
+            }
+            
+            /* KPIs más robustos para monitor 2K/QHD */
+            .kpi-card .value { font-size: 1.6rem; }
+            .kpi-card h4 { font-size: 0.75rem; }
+            .table-wrapper { padding: 20px; }
+        }
     </style>
 </head>
 <body>
