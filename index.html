@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Bunker Digital SCADA v29.1 - Clean Core</title>
+    <title>Bunker Digital SCADA v29.2 - Pro Architect</title>
     
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -34,75 +34,75 @@
         .login-box { padding: 40px; background: #161b22; border: 1px solid #30363d; border-radius: 12px; text-align: center; }
         .btn-google { background: #fff; color: #000; border: none; padding: 12px 24px; border-radius: 6px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 10px; margin-top: 20px; }
 
-        /* CONTENEDOR PRINCIPAL MODULAR */
+        /* CONTENEDOR MODULAR */
         .app-container { display: none; width: 100%; padding: 12px; flex-direction: column; gap: 15px; max-width: 1200px; margin: 0 auto; }
         .app-container.active-app { display: flex; }
 
-        /* HEADER & CRONOS */
-        .header-titles { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; }
+        /* HEADER */
+        .header-titles { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; margin-bottom: 5px; }
         h2 { color: var(--color-saldo); margin: 0; font-size: 1.1rem; font-weight: 900; }
         .cronos { font-family: 'Courier New', monospace; font-size: 0.8rem; font-weight: 800; color: var(--text-muted); }
 
-        /* GRID DE KPIS - RESPONSIVE (2 COLUMNAS EN MÓVIL) */
-        .kpi-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+        /* VISTAS DINÁMICAS (CORE FIX) */
+        .view-section { display: none; width: 100%; animation: fadeIn 0.2s ease; }
+        .view-section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* KPI GRID */
+        .kpi-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 15px; }
         @media (min-width: 768px) { .kpi-grid { grid-template-columns: repeat(4, 1fr); } }
         
-        .kpi-card { padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-panel); border-top: 3px solid var(--border-color); display: flex; flex-direction: column; }
-        .kpi-card h4 { margin: 0 0 5px 0; font-size: 0.6rem; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.5px; }
+        .kpi-card { padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-panel); border-top: 3px solid var(--border-color); }
+        .kpi-card h4 { margin: 0 0 5px 0; font-size: 0.6rem; text-transform: uppercase; color: var(--text-muted); font-weight: 800; }
         .kpi-card .value { font-size: 1.1rem; font-weight: 900; }
-        .kpi-highlight { border: none; background: var(--color-saldo); color: #000; }
+        .kpi-highlight { border: none; background: var(--color-saldo); color: #000; box-shadow: 0 4px 12px rgba(63, 185, 80, 0.2); }
         .kpi-highlight h4, .kpi-highlight .value { color: #000 !important; }
 
         /* TABLA DE AUDITORÍA */
-        .table-wrapper { background: var(--bg-panel); border-radius: 8px; border: 1px solid var(--border-color); padding: 10px; }
-        .grid-scroll { height: 350px; overflow-y: auto; border-radius: 4px; }
+        .table-wrapper { background: var(--bg-panel); border-radius: 8px; border: 1px solid var(--border-color); padding: 12px; }
+        .grid-scroll { height: 60vh; overflow-y: auto; }
         .data-grid { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
-        .data-grid th { position: sticky; top: 0; background: var(--bg-subpanel); padding: 10px; color: var(--text-muted); font-size: 0.7rem; text-transform: uppercase; border-bottom: 2px solid var(--border-color); }
-        .data-grid td { padding: 10px; border-bottom: 1px solid var(--border-color); }
+        .data-grid th { position: sticky; top: 0; background: var(--bg-subpanel); padding: 10px; color: var(--text-muted); font-size: 0.7rem; text-transform: uppercase; z-index: 10; border-bottom: 2px solid var(--border-color); }
+        .data-grid td { padding: 12px 10px; border-bottom: 1px solid var(--border-color); }
         .col-monto { text-align: right; font-weight: 800; }
-        .col-hora { font-size: 0.7rem; color: var(--text-muted); }
+        .col-hora { font-size: 0.7rem; color: var(--text-muted); font-weight: 700; display: block; }
 
-        /* BOTTOM NAVIGATION BAR (ERGO MÓVIL) */
-        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; height: 65px; background: var(--bg-panel); border-top: 1px solid var(--border-color); display: flex; justify-content: space-around; align-items: center; z-index: 9000; }
-        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--text-muted); cursor: pointer; flex: 1; }
+        /* BOTTOM NAV */
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; height: 70px; background: var(--bg-panel); border-top: 1px solid var(--border-color); display: flex; justify-content: space-around; align-items: center; z-index: 9000; padding-bottom: env(safe-area-inset-bottom); }
+        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--text-muted); cursor: pointer; flex: 1; transition: 0.2s; }
         .nav-item.active { color: var(--color-saldo); }
         .nav-item span { font-size: 0.6rem; font-weight: 800; text-transform: uppercase; }
-        .nav-add { background: var(--color-saldo); width: 50px; height: 50px; border-radius: 50%; color: #000; display: flex; align-items: center; justify-content: center; font-size: 2rem; margin-top: -30px; border: 5px solid var(--bg-body); box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+        .nav-add { background: var(--color-saldo); width: 55px; height: 55px; border-radius: 50%; color: #000; display: flex; align-items: center; justify-content: center; font-size: 2rem; margin-top: -35px; border: 6px solid var(--bg-body); box-shadow: 0 4px 15px rgba(0,0,0,0.6); }
 
-        /* MODAL DE INGRESO MANUAL */
-        .modal { position: fixed; inset: 0; background: var(--bg-body); z-index: 10001; display: none; flex-direction: column; padding: 20px; overflow-y: auto; }
-        .modal.active { display: flex; animation: slideUp 0.3s ease-out; }
-        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        /* MODAL */
+        .modal { position: fixed; inset: 0; background: var(--bg-body); z-index: 10001; display: none; flex-direction: column; padding: 25px; overflow-y: auto; }
+        .modal.active { display: flex; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
+        .form-group { margin-bottom: 18px; }
+        .form-group label { display: block; font-size: 0.7rem; font-weight: 800; color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase; }
+        .form-group input, .form-group select { width: 100%; height: 55px; background: var(--input-bg); border: 1px solid var(--border-color); border-radius: 10px; color: var(--text-main); padding: 0 15px; font-size: 1.1rem; outline: none; }
         
-        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .modal-close { font-size: 1.5rem; cursor: pointer; color: var(--text-muted); }
-        
-        .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; font-size: 0.7rem; font-weight: 800; color: var(--text-muted); margin-bottom: 6px; text-transform: uppercase; }
-        .form-group input, .form-group select { width: 100%; height: 50px; background: var(--input-bg); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-main); padding: 0 15px; font-size: 1rem; outline: none; }
-        
-        .btn-full { width: 100%; height: 55px; border: none; border-radius: 12px; font-weight: 900; text-transform: uppercase; font-size: 1rem; cursor: pointer; margin-top: 10px; }
-        .btn-save { background: var(--color-guardar); color: #fff; }
+        .quick-cats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
+        .q-cat { background: var(--bg-subpanel); border: 1px solid var(--border-color); padding: 12px; border-radius: 10px; font-size: 0.7rem; text-align: center; font-weight: 800; }
+        .q-cat.selected { border-color: var(--color-saldo); background: rgba(63, 185, 80, 0.15); color: var(--color-saldo); }
 
-        .quick-cats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 15px; }
-        .q-cat { background: var(--bg-subpanel); border: 1px solid var(--border-color); padding: 10px; border-radius: 8px; font-size: 0.65rem; text-align: center; font-weight: 700; cursor: pointer; }
-        .q-cat.selected { border-color: var(--color-saldo); background: rgba(63, 185, 80, 0.1); }
+        /* TRENDS */
+        .chart-container { background: var(--bg-panel); border-radius: 8px; border: 1px solid var(--border-color); padding: 15px; height: 400px; }
 
-        /* GRAFICOS */
-        .chart-box { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 8px; padding: 15px; height: 300px; }
-        
-        .hide { display: none !important; }
-        @media (max-width: 600px) { .hide-mobile { display: none !important; } }
+        @media (max-width: 600px) {
+            h2 { font-size: 1rem; }
+            .kpi-card .value { font-size: 1rem; }
+        }
     </style>
 </head>
-<body class="dark-theme">
+<body>
 
     <div id="login-screen">
         <div class="login-box">
-            <h1 style="color:#fff; margin:0; font-size:1.5rem;">BUNKER SCADA</h1>
-            <p style="color:var(--text-muted); font-size:0.7rem; margin-top:5px;">CLEAN CORE V29.1</p>
+            <h1 style="color:#fff; margin:0; font-size:1.6rem; font-weight:900;">BUNKER SCADA</h1>
+            <p style="color:var(--text-muted); font-size:0.75rem; letter-spacing:1px; margin-top:5px;">CONTROL TÁCTICO V29.2</p>
             <button class="btn-google" onclick="loginWithGoogle()">
-                <img src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png" width="20" alt="">
+                <img src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png" width="22" alt="">
                 ENTRAR CON GOOGLE
             </button>
         </div>
@@ -114,99 +114,105 @@
                 <h2 id="user-display">BUNKER DIGITAL</h2>
                 <div id="cronos" class="cronos">--:--:--</div>
             </div>
-            <div style="display: flex; gap: 8px;">
-                <button onclick="enviarReporteTelegram()" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">🚀</button>
-                <button onclick="toggleTheme()" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">🌓</button>
+            <div style="display: flex; gap: 12px; align-items: center;">
+                <button onclick="enviarReporteTelegram()" style="background:var(--bg-subpanel); border:1px solid var(--border-color); border-radius:50%; width:40px; height:40px; font-size:1.2rem; cursor:pointer; display:flex; align-items:center; justify-content:center;">🚀</button>
+                <button onclick="toggleTheme()" style="background:var(--bg-subpanel); border:1px solid var(--border-color); border-radius:50%; width:40px; height:40px; font-size:1.2rem; cursor:pointer; display:flex; align-items:center; justify-content:center;">🌓</button>
             </div>
         </div>
 
-        <div class="kpi-grid">
-            <div class="kpi-card kpi-highlight" id="cardBalance">
-                <h4>Balance Real</h4>
-                <div class="value">$<span id="txtSaldo">0</span></div>
-                <div id="badgeDias" style="font-size:0.5rem; font-weight:900; opacity:0.7;">-- DÍAS</div>
+        <div id="view-home" class="view-section active">
+            <div class="kpi-grid">
+                <div class="kpi-card kpi-highlight">
+                    <h4>Balance Real</h4>
+                    <div class="value">$<span id="txtSaldo">0</span></div>
+                    <div id="badgeDias" style="font-size:0.55rem; font-weight:900; opacity:0.8; margin-top:3px;">-- DÍAS RESTANTES</div>
+                </div>
+                <div class="kpi-card" style="border-top-color: var(--color-proyectado);">
+                    <h4>Proyectado</h4>
+                    <div class="value">$<span id="txtProyectado">0</span></div>
+                </div>
+                <div class="kpi-card" style="border-top-color: var(--color-edit);">
+                    <h4>Sueldo Base</h4>
+                    <div class="value">$2.382.505</div>
+                </div>
+                <div class="kpi-card" style="border-top-color: var(--color-fuga);">
+                    <h4>Fugas Mes</h4>
+                    <div class="value">$<span id="txtFugas">0</span></div>
+                </div>
             </div>
-            <div class="kpi-card" style="border-top-color: var(--color-proyectado);">
-                <h4>Proyectado</h4>
-                <div class="value">$<span id="txtProyectado">0</span></div>
-            </div>
-            <div class="kpi-card" style="border-top-color: var(--color-edit);">
-                <h4>Sueldo</h4>
-                <div class="value">$<span id="txtSueldo">2.382.505</span></div>
-            </div>
-            <div class="kpi-card" style="border-top-color: var(--color-fuga);">
-                <h4>Fugas</h4>
-                <div class="value">$<span id="txtFugas">0</span></div>
-            </div>
-        </div>
-
-        <div style="background:var(--bg-panel); padding:10px; border-radius:8px; border:1px solid var(--border-color); text-align:center;">
-            <span style="font-size:0.6rem; color:var(--text-muted); font-weight:800;">CICLO ACTIVO:</span>
-            <span id="txtPeriodoBatch" style="font-size:0.8rem; font-weight:900; color:var(--color-ingresos); margin-left:10px;">--/-- al --/--</span>
-        </div>
-
-        <div class="table-wrapper" id="section-auditoria">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                <h4 style="margin:0; font-size:0.7rem; color:var(--text-muted);">AUDITORÍA DE FLUJO</h4>
-                <input type="text" id="inputBuscador" placeholder="🔍 Buscar..." oninput="actualizarDashboard()" style="background:var(--input-bg); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; padding:4px 8px; font-size:0.7rem;">
-            </div>
-            <div class="grid-scroll">
-                <table class="data-grid">
-                    <thead>
-                        <tr>
-                            <th>Fecha</th>
-                            <th>Descripción</th>
-                            <th class="col-monto">Monto</th>
-                        </tr>
-                    </thead>
-                    <tbody id="listaDetalle"></tbody>
-                </table>
+            
+            <div style="background:var(--bg-panel); padding:12px; border-radius:10px; border:1px solid var(--border-color); text-align:center; border-left: 5px solid var(--color-ingresos);">
+                <span style="font-size:0.65rem; color:var(--text-muted); font-weight:800; text-transform:uppercase;">Período Operativo:</span>
+                <span id="txtPeriodoBatch" style="font-size:0.9rem; font-weight:900; color:var(--text-main); margin-left:10px;">--/-- al --/--</span>
             </div>
         </div>
 
-        <div class="chart-box" id="section-kpis">
-            <h5 style="margin:0 0 10px 0; font-size:0.7rem; text-align:center; color:var(--text-muted);">VELOCIDAD DE CONSUMO</h5>
-            <canvas id="chartBurnDown"></canvas>
+        <div id="view-auditoria" class="view-section">
+            <div class="table-wrapper">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                    <h4 style="margin:0; font-size:0.8rem; color:var(--text-muted); font-weight:900; text-transform:uppercase;">Historial de Flujo</h4>
+                    <input type="text" id="inputBuscador" placeholder="🔍 Buscar..." oninput="actualizarDashboard()" style="background:var(--input-bg); border:1px solid var(--border-color); color:var(--text-main); border-radius:6px; padding:6px 12px; font-size:0.8rem; width:140px;">
+                </div>
+                <div class="grid-scroll">
+                    <table class="data-grid">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Concepto</th>
+                                <th class="col-monto">Monto</th>
+                            </tr>
+                        </thead>
+                        <tbody id="listaDetalle"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-trends" class="view-section">
+            <div class="chart-container">
+                <h5 style="margin:0 0 15px 0; font-size:0.75rem; text-align:center; color:var(--text-muted); font-weight:900;">VELOCIDAD DE CONSUMO (BURN-DOWN)</h5>
+                <canvas id="chartBurnDown"></canvas>
+            </div>
         </div>
     </div>
 
     <nav class="bottom-nav">
-        <div class="nav-item active" onclick="showSection('reportZone')">
-            <div style="font-size:1.2rem;">🏠</div>
+        <div class="nav-item active" id="nav-home" onclick="switchView('home')">
+            <div style="font-size:1.4rem;">🏠</div>
             <span>Home</span>
         </div>
-        <div class="nav-item" onclick="showSection('section-auditoria')">
-            <div style="font-size:1.2rem;">📊</div>
+        <div class="nav-item" id="nav-auditoria" onclick="switchView('auditoria')">
+            <div style="font-size:1.4rem;">📊</div>
             <span>Flujo</span>
         </div>
         <div class="nav-add" onclick="openManualEntry()">+</div>
-        <div class="nav-item" onclick="showSection('section-kpis')">
-            <div style="font-size:1.2rem;">📈</div>
+        <div class="nav-item" id="nav-trends" onclick="switchView('trends')">
+            <div style="font-size:1.4rem;">📈</div>
             <span>Trend</span>
         </div>
         <div class="nav-item" onclick="logout()">
-            <div style="font-size:1.2rem;">🚪</div>
+            <div style="font-size:1.4rem;">🚪</div>
             <span>Salir</span>
         </div>
     </nav>
 
     <div id="modalEntry" class="modal">
         <div class="modal-header">
-            <h3 style="margin:0; color:var(--color-saldo);">NUEVO MOVIMIENTO</h3>
-            <div class="modal-close" onclick="closeManualEntry()">✕</div>
+            <h3 style="margin:0; color:var(--color-saldo); font-weight:900; text-transform:uppercase; font-size:1rem;">Nuevo Movimiento</h3>
+            <div onclick="closeManualEntry()" style="font-size:1.8rem; color:var(--text-muted); cursor:pointer;">✕</div>
         </div>
 
         <div class="form-group">
-            <label>Descripción del Gasto</label>
+            <label>Descripción</label>
             <input type="text" id="mNombre" placeholder="Ej: Supermercado Unimarc">
         </div>
 
         <div class="form-group">
             <label>Monto</label>
-            <input type="text" id="mMonto" placeholder="0" oninput="formatearMonto(this)">
+            <input type="text" id="mMonto" placeholder="$0" oninput="formatearMonto(this)">
         </div>
 
-        <label style="font-size:0.7rem; font-weight:800; color:var(--text-muted); text-transform:uppercase; margin-bottom:8px; display:block;">Categoría Rápida</label>
+        <label style="font-size:0.7rem; font-weight:800; color:var(--text-muted); text-transform:uppercase; margin-bottom:10px; display:block;">Categoría Rápida</label>
         <div class="quick-cats">
             <div class="q-cat" onclick="selCat(this, 'Alimentación Extra (Dopamina)')">🍕 Dopamina</div>
             <div class="q-cat" onclick="selCat(this, 'Transporte & Logística')">🚗 Transporte</div>
@@ -218,7 +224,7 @@
         <input type="hidden" id="mCategoria" value="Sin Categoría">
 
         <div class="form-group">
-            <label>Tipo de Flujo</label>
+            <label>Tipo de Registro</label>
             <select id="mTipo">
                 <option value="Gasto">Gasto Variable</option>
                 <option value="Gasto Fijo">Gasto Fijo</option>
@@ -232,8 +238,8 @@
             <input type="datetime-local" id="mFecha">
         </div>
 
-        <button class="btn-full btn-save" onclick="guardarManual()">REGISTRAR EN BÚNKER</button>
-        <button class="btn-full" style="background:transparent; color:var(--text-muted); border:1px solid var(--border-color);" onclick="closeManualEntry()">CANCELAR</button>
+        <button onclick="guardarManual()" style="width:100%; height:60px; border:none; border-radius:12px; background:var(--color-guardar); color:#fff; font-weight:900; font-size:1.1rem; text-transform:uppercase; cursor:pointer; margin-top:10px;">GUARDAR EN BÚNKER</button>
+        <button onclick="closeManualEntry()" style="width:100%; height:50px; background:transparent; border:1px solid var(--border-color); border-radius:12px; color:var(--text-muted); font-weight:800; margin-top:12px;">CANCELAR</button>
     </div>
 
     <script>
@@ -254,7 +260,43 @@
         let listaMovimientos = [];
         let chartBD = null;
 
-        // LOGIN
+        // MOTOR DE NAVEGACIÓN (PRO FIX)
+        function switchView(viewName) {
+            // Ocultar todas las secciones
+            document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+
+            // Activar seleccionada
+            const targetView = document.getElementById(`view-${viewName}`);
+            const targetNav = document.getElementById(`nav-${viewName}`);
+            
+            if(targetView && targetNav) {
+                targetView.classList.add('active');
+                targetNav.classList.add('active');
+            }
+
+            // Redibujar gráfico si es necesario
+            if(viewName === 'trends' && listaMovimientos.length > 0) {
+                setTimeout(actualizarDashboard, 50);
+            }
+            window.scrollTo(0,0);
+        }
+
+        function openManualEntry() {
+            document.getElementById('modalEntry').classList.add('active');
+            const ahora = new Date(); ahora.setMinutes(ahora.getMinutes() - ahora.getTimezoneOffset());
+            document.getElementById('mFecha').value = ahora.toISOString().slice(0,16);
+        }
+
+        function closeManualEntry() { document.getElementById('modalEntry').classList.remove('active'); }
+
+        function selCat(el, cat) {
+            document.querySelectorAll('.q-cat').forEach(c => c.classList.remove('selected'));
+            el.classList.add('selected');
+            document.getElementById('mCategoria').value = cat;
+        }
+
+        // AUTH & FIREBASE
         function loginWithGoogle() { auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
         function logout() { auth.signOut().then(() => window.location.reload()); }
 
@@ -262,7 +304,7 @@
             if (user && user.email.toLowerCase() === BYRON_EMAIL) {
                 document.getElementById('login-screen').style.display = 'none';
                 document.getElementById('reportZone').classList.add('active-app');
-                document.getElementById('user-display').innerText = user.displayName.split(' ')[0];
+                document.getElementById('user-display').innerText = user.displayName.split(' ')[0].toUpperCase();
                 conectarFirestore();
             } else if (user) { auth.signOut(); }
         });
@@ -286,7 +328,7 @@
             const T0 = new Date("2026-03-30T00:00:00");
             const TFinal = new Date(T0); TFinal.setMonth(TFinal.getMonth() + 1);
 
-            document.getElementById('txtPeriodoBatch').innerText = `${T0.getDate()}/${T0.getMonth()+1} al ${TFinal.getDate()}/${TFinal.getMonth()+1}`;
+            document.getElementById('txtPeriodoBatch').innerText = `${T0.getDate()}/${T0.getMonth()+1} AL ${TFinal.getDate()}/${TFinal.getMonth()+1}`;
 
             let dataMes = listaMovimientos.filter(x => x.fechaMs >= T0.getTime() && x.fechaMs < TFinal.getTime());
             dataMes.sort((a,b) => b.fechaMs - a.fechaMs);
@@ -299,7 +341,7 @@
                 else if (x.tipo === 'Por Cobrar') tCxC += x.monto;
                 else {
                     saldoAcc -= x.monto;
-                    if (x.categoria === 'Alimentación Extra (Dopamina)' || x.categoria === 'Fuga / Imprevisto') tFugas += x.monto;
+                    if (x.categoria?.includes('Dopamina') || x.categoria?.includes('Fuga')) tFugas += x.monto;
                 }
                 x.saldoH = saldoAcc;
             });
@@ -314,19 +356,21 @@
             document.getElementById('badgeDias').innerText = `${Math.max(diasC - trans, 0)} DÍAS RESTANTES`;
 
             dibujarTabla(dataMes.filter(x => x.nombre.toLowerCase().includes(b)));
-            dibujarGrafico(sueldo, chronData, diasC, T0);
+            if(document.getElementById('view-trends').classList.contains('active')) {
+                dibujarGrafico(sueldo, chronData, diasC, T0);
+            }
         }
 
         function dibujarTabla(datos) {
             const l = document.getElementById('listaDetalle'); l.innerHTML = '';
             datos.forEach(x => {
                 let d = new Date(x.fechaMs);
-                let fechaStr = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`;
-                let horaStr = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+                let fS = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`;
+                let hS = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
                 
                 l.innerHTML += `<tr>
-                    <td>${fechaStr} <span class="col-hora">${horaStr}</span></td>
-                    <td style="font-weight:600;">${x.nombre}</td>
+                    <td>${fS} <span class="col-hora">${hS}</span></td>
+                    <td style="font-weight:700;">${x.nombre}</td>
                     <td class="col-monto" style="color:${x.tipo==='Ingreso'?'var(--color-ingresos)':'inherit'}">$${x.monto.toLocaleString('es-CL')}</td>
                 </tr>`;
             });
@@ -342,12 +386,12 @@
                 if(diff >= 1 && diff <= dias && m.tipo !== 'Ingreso' && m.tipo !== 'Por Cobrar') daily[diff] += m.monto;
             });
 
-            let hoyLimit = Math.floor((Date.now() - T0.getTime()) / 86400000) + 1;
+            let hoyL = Math.floor((Date.now() - T0.getTime()) / 86400000) + 1;
             for(let i=1; i<=dias; i++){
                 labels.push(i);
                 ideal.push(sueldo - (sueldo/dias)*i);
                 acc -= daily[i];
-                real.push(i <= hoyLimit ? acc : null);
+                real.push(i <= hoyL ? acc : null);
             }
 
             chartBD = new Chart(document.getElementById('chartBurnDown'), {
@@ -355,76 +399,53 @@
                 data: {
                     labels,
                     datasets: [
-                        { label: 'Real', data: real, borderColor: '#1f6feb', borderWidth: 3, pointRadius: 0, tension: 0.2 },
+                        { label: 'Real', data: real, borderColor: '#1f6feb', borderWidth: 3, pointRadius: 0, tension: 0.1 },
                         { label: 'Ideal', data: ideal, borderColor: 'rgba(63,185,80,0.3)', borderDash: [5,5], pointRadius: 0 }
                     ]
                 },
-                options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { ticks: { color: '#8b949e' } }, x: { ticks: { color: '#8b949e' } } } }
+                options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { ticks: { color: '#8b949e', font: {size: 10} }, grid: {color: '#30363d'} }, x: { ticks: { color: '#8b949e', font: {size: 10} }, grid: {display: false} } } }
             });
         }
 
-        // FUNCIONES UI MÓVIL
-        function showSection(id) {
-            document.querySelectorAll('.app-container, .table-wrapper, .chart-box').forEach(el => el.classList.remove('hide-mobile'));
-            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-            // Lógica de visibilidad simple para móvil
-            if(window.innerWidth < 600) {
-                document.getElementById('reportZone').classList.add('hide-mobile');
-                document.getElementById('section-auditoria').classList.add('hide-mobile');
-                document.getElementById('section-kpis').classList.add('hide-mobile');
-                document.getElementById(id).classList.remove('hide-mobile');
-                if(id === 'reportZone') document.getElementById('reportZone').classList.remove('hide-mobile');
-            }
-        }
-
-        function openManualEntry() {
-            document.getElementById('modalEntry').classList.add('active');
-            const ahora = new Date(); ahora.setMinutes(ahora.getMinutes() - ahora.getTimezoneOffset());
-            document.getElementById('mFecha').value = ahora.toISOString().slice(0,16);
-        }
-
-        function closeManualEntry() { document.getElementById('modalEntry').classList.remove('active'); }
-
-        function selCat(el, cat) {
-            document.querySelectorAll('.q-cat').forEach(c => c.classList.remove('selected'));
-            el.classList.add('selected');
-            document.getElementById('mCategoria').value = cat;
-        }
-
+        // UTILS
         function formatearMonto(i) { let v = i.value.replace(/\D/g,''); i.value = v ? parseInt(v).toLocaleString('es-CL') : ''; }
+        function toggleTheme() { document.body.classList.toggle('light-theme'); }
+        setInterval(() => { document.getElementById('cronos').innerText = new Date().toLocaleTimeString('es-CL'); }, 1000);
 
         function guardarManual() {
             const m = parseInt(document.getElementById('mMonto').value.replace(/\./g,''));
             const n = document.getElementById('mNombre').value;
-            if(!m || !n) return alert("Faltan datos críticos");
+            const c = document.getElementById('mCategoria').value;
+            if(!m || !n) return alert("Faltan datos");
 
             db.collection("movimientos").add({
-                nombre: n, monto: m, categoria: document.getElementById('mCategoria').value,
+                nombre: n, monto: m, categoria: c,
                 tipo: document.getElementById('mTipo').value,
                 fecha: new Date(document.getElementById('mFecha').value),
                 status: 'Manual'
             }).then(() => {
                 closeManualEntry();
-                // Limpiar form
                 document.getElementById('mMonto').value = '';
                 document.getElementById('mNombre').value = '';
             });
         }
 
         async function enviarReporteTelegram() {
-            const canvas = await html2canvas(document.body);
-            canvas.toBlob(blob => {
-                const fd = new FormData();
-                fd.append("chat_id", TG_CHAT_ID);
-                fd.append("photo", blob, "scada.png");
-                fd.append("caption", `📊 STATUS BUNKER: $${document.getElementById('txtSaldo').innerText}`);
-                fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendPhoto`, { method: 'POST', body: fd });
-                alert("Reporte enviado a Telegram 🚀");
-            });
+            const bt = document.querySelector('button[onclick="enviarReporteTelegram()"]');
+            bt.innerText = "⏳";
+            try {
+                const canvas = await html2canvas(document.body, {backgroundColor: getComputedStyle(document.body).backgroundColor});
+                canvas.toBlob(blob => {
+                    const fd = new FormData();
+                    fd.append("chat_id", TG_CHAT_ID);
+                    fd.append("photo", blob, "scada.png");
+                    fd.append("caption", `🚀 SCADA UPDATE - BALANCE: $${document.getElementById('txtSaldo').innerText}`);
+                    fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendPhoto`, { method: 'POST', body: fd });
+                    alert("Reporte disparado a Telegram! 🚀");
+                    bt.innerText = "🚀";
+                });
+            } catch(e) { alert("Error de captura"); bt.innerText = "🚀"; }
         }
-
-        function toggleTheme() { document.body.classList.toggle('light-theme'); }
-        setInterval(() => { document.getElementById('cronos').innerText = new Date().toLocaleTimeString('es-CL'); }, 1000);
     </script>
 </body>
 </html>
