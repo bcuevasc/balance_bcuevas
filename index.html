@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Bunker Digital SCADA v29.2 - Pro Architect</title>
+    <title>Bunker Digital SCADA V30.0 - Control Maestro</title>
     
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -29,52 +29,55 @@
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
         body { background-color: var(--bg-body); margin: 0; padding: 0; color: var(--text-main); overflow-x: hidden; padding-bottom: 80px; }
 
-        /* PANTALLA DE LOGIN */
+        /* LOGIN */
         #login-screen { position: fixed; inset: 0; background: #0b0e14; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10000; }
         .login-box { padding: 40px; background: #161b22; border: 1px solid #30363d; border-radius: 12px; text-align: center; }
         .btn-google { background: #fff; color: #000; border: none; padding: 12px 24px; border-radius: 6px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 10px; margin-top: 20px; }
 
-        /* CONTENEDOR MODULAR */
-        .app-container { display: none; width: 100%; padding: 12px; flex-direction: column; gap: 15px; max-width: 1200px; margin: 0 auto; }
+        /* CONTENEDOR CORE */
+        .app-container { display: none; width: 100%; padding: 12px; flex-direction: column; gap: 15px; max-width: 1400px; margin: 0 auto; }
         .app-container.active-app { display: flex; }
 
         /* HEADER */
         .header-titles { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; margin-bottom: 5px; }
-        h2 { color: var(--color-saldo); margin: 0; font-size: 1.1rem; font-weight: 900; }
+        h2 { color: var(--color-saldo); margin: 0; font-size: 1.1rem; font-weight: 900; text-transform: uppercase; }
         .cronos { font-family: 'Courier New', monospace; font-size: 0.8rem; font-weight: 800; color: var(--text-muted); }
 
-        /* VISTAS DINÁMICAS (CORE FIX) */
+        /* SECCIONES DINÁMICAS (Móvil usa tabs, PC muestra todo) */
         .view-section { display: none; width: 100%; animation: fadeIn 0.2s ease; }
         .view-section.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
         /* KPI GRID */
         .kpi-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 15px; }
-        @media (min-width: 768px) { .kpi-grid { grid-template-columns: repeat(4, 1fr); } }
-        
         .kpi-card { padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-panel); border-top: 3px solid var(--border-color); }
         .kpi-card h4 { margin: 0 0 5px 0; font-size: 0.6rem; text-transform: uppercase; color: var(--text-muted); font-weight: 800; }
-        .kpi-card .value { font-size: 1.1rem; font-weight: 900; }
+        .kpi-card .value { font-size: 1.2rem; font-weight: 900; }
         .kpi-highlight { border: none; background: var(--color-saldo); color: #000; box-shadow: 0 4px 12px rgba(63, 185, 80, 0.2); }
         .kpi-highlight h4, .kpi-highlight .value { color: #000 !important; }
 
-        /* TABLA DE AUDITORÍA */
+        /* CHARTS & TABLAS */
+        .charts-container { display: flex; flex-direction: column; gap: 15px; }
+        .chart-box { background: var(--bg-panel); border-radius: 8px; border: 1px solid var(--border-color); padding: 15px; height: 350px; }
+        .chart-title { margin: 0 0 10px 0; font-size: 0.75rem; text-align: center; color: var(--text-muted); font-weight: 900; text-transform: uppercase; }
+        
         .table-wrapper { background: var(--bg-panel); border-radius: 8px; border: 1px solid var(--border-color); padding: 12px; }
-        .grid-scroll { height: 60vh; overflow-y: auto; }
+        .grid-scroll { height: 50vh; overflow-y: auto; }
         .data-grid { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
         .data-grid th { position: sticky; top: 0; background: var(--bg-subpanel); padding: 10px; color: var(--text-muted); font-size: 0.7rem; text-transform: uppercase; z-index: 10; border-bottom: 2px solid var(--border-color); }
         .data-grid td { padding: 12px 10px; border-bottom: 1px solid var(--border-color); }
         .col-monto { text-align: right; font-weight: 800; }
         .col-hora { font-size: 0.7rem; color: var(--text-muted); font-weight: 700; display: block; }
+        .cat-badge { font-size: 0.6rem; padding: 2px 6px; border-radius: 4px; background: var(--bg-subpanel); border: 1px solid var(--border-color); display: inline-block; margin-top: 4px; }
 
-        /* BOTTOM NAV */
+        /* NAVEGACIÓN MÓVIL */
         .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; height: 70px; background: var(--bg-panel); border-top: 1px solid var(--border-color); display: flex; justify-content: space-around; align-items: center; z-index: 9000; padding-bottom: env(safe-area-inset-bottom); }
         .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--text-muted); cursor: pointer; flex: 1; transition: 0.2s; }
         .nav-item.active { color: var(--color-saldo); }
         .nav-item span { font-size: 0.6rem; font-weight: 800; text-transform: uppercase; }
-        .nav-add { background: var(--color-saldo); width: 55px; height: 55px; border-radius: 50%; color: #000; display: flex; align-items: center; justify-content: center; font-size: 2rem; margin-top: -35px; border: 6px solid var(--bg-body); box-shadow: 0 4px 15px rgba(0,0,0,0.6); }
+        .nav-add { background: var(--color-saldo); width: 55px; height: 55px; border-radius: 50%; color: #000; display: flex; align-items: center; justify-content: center; font-size: 2rem; margin-top: -35px; border: 6px solid var(--bg-body); box-shadow: 0 4px 15px rgba(0,0,0,0.6); cursor: pointer; }
 
-        /* MODAL */
+        /* MODAL DE INGRESO */
         .modal { position: fixed; inset: 0; background: var(--bg-body); z-index: 10001; display: none; flex-direction: column; padding: 25px; overflow-y: auto; }
         .modal.active { display: flex; }
         .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
@@ -83,63 +86,33 @@
         .form-group input, .form-group select { width: 100%; height: 55px; background: var(--input-bg); border: 1px solid var(--border-color); border-radius: 10px; color: var(--text-main); padding: 0 15px; font-size: 1.1rem; outline: none; }
         
         .quick-cats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
-        .q-cat { background: var(--bg-subpanel); border: 1px solid var(--border-color); padding: 12px; border-radius: 10px; font-size: 0.7rem; text-align: center; font-weight: 800; }
+        .q-cat { background: var(--bg-subpanel); border: 1px solid var(--border-color); padding: 12px; border-radius: 10px; font-size: 0.7rem; text-align: center; font-weight: 800; cursor: pointer; }
         .q-cat.selected { border-color: var(--color-saldo); background: rgba(63, 185, 80, 0.15); color: var(--color-saldo); }
 
-        /* TRENDS */
-        .chart-container { background: var(--bg-panel); border-radius: 8px; border: 1px solid var(--border-color); padding: 15px; height: 400px; }
-
-        @media (max-width: 600px) {
-            h2 { font-size: 1rem; }
-            .kpi-card .value { font-size: 1rem; }
-        }
         /* =======================================================
-           🖥️ MODO ESCRITORIO (PC) V30.0 - SIDEBAR INDUSTRIAL
+           🖥️ MODO ESCRITORIO (SCADA DASHBOARD COMPLETO)
            ======================================================= */
-        @media (min-width: 768px) {
-            body { 
-                padding-bottom: 0; 
-            }
-            .app-container { 
-                margin-left: 110px; /* Empuja el contenido para hacer espacio al menú */
-                margin-top: 20px;
-                max-width: 1100px; 
-            }
+        @media (min-width: 1024px) {
+            body { padding-bottom: 0; }
+            .app-container { padding: 20px; }
             
-            /* Transforma la barra inferior en un menú lateral fijo */
-            .bottom-nav {
-                top: 0; 
-                left: 0; 
-                bottom: 0; 
-                right: auto;
-                width: 90px; 
-                height: 100vh;
-                flex-direction: column;
-                justify-content: center;
-                border-top: none;
-                border-right: 1px solid var(--border-color);
-                background: var(--bg-panel);
-                gap: 40px;
-            }
+            /* En PC, Ocultar la barra móvil y mostrar TODAS las vistas a la vez */
+            .bottom-nav { display: none; }
+            .view-section { display: block !important; margin-bottom: 20px; }
             
-            /* Ajustes estéticos para los botones en PC */
-            .nav-item { flex: none; gap: 8px; }
-            .nav-item span { font-size: 0.75rem; }
+            h2 { font-size: 1.5rem; }
             
-            /* Botón "+" estilo Dashboard */
-            .nav-add {
-                margin-top: 0; 
-                width: 50px; 
-                height: 50px; 
-                border: none; 
-                font-size: 2rem;
-                box-shadow: 0 4px 10px rgba(63, 185, 80, 0.4);
-            }
-            
-            /* KPIs más robustos para monitor 2K/QHD */
-            .kpi-card .value { font-size: 1.6rem; }
-            .kpi-card h4 { font-size: 0.75rem; }
-            .table-wrapper { padding: 20px; }
+            /* KPIs en 4 columnas */
+            .kpi-grid { grid-template-columns: repeat(4, 1fr); gap: 20px; }
+            .kpi-card .value { font-size: 1.8rem; }
+            .kpi-card h4 { font-size: 0.8rem; }
+
+            /* Gráficos lado a lado */
+            .charts-container { flex-direction: row; gap: 20px; }
+            .chart-box { flex: 1; height: 400px; }
+
+            /* Tabla más cómoda */
+            .grid-scroll { height: 40vh; }
         }
     </style>
 </head>
@@ -148,13 +121,15 @@
     <div id="login-screen">
         <div class="login-box">
             <h1 style="color:#fff; margin:0; font-size:1.6rem; font-weight:900;">BUNKER SCADA</h1>
-            <p style="color:var(--text-muted); font-size:0.75rem; letter-spacing:1px; margin-top:5px;">CONTROL TÁCTICO V29.2</p>
+            <p style="color:var(--text-muted); font-size:0.75rem; letter-spacing:1px; margin-top:5px;">CONTROL MAESTRO V30.0</p>
             <button class="btn-google" onclick="loginWithGoogle()">
                 <img src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png" width="22" alt="">
                 ENTRAR CON GOOGLE
             </button>
         </div>
     </div>
+
+    <div onclick="openManualEntry()" style="display:none; position:fixed; bottom:30px; right:30px; width:60px; height:60px; background:var(--color-saldo); color:#000; border-radius:50%; align-items:center; justify-content:center; font-size:2rem; font-weight:bold; cursor:pointer; box-shadow:0 5px 15px rgba(0,0,0,0.5); z-index:9999;" id="btnFloatingPC">+</div>
 
     <div class="app-container" id="reportZone">
         <div class="header-titles">
@@ -163,6 +138,7 @@
                 <div id="cronos" class="cronos">--:--:--</div>
             </div>
             <div style="display: flex; gap: 12px; align-items: center;">
+                <span id="txtPeriodoBatch" style="font-size:0.8rem; font-weight:900; color:var(--text-muted); border:1px solid var(--border-color); padding:5px 10px; border-radius:6px; background:var(--bg-panel);">--/-- AL --/--</span>
                 <button onclick="enviarReporteTelegram()" style="background:var(--bg-subpanel); border:1px solid var(--border-color); border-radius:50%; width:40px; height:40px; font-size:1.2rem; cursor:pointer; display:flex; align-items:center; justify-content:center;">🚀</button>
                 <button onclick="toggleTheme()" style="background:var(--bg-subpanel); border:1px solid var(--border-color); border-radius:50%; width:40px; height:40px; font-size:1.2rem; cursor:pointer; display:flex; align-items:center; justify-content:center;">🌓</button>
             </div>
@@ -184,29 +160,37 @@
                     <div class="value">$2.382.505</div>
                 </div>
                 <div class="kpi-card" style="border-top-color: var(--color-fuga);">
-                    <h4>Fugas Mes</h4>
+                    <h4>Fugas Mes (Dopamina)</h4>
                     <div class="value">$<span id="txtFugas">0</span></div>
                 </div>
             </div>
-            
-            <div style="background:var(--bg-panel); padding:12px; border-radius:10px; border:1px solid var(--border-color); text-align:center; border-left: 5px solid var(--color-ingresos);">
-                <span style="font-size:0.65rem; color:var(--text-muted); font-weight:800; text-transform:uppercase;">Período Operativo:</span>
-                <span id="txtPeriodoBatch" style="font-size:0.9rem; font-weight:900; color:var(--text-main); margin-left:10px;">--/-- al --/--</span>
+        </div>
+
+        <div id="view-trends" class="view-section">
+            <div class="charts-container">
+                <div class="chart-box">
+                    <h5 class="chart-title">VELOCIDAD DE CONSUMO (BURN-DOWN)</h5>
+                    <canvas id="chartBurnDown"></canvas>
+                </div>
+                <div class="chart-box">
+                    <h5 class="chart-title">ANÁLISIS PARETO (DISTRIBUCIÓN DE GASTOS)</h5>
+                    <canvas id="chartPareto"></canvas>
+                </div>
             </div>
         </div>
 
         <div id="view-auditoria" class="view-section">
             <div class="table-wrapper">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                    <h4 style="margin:0; font-size:0.8rem; color:var(--text-muted); font-weight:900; text-transform:uppercase;">Historial de Flujo</h4>
-                    <input type="text" id="inputBuscador" placeholder="🔍 Buscar..." oninput="actualizarDashboard()" style="background:var(--input-bg); border:1px solid var(--border-color); color:var(--text-main); border-radius:6px; padding:6px 12px; font-size:0.8rem; width:140px;">
+                    <h4 style="margin:0; font-size:0.8rem; color:var(--text-muted); font-weight:900; text-transform:uppercase;">Historial de Flujo V30</h4>
+                    <input type="text" id="inputBuscador" placeholder="🔍 Buscar comercio..." oninput="actualizarDashboard()" style="background:var(--input-bg); border:1px solid var(--border-color); color:var(--text-main); border-radius:6px; padding:6px 12px; font-size:0.8rem; width:180px;">
                 </div>
                 <div class="grid-scroll">
                     <table class="data-grid">
                         <thead>
                             <tr>
                                 <th>Fecha</th>
-                                <th>Concepto</th>
+                                <th>Comercio / Detalle</th>
                                 <th class="col-monto">Monto</th>
                             </tr>
                         </thead>
@@ -215,28 +199,21 @@
                 </div>
             </div>
         </div>
-
-        <div id="view-trends" class="view-section">
-            <div class="chart-container">
-                <h5 style="margin:0 0 15px 0; font-size:0.75rem; text-align:center; color:var(--text-muted); font-weight:900;">VELOCIDAD DE CONSUMO (BURN-DOWN)</h5>
-                <canvas id="chartBurnDown"></canvas>
-            </div>
-        </div>
     </div>
 
     <nav class="bottom-nav">
         <div class="nav-item active" id="nav-home" onclick="switchView('home')">
             <div style="font-size:1.4rem;">🏠</div>
-            <span>Home</span>
+            <span>KPIs</span>
         </div>
-        <div class="nav-item" id="nav-auditoria" onclick="switchView('auditoria')">
-            <div style="font-size:1.4rem;">📊</div>
-            <span>Flujo</span>
-        </div>
-        <div class="nav-add" onclick="openManualEntry()">+</div>
         <div class="nav-item" id="nav-trends" onclick="switchView('trends')">
             <div style="font-size:1.4rem;">📈</div>
-            <span>Trend</span>
+            <span>Trends</span>
+        </div>
+        <div class="nav-add" onclick="openManualEntry()">+</div>
+        <div class="nav-item" id="nav-auditoria" onclick="switchView('auditoria')">
+            <div style="font-size:1.4rem;">📊</div>
+            <span>Auditoría</span>
         </div>
         <div class="nav-item" onclick="logout()">
             <div style="font-size:1.4rem;">🚪</div>
@@ -260,14 +237,14 @@
             <input type="text" id="mMonto" placeholder="$0" oninput="formatearMonto(this)">
         </div>
 
-        <label style="font-size:0.7rem; font-weight:800; color:var(--text-muted); text-transform:uppercase; margin-bottom:10px; display:block;">Categoría Rápida</label>
+        <label style="font-size:0.7rem; font-weight:800; color:var(--text-muted); text-transform:uppercase; margin-bottom:10px; display:block;">Categoría Rápida V30</label>
         <div class="quick-cats">
-            <div class="q-cat" onclick="selCat(this, 'Alimentación Extra (Dopamina)')">🍕 Dopamina</div>
+            <div class="q-cat" onclick="selCat(this, 'Dopamina & Antojos')">🍔 Dopamina</div>
+            <div class="q-cat" onclick="selCat(this, 'Ocio & Experiencias')">🎸 Ocio Fino</div>
+            <div class="q-cat" onclick="selCat(this, 'Alimentación & Supermercado')">🛒 Súper</div>
             <div class="q-cat" onclick="selCat(this, 'Transporte & Logística')">🚗 Transporte</div>
-            <div class="q-cat" onclick="selCat(this, 'Alimentación Esencial')">🛒 Súper</div>
-            <div class="q-cat" onclick="selCat(this, 'Salud & Deporte')">🎾 Salud</div>
-            <div class="q-cat" onclick="selCat(this, 'Transferencia')">💸 Transf.</div>
-            <div class="q-cat" onclick="selCat(this, 'Hogar & Búnker')">🏠 Hogar</div>
+            <div class="q-cat" onclick="selCat(this, 'Transferencia Propia / Ahorro')">💸 Transf.</div>
+            <div class="q-cat" onclick="selCat(this, 'Mantenimiento Hardware (Salud)')">🎾 Salud</div>
         </div>
         <input type="hidden" id="mCategoria" value="Sin Categoría">
 
@@ -291,7 +268,6 @@
     </div>
 
     <script>
-        // CONFIGURACIÓN CORE
         const BYRON_EMAIL = "bvhcc94@gmail.com";
         const TG_TOKEN = "8614679709:AAEJGy9yAlKnhjVmJ0VUZpT-YmZQ6J5IOps";
         const TG_CHAT_ID = "1484213465";
@@ -307,25 +283,24 @@
         const auth = firebase.auth();
         let listaMovimientos = [];
         let chartBD = null;
+        let chartPR = null;
 
-        // MOTOR DE NAVEGACIÓN (PRO FIX)
+        // Comportamiento Responsivo: En PC el botón "+" flota.
+        if(window.innerWidth >= 1024) document.getElementById('btnFloatingPC').style.display = 'flex';
+
         function switchView(viewName) {
-            // Ocultar todas las secciones
+            // Si está en PC, no hace nada porque todo es visible
+            if (window.innerWidth >= 1024) return; 
+
             document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
 
-            // Activar seleccionada
             const targetView = document.getElementById(`view-${viewName}`);
             const targetNav = document.getElementById(`nav-${viewName}`);
             
             if(targetView && targetNav) {
                 targetView.classList.add('active');
                 targetNav.classList.add('active');
-            }
-
-            // Redibujar gráfico si es necesario
-            if(viewName === 'trends' && listaMovimientos.length > 0) {
-                setTimeout(actualizarDashboard, 50);
             }
             window.scrollTo(0,0);
         }
@@ -344,7 +319,6 @@
             document.getElementById('mCategoria').value = cat;
         }
 
-        // AUTH & FIREBASE
         function loginWithGoogle() { auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
         function logout() { auth.signOut().then(() => window.location.reload()); }
 
@@ -389,9 +363,9 @@
                 else if (x.tipo === 'Por Cobrar') tCxC += x.monto;
                 else {
                     saldoAcc -= x.monto;
-                    if (x.categoria?.includes('Dopamina') || x.categoria?.includes('Fuga')) tFugas += x.monto;
+                    // Lógica V30 para fugas
+                    if (x.categoria === 'Dopamina & Antojos' || x.categoria?.includes('Fuga')) tFugas += x.monto;
                 }
-                x.saldoH = saldoAcc;
             });
 
             document.getElementById('txtSaldo').innerText = saldoAcc.toLocaleString('es-CL');
@@ -404,9 +378,7 @@
             document.getElementById('badgeDias').innerText = `${Math.max(diasC - trans, 0)} DÍAS RESTANTES`;
 
             dibujarTabla(dataMes.filter(x => x.nombre.toLowerCase().includes(b)));
-            if(document.getElementById('view-trends').classList.contains('active')) {
-                dibujarGrafico(sueldo, chronData, diasC, T0);
-            }
+            dibujarGraficos(sueldo, chronData, diasC, T0, dataMes);
         }
 
         function dibujarTabla(datos) {
@@ -415,28 +387,30 @@
                 let d = new Date(x.fechaMs);
                 let fS = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`;
                 let hS = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+                let cat = x.categoria || 'Sin Categoría';
                 
                 l.innerHTML += `<tr>
                     <td>${fS} <span class="col-hora">${hS}</span></td>
-                    <td style="font-weight:700;">${x.nombre}</td>
+                    <td style="font-weight:700;">${x.nombre}<br><span class="cat-badge">${cat}</span></td>
                     <td class="col-monto" style="color:${x.tipo==='Ingreso'?'var(--color-ingresos)':'inherit'}">$${x.monto.toLocaleString('es-CL')}</td>
                 </tr>`;
             });
         }
 
-        function dibujarGrafico(sueldo, data, dias, T0) {
+        function dibujarGraficos(sueldo, chronData, dias, T0, dataMes) {
+            // --- GRÁFICO 1: BURN-DOWN ---
             if(chartBD) chartBD.destroy();
-            let labels = [], ideal = [], real = [], acc = sueldo;
+            let labelsBD = [], ideal = [], real = [], acc = sueldo;
             let daily = Array(dias + 1).fill(0);
             
-            data.forEach(m => {
+            chronData.forEach(m => {
                 let diff = Math.floor((m.fechaMs - T0.getTime()) / 86400000) + 1;
                 if(diff >= 1 && diff <= dias && m.tipo !== 'Ingreso' && m.tipo !== 'Por Cobrar') daily[diff] += m.monto;
             });
 
             let hoyL = Math.floor((Date.now() - T0.getTime()) / 86400000) + 1;
             for(let i=1; i<=dias; i++){
-                labels.push(i);
+                labelsBD.push(i);
                 ideal.push(sueldo - (sueldo/dias)*i);
                 acc -= daily[i];
                 real.push(i <= hoyL ? acc : null);
@@ -445,13 +419,41 @@
             chartBD = new Chart(document.getElementById('chartBurnDown'), {
                 type: 'line',
                 data: {
-                    labels,
+                    labels: labelsBD,
                     datasets: [
                         { label: 'Real', data: real, borderColor: '#1f6feb', borderWidth: 3, pointRadius: 0, tension: 0.1 },
                         { label: 'Ideal', data: ideal, borderColor: 'rgba(63,185,80,0.3)', borderDash: [5,5], pointRadius: 0 }
                     ]
                 },
-                options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { ticks: { color: '#8b949e', font: {size: 10} }, grid: {color: '#30363d'} }, x: { ticks: { color: '#8b949e', font: {size: 10} }, grid: {display: false} } } }
+                options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { ticks: { color: '#8b949e' }, grid: {color: '#30363d'} }, x: { ticks: { color: '#8b949e' }, grid: {display: false} } } }
+            });
+
+            // --- GRÁFICO 2: PARETO V30 ---
+            if(chartPR) chartPR.destroy();
+            let sumasCat = {};
+            dataMes.forEach(x => {
+                if(x.tipo !== 'Ingreso' && x.tipo !== 'Por Cobrar' && !x.categoria?.includes('Ahorro') && !x.categoria?.includes('Gastos Fijos (Búnker)')) {
+                    let c = x.categoria || 'Otros';
+                    sumasCat[c] = (sumasCat[c] || 0) + x.monto;
+                }
+            });
+
+            let arrPA = Object.entries(sumasCat).sort((a,b) => b[1] - a[1]);
+            let pLabels = arrPA.map(x => x[0].split(" ")[0]); // Acorta los nombres para el gráfico
+            let pData = arrPA.map(x => x[1]);
+
+            chartPR = new Chart(document.getElementById('chartPareto'), {
+                type: 'bar',
+                data: {
+                    labels: pLabels,
+                    datasets: [{
+                        label: 'Gasto por Categoría',
+                        data: pData,
+                        backgroundColor: pLabels.map(l => l.includes('Dopamina') ? '#ff5252' : '#3fb950'),
+                        borderRadius: 4
+                    }]
+                },
+                options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { ticks: { color: '#8b949e' }, grid: {color: '#30363d'} }, x: { ticks: { color: '#8b949e', font: {size: 9} }, grid: {display: false} } } }
             });
         }
 
