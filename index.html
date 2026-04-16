@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Bunker Digital SCADA v31.1 - Auditoría Activa</title>
+    <title>Bunker Digital SCADA v31.2 - Auditoría Activa</title>
     
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
@@ -80,11 +80,13 @@
         .data-grid { width: 100%; border-collapse: collapse; text-align: left; }
         .data-grid th { position: sticky; top: 0; background: var(--bg-subpanel); padding: 10px; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; z-index: 10; border-bottom: 2px solid var(--border-color); white-space: nowrap; cursor: pointer; user-select: none; }
         .data-grid td { padding: 8px 10px; font-size: 0.85rem; border-bottom: 1px solid var(--border-color); white-space: nowrap; vertical-align: middle; }
+        .col-hora { font-size: 0.65rem; color: var(--text-muted); font-weight: 700; display: block; margin-top: 2px; }
+        .cat-badge { font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); display: inline-block; margin-top: 4px; color: var(--text-muted); font-weight: 800; }
+        
         .col-check { width: 40px; text-align: center; cursor: default; }
         .row-check { cursor: pointer; transform: scale(1.3); accent-color: var(--color-edit); margin: 0; }
         
         /* Badges e Iconos V31 */
-        .cat-badge { font-size: 0.75rem; color: var(--text-muted); display: flex; align-items: center; gap: 5px; }
         .status-badge { padding: 3px 8px; border-radius: 4px; font-size: 0.65rem; font-weight: 800; border: 1px solid; }
         .status-ok { color: var(--color-saldo); border-color: rgba(63,185,80,0.3); background: rgba(63,185,80,0.1); }
         .status-warn { color: var(--color-edit); border-color: rgba(210,153,34,0.3); background: rgba(210,153,34,0.1); }
@@ -141,7 +143,7 @@
 <div id="login-screen">
     <div class="login-box">
         <h2 style="color:#fff; margin-bottom:10px;">BUNKER SCADA</h2>
-        <p style="color:var(--text-muted); font-size:0.8rem;">SISTEMA PRIVADO DE GESTIÓN TÁCTICA V31</p>
+        <p style="color:var(--text-muted); font-size:0.8rem;">SISTEMA PRIVADO DE GESTIÓN TÁCTICA V31.2</p>
         <button class="btn-google" onclick="loginWithGoogle()">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="20px" height="20px" style="margin-right:10px; vertical-align:middle;">
                 <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.7 17.74 9.5 24 9.5z"/>
@@ -230,14 +232,10 @@
                         <thead>
                             <tr>
                                 <th class="col-check hide-mobile" onclick="event.stopPropagation();"><input type="checkbox" id="checkAll" class="row-check" onchange="toggleAllChecks()"></th>
-                                <th class="hide-mobile" style="width: 40px; text-align: center;">N°</th>
                                 <th onclick="sortTable('fecha')">Fecha</th>
                                 <th onclick="sortTable('nombre')">Descripción</th>
-                                <th class="hide-mobile" onclick="sortTable('categoria')">Categoría</th>
                                 <th onclick="sortTable('monto')">Monto</th>
                                 <th id="thSaldoAcumulado" class="hide-mobile" style="text-align: right;">Saldo Hist.</th>
-                                <th class="hide-mobile" style="text-align: center;">% Fuga</th>
-                                <th class="hide-mobile" style="text-align: center;">Status</th>
                                 <th class="hide-mobile" style="text-align: center;">Acciones</th>
                             </tr>
                         </thead>
@@ -275,7 +273,7 @@
                 <input type="hidden" id="editId">
                 <div class="form-group"><label>Fecha</label><input type="datetime-local" id="inputFecha"></div>
                 <div class="form-group"><label>Flujo</label><select id="inputTipo"><option value="Gasto">Gasto Variable</option><option value="Gasto Fijo">Gasto Fijo</option><option value="Ingreso">Ingreso Extra</option><option value="Por Cobrar">Préstamo (CxC)</option><option value="Ahorro">Ahorro / Mov. Neutro</option></select></div>
-                <div class="form-group"><label>Categoría V30</label>
+                <div class="form-group"><label>Categoría V31.2</label>
                     <select id="inputCategoria">
                         <option value="Gastos Fijos (Búnker)">🏠 Gastos Fijos (Búnker)</option>
                         <option value="Suscripciones">📱 Suscripciones</option>
@@ -285,6 +283,7 @@
                         <option value="Transporte & Logística">🚗 Transporte & Log</option>
                         <option value="Mantenimiento Hardware (Salud)">💊 Salud</option>
                         <option value="Transferencia Propia / Ahorro">🏦 Transferencia Propia</option>
+                        <option value="Transferencia Recibida">📲 Transferencia Recibida</option>
                         <option value="Hogar & Búnker">🛠️ Hogar & Búnker</option>
                         <option value="Red de Apoyo (Familia)">🫂 Red de Apoyo</option>
                         <option value="Gasto Tarjeta de Crédito">💳 Gasto TC</option>
@@ -323,7 +322,8 @@
                 <option value="Alimentación & Supermercado">🛒 Alimentación Base</option>
                 <option value="Dopamina & Antojos">🍔 Dopamina</option>
                 <option value="Ocio & Experiencias">🎸 Ocio Fino</option>
-                <option value="Transferencia Propia / Ahorro">🏦 Transferencia</option>
+                <option value="Transferencia Propia / Ahorro">🏦 Transferencia Propia</option>
+                <option value="Transferencia Recibida">📲 Transferencia Recibida</option>
             </select>
             <button class="btn-sys" onclick="massCategorize()">APLICAR</button>
             <button class="btn-sys" onclick="massDelete()" style="color:var(--color-fuga);">🗑️</button>
@@ -333,7 +333,7 @@
 
 <script>
     // ==========================================
-    // ⚙️ CONFIGURACIÓN V31.1 (Tabla Extendida & Edición Activa)
+    // ⚙️ CONFIGURACIÓN V31.2
     // ==========================================
     const BYRON_EMAIL = "bvhcc94@gmail.com"; 
     const MASTER_KEY = "Byron_Secured_2026"; 
@@ -353,12 +353,13 @@
     const auth = firebase.auth();
     const APPS_SCRIPT_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzhlxJ_pgky_KDhItJpQHch7HF4HLQhhdEcUfaweh9Eeg2x4XO6LSsuemoGF0sOY5XFZA/exec";
 
+    // 💡 NUEVO DICCIONARIO V31.2 CON TRANSFERENCIA RECIBIDA
     const catEmojis = {
         "Gastos Fijos (Búnker)": "🏠", "Suscripciones": "📱", "Alimentación & Supermercado": "🛒",
         "Dopamina & Antojos": "🍔", "Ocio & Experiencias": "🎸", "Transporte & Logística": "🚗", 
         "Mantenimiento Hardware (Salud)": "💊", "Transferencia Propia / Ahorro": "🏦", "Hogar & Búnker": "🛠️",
         "Red de Apoyo (Familia)": "🫂", "Gasto Tarjeta de Crédito": "💳",
-        "Ingreso Adicional": "💰", "Ruido de Sistema": "⚙️", "Sin Categoría": "❓"
+        "Ingreso Adicional": "💰", "Transferencia Recibida": "📲", "Ruido de Sistema": "⚙️", "Sin Categoría": "❓"
     };
 
     let firestoreListener = null; 
@@ -484,8 +485,7 @@
             let valA = a.fechaISO, valB = b.fechaISO;
             if (currentSort.column === 'monto') { valA = a.monto; valB = b.monto; }
             else if (currentSort.column === 'nombre') { valA = a.nombre?.toLowerCase(); valB = b.nombre?.toLowerCase(); }
-            else if (currentSort.column === 'categoria') { valA = a.catV.toLowerCase(); valB = b.catV.toLowerCase(); }
-
+            
             if (valA < valB) return currentSort.direction === 'asc' ? -1 : 1;
             if (valA > valB) return currentSort.direction === 'asc' ? 1 : -1;
             return 0;
@@ -507,7 +507,7 @@
         dibujarTabla(datosAProcesar);
     }
 
-    // 💡 V31.1: RENDER DE TABLA (7 Columnas + Telemetría Visual)
+    // 💡 V31.1: RENDER DE TABLA ALTA DENSIDAD
     function dibujarTabla(datos) {
         const l = document.getElementById('listaDetalle'); l.innerHTML = '';
         
@@ -515,7 +515,8 @@
             const em = catEmojis[x.catV] || "❓";
             
             let d = new Date(x.fechaISO);
-            let dS = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+            let fS = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`;
+            let hS = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
             
             // Iconos y Colores de Impacto (+, -, =)
             let iconImpacto = "";
@@ -531,25 +532,16 @@
                 iconImpacto = `<span class="impact-icon impact-neg">(-)</span>`;
             }
 
-            // Datos Extra (Fuga y Status)
-            let pctFuga = catEvitables.includes(x.catV) ? '100%' : '0%';
-            let statusBadge = `<span class="status-badge status-ok">OK</span>`;
-            if(x.catV === 'Sin Categoría') statusBadge = `<span class="status-badge status-warn">REVISAR</span>`;
-
             // Highlight si está en edición
             let bgEdicion = (document.getElementById('editId').value === x.firestoreId) ? 'background-color: rgba(210, 153, 34, 0.15); border-left: 3px solid var(--color-edit);' : '';
 
             l.innerHTML += `<tr style="${bgEdicion}">
                 <td class="col-check hide-mobile"><input type="checkbox" class="row-check" value="${x.firestoreId}" onchange="updateMassActions()"></td>
-                <td class="hide-mobile" style="text-align:center; font-size:0.75rem; font-weight:800; color:var(--text-muted);">${x.indiceVista}</td>
-                <td style="font-size:0.75rem; color:var(--text-muted);">${dS}</td>
-                <td style="font-weight:700;">${x.nombre}</td>
-                <td class="hide-mobile" style="font-size:0.75rem;"><span class="cat-badge">${em} ${x.catV}</span></td>
+                <td style="font-size:0.75rem; color:var(--text-muted);">${fS} <span class="col-hora">${hS}</span></td>
+                <td style="font-weight:700;">${x.nombre}<br><span class="cat-badge">${em} ${x.catV}</span></td>
                 <td style="font-weight:800; color:${colorMonto}; white-space: nowrap;">${iconImpacto}$${x.monto.toLocaleString('es-CL')}</td>
                 <td class="hide-mobile" style="text-align:right; font-weight:800; color:${x.saldoCalculadoVista<0?'var(--color-fuga)':'var(--text-muted)'}">$${x.saldoCalculadoVista.toLocaleString('es-CL')}</td>
-                <td class="hide-mobile" style="text-align:center; font-size:0.7rem; color:var(--text-muted);">${pctFuga}</td>
-                <td class="hide-mobile" style="text-align:center;">${statusBadge}</td>
-                <td class="hide-mobile" style="text-align:center;"><button class="btn-sys" style="padding:4px; font-size:0.8rem; background:transparent; border:none;" onclick="editarMovimiento('${x.firestoreId}')">✏️</button></td>
+                <td class="hide-mobile" style="text-align:center;"><button class="btn-sys" style="padding:4px 8px; border-color:var(--color-edit); color:var(--color-edit);" onclick="editarMovimiento('${x.firestoreId}')">✏️ EDIT</button></td>
             </tr>`;
         });
     }
@@ -571,7 +563,7 @@
         renderizarTablaOrdenada(sueldo, b);
     }
 
-    // 💡 V31.1: EDICIÓN ACTIVA (Cargar en panel + Respetar Zona Horaria)
+    // 💡 V31.1: EDICIÓN ACTIVA
     function editarMovimiento(id) {
         const mov = listaMovimientos.find(m => m.firestoreId === id);
         if(!mov) return;
@@ -582,7 +574,6 @@
         document.getElementById('inputTipo').value = mov.tipo || 'Gasto';
         document.getElementById('inputCategoria').value = mov.categoria || 'Sin Categoría';
         
-        // Ajuste de zona horaria local para que el input datetime-local no desfase la hora
         let d = new Date(mov.fechaISO);
         let dLocal = new Date(d.getTime() - (d.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
         document.getElementById('inputFecha').value = dLocal;
@@ -592,12 +583,10 @@
         btn.style.backgroundColor = "var(--color-edit)";
         modoEdicionActivo = true;
 
-        // Repintar para que la fila seleccionada se ilumine
         const sueldo = parseInt(document.getElementById('inputSueldo').value.replace(/\./g,'')) || 0;
         renderizarTablaOrdenada(sueldo, "");
     }
 
-    // 💡 V31.1: MOTOR DE GUARDADO INTELIGENTE (Detecta si es Update o Add)
     function agregarMovimiento() {
         const mStr = document.getElementById('inputMonto').value.replace(/\./g, '');
         const m = parseInt(mStr);
@@ -614,7 +603,7 @@
         btn.innerHTML = "⏳ GUARDANDO...";
         btn.disabled = true;
 
-        const fechaDoc = new Date(fInput); // Pasa directo al backend respetando ISO
+        const fechaDoc = new Date(fInput);
 
         const dataPayload = {
             nombre: n,
@@ -633,12 +622,10 @@
         }
 
         operacion.then(() => {
-            // Limpieza de formulario
             document.getElementById('editId').value = '';
             document.getElementById('inputNombre').value = '';
             document.getElementById('inputMonto').value = '';
             
-            // Resetear botón
             btn.innerHTML = "GUARDAR EN BÚNKER";
             btn.style.backgroundColor = "var(--color-guardar)";
             btn.disabled = false;
@@ -650,7 +637,6 @@
         });
     }
 
-    // Gráficos y Utilidades Generales
     function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0) {
         if(chartBD) chartBD.destroy(); if(chartP) chartP.destroy();
         const cT = getComputedStyle(document.body).getPropertyValue('--text-main').trim();
@@ -718,12 +704,8 @@
     function formatearEntradaNumerica(i) { let v = i.value.replace(/\D/g,''); i.value = v ? parseInt(v).toLocaleString('es-CL') : ''; }
     setInterval(() => { document.getElementById('cronos').innerText = new Date().toLocaleString('es-CL').toUpperCase(); }, 1000);
     async function triggerSync() { const btn = document.getElementById('btnSyncManualPC'); btn.innerText = "⏳ SYNCING..."; try { await fetch(`${APPS_SCRIPT_WEB_APP_URL}?key=${MASTER_KEY}`, { method: 'POST', mode: 'no-cors' }); btn.innerText = "✅ SEÑAL ENVIADA"; } catch(e) { btn.innerText = "❌ ERROR"; } setTimeout(() => btn.innerText = "🔄 SYNC GMAIL", 3000); }
-    async function enviarReporteTelegram(esAuto=false) { alert("Función Telegram vinculada al motor de captura."); }
     function exportarCSV() { let csv = "Fecha;Descripcion;Monto\n"; listaMovimientos.forEach(r => { csv += `${r.fechaISO};${r.nombre};${r.monto}\n`; }); const link = document.createElement("a"); link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' })); link.download = `Bunker_Backup.csv`; link.click(); }
 
-    // ==========================================
-    // ⚙️ MOTOR DE ACCIONES MASIVAS
-    // ==========================================
     function toggleAllChecks() {
         const masterCheck = document.getElementById('checkAll');
         document.querySelectorAll('.row-check:not(#checkAll)').forEach(cb => cb.checked = masterCheck.checked);
