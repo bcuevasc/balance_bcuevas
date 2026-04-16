@@ -81,6 +81,8 @@
         .data-grid { width: 100%; border-collapse: collapse; text-align: left; }
         .data-grid th { position: sticky; top: 0; background: var(--bg-subpanel); padding: 10px; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; z-index: 10; border-bottom: 2px solid var(--border-color); white-space: nowrap; }
         .data-grid td { padding: 8px 10px; font-size: 0.85rem; border-bottom: 1px solid var(--border-color); white-space: nowrap; }
+        .col-hora { font-size: 0.65rem; color: var(--text-muted); font-weight: 700; display: block; margin-top: 2px; }
+        .cat-badge { font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); display: inline-block; margin-top: 4px; color: var(--text-muted); font-weight: 800; }
         
         .col-check { width: 40px; text-align: center; }
         .row-check { cursor: pointer; transform: scale(1.3); accent-color: var(--color-edit); margin: 0; }
@@ -237,8 +239,7 @@
                             <tr>
                                 <th class="col-check hide-mobile"><input type="checkbox" id="checkAll" class="row-check" onchange="toggleAllChecks()"></th>
                                 <th onclick="sortTable('fecha')">Fecha</th>
-                                <th class="desc-col" onclick="sortTable('nombre')">Descripción</th>
-                                <th class="hide-mobile" onclick="sortTable('categoria')">Categoría V30</th>
+                                <th class="desc-col" onclick="sortTable('nombre')">Comercio / Detalle</th>
                                 <th onclick="sortTable('monto')">Monto</th>
                                 <th id="thSaldoAcumulado" class="hide-mobile" style="text-align: right;">Saldo Hist.</th>
                                 <th class="hide-mobile" style="text-align: center;">Acciones</th>
@@ -477,14 +478,19 @@
         datos.sort((x,y) => x.fechaISO < y.fechaISO ? 1 : -1); 
         datos.forEach(x => {
             const em = catEmojis[x.catV] || "❓";
+            
+            // Lógica de Fecha y Hora de alta densidad
+            let d = new Date(x.fechaISO);
+            let fS = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`;
+            let hS = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+            
             l.innerHTML += `<tr>
                 <td class="col-check hide-mobile"><input type="checkbox" class="row-check" value="${x.firestoreId}" onchange="updateMassActions()"></td>
-                <td style="font-size:0.75rem; color:var(--text-muted);">${x.fechaISO.slice(8,10)}/${x.fechaISO.slice(5,7)}</td>
-                <td style="font-weight:700;">${x.nombre}</td>
-                <td class="hide-mobile" style="font-size:0.75rem; color:var(--text-muted);"><span class="floating-emoji">${em}</span> ${x.catV}</td>
+                <td style="font-size:0.75rem; color:var(--text-muted);">${fS} <span class="col-hora">${hS}</span></td>
+                <td style="font-weight:700;">${x.nombre}<br><span class="cat-badge">${em} ${x.catV}</span></td>
                 <td style="font-weight:800; color:${(x.tipo==='Ingreso')?'var(--color-ingresos)':'var(--text-main)'};">$${x.monto.toLocaleString('es-CL')}</td>
                 <td class="hide-mobile" style="text-align:right; font-weight:800; color:${x.saldoH<0?'var(--color-fuga)':'var(--text-muted)'}">$${x.saldoH.toLocaleString('es-CL')}</td>
-                <td style="text-align:center;"><button class="btn-sys" style="padding:4px 8px;" onclick="editarMovimiento('${x.firestoreId}')">✏️</button></td>
+                <td class="hide-mobile" style="text-align:center;"><button class="btn-sys" style="padding:4px 8px;" onclick="editarMovimiento('${x.firestoreId}')">✏️</button></td>
             </tr>`;
         });
     }
