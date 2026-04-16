@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Bunker Digital SCADA v28.0 (Motor V30) - Trans-Mes Edition</title>
+    <title>Bunker Digital SCADA v31.1 - Auditoría Activa</title>
     
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
@@ -71,7 +71,6 @@
 
         .grid-main-wrapper { background: var(--bg-panel); border-radius: 8px; border: 1px solid var(--border-color); padding: 15px; display: flex; flex-direction: column; }
         
-        /* 💡 BADGE DE TELEMETRÍA LCD STYLE */
         .telemetry-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; gap: 10px; }
         .lcd-badge { background: #0d1117; border: 1px solid #30363d; border-left: 4px solid var(--color-ingresos); padding: 6px 12px; border-radius: 4px; display: flex; align-items: center; gap: 8px; }
         .lcd-badge .label { font-size: 0.6rem; color: var(--text-muted); font-weight: 800; text-transform: uppercase; }
@@ -79,13 +78,21 @@
 
         .grid-container { height: 280px; overflow-y: auto; background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 6px; }
         .data-grid { width: 100%; border-collapse: collapse; text-align: left; }
-        .data-grid th { position: sticky; top: 0; background: var(--bg-subpanel); padding: 10px; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; z-index: 10; border-bottom: 2px solid var(--border-color); white-space: nowrap; }
-        .data-grid td { padding: 8px 10px; font-size: 0.85rem; border-bottom: 1px solid var(--border-color); white-space: nowrap; }
-        .col-hora { font-size: 0.65rem; color: var(--text-muted); font-weight: 700; display: block; margin-top: 2px; }
-        .cat-badge { font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); display: inline-block; margin-top: 4px; color: var(--text-muted); font-weight: 800; }
-        
-        .col-check { width: 40px; text-align: center; }
+        .data-grid th { position: sticky; top: 0; background: var(--bg-subpanel); padding: 10px; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; z-index: 10; border-bottom: 2px solid var(--border-color); white-space: nowrap; cursor: pointer; user-select: none; }
+        .data-grid td { padding: 8px 10px; font-size: 0.85rem; border-bottom: 1px solid var(--border-color); white-space: nowrap; vertical-align: middle; }
+        .col-check { width: 40px; text-align: center; cursor: default; }
         .row-check { cursor: pointer; transform: scale(1.3); accent-color: var(--color-edit); margin: 0; }
+        
+        /* Badges e Iconos V31 */
+        .cat-badge { font-size: 0.75rem; color: var(--text-muted); display: flex; align-items: center; gap: 5px; }
+        .status-badge { padding: 3px 8px; border-radius: 4px; font-size: 0.65rem; font-weight: 800; border: 1px solid; }
+        .status-ok { color: var(--color-saldo); border-color: rgba(63,185,80,0.3); background: rgba(63,185,80,0.1); }
+        .status-warn { color: var(--color-edit); border-color: rgba(210,153,34,0.3); background: rgba(210,153,34,0.1); }
+        
+        .impact-icon { font-weight: 900; margin-right: 5px; }
+        .impact-pos { color: var(--color-ingresos); }
+        .impact-neg { color: var(--color-fuga); }
+        .impact-neu { color: #ff9800; }
 
         #charts-grid-container { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-top: 10px; }
         .chart-box { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 8px; padding: 15px; height: 320px; display: flex; flex-direction: column; }
@@ -97,7 +104,7 @@
         .form-group label { display: block; font-size: 0.65rem; font-weight: 800; color: var(--text-muted); margin-bottom: 4px; text-transform: uppercase; }
         
         .custom-select, .form-group input, .form-group select { width: 100%; border: 1px solid var(--border-color); border-radius: 4px; background-color: var(--input-bg); color: var(--text-main); outline: none; padding: 8px 10px; font-size: 0.85rem; height: 36px; }
-        input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(1); cursor: pointer; }
+        input[type="date"]::-webkit-calendar-picker-indicator, input[type="datetime-local"]::-webkit-calendar-picker-indicator { filter: invert(1); cursor: pointer; }
 
         .btn-guardar { width: 100%; background-color: var(--color-guardar); color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 800; text-transform: uppercase; padding: 10px; font-size: 0.85rem; margin-top: 5px; }
 
@@ -110,37 +117,22 @@
         .floating-mass-actions { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #1c2128; border: 1px solid var(--color-edit); border-radius: 50px; padding: 10px 25px; display: flex; align-items: center; justify-content: space-between; gap: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); z-index: 9999; animation: slideUp 0.3s ease; }
         @keyframes slideUp { from { opacity: 0; transform: translate(-50%, 20px); } to { opacity: 1; transform: translate(-50%, 0); } }
 
-        /* =======================================================
-           📱 RESPONSIVO MÓVIL (Ajuste de Escala sin romper PC)
-           ======================================================= */
         @media (max-width: 1024px) {
             .app-container { padding: 8px; gap: 8px; }
-            
-            /* Cabecera y Botones apilados ordenados */
             .header-titles { flex-direction: column; align-items: flex-start; gap: 5px; }
             h2 { font-size: 1.1rem; }
             .system-btns { justify-content: space-between; padding-bottom: 10px; }
             .btn-sys { flex: 1 1 30%; text-align: center; padding: 10px 5px; margin-bottom: 4px; font-size: 0.65rem; }
-            
-            /* KPIs a 2 columnas ajustadas */
             .kpi-row { grid-template-columns: repeat(2, 1fr); gap: 8px; }
             .kpi-card { padding: 10px; }
             .kpi-card .value { font-size: 1.1rem; }
-            
-            /* Layout Principal (Todo en una columna) */
             .master-layout { grid-template-columns: 1fr; display: flex; flex-direction: column; margin-top: 5px; }
-            
-            /* Gráficos uno debajo del otro */
             #charts-grid-container { grid-template-columns: 1fr; display: flex; flex-direction: column; gap: 10px; }
             .chart-box { height: 260px; padding: 10px; }
-            
-            /* Ocultar columnas no vitales en la tabla (Ya lo tenías, lo reforzamos) */
             .hide-mobile { display: none !important; }
             .grid-container { max-height: 400px; }
-            
-            /* Panel de Registro Manual (Full width en celular) */
             .sidebar-panel { width: 100%; padding: 12px; }
-            .btn-guardar { height: 50px; font-size: 1rem; } /* Botón más grande para el pulgar */
+            .btn-guardar { height: 50px; font-size: 1rem; }
         }
     </style>
 </head>
@@ -149,7 +141,7 @@
 <div id="login-screen">
     <div class="login-box">
         <h2 style="color:#fff; margin-bottom:10px;">BUNKER SCADA</h2>
-        <p style="color:var(--text-muted); font-size:0.8rem;">SISTEMA PRIVADO DE GESTIÓN TÁCTICA V28</p>
+        <p style="color:var(--text-muted); font-size:0.8rem;">SISTEMA PRIVADO DE GESTIÓN TÁCTICA V31</p>
         <button class="btn-google" onclick="loginWithGoogle()">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="20px" height="20px" style="margin-right:10px; vertical-align:middle;">
                 <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.7 17.74 9.5 24 9.5z"/>
@@ -237,11 +229,15 @@
                     <table class="data-grid">
                         <thead>
                             <tr>
-                                <th class="col-check hide-mobile"><input type="checkbox" id="checkAll" class="row-check" onchange="toggleAllChecks()"></th>
+                                <th class="col-check hide-mobile" onclick="event.stopPropagation();"><input type="checkbox" id="checkAll" class="row-check" onchange="toggleAllChecks()"></th>
+                                <th class="hide-mobile" style="width: 40px; text-align: center;">N°</th>
                                 <th onclick="sortTable('fecha')">Fecha</th>
-                                <th class="desc-col" onclick="sortTable('nombre')">Comercio / Detalle</th>
+                                <th onclick="sortTable('nombre')">Descripción</th>
+                                <th class="hide-mobile" onclick="sortTable('categoria')">Categoría</th>
                                 <th onclick="sortTable('monto')">Monto</th>
                                 <th id="thSaldoAcumulado" class="hide-mobile" style="text-align: right;">Saldo Hist.</th>
+                                <th class="hide-mobile" style="text-align: center;">% Fuga</th>
+                                <th class="hide-mobile" style="text-align: center;">Status</th>
                                 <th class="hide-mobile" style="text-align: center;">Acciones</th>
                             </tr>
                         </thead>
@@ -278,7 +274,7 @@
                 <h4 style="color:var(--color-saldo); margin:0; font-size:0.85rem; text-transform:uppercase; margin-bottom:10px;">REGISTRO MANUAL</h4>
                 <input type="hidden" id="editId">
                 <div class="form-group"><label>Fecha</label><input type="datetime-local" id="inputFecha"></div>
-                <div class="form-group"><label>Flujo</label><select id="inputTipo"><option value="Gasto">Gasto Variable</option><option value="Gasto Fijo">Gasto Fijo</option><option value="Ingreso">Ingreso Extra</option><option value="Por Cobrar">Préstamo (CxC)</option></select></div>
+                <div class="form-group"><label>Flujo</label><select id="inputTipo"><option value="Gasto">Gasto Variable</option><option value="Gasto Fijo">Gasto Fijo</option><option value="Ingreso">Ingreso Extra</option><option value="Por Cobrar">Préstamo (CxC)</option><option value="Ahorro">Ahorro / Mov. Neutro</option></select></div>
                 <div class="form-group"><label>Categoría V30</label>
                     <select id="inputCategoria">
                         <option value="Gastos Fijos (Búnker)">🏠 Gastos Fijos (Búnker)</option>
@@ -336,14 +332,12 @@
 </div>
 
 <script>
-   // ==========================================
-    // ⚙️ CONFIGURACIÓN V31.0 (Auditoría Dinámica & Edición)
+    // ==========================================
+    // ⚙️ CONFIGURACIÓN V31.1 (Tabla Extendida & Edición Activa)
     // ==========================================
     const BYRON_EMAIL = "bvhcc94@gmail.com"; 
     const MASTER_KEY = "Byron_Secured_2026"; 
     const CREDIT_SETPOINT = -300000; 
-    
-    // 💡 REGLAS DE FUGA V30
     const catEvitables = ["Dopamina & Antojos"]; 
 
     firebase.initializeApp({
@@ -359,7 +353,6 @@
     const auth = firebase.auth();
     const APPS_SCRIPT_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzhlxJ_pgky_KDhItJpQHch7HF4HLQhhdEcUfaweh9Eeg2x4XO6LSsuemoGF0sOY5XFZA/exec";
 
-    // 💡 DICCIONARIO DE EMOJIS V30
     const catEmojis = {
         "Gastos Fijos (Búnker)": "🏠", "Suscripciones": "📱", "Alimentación & Supermercado": "🛒",
         "Dopamina & Antojos": "🍔", "Ocio & Experiencias": "🎸", "Transporte & Logística": "🚗", 
@@ -372,8 +365,8 @@
     let listaMovimientos = [];
     let chartBD = null, chartP = null;
     let currentSort = { column: 'fecha', direction: 'desc' }; 
-
-    // 💡 V31.0: Control de Estado Global
+    
+    // Control de Estado Global
     let modoEdicionActivo = false;
     let datosMesGlobal = []; 
 
@@ -417,22 +410,18 @@
         }
         
         const TFinal = new Date(T0); TFinal.setMonth(TFinal.getMonth() + 1); 
-        
         document.getElementById('txtPeriodoBatch').innerText = `${T0.toLocaleDateString('es-CL', {day:'2-digit', month:'2-digit'})} al ${new Date(TFinal.getTime()-86400000).toLocaleDateString('es-CL', {day:'2-digit', month:'2-digit'})}`;
 
-        // Filtrar mes
         let dataMes = listaMovimientos.filter(x => {
             let d = new Date(x.fechaISO);
             return d >= T0 && d < TFinal;
         });
 
-        // 💡 V31.0: Almacenar para tabla dinámica
         datosMesGlobal = [...dataMes];
 
         let saldoAcc = sueldo, tI = 0, tF = 0, tO = 0, tC = 0, tEvitable = 0, gCat = {};
         let chronData = [...dataMes].sort((x,y) => x.fechaISO < y.fechaISO ? -1 : 1);
         
-        // Calcular Saldo Real y Métricas
         chronData.forEach((x, index) => {
             x.cronoIndex = index + 1;
             x.catV = (x.monto <= 1000 && (!x.categoria || x.categoria === 'Sin Categoría')) ? "Ruido de Sistema" : (x.categoria || 'Sin Categoría');
@@ -448,7 +437,6 @@
             if (catEvitables.includes(x.catV)) tEvitable += x.monto;
         });
 
-        // Actualizar KPIs de la pantalla
         document.getElementById('txtTotalFijos').innerText = tF.toLocaleString('es-CL');
         document.getElementById('txtTotalOtros').innerText = tO.toLocaleString('es-CL');
         document.getElementById('txtTotalIngresos').innerText = tI.toLocaleString('es-CL');
@@ -480,12 +468,11 @@
         
         window.tgData = { real: saldoAcc, proyectado: saldoProyVal, fugas: tEvitable, mes: T0.toLocaleDateString() };
         
-        // Renderizado del Dashboard
         renderizarTablaOrdenada(sueldo, b);
         dibujarGraficos(sueldo, chronData, gCat, diasCiclo, T0);
     }
 
-    // 💡 V31.0: GESTOR DE TABLA DINÁMICA (Ordenamiento + Saldo Relativo)
+    // 💡 V31.1: GESTOR DE TABLA (Ordenamiento y Recálculo)
     function renderizarTablaOrdenada(sueldoBase, filtroBuscador) {
         let datosAProcesar = [...datosMesGlobal];
 
@@ -497,18 +484,21 @@
             let valA = a.fechaISO, valB = b.fechaISO;
             if (currentSort.column === 'monto') { valA = a.monto; valB = b.monto; }
             else if (currentSort.column === 'nombre') { valA = a.nombre?.toLowerCase(); valB = b.nombre?.toLowerCase(); }
+            else if (currentSort.column === 'categoria') { valA = a.catV.toLowerCase(); valB = b.catV.toLowerCase(); }
 
             if (valA < valB) return currentSort.direction === 'asc' ? -1 : 1;
             if (valA > valB) return currentSort.direction === 'asc' ? 1 : -1;
             return 0;
         });
 
-        // Simular flujo en el orden actual para mostrar el impacto
+        // Recálculo del Saldo Histórico según la vista actual
         let saldoRelativo = sueldoBase;
-        datosAProcesar.forEach(x => {
+        datosAProcesar.forEach((x, idx) => {
+            x.indiceVista = datosAProcesar.length - idx; // N° para la columna
+
             const esIn = x.tipo === 'Ingreso' || x.nombre?.toLowerCase().includes('recibida');
             if (esIn) saldoRelativo += x.monto;
-            else if (x.tipo === 'Por Cobrar' || x.tipo === 'Ahorro' || x.categoria?.includes('Ahorro')) { /* Nada */ }
+            else if (x.tipo === 'Por Cobrar' || x.tipo === 'Ahorro' || x.categoria?.includes('Ahorro')) { /* Neutro */ }
             else saldoRelativo -= x.monto;
             
             x.saldoCalculadoVista = saldoRelativo;
@@ -517,7 +507,7 @@
         dibujarTabla(datosAProcesar);
     }
 
-    // 💡 V31.0: RENDER DE TABLA (Alta Densidad + Telemetría Visual)
+    // 💡 V31.1: RENDER DE TABLA (7 Columnas + Telemetría Visual)
     function dibujarTabla(datos) {
         const l = document.getElementById('listaDetalle'); l.innerHTML = '';
         
@@ -525,32 +515,41 @@
             const em = catEmojis[x.catV] || "❓";
             
             let d = new Date(x.fechaISO);
-            let fS = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`;
-            let hS = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+            let dS = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
             
-            // Iconos de Impacto
+            // Iconos y Colores de Impacto (+, -, =)
             let iconImpacto = "";
             let colorMonto = "var(--text-main)";
             
             if (x.tipo === 'Ingreso' || x.nombre?.toLowerCase().includes('recibida')) {
-                iconImpacto = `<span style="color: var(--color-ingresos); font-weight: 900; margin-right: 5px;">(+)</span>`;
+                iconImpacto = `<span class="impact-icon impact-pos">(+)</span>`;
                 colorMonto = "var(--color-ingresos)";
             } else if (x.tipo === 'Por Cobrar' || x.tipo === 'Ahorro' || x.categoria?.includes('Ahorro')) {
-                iconImpacto = `<span style="color: #ff9800; font-weight: 900; margin-right: 5px;">(=)</span>`;
+                iconImpacto = `<span class="impact-icon impact-neu">(=)</span>`;
                 colorMonto = "#ff9800";
             } else {
-                iconImpacto = `<span style="color: var(--color-fuga); font-weight: 900; margin-right: 5px;">(-)</span>`;
+                iconImpacto = `<span class="impact-icon impact-neg">(-)</span>`;
             }
 
+            // Datos Extra (Fuga y Status)
+            let pctFuga = catEvitables.includes(x.catV) ? '100%' : '0%';
+            let statusBadge = `<span class="status-badge status-ok">OK</span>`;
+            if(x.catV === 'Sin Categoría') statusBadge = `<span class="status-badge status-warn">REVISAR</span>`;
+
+            // Highlight si está en edición
             let bgEdicion = (document.getElementById('editId').value === x.firestoreId) ? 'background-color: rgba(210, 153, 34, 0.15); border-left: 3px solid var(--color-edit);' : '';
 
             l.innerHTML += `<tr style="${bgEdicion}">
                 <td class="col-check hide-mobile"><input type="checkbox" class="row-check" value="${x.firestoreId}" onchange="updateMassActions()"></td>
-                <td style="font-size:0.75rem; color:var(--text-muted);">${fS} <span class="col-hora">${hS}</span></td>
-                <td style="font-weight:700;">${x.nombre}<br><span class="cat-badge">${em} ${x.catV}</span></td>
+                <td class="hide-mobile" style="text-align:center; font-size:0.75rem; font-weight:800; color:var(--text-muted);">${x.indiceVista}</td>
+                <td style="font-size:0.75rem; color:var(--text-muted);">${dS}</td>
+                <td style="font-weight:700;">${x.nombre}</td>
+                <td class="hide-mobile" style="font-size:0.75rem;"><span class="cat-badge">${em} ${x.catV}</span></td>
                 <td style="font-weight:800; color:${colorMonto}; white-space: nowrap;">${iconImpacto}$${x.monto.toLocaleString('es-CL')}</td>
                 <td class="hide-mobile" style="text-align:right; font-weight:800; color:${x.saldoCalculadoVista<0?'var(--color-fuga)':'var(--text-muted)'}">$${x.saldoCalculadoVista.toLocaleString('es-CL')}</td>
-                <td class="hide-mobile" style="text-align:center;"><button class="btn-sys" style="padding:4px 8px; border-color:var(--color-edit); color:var(--color-edit);" onclick="editarMovimiento('${x.firestoreId}')">✏️ EDIT</button></td>
+                <td class="hide-mobile" style="text-align:center; font-size:0.7rem; color:var(--text-muted);">${pctFuga}</td>
+                <td class="hide-mobile" style="text-align:center;">${statusBadge}</td>
+                <td class="hide-mobile" style="text-align:center;"><button class="btn-sys" style="padding:4px; font-size:0.8rem; background:transparent; border:none;" onclick="editarMovimiento('${x.firestoreId}')">✏️</button></td>
             </tr>`;
         });
     }
@@ -572,7 +571,7 @@
         renderizarTablaOrdenada(sueldo, b);
     }
 
-    // 💡 V31.0: LÁPIZ ROTO ARREGLADO (Cargar en panel)
+    // 💡 V31.1: EDICIÓN ACTIVA (Cargar en panel + Respetar Zona Horaria)
     function editarMovimiento(id) {
         const mov = listaMovimientos.find(m => m.firestoreId === id);
         if(!mov) return;
@@ -583,7 +582,7 @@
         document.getElementById('inputTipo').value = mov.tipo || 'Gasto';
         document.getElementById('inputCategoria').value = mov.categoria || 'Sin Categoría';
         
-        // Ajuste de zona horaria local para el input HTML
+        // Ajuste de zona horaria local para que el input datetime-local no desfase la hora
         let d = new Date(mov.fechaISO);
         let dLocal = new Date(d.getTime() - (d.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
         document.getElementById('inputFecha').value = dLocal;
@@ -593,11 +592,12 @@
         btn.style.backgroundColor = "var(--color-edit)";
         modoEdicionActivo = true;
 
+        // Repintar para que la fila seleccionada se ilumine
         const sueldo = parseInt(document.getElementById('inputSueldo').value.replace(/\./g,'')) || 0;
         renderizarTablaOrdenada(sueldo, "");
     }
 
-    // 💡 V31.0: MOTOR DE GUARDADO INTELIGENTE
+    // 💡 V31.1: MOTOR DE GUARDADO INTELIGENTE (Detecta si es Update o Add)
     function agregarMovimiento() {
         const mStr = document.getElementById('inputMonto').value.replace(/\./g, '');
         const m = parseInt(mStr);
@@ -607,15 +607,14 @@
         const fInput = document.getElementById('inputFecha').value;
         const editId = document.getElementById('editId').value;
 
-        if (!m || !n || !fInput) return alert("Faltan datos críticos.");
+        if (!m || !n || !fInput) return alert("⚠️ Faltan datos críticos (Nombre, Monto o Fecha).");
 
         const btn = document.getElementById('btnGuardar');
         const txtOrig = btn.innerHTML;
         btn.innerHTML = "⏳ GUARDANDO...";
         btn.disabled = true;
 
-        // Aseguramos formato nativo JS Date para Firestore
-        const fechaDoc = new Date(fInput);
+        const fechaDoc = new Date(fInput); // Pasa directo al backend respetando ISO
 
         const dataPayload = {
             nombre: n,
@@ -626,26 +625,32 @@
             status: 'Manual'
         };
 
-        let operacion = (modoEdicionActivo && editId) 
-            ? db.collection("movimientos").doc(editId).update(dataPayload)
-            : db.collection("movimientos").add(dataPayload);
+        let operacion;
+        if (modoEdicionActivo && editId) {
+            operacion = db.collection("movimientos").doc(editId).update(dataPayload);
+        } else {
+            operacion = db.collection("movimientos").add(dataPayload);
+        }
 
         operacion.then(() => {
+            // Limpieza de formulario
             document.getElementById('editId').value = '';
             document.getElementById('inputNombre').value = '';
             document.getElementById('inputMonto').value = '';
+            
+            // Resetear botón
             btn.innerHTML = "GUARDAR EN BÚNKER";
             btn.style.backgroundColor = "var(--color-guardar)";
             btn.disabled = false;
             modoEdicionActivo = false;
         }).catch(err => {
-            alert("Error: " + err.message);
+            alert("❌ Error: " + err.message);
             btn.innerHTML = txtOrig;
             btn.disabled = false;
         });
     }
 
-    // Gráficos y Utilidades
+    // Gráficos y Utilidades Generales
     function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0) {
         if(chartBD) chartBD.destroy(); if(chartP) chartP.destroy();
         const cT = getComputedStyle(document.body).getPropertyValue('--text-main').trim();
@@ -747,7 +752,6 @@
                 document.getElementById('massActionsBar').style.display = 'none';
                 document.getElementById('checkAll').checked = false;
                 btn.innerHTML = originalText;
-                alert(`✅ ${checkedIds.length} registros eliminados.`);
             }).catch(e => { alert("❌ Error."); btn.innerHTML = originalText; });
         }
     }
@@ -764,7 +768,6 @@
                 document.getElementById('checkAll').checked = false;
                 document.getElementById('massCategorySelect').value = '';
                 btn.innerHTML = originalText;
-                alert(`✅ Recategorización exitosa.`);
             }).catch(e => { alert("❌ Error."); btn.innerHTML = originalText; });
         }
     }
@@ -772,6 +775,7 @@
     window.toggleAllChecks = toggleAllChecks;
     window.updateMassActions = updateMassActions;
     window.massDelete = massDelete;
-    window.massCategorize = massCategorize;</script>
+    window.massCategorize = massCategorize;
+</script>
 </body>
 </html>
