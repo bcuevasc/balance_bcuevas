@@ -623,7 +623,12 @@
         
         let actual = [], ideal = [], acc = sueldo, diaQ = null;
         let daily = Array(diasCiclo + 1).fill(0);
+        
+        // 🟢 Arrays Dinámicos para el Eje X (Texto y Líneas)
         let labelsX = [];
+        let colorLabelsX = [];
+        let colorGridX = [];
+        const nombresMes = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"];
 
         chronData.forEach(m => {
             let diff = Math.floor((new Date(m.fechaISO) - T0) / 86400000) + 1;
@@ -638,34 +643,53 @@
             acc += daily[i];
             if (acc < 0 && diaQ === null) diaQ = i;
             actual.push(i > limit ? null : acc);
-            labelsX.push(String(new Date(T0.getTime() + (i-1)*86400000).getDate()).padStart(2, '0'));
-        }
 
-        // 🟢 Plugin inyectado para la línea divisoria naranja (Inicio de Mes)
-        const pluginInicioMes = {
-            id: 'pluginInicioMes',
-            beforeDraw: (chart) => {
-                const ctx = chart.ctx;
-                const xAxis = chart.scales.x; const yAxis = chart.scales.y;
-                const xPos = xAxis.getPixelForTick(0); // Posición del día 1
-                ctx.save(); ctx.beginPath();
-                ctx.moveTo(xPos, yAxis.top); ctx.lineTo(xPos, yAxis.bottom);
-                ctx.lineWidth = 2; ctx.strokeStyle = '#ff9800'; ctx.setLineDash([5, 5]);
-                ctx.stroke();
-                ctx.fillStyle = '#ff9800'; ctx.font = 'bold 9px monospace';
-                ctx.fillText(' INICIO MES', xPos + 4, yAxis.top + 10);
-                ctx.restore();
+            // 🟢 Lógica del "01 ABR"
+            let fechaIteracion = new Date(T0.getTime() + (i-1)*86400000);
+            let dia = String(fechaIteracion.getDate()).padStart(2, '0');
+
+            if (fechaIteracion.getDate() === 1) {
+                // Es el día 1 del mes: Formato "01 MMM" y color naranja
+                labelsX.push(`${dia} ${nombresMes[fechaIteracion.getMonth()]}`);
+                colorLabelsX.push('#ff9800'); 
+                colorGridX.push('#ff9800');   
+            } else {
+                // Día normal
+                labelsX.push(dia);
+                colorLabelsX.push(cT);
+                colorGridX.push(cG); 
             }
-        };
+        }
 
         chartBD = new Chart(document.getElementById('chartBurnDown'), {
             type: 'line', 
-            plugins: [pluginInicioMes],
             data: { labels: labelsX, datasets: [
                 { label: 'Consumo Real', data: actual, borderColor: '#1f6feb', borderWidth: 3, fill: {target:'origin', above:'rgba(31,111,235,0.05)', below:'rgba(218,54,51,0.2)'}, segment: {borderColor: c => c.p0.parsed.y < 0 ? cF : '#1f6feb'} },
                 { label: 'Gasto Ideal', data: ideal, borderColor: 'rgba(63,185,80,0.3)', borderDash:[5,5], pointRadius:0 }
             ]},
-            options: { maintainAspectRatio:false, plugins:{legend:{display:true, labels:{color:cT, font:{size:10, weight:'bold'}}}}, scales:{ x:{ticks:{color:cT}, grid:{color:cG, drawBorder:false}}, y:{ticks:{color:cT, callback:v=>'$'+(v/1000)+'k'}, grid:{color: c => c.tick.value === 0 ? cF : cG}} } }
+            options: { 
+                maintainAspectRatio:false, 
+                plugins:{legend:{display:true, labels:{color:cT, font:{size:10, weight:'bold'}}}}, 
+                scales:{ 
+                    x:{
+                        ticks:{
+                            color: colorLabelsX, // 🟢 Aplica el array de colores
+                            maxRotation: 45,     // 🟢 Fuerza la inclinación a 45 grados
+                            minRotation: 45,
+                            font: (context) => {
+                                // Pone en negrita (900) el día 1, el resto normal
+                                return { weight: colorLabelsX[context.index] === '#ff9800' ? '900' : 'bold', size: 10 };
+                            }
+                        }, 
+                        grid:{
+                            color: colorGridX,   // 🟢 Pinta solo la línea del día 1 de naranja
+                            drawBorder:false,
+                            lineWidth: (context) => colorGridX[context.index] === '#ff9800' ? 2 : 1 // Hace la línea naranja un poco más gruesa
+                        }
+                    }, 
+                    y:{ticks:{color:cT, callback:v=>'$'+(v/1000)+'k'}, grid:{color: c => c.tick.value === 0 ? cF : cG}} 
+                } 
+            }
         });
 
         // 🟢 Preparación de datos para el Pareto de doble eje
