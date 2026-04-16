@@ -336,14 +336,14 @@
 </div>
 
 <script>
-    // ==========================================
-    // ⚙️ CONFIGURACIÓN V28.0 PASO 2 + REGLAS V30
+   // ==========================================
+    // ⚙️ CONFIGURACIÓN V31.0 (Auditoría Dinámica & Edición)
     // ==========================================
     const BYRON_EMAIL = "bvhcc94@gmail.com"; 
     const MASTER_KEY = "Byron_Secured_2026"; 
     const CREDIT_SETPOINT = -300000; 
     
-    // 💡 NUEVAS REGLAS DE FUGA V30
+    // 💡 REGLAS DE FUGA V30
     const catEvitables = ["Dopamina & Antojos"]; 
 
     firebase.initializeApp({
@@ -359,7 +359,7 @@
     const auth = firebase.auth();
     const APPS_SCRIPT_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzhlxJ_pgky_KDhItJpQHch7HF4HLQhhdEcUfaweh9Eeg2x4XO6LSsuemoGF0sOY5XFZA/exec";
 
-    // 💡 NUEVO DICCIONARIO DE EMOJIS V30
+    // 💡 DICCIONARIO DE EMOJIS V30
     const catEmojis = {
         "Gastos Fijos (Búnker)": "🏠", "Suscripciones": "📱", "Alimentación & Supermercado": "🛒",
         "Dopamina & Antojos": "🍔", "Ocio & Experiencias": "🎸", "Transporte & Logística": "🚗", 
@@ -372,6 +372,10 @@
     let listaMovimientos = [];
     let chartBD = null, chartP = null;
     let currentSort = { column: 'fecha', direction: 'desc' }; 
+
+    // 💡 V31.0: Control de Estado Global
+    let modoEdicionActivo = false;
+    let datosMesGlobal = []; 
 
     function loginWithGoogle() { auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
     function logout() { auth.signOut().then(() => window.location.reload()); }
@@ -399,10 +403,6 @@
         });
     }
 
-    // 💡 V31.0: Variables Globales para Control de Edición y Ordenamiento
-    let modoEdicionActivo = false;
-    let datosMesGlobal = []; // Guarda los datos del mes para recalcular al ordenar
-
     function actualizarDashboard() {
         const sueldo = parseInt(document.getElementById('inputSueldo').value.replace(/\./g,'')) || 0;
         const b = document.getElementById('inputBuscador').value.toLowerCase();
@@ -420,19 +420,19 @@
         
         document.getElementById('txtPeriodoBatch').innerText = `${T0.toLocaleDateString('es-CL', {day:'2-digit', month:'2-digit'})} al ${new Date(TFinal.getTime()-86400000).toLocaleDateString('es-CL', {day:'2-digit', month:'2-digit'})}`;
 
-        // Filtramos solo el mes actual
+        // Filtrar mes
         let dataMes = listaMovimientos.filter(x => {
             let d = new Date(x.fechaISO);
             return d >= T0 && d < TFinal;
         });
 
-        // V31.0: Guardamos para el ordenamiento dinámico
+        // 💡 V31.0: Almacenar para tabla dinámica
         datosMesGlobal = [...dataMes];
 
         let saldoAcc = sueldo, tI = 0, tF = 0, tO = 0, tC = 0, tEvitable = 0, gCat = {};
         let chronData = [...dataMes].sort((x,y) => x.fechaISO < y.fechaISO ? -1 : 1);
         
-        // Cálculo del Saldo Real y KPIs
+        // Calcular Saldo Real y Métricas
         chronData.forEach((x, index) => {
             x.cronoIndex = index + 1;
             x.catV = (x.monto <= 1000 && (!x.categoria || x.categoria === 'Sin Categoría')) ? "Ruido de Sistema" : (x.categoria || 'Sin Categoría');
@@ -448,12 +448,12 @@
             if (catEvitables.includes(x.catV)) tEvitable += x.monto;
         });
 
-        // Actualización de Tarjetas (KPIs)
+        // Actualizar KPIs de la pantalla
         document.getElementById('txtTotalFijos').innerText = tF.toLocaleString('es-CL');
         document.getElementById('txtTotalOtros').innerText = tO.toLocaleString('es-CL');
         document.getElementById('txtTotalIngresos').innerText = tI.toLocaleString('es-CL');
         document.getElementById('txtCxC').innerText = tC.toLocaleString('es-CL');
-        document.getElementById('txtSaldo').innerText = saldoAcc.toLocaleString('es-CL'); // Este es el saldo INMUTABLE
+        document.getElementById('txtSaldo').innerText = saldoAcc.toLocaleString('es-CL');
         
         const saldoProyVal = saldoAcc + tC;
         const txtSaldoProy = document.getElementById('txtProyectado');
@@ -480,60 +480,55 @@
         
         window.tgData = { real: saldoAcc, proyectado: saldoProyVal, fugas: tEvitable, mes: T0.toLocaleDateString() };
         
-        // Ejecutamos el render de la tabla pasando el sueldo base para recalcular
+        // Renderizado del Dashboard
         renderizarTablaOrdenada(sueldo, b);
         dibujarGraficos(sueldo, chronData, gCat, diasCiclo, T0);
     }
 
-    // 💡 V31.0: NUEVA FUNCIÓN PARA TABLA DINÁMICA
+    // 💡 V31.0: GESTOR DE TABLA DINÁMICA (Ordenamiento + Saldo Relativo)
     function renderizarTablaOrdenada(sueldoBase, filtroBuscador) {
-        let datosAProcesar = datosMesGlobal;
+        let datosAProcesar = [...datosMesGlobal];
 
-        // 1. Filtrado
         if (filtroBuscador) {
             datosAProcesar = datosAProcesar.filter(x => x.nombre?.toLowerCase().includes(filtroBuscador) || x.catV.toLowerCase().includes(filtroBuscador));
         }
 
-        // 2. Ordenamiento Dinámico
         datosAProcesar.sort((a, b) => {
-            let valA, valB;
+            let valA = a.fechaISO, valB = b.fechaISO;
             if (currentSort.column === 'monto') { valA = a.monto; valB = b.monto; }
             else if (currentSort.column === 'nombre') { valA = a.nombre?.toLowerCase(); valB = b.nombre?.toLowerCase(); }
-            else { valA = a.fechaISO; valB = b.fechaISO; } // Default: Fecha
 
             if (valA < valB) return currentSort.direction === 'asc' ? -1 : 1;
             if (valA > valB) return currentSort.direction === 'asc' ? 1 : -1;
             return 0;
         });
 
-        // 3. Recálculo Dinámico de Saldo Histórico según el ORDEN de la vista
+        // Simular flujo en el orden actual para mostrar el impacto
         let saldoRelativo = sueldoBase;
         datosAProcesar.forEach(x => {
             const esIn = x.tipo === 'Ingreso' || x.nombre?.toLowerCase().includes('recibida');
             if (esIn) saldoRelativo += x.monto;
-            else if (x.tipo === 'Por Cobrar' || x.tipo === 'Ahorro' || x.categoria?.includes('Ahorro')) { /* Neutro */ }
+            else if (x.tipo === 'Por Cobrar' || x.tipo === 'Ahorro' || x.categoria?.includes('Ahorro')) { /* Nada */ }
             else saldoRelativo -= x.monto;
             
-            x.saldoCalculadoVista = saldoRelativo; // Guardamos el saldo relativo a ESTA vista
+            x.saldoCalculadoVista = saldoRelativo;
         });
 
-        // 4. Dibujar la tabla
         dibujarTabla(datosAProcesar);
     }
 
-    // 💡 V31.0: DIBUJO DE ALTA DENSIDAD Y TELEMETRÍA (ICONOS +, -, =)
+    // 💡 V31.0: RENDER DE TABLA (Alta Densidad + Telemetría Visual)
     function dibujarTabla(datos) {
         const l = document.getElementById('listaDetalle'); l.innerHTML = '';
         
         datos.forEach(x => {
             const em = catEmojis[x.catV] || "❓";
             
-            // Fecha y Hora compactas
             let d = new Date(x.fechaISO);
             let fS = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`;
             let hS = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
             
-            // 💡 Telemetría Visual (Iconos de Impacto)
+            // Iconos de Impacto
             let iconImpacto = "";
             let colorMonto = "var(--text-main)";
             
@@ -547,7 +542,6 @@
                 iconImpacto = `<span style="color: var(--color-fuga); font-weight: 900; margin-right: 5px;">(-)</span>`;
             }
 
-            // CSS en línea para simular si está siendo editado
             let bgEdicion = (document.getElementById('editId').value === x.firestoreId) ? 'background-color: rgba(210, 153, 34, 0.15); border-left: 3px solid var(--color-edit);' : '';
 
             l.innerHTML += `<tr style="${bgEdicion}">
@@ -561,7 +555,6 @@
         });
     }
 
-    // 💡 V31.0: Lógica de Ordenamiento al hacer click en las cabeceras
     function sortTable(column) {
         if (currentSort.column === column) {
             currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
@@ -570,7 +563,6 @@
             currentSort.direction = 'asc';
         }
         
-        // Indicadores visuales en la cabecera
         document.querySelectorAll('.data-grid th').forEach(th => th.innerHTML = th.innerHTML.replace(/ ▲| ▼/g, ''));
         const activeTh = Array.from(document.querySelectorAll('.data-grid th')).find(th => th.getAttribute('onclick')?.includes(column));
         if (activeTh) activeTh.innerHTML += currentSort.direction === 'asc' ? ' ▲' : ' ▼';
@@ -579,6 +571,81 @@
         const b = document.getElementById('inputBuscador').value.toLowerCase();
         renderizarTablaOrdenada(sueldo, b);
     }
+
+    // 💡 V31.0: LÁPIZ ROTO ARREGLADO (Cargar en panel)
+    function editarMovimiento(id) {
+        const mov = listaMovimientos.find(m => m.firestoreId === id);
+        if(!mov) return;
+
+        document.getElementById('editId').value = mov.firestoreId; 
+        document.getElementById('inputNombre').value = mov.nombre;
+        document.getElementById('inputMonto').value = mov.monto.toLocaleString('es-CL');
+        document.getElementById('inputTipo').value = mov.tipo || 'Gasto';
+        document.getElementById('inputCategoria').value = mov.categoria || 'Sin Categoría';
+        
+        // Ajuste de zona horaria local para el input HTML
+        let d = new Date(mov.fechaISO);
+        let dLocal = new Date(d.getTime() - (d.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
+        document.getElementById('inputFecha').value = dLocal;
+
+        const btn = document.getElementById('btnGuardar');
+        btn.innerHTML = "💾 ACTUALIZAR REGISTRO";
+        btn.style.backgroundColor = "var(--color-edit)";
+        modoEdicionActivo = true;
+
+        const sueldo = parseInt(document.getElementById('inputSueldo').value.replace(/\./g,'')) || 0;
+        renderizarTablaOrdenada(sueldo, "");
+    }
+
+    // 💡 V31.0: MOTOR DE GUARDADO INTELIGENTE
+    function agregarMovimiento() {
+        const mStr = document.getElementById('inputMonto').value.replace(/\./g, '');
+        const m = parseInt(mStr);
+        const n = document.getElementById('inputNombre').value;
+        const c = document.getElementById('inputCategoria').value;
+        const t = document.getElementById('inputTipo').value;
+        const fInput = document.getElementById('inputFecha').value;
+        const editId = document.getElementById('editId').value;
+
+        if (!m || !n || !fInput) return alert("Faltan datos críticos.");
+
+        const btn = document.getElementById('btnGuardar');
+        const txtOrig = btn.innerHTML;
+        btn.innerHTML = "⏳ GUARDANDO...";
+        btn.disabled = true;
+
+        // Aseguramos formato nativo JS Date para Firestore
+        const fechaDoc = new Date(fInput);
+
+        const dataPayload = {
+            nombre: n,
+            monto: m,
+            categoria: c,
+            tipo: t,
+            fecha: fechaDoc,
+            status: 'Manual'
+        };
+
+        let operacion = (modoEdicionActivo && editId) 
+            ? db.collection("movimientos").doc(editId).update(dataPayload)
+            : db.collection("movimientos").add(dataPayload);
+
+        operacion.then(() => {
+            document.getElementById('editId').value = '';
+            document.getElementById('inputNombre').value = '';
+            document.getElementById('inputMonto').value = '';
+            btn.innerHTML = "GUARDAR EN BÚNKER";
+            btn.style.backgroundColor = "var(--color-guardar)";
+            btn.disabled = false;
+            modoEdicionActivo = false;
+        }).catch(err => {
+            alert("Error: " + err.message);
+            btn.innerHTML = txtOrig;
+            btn.disabled = false;
+        });
+    }
+
+    // Gráficos y Utilidades
     function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0) {
         if(chartBD) chartBD.destroy(); if(chartP) chartP.destroy();
         const cT = getComputedStyle(document.body).getPropertyValue('--text-main').trim();
@@ -606,7 +673,6 @@
         for(let i=1; i<=diasCiclo; i++) {
             ideal.push(sueldo - (sueldo/diasCiclo)*i);
             acc += daily[i];
-            
             if (acc < 0 && diaQ === null) diaQ = i;
             actual.push(i > limit ? null : acc);
 
@@ -617,9 +683,7 @@
             if(d.getDate() === 1) {
                 labelsX.push(dayStr + ' ' + mesesStr[d.getMonth()]);
                 indexMes = i - 1; 
-            } else {
-                labelsX.push(dayStr);
-            }
+            } else labelsX.push(dayStr);
         }
 
         let lastV = 0; for(let k=actual.length-1; k>=0; k--) { if(actual[k]!==null){lastV=actual[k]; break;} }
@@ -634,42 +698,13 @@
                     { data: ideal, borderColor: 'rgba(63,185,80,0.3)', borderDash:[5,5], pointRadius:0 }
                 ] 
             },
-            options: { 
-                maintainAspectRatio:false, 
-                plugins:{legend:{display:false}}, 
-                scales:{ 
-                    x:{
-                        ticks:{
-                            color: ctx => ctx.index === indexMes ? cEdit : cT,
-                            font: ctx => ({ weight: ctx.index === indexMes ? '900' : 'normal', size: 10 })
-                        }, 
-                        grid:{
-                            color: ctx => ctx.index === indexMes ? cEdit : cG,
-                            lineWidth: ctx => ctx.index === indexMes ? 2 : 1,
-                            borderDash: ctx => ctx.index === indexMes ? [4, 4] : [],
-                            drawBorder:false
-                        }
-                    }, 
-                    y:{
-                        ticks:{color:cT, callback:v=>'$'+(v/1000)+'k'}, 
-                        grid:{color: c => c.tick.value === 0 ? cF : cG, lineWidth: c => c.tick.value === 0 ? 2 : 1}
-                    } 
-                } 
-            }
+            options: { maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{ x:{ticks:{color: ctx => ctx.index === indexMes ? cEdit : cT, font: ctx => ({ weight: ctx.index === indexMes ? '900' : 'normal', size: 10 })}, grid:{color: ctx => ctx.index === indexMes ? cEdit : cG, lineWidth: ctx => ctx.index === indexMes ? 2 : 1, borderDash: ctx => ctx.index === indexMes ? [4, 4] : [], drawBorder:false}}, y:{ticks:{color:cT, callback:v=>'$'+(v/1000)+'k'}, grid:{color: c => c.tick.value === 0 ? cF : cG, lineWidth: c => c.tick.value === 0 ? 2 : 1}} } }
         });
 
-        // 💡 PARETO V30 COLORING LOGIC
         const sorted = Object.entries(cats).sort((a,b)=>b[1]-a[1]).slice(0,8);
         chartP = new Chart(document.getElementById('chartPareto'), {
             type: 'bar', 
-            data: { 
-                labels: sorted.map(c => c[0].split(' ')[0]), // Acortar nombres
-                datasets: [{ 
-                    data: sorted.map(c => c[1]), 
-                    backgroundColor: sorted.map(c => c[0] === 'Dopamina & Antojos' ? '#ff5252' : '#1f6feb'), 
-                    borderRadius: 4 
-                }] 
-            },
+            data: { labels: sorted.map(c => c[0].split(' ')[0]), datasets: [{ data: sorted.map(c => c[1]), backgroundColor: sorted.map(c => c[0] === 'Dopamina & Antojos' ? '#ff5252' : '#1f6feb'), borderRadius: 4 }] },
             options: { maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{ x:{ticks:{color:cT, font:{size:9}}}, y:{ticks:{color:cT, callback:v=>'$'+(v/1000)+'k'}} } }
         });
     }
@@ -677,111 +712,66 @@
     function toggleTheme() { document.body.classList.toggle('light-theme'); actualizarDashboard(); }
     function formatearEntradaNumerica(i) { let v = i.value.replace(/\D/g,''); i.value = v ? parseInt(v).toLocaleString('es-CL') : ''; }
     setInterval(() => { document.getElementById('cronos').innerText = new Date().toLocaleString('es-CL').toUpperCase(); }, 1000);
-
     async function triggerSync() { const btn = document.getElementById('btnSyncManualPC'); btn.innerText = "⏳ SYNCING..."; try { await fetch(`${APPS_SCRIPT_WEB_APP_URL}?key=${MASTER_KEY}`, { method: 'POST', mode: 'no-cors' }); btn.innerText = "✅ SEÑAL ENVIADA"; } catch(e) { btn.innerText = "❌ ERROR"; } setTimeout(() => btn.innerText = "🔄 SYNC GMAIL", 3000); }
-    async function enviarReporteTelegram(esAuto=false) { const msg = `📊 *Reporte Bunker* \nBalance: $${window.tgData.real.toLocaleString()} \nFugas: $${window.tgData.fugas.toLocaleString()}`; alert("Función Telegram vinculada al motor de captura."); }
+    async function enviarReporteTelegram(esAuto=false) { alert("Función Telegram vinculada al motor de captura."); }
     function exportarCSV() { let csv = "Fecha;Descripcion;Monto\n"; listaMovimientos.forEach(r => { csv += `${r.fechaISO};${r.nombre};${r.monto}\n`; }); const link = document.createElement("a"); link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' })); link.download = `Bunker_Backup.csv`; link.click(); }
-// ==========================================
-    // ⚙️ MOTOR DE ACCIONES MASIVAS (V30)
+
     // ==========================================
-    
-    // 1. Lógica del "Seleccionar Todo"
+    // ⚙️ MOTOR DE ACCIONES MASIVAS
+    // ==========================================
     function toggleAllChecks() {
         const masterCheck = document.getElementById('checkAll');
-        const checkboxes = document.querySelectorAll('.row-check:not(#checkAll)'); // Selecciona todos menos el maestro
-        
-        checkboxes.forEach(cb => {
-            cb.checked = masterCheck.checked;
-        });
-        updateMassActions(); // Actualiza el contador
+        document.querySelectorAll('.row-check:not(#checkAll)').forEach(cb => cb.checked = masterCheck.checked);
+        updateMassActions();
     }
 
-    // 2. Lógica para mostrar/ocultar la barra flotante y contar
     function updateMassActions() {
-        const checkboxes = document.querySelectorAll('.row-check:not(#checkAll)');
-        const checkedBoxes = Array.from(checkboxes).filter(cb => cb.checked);
+        const checkedBoxes = Array.from(document.querySelectorAll('.row-check:not(#checkAll)')).filter(cb => cb.checked);
         const massBar = document.getElementById('massActionsBar');
-        const countSpan = document.getElementById('massCount');
-
         if (checkedBoxes.length > 0) {
             massBar.style.display = 'flex';
-            countSpan.innerText = `${checkedBoxes.length} seleccionado(s)`;
+            document.getElementById('massCount').innerText = `${checkedBoxes.length} seleccionado(s)`;
         } else {
             massBar.style.display = 'none';
-            document.getElementById('checkAll').checked = false; // Desmarca el maestro si no hay nada
+            document.getElementById('checkAll').checked = false;
         }
     }
 
-    // 3. Lógica para Borrar Masivamente
     function massDelete() {
-        const checkboxes = document.querySelectorAll('.row-check:not(#checkAll)');
-        const checkedIds = Array.from(checkboxes).filter(cb => cb.checked).map(cb => cb.value);
-
+        const checkedIds = Array.from(document.querySelectorAll('.row-check:not(#checkAll)')).filter(cb => cb.checked).map(cb => cb.value);
         if (checkedIds.length === 0) return;
-        
-        if (confirm(`⚠️ PELIGRO: ¿Estás seguro de eliminar ${checkedIds.length} registro(s)? Esta acción no se puede deshacer.`)) {
-            // Animación de carga en el botón
+        if (confirm(`⚠️ PELIGRO: ¿Eliminar ${checkedIds.length} registro(s)?`)) {
             const btn = document.querySelector('button[onclick="massDelete()"]');
-            const originalText = btn.innerHTML;
-            btn.innerHTML = '⏳...';
-
-            // Promesa múltiple para borrar en Firebase
-            const deletePromises = checkedIds.map(id => db.collection("movimientos").doc(id).delete());
-            
-            Promise.all(deletePromises).then(() => {
+            const originalText = btn.innerHTML; btn.innerHTML = '⏳...';
+            Promise.all(checkedIds.map(id => db.collection("movimientos").doc(id).delete())).then(() => {
                 document.getElementById('massActionsBar').style.display = 'none';
                 document.getElementById('checkAll').checked = false;
                 btn.innerHTML = originalText;
-                alert(`✅ Se eliminaron ${checkedIds.length} registros exitosamente.`);
-            }).catch(error => {
-                console.error("Error borrando documentos: ", error);
-                alert("❌ Ocurrió un error al intentar borrar algunos registros.");
-                btn.innerHTML = originalText;
-            });
+                alert(`✅ ${checkedIds.length} registros eliminados.`);
+            }).catch(e => { alert("❌ Error."); btn.innerHTML = originalText; });
         }
     }
 
-    // 4. Lógica para Recategorizar Masivamente
     function massCategorize() {
-        const checkboxes = document.querySelectorAll('.row-check:not(#checkAll)');
-        const checkedIds = Array.from(checkboxes).filter(cb => cb.checked).map(cb => cb.value);
-        const newCategory = document.getElementById('massCategorySelect').value;
-
-        if (checkedIds.length === 0) return;
-        if (!newCategory) {
-            alert("⚠️ Selecciona una categoría primero.");
-            return;
-        }
-
-        if (confirm(`¿Cambiar la categoría de ${checkedIds.length} registro(s) a "${newCategory}"?`)) {
-             // Animación de carga en el botón
+        const checkedIds = Array.from(document.querySelectorAll('.row-check:not(#checkAll)')).filter(cb => cb.checked).map(cb => cb.value);
+        const newCat = document.getElementById('massCategorySelect').value;
+        if (checkedIds.length === 0 || !newCat) return alert("⚠️ Selecciona una categoría.");
+        if (confirm(`¿Cambiar categoría de ${checkedIds.length} registro(s) a "${newCat}"?`)) {
             const btn = document.querySelector('button[onclick="massCategorize()"]');
-            const originalText = btn.innerHTML;
-            btn.innerHTML = '⏳...';
-
-            const updatePromises = checkedIds.map(id => db.collection("movimientos").doc(id).update({
-                categoria: newCategory
-            }));
-
-            Promise.all(updatePromises).then(() => {
+            const originalText = btn.innerHTML; btn.innerHTML = '⏳...';
+            Promise.all(checkedIds.map(id => db.collection("movimientos").doc(id).update({categoria: newCat}))).then(() => {
                 document.getElementById('massActionsBar').style.display = 'none';
                 document.getElementById('checkAll').checked = false;
-                document.getElementById('massCategorySelect').value = ''; // Reset select
+                document.getElementById('massCategorySelect').value = '';
                 btn.innerHTML = originalText;
-                alert(`✅ Se recategorizaron ${checkedIds.length} registros exitosamente.`);
-            }).catch(error => {
-                console.error("Error actualizando documentos: ", error);
-                alert("❌ Ocurrió un error al intentar recategorizar.");
-                btn.innerHTML = originalText;
-            });
+                alert(`✅ Recategorización exitosa.`);
+            }).catch(e => { alert("❌ Error."); btn.innerHTML = originalText; });
         }
     }
 
-    // 5. Exponer funciones globalmente (Necesario porque se inyectan en el HTML)
     window.toggleAllChecks = toggleAllChecks;
     window.updateMassActions = updateMassActions;
     window.massDelete = massDelete;
-    window.massCategorize = massCategorize;
-</script>
+    window.massCategorize = massCategorize;</script>
 </body>
 </html>
