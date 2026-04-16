@@ -399,6 +399,10 @@
         });
     }
 
+    // 💡 V31.0: Variables Globales para Control de Edición y Ordenamiento
+    let modoEdicionActivo = false;
+    let datosMesGlobal = []; // Guarda los datos del mes para recalcular al ordenar
+
     function actualizarDashboard() {
         const sueldo = parseInt(document.getElementById('inputSueldo').value.replace(/\./g,'')) || 0;
         const b = document.getElementById('inputBuscador').value.toLowerCase();
@@ -416,34 +420,40 @@
         
         document.getElementById('txtPeriodoBatch').innerText = `${T0.toLocaleDateString('es-CL', {day:'2-digit', month:'2-digit'})} al ${new Date(TFinal.getTime()-86400000).toLocaleDateString('es-CL', {day:'2-digit', month:'2-digit'})}`;
 
+        // Filtramos solo el mes actual
         let dataMes = listaMovimientos.filter(x => {
             let d = new Date(x.fechaISO);
             return d >= T0 && d < TFinal;
         });
 
+        // V31.0: Guardamos para el ordenamiento dinámico
+        datosMesGlobal = [...dataMes];
+
         let saldoAcc = sueldo, tI = 0, tF = 0, tO = 0, tC = 0, tEvitable = 0, gCat = {};
         let chronData = [...dataMes].sort((x,y) => x.fechaISO < y.fechaISO ? -1 : 1);
         
+        // Cálculo del Saldo Real y KPIs
         chronData.forEach((x, index) => {
             x.cronoIndex = index + 1;
             x.catV = (x.monto <= 1000 && (!x.categoria || x.categoria === 'Sin Categoría')) ? "Ruido de Sistema" : (x.categoria || 'Sin Categoría');
             const esIn = x.tipo === 'Ingreso' || x.nombre?.toLowerCase().includes('recibida');
             if (esIn) { tI += x.monto; saldoAcc += x.monto; }
             else if (x.tipo === 'Por Cobrar') tC += x.monto;
+            else if (x.tipo === 'Ahorro' || x.categoria?.includes('Ahorro')) { /* Neutro */ }
             else {
                 saldoAcc -= x.monto;
                 if (x.tipo === 'Gasto Fijo') tF += x.monto; else tO += x.monto;
                 gCat[x.catV] = (gCat[x.catV] || 0) + x.monto;
             }
             if (catEvitables.includes(x.catV)) tEvitable += x.monto;
-            x.saldoH = saldoAcc;
         });
 
+        // Actualización de Tarjetas (KPIs)
         document.getElementById('txtTotalFijos').innerText = tF.toLocaleString('es-CL');
         document.getElementById('txtTotalOtros').innerText = tO.toLocaleString('es-CL');
         document.getElementById('txtTotalIngresos').innerText = tI.toLocaleString('es-CL');
         document.getElementById('txtCxC').innerText = tC.toLocaleString('es-CL');
-        document.getElementById('txtSaldo').innerText = saldoAcc.toLocaleString('es-CL');
+        document.getElementById('txtSaldo').innerText = saldoAcc.toLocaleString('es-CL'); // Este es el saldo INMUTABLE
         
         const saldoProyVal = saldoAcc + tC;
         const txtSaldoProy = document.getElementById('txtProyectado');
@@ -469,32 +479,106 @@
         document.getElementById('msgEvitable').innerText = pctE > 10 ? "ALERTA DE FUGAS ("+pctE.toFixed(1)+"%)" : "EFICIENCIA ÓPTIMA";
         
         window.tgData = { real: saldoAcc, proyectado: saldoProyVal, fugas: tEvitable, mes: T0.toLocaleDateString() };
-        dibujarTabla(dataMes.filter(x => x.nombre?.toLowerCase().includes(b) || x.catV.toLowerCase().includes(b)), b);
+        
+        // Ejecutamos el render de la tabla pasando el sueldo base para recalcular
+        renderizarTablaOrdenada(sueldo, b);
         dibujarGraficos(sueldo, chronData, gCat, diasCiclo, T0);
     }
 
-    function dibujarTabla(datos, b) {
+    // 💡 V31.0: NUEVA FUNCIÓN PARA TABLA DINÁMICA
+    function renderizarTablaOrdenada(sueldoBase, filtroBuscador) {
+        let datosAProcesar = datosMesGlobal;
+
+        // 1. Filtrado
+        if (filtroBuscador) {
+            datosAProcesar = datosAProcesar.filter(x => x.nombre?.toLowerCase().includes(filtroBuscador) || x.catV.toLowerCase().includes(filtroBuscador));
+        }
+
+        // 2. Ordenamiento Dinámico
+        datosAProcesar.sort((a, b) => {
+            let valA, valB;
+            if (currentSort.column === 'monto') { valA = a.monto; valB = b.monto; }
+            else if (currentSort.column === 'nombre') { valA = a.nombre?.toLowerCase(); valB = b.nombre?.toLowerCase(); }
+            else { valA = a.fechaISO; valB = b.fechaISO; } // Default: Fecha
+
+            if (valA < valB) return currentSort.direction === 'asc' ? -1 : 1;
+            if (valA > valB) return currentSort.direction === 'asc' ? 1 : -1;
+            return 0;
+        });
+
+        // 3. Recálculo Dinámico de Saldo Histórico según el ORDEN de la vista
+        let saldoRelativo = sueldoBase;
+        datosAProcesar.forEach(x => {
+            const esIn = x.tipo === 'Ingreso' || x.nombre?.toLowerCase().includes('recibida');
+            if (esIn) saldoRelativo += x.monto;
+            else if (x.tipo === 'Por Cobrar' || x.tipo === 'Ahorro' || x.categoria?.includes('Ahorro')) { /* Neutro */ }
+            else saldoRelativo -= x.monto;
+            
+            x.saldoCalculadoVista = saldoRelativo; // Guardamos el saldo relativo a ESTA vista
+        });
+
+        // 4. Dibujar la tabla
+        dibujarTabla(datosAProcesar);
+    }
+
+    // 💡 V31.0: DIBUJO DE ALTA DENSIDAD Y TELEMETRÍA (ICONOS +, -, =)
+    function dibujarTabla(datos) {
         const l = document.getElementById('listaDetalle'); l.innerHTML = '';
-        datos.sort((x,y) => x.fechaISO < y.fechaISO ? 1 : -1); 
+        
         datos.forEach(x => {
             const em = catEmojis[x.catV] || "❓";
             
-            // Lógica de Fecha y Hora de alta densidad
+            // Fecha y Hora compactas
             let d = new Date(x.fechaISO);
             let fS = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`;
             let hS = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
             
-            l.innerHTML += `<tr>
+            // 💡 Telemetría Visual (Iconos de Impacto)
+            let iconImpacto = "";
+            let colorMonto = "var(--text-main)";
+            
+            if (x.tipo === 'Ingreso' || x.nombre?.toLowerCase().includes('recibida')) {
+                iconImpacto = `<span style="color: var(--color-ingresos); font-weight: 900; margin-right: 5px;">(+)</span>`;
+                colorMonto = "var(--color-ingresos)";
+            } else if (x.tipo === 'Por Cobrar' || x.tipo === 'Ahorro' || x.categoria?.includes('Ahorro')) {
+                iconImpacto = `<span style="color: #ff9800; font-weight: 900; margin-right: 5px;">(=)</span>`;
+                colorMonto = "#ff9800";
+            } else {
+                iconImpacto = `<span style="color: var(--color-fuga); font-weight: 900; margin-right: 5px;">(-)</span>`;
+            }
+
+            // CSS en línea para simular si está siendo editado
+            let bgEdicion = (document.getElementById('editId').value === x.firestoreId) ? 'background-color: rgba(210, 153, 34, 0.15); border-left: 3px solid var(--color-edit);' : '';
+
+            l.innerHTML += `<tr style="${bgEdicion}">
                 <td class="col-check hide-mobile"><input type="checkbox" class="row-check" value="${x.firestoreId}" onchange="updateMassActions()"></td>
                 <td style="font-size:0.75rem; color:var(--text-muted);">${fS} <span class="col-hora">${hS}</span></td>
                 <td style="font-weight:700;">${x.nombre}<br><span class="cat-badge">${em} ${x.catV}</span></td>
-                <td style="font-weight:800; color:${(x.tipo==='Ingreso')?'var(--color-ingresos)':'var(--text-main)'};">$${x.monto.toLocaleString('es-CL')}</td>
-                <td class="hide-mobile" style="text-align:right; font-weight:800; color:${x.saldoH<0?'var(--color-fuga)':'var(--text-muted)'}">$${x.saldoH.toLocaleString('es-CL')}</td>
-                <td class="hide-mobile" style="text-align:center;"><button class="btn-sys" style="padding:4px 8px;" onclick="editarMovimiento('${x.firestoreId}')">✏️</button></td>
+                <td style="font-weight:800; color:${colorMonto}; white-space: nowrap;">${iconImpacto}$${x.monto.toLocaleString('es-CL')}</td>
+                <td class="hide-mobile" style="text-align:right; font-weight:800; color:${x.saldoCalculadoVista<0?'var(--color-fuga)':'var(--text-muted)'}">$${x.saldoCalculadoVista.toLocaleString('es-CL')}</td>
+                <td class="hide-mobile" style="text-align:center;"><button class="btn-sys" style="padding:4px 8px; border-color:var(--color-edit); color:var(--color-edit);" onclick="editarMovimiento('${x.firestoreId}')">✏️ EDIT</button></td>
             </tr>`;
         });
     }
 
+    // 💡 V31.0: Lógica de Ordenamiento al hacer click en las cabeceras
+    function sortTable(column) {
+        if (currentSort.column === column) {
+            currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+        } else {
+            currentSort.column = column;
+            currentSort.direction = 'asc';
+        }
+        
+        // Indicadores visuales en la cabecera
+        document.querySelectorAll('.data-grid th').forEach(th => th.innerHTML = th.innerHTML.replace(/ ▲| ▼/g, ''));
+        const activeTh = Array.from(document.querySelectorAll('.data-grid th')).find(th => th.getAttribute('onclick')?.includes(column));
+        if (activeTh) activeTh.innerHTML += currentSort.direction === 'asc' ? ' ▲' : ' ▼';
+
+        const sueldo = parseInt(document.getElementById('inputSueldo').value.replace(/\./g,'')) || 0;
+        const b = document.getElementById('inputBuscador').value.toLowerCase();
+        renderizarTablaOrdenada(sueldo, b);
+    }
     function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0) {
         if(chartBD) chartBD.destroy(); if(chartP) chartP.destroy();
         const cT = getComputedStyle(document.body).getPropertyValue('--text-main').trim();
