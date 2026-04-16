@@ -591,6 +591,107 @@
     async function triggerSync() { const btn = document.getElementById('btnSyncManualPC'); btn.innerText = "⏳ SYNCING..."; try { await fetch(`${APPS_SCRIPT_WEB_APP_URL}?key=${MASTER_KEY}`, { method: 'POST', mode: 'no-cors' }); btn.innerText = "✅ SEÑAL ENVIADA"; } catch(e) { btn.innerText = "❌ ERROR"; } setTimeout(() => btn.innerText = "🔄 SYNC GMAIL", 3000); }
     async function enviarReporteTelegram(esAuto=false) { const msg = `📊 *Reporte Bunker* \nBalance: $${window.tgData.real.toLocaleString()} \nFugas: $${window.tgData.fugas.toLocaleString()}`; alert("Función Telegram vinculada al motor de captura."); }
     function exportarCSV() { let csv = "Fecha;Descripcion;Monto\n"; listaMovimientos.forEach(r => { csv += `${r.fechaISO};${r.nombre};${r.monto}\n`; }); const link = document.createElement("a"); link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' })); link.download = `Bunker_Backup.csv`; link.click(); }
+// ==========================================
+    // ⚙️ MOTOR DE ACCIONES MASIVAS (V30)
+    // ==========================================
+    
+    // 1. Lógica del "Seleccionar Todo"
+    function toggleAllChecks() {
+        const masterCheck = document.getElementById('checkAll');
+        const checkboxes = document.querySelectorAll('.row-check:not(#checkAll)'); // Selecciona todos menos el maestro
+        
+        checkboxes.forEach(cb => {
+            cb.checked = masterCheck.checked;
+        });
+        updateMassActions(); // Actualiza el contador
+    }
+
+    // 2. Lógica para mostrar/ocultar la barra flotante y contar
+    function updateMassActions() {
+        const checkboxes = document.querySelectorAll('.row-check:not(#checkAll)');
+        const checkedBoxes = Array.from(checkboxes).filter(cb => cb.checked);
+        const massBar = document.getElementById('massActionsBar');
+        const countSpan = document.getElementById('massCount');
+
+        if (checkedBoxes.length > 0) {
+            massBar.style.display = 'flex';
+            countSpan.innerText = `${checkedBoxes.length} seleccionado(s)`;
+        } else {
+            massBar.style.display = 'none';
+            document.getElementById('checkAll').checked = false; // Desmarca el maestro si no hay nada
+        }
+    }
+
+    // 3. Lógica para Borrar Masivamente
+    function massDelete() {
+        const checkboxes = document.querySelectorAll('.row-check:not(#checkAll)');
+        const checkedIds = Array.from(checkboxes).filter(cb => cb.checked).map(cb => cb.value);
+
+        if (checkedIds.length === 0) return;
+        
+        if (confirm(`⚠️ PELIGRO: ¿Estás seguro de eliminar ${checkedIds.length} registro(s)? Esta acción no se puede deshacer.`)) {
+            // Animación de carga en el botón
+            const btn = document.querySelector('button[onclick="massDelete()"]');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '⏳...';
+
+            // Promesa múltiple para borrar en Firebase
+            const deletePromises = checkedIds.map(id => db.collection("movimientos").doc(id).delete());
+            
+            Promise.all(deletePromises).then(() => {
+                document.getElementById('massActionsBar').style.display = 'none';
+                document.getElementById('checkAll').checked = false;
+                btn.innerHTML = originalText;
+                alert(`✅ Se eliminaron ${checkedIds.length} registros exitosamente.`);
+            }).catch(error => {
+                console.error("Error borrando documentos: ", error);
+                alert("❌ Ocurrió un error al intentar borrar algunos registros.");
+                btn.innerHTML = originalText;
+            });
+        }
+    }
+
+    // 4. Lógica para Recategorizar Masivamente
+    function massCategorize() {
+        const checkboxes = document.querySelectorAll('.row-check:not(#checkAll)');
+        const checkedIds = Array.from(checkboxes).filter(cb => cb.checked).map(cb => cb.value);
+        const newCategory = document.getElementById('massCategorySelect').value;
+
+        if (checkedIds.length === 0) return;
+        if (!newCategory) {
+            alert("⚠️ Selecciona una categoría primero.");
+            return;
+        }
+
+        if (confirm(`¿Cambiar la categoría de ${checkedIds.length} registro(s) a "${newCategory}"?`)) {
+             // Animación de carga en el botón
+            const btn = document.querySelector('button[onclick="massCategorize()"]');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '⏳...';
+
+            const updatePromises = checkedIds.map(id => db.collection("movimientos").doc(id).update({
+                categoria: newCategory
+            }));
+
+            Promise.all(updatePromises).then(() => {
+                document.getElementById('massActionsBar').style.display = 'none';
+                document.getElementById('checkAll').checked = false;
+                document.getElementById('massCategorySelect').value = ''; // Reset select
+                btn.innerHTML = originalText;
+                alert(`✅ Se recategorizaron ${checkedIds.length} registros exitosamente.`);
+            }).catch(error => {
+                console.error("Error actualizando documentos: ", error);
+                alert("❌ Ocurrió un error al intentar recategorizar.");
+                btn.innerHTML = originalText;
+            });
+        }
+    }
+
+    // 5. Exponer funciones globalmente (Necesario porque se inyectan en el HTML)
+    window.toggleAllChecks = toggleAllChecks;
+    window.updateMassActions = updateMassActions;
+    window.massDelete = massDelete;
+    window.massCategorize = massCategorize;
 </script>
 </body>
 </html>
