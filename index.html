@@ -303,8 +303,11 @@
                 <h4 style="margin:0 0 10px 0; font-size:0.85rem; color:var(--text-muted); text-transform:uppercase;">Eficiencia de Gasto</h4>
                 <div class="eficiencia-kpi"><div class="monto">$<span id="txtTotalEvitable">0</span></div><div class="label">Fugas Detectadas</div></div>
                 <div class="bar-container"><div id="barEvitable" class="bar-fill"></div></div>
+                <div style="margin-top:12px; padding-top:10px; border-top:1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center;">
+                    <span style="font-size:0.65rem; color:var(--text-muted); font-weight:800; text-transform:uppercase;">% Sueldo a Fugas:</span>
+                    <span id="txtPorcentajeFugas" style="font-size:0.9rem; font-weight:900; color:var(--color-fuga);">0%</span>
+                </div>
             </div>
-        </div>
     </div>
     
     <div id="massActionsBar" class="floating-mass-actions" style="display: none;">
@@ -441,8 +444,12 @@
 
         document.getElementById('barFijos').style.width = Math.min((tF / (sueldo || 1)) * 100, 100) + "%";
         document.getElementById('barOtros').style.width = Math.min((tO / (sueldo || 1)) * 100, 100) + "%";
+        // 🟢 Actualización de Barras y Porcentaje de Fugas
         document.getElementById('txtTotalEvitable').innerText = tEvitable.toLocaleString('es-CL');
-        
+        const pctFugas = sueldo > 0 ? ((tEvitable / sueldo) * 100).toFixed(1) : 0;
+        document.getElementById('txtPorcentajeFugas').innerText = pctFugas + '%';
+        document.getElementById('barEvitable').style.width = Math.min(pctFugas, 100) + "%";
+        document.getElementById('barEvitable').style.backgroundColor = "var(--color-fuga)";
         renderizarTabla(sueldo, b);
         dibujarGraficos(sueldo, [...dataMes].sort((x,y) => x.fechaISO < y.fechaISO ? -1 : 1), gCat, diasCiclo, T0);
     }
@@ -634,20 +641,57 @@
             labelsX.push(String(new Date(T0.getTime() + (i-1)*86400000).getDate()).padStart(2, '0'));
         }
 
+        // 🟢 Plugin inyectado para la línea divisoria naranja (Inicio de Mes)
+        const pluginInicioMes = {
+            id: 'pluginInicioMes',
+            beforeDraw: (chart) => {
+                const ctx = chart.ctx;
+                const xAxis = chart.scales.x; const yAxis = chart.scales.y;
+                const xPos = xAxis.getPixelForTick(0); // Posición del día 1
+                ctx.save(); ctx.beginPath();
+                ctx.moveTo(xPos, yAxis.top); ctx.lineTo(xPos, yAxis.bottom);
+                ctx.lineWidth = 2; ctx.strokeStyle = '#ff9800'; ctx.setLineDash([5, 5]);
+                ctx.stroke();
+                ctx.fillStyle = '#ff9800'; ctx.font = 'bold 9px monospace';
+                ctx.fillText(' INICIO MES', xPos + 4, yAxis.top + 10);
+                ctx.restore();
+            }
+        };
+
         chartBD = new Chart(document.getElementById('chartBurnDown'), {
             type: 'line', 
+            plugins: [pluginInicioMes],
             data: { labels: labelsX, datasets: [
-                { data: actual, borderColor: '#1f6feb', borderWidth: 3, fill: {target:'origin', above:'rgba(31,111,235,0.05)', below:'rgba(218,54,51,0.2)'}, segment: {borderColor: c => c.p0.parsed.y < 0 ? cF : '#1f6feb'} },
-                { data: ideal, borderColor: 'rgba(63,185,80,0.3)', borderDash:[5,5], pointRadius:0 }
+                { label: 'Consumo Real', data: actual, borderColor: '#1f6feb', borderWidth: 3, fill: {target:'origin', above:'rgba(31,111,235,0.05)', below:'rgba(218,54,51,0.2)'}, segment: {borderColor: c => c.p0.parsed.y < 0 ? cF : '#1f6feb'} },
+                { label: 'Gasto Ideal', data: ideal, borderColor: 'rgba(63,185,80,0.3)', borderDash:[5,5], pointRadius:0 }
             ]},
-            options: { maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{ x:{ticks:{color:cT}, grid:{color:cG, drawBorder:false}}, y:{ticks:{color:cT, callback:v=>'$'+(v/1000)+'k'}, grid:{color: c => c.tick.value === 0 ? cF : cG}} } }
+            options: { maintainAspectRatio:false, plugins:{legend:{display:true, labels:{color:cT, font:{size:10, weight:'bold'}}}}, scales:{ x:{ticks:{color:cT}, grid:{color:cG, drawBorder:false}}, y:{ticks:{color:cT, callback:v=>'$'+(v/1000)+'k'}, grid:{color: c => c.tick.value === 0 ? cF : cG}} } }
         });
 
+        // 🟢 Preparación de datos para el Pareto de doble eje
         const sorted = Object.entries(cats).sort((a,b)=>b[1]-a[1]).slice(0,8);
+        const totalTop8 = sorted.reduce((sum, val) => sum + val[1], 0) || 1;
+        let acumulado = 0;
+        const dataAcumulada = sorted.map(c => { acumulado += c[1]; return (acumulado / totalTop8) * 100; });
+
         chartP = new Chart(document.getElementById('chartPareto'), {
             type: 'bar', 
-            data: { labels: sorted.map(c => c[0].split(' ')[0]), datasets: [{ data: sorted.map(c => c[1]), backgroundColor: sorted.map(c => c[0] === 'Dopamina & Antojos' ? '#ff5252' : '#1f6feb'), borderRadius: 4 }] },
-            options: { maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{ x:{ticks:{color:cT, font:{size:9}}}, y:{ticks:{color:cT, callback:v=>'$'+(v/1000)+'k'}} } }
+            data: { 
+                labels: sorted.map(c => c[0].split(' ')[0]), 
+                datasets: [
+                    { type: 'line', label: '% Acumulado', data: dataAcumulada, borderColor: '#ff9800', borderWidth: 2, borderDash: [5, 5], pointBackgroundColor: '#ff9800', pointRadius: 3, fill: false, yAxisID: 'y1' },
+                    { type: 'bar', label: 'Gasto', data: sorted.map(c => c[1]), backgroundColor: sorted.map(c => c[0] === 'Dopamina & Antojos' ? '#ff5252' : '#1f6feb'), borderRadius: 4, yAxisID: 'y' }
+                ] 
+            },
+            options: { 
+                maintainAspectRatio:false, 
+                plugins:{legend:{display:true, labels:{color:cT, font:{size:10, weight:'bold'}}}}, 
+                scales:{ 
+                    x:{ticks:{color:cT, font:{size:9}}}, 
+                    y:{ type: 'linear', position: 'left', ticks:{color:cT, callback:v=>'$'+(v/1000)+'k'} },
+                    y1:{ type: 'linear', position: 'right', min: 0, max: 100, grid: { drawOnChartArea: false }, ticks:{color:'#ff9800', callback:v=>v+'%', font:{weight:'bold'}} }
+                } 
+            }
         });
     }
 </script>
