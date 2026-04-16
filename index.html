@@ -108,11 +108,37 @@
         .floating-mass-actions { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #1c2128; border: 1px solid var(--color-edit); border-radius: 50px; padding: 10px 25px; display: flex; align-items: center; justify-content: space-between; gap: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); z-index: 9999; animation: slideUp 0.3s ease; }
         @keyframes slideUp { from { opacity: 0; transform: translate(-50%, 20px); } to { opacity: 1; transform: translate(-50%, 0); } }
 
+        /* =======================================================
+           📱 RESPONSIVO MÓVIL (Ajuste de Escala sin romper PC)
+           ======================================================= */
         @media (max-width: 1024px) {
-            .master-layout { grid-template-columns: 1fr; }
-            .kpi-row { grid-template-columns: repeat(2, 1fr); }
-            #charts-grid-container { grid-template-columns: 1fr; }
+            .app-container { padding: 8px; gap: 8px; }
+            
+            /* Cabecera y Botones apilados ordenados */
+            .header-titles { flex-direction: column; align-items: flex-start; gap: 5px; }
+            h2 { font-size: 1.1rem; }
+            .system-btns { justify-content: space-between; padding-bottom: 10px; }
+            .btn-sys { flex: 1 1 30%; text-align: center; padding: 10px 5px; margin-bottom: 4px; font-size: 0.65rem; }
+            
+            /* KPIs a 2 columnas ajustadas */
+            .kpi-row { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+            .kpi-card { padding: 10px; }
+            .kpi-card .value { font-size: 1.1rem; }
+            
+            /* Layout Principal (Todo en una columna) */
+            .master-layout { grid-template-columns: 1fr; display: flex; flex-direction: column; margin-top: 5px; }
+            
+            /* Gráficos uno debajo del otro */
+            #charts-grid-container { grid-template-columns: 1fr; display: flex; flex-direction: column; gap: 10px; }
+            .chart-box { height: 260px; padding: 10px; }
+            
+            /* Ocultar columnas no vitales en la tabla (Ya lo tenías, lo reforzamos) */
             .hide-mobile { display: none !important; }
+            .grid-container { max-height: 400px; }
+            
+            /* Panel de Registro Manual (Full width en celular) */
+            .sidebar-panel { width: 100%; padding: 12px; }
+            .btn-guardar { height: 50px; font-size: 1rem; } /* Botón más grande para el pulgar */
         }
     </style>
 </head>
