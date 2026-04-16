@@ -490,8 +490,9 @@
                 <td style="font-weight:700;">${x.nombre}<br><span class="cat-badge">${em} ${x.catV}</span></td>
                 <td style="font-weight:800; color:${(x.tipo==='Ingreso')?'var(--color-ingresos)':'var(--text-main)'};">$${x.monto.toLocaleString('es-CL')}</td>
                 <td class="hide-mobile" style="text-align:right; font-weight:800; color:${x.saldoH<0?'var(--color-fuga)':'var(--text-muted)'}">$${x.saldoH.toLocaleString('es-CL')}</td>
-                <td class="hide-mobile" style="text-align:center;"><button class="btn-sys" style="padding:4px 8px;" onclick="editarMovimiento('${x.firestoreId}')">✏️</button></td>
-            </tr>`;
+                <td class="hide-mobile" style="text-align:center;">
+    <button class="btn-sys" style="padding:4px 8px; border-color:var(--color-edit); color:var(--color-edit);" onclick="window.editarMovimiento('${x.firestoreId}')">✏️ EDIT</button>
+</td>
         });
     }
 
@@ -627,7 +628,92 @@
             document.getElementById('checkAll').checked = false; // Desmarca el maestro si no hay nada
         }
     }
+    // ==========================================
+    // ✏️ MOTOR DE EDICIÓN PRO (BLINDADO Y AISLADO)
+    // ==========================================
+    window.editarMovimiento = function(id) {
+        console.log("🛠️ [MOTOR PRO] Iniciando secuencia de edición para ID:", id);
+        
+        try {
+            const mov = listaMovimientos.find(m => m.firestoreId === id);
+            if (!mov) throw new Error("Registro no encontrado en la memoria local.");
 
+            // 1. Cargar Textos y Montos
+            document.getElementById('editId').value = mov.firestoreId; 
+            document.getElementById('inputNombre').value = mov.nombre;
+            document.getElementById('inputMonto').value = (mov.monto || 0).toLocaleString('es-CL');
+            document.getElementById('inputCategoria').value = mov.categoria || 'Sin Categoría';
+            
+            // 2. Inferencia de Flujo
+            let tipoC = mov.tipo || 'Gasto';
+            if (mov.catV === 'Transferencia Recibida' || mov.catV === 'Ingreso Adicional') tipoC = 'Ingreso';
+            if (mov.catV === 'Transferencia Propia / Ahorro') tipoC = 'Ahorro';
+            document.getElementById('inputTipo').value = tipoC;
+            
+            // 3. Ajuste de Zona Horaria Crítico
+            if (mov.fechaISO) {
+                let d = new Date(mov.fechaISO);
+                let offset = d.getTimezoneOffset() * 60000;
+                let localISOTime = (new Date(d.getTime() - offset)).toISOString().slice(0, 16);
+                document.getElementById('inputFecha').value = localISOTime;
+            } else {
+                console.warn("⚠️ [MOTOR PRO] Sin fecha válida. Usando actual.");
+            }
+
+            // 4. Transformar HMI al Modo Edición
+            const btn = document.getElementById('btnGuardar');
+            btn.innerHTML = "💾 ACTUALIZAR REGISTRO";
+            btn.style.backgroundColor = "var(--color-edit)";
+            modoEdicionActivo = true;
+
+            // 5. UX: Subir pantalla en móviles
+            if (window.innerWidth <= 1024) window.scrollTo({ top: 0, behavior: 'smooth' });
+            
+            console.log("✅ [MOTOR PRO] Lazo cerrado. Datos cargados en el panel.");
+
+        } catch (error) {
+            console.error("❌ [MOTOR PRO] FALLA CRÍTICA:", error);
+            alert("Error del sistema al abrir edición: " + error.message);
+        }
+    };
+
+    window.agregarMovimiento = function() {
+        console.log("🛠️ [MOTOR PRO] Ejecutando guardado/actualización...");
+        const mStr = document.getElementById('inputMonto').value.replace(/\./g, '');
+        const m = parseInt(mStr);
+        const n = document.getElementById('inputNombre').value;
+        const c = document.getElementById('inputCategoria').value;
+        const t = document.getElementById('inputTipo').value;
+        const fInput = document.getElementById('inputFecha').value;
+        const editId = document.getElementById('editId').value;
+
+        if (!m || !n || !fInput) return alert("⚠️ Faltan datos críticos en el formulario.");
+
+        const btn = document.getElementById('btnGuardar');
+        const txtOrig = btn.innerHTML; const colorOrig = btn.style.backgroundColor;
+        btn.innerHTML = "⏳ COMUNICANDO..."; btn.disabled = true;
+
+        const payload = { nombre: n, monto: m, categoria: c, tipo: t, fecha: new Date(fInput), status: 'Manual' };
+
+        let operacion = (modoEdicionActivo && editId) 
+            ? db.collection("movimientos").doc(editId).update(payload) 
+            : db.collection("movimientos").add(payload);
+
+        operacion.then(() => {
+            console.log("✅ [MOTOR PRO] Escritura en Firebase confirmada.");
+            document.getElementById('editId').value = '';
+            document.getElementById('inputNombre').value = '';
+            document.getElementById('inputMonto').value = '';
+            btn.innerHTML = "GUARDAR EN BÚNKER";
+            btn.style.backgroundColor = "var(--color-guardar)";
+            btn.disabled = false;
+            modoEdicionActivo = false;
+        }).catch(err => { 
+            console.error("❌ [MOTOR PRO] Error en Firebase:", err);
+            alert("Error de conexión: " + err.message); 
+            btn.innerHTML = txtOrig; btn.style.backgroundColor = colorOrig; btn.disabled = false; 
+        });
+    };
     // 3. Lógica para Borrar Masivamente
     function massDelete() {
         const checkboxes = document.querySelectorAll('.row-check:not(#checkAll)');
