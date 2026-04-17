@@ -117,6 +117,48 @@
             .app-container { padding: 8px; gap: 8px; }
             .header-titles { flex-direction: column; align-items: flex-start; gap: 5px; }
             .system-btns { justify-content: space-between; padding-bottom: 10px; }
+            /* === V31.7: NAVEGADOR TEMPORAL GLOBAL === */
+        .time-navigator-panel {
+            background: var(--bg-panel); border: 1px solid var(--border-color);
+            border-radius: 8px; padding: 12px 20px; margin-bottom: 15px;
+            display: flex; justify-content: space-between; align-items: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            border-top: 3px solid var(--color-ingresos);
+        }
+        .time-nav-controls { display: flex; align-items: center; gap: 12px; }
+        .nav-select {
+            background: var(--input-bg); color: var(--text-main);
+            border: 1px solid var(--border-color); padding: 8px 15px;
+            border-radius: 6px; font-weight: 800; text-transform: uppercase;
+            font-size: 0.85rem; outline: none; cursor: pointer;
+        }
+        .nav-select:focus { border-color: var(--color-ingresos); }
+        .nav-badge {
+            font-family: 'Courier New', Courier, monospace;
+            background: rgba(31, 111, 235, 0.1); color: var(--color-ingresos);
+            border: 1px solid rgba(31, 111, 235, 0.3); padding: 6px 12px;
+            border-radius: 4px; font-size: 0.8rem; font-weight: 900;
+            letter-spacing: 0.5px; text-transform: uppercase;
+        }
+        .time-nav-presets { display: flex; gap: 10px; }
+        .preset-btn {
+            background: var(--bg-subpanel); color: var(--text-muted);
+            border: 1px solid var(--border-color); padding: 8px 15px;
+            border-radius: 6px; font-weight: 800; font-size: 0.75rem;
+            cursor: pointer; text-transform: uppercase; transition: all 0.2s;
+        }
+        .preset-btn:hover { border-color: var(--color-ingresos); color: var(--text-main); }
+        .preset-active {
+            background: rgba(31, 111, 235, 0.15); border-color: var(--color-ingresos);
+            color: var(--color-ingresos);
+        }
+        
+        @media (max-width: 1024px) {
+            .time-navigator-panel { flex-direction: column; gap: 12px; align-items: stretch; padding: 10px; }
+            .time-nav-controls { justify-content: space-between; }
+            .time-nav-presets { justify-content: space-between; }
+            .preset-btn { flex: 1; text-align: center; padding: 10px 5px; }
+        }
             .btn-sys { flex: 1 1 30%; text-align: center; padding: 10px 5px; margin-bottom: 4px; font-size: 0.65rem; }
             .kpi-row { grid-template-columns: repeat(2, 1fr); gap: 8px; }
             .master-layout { grid-template-columns: 1fr; display: flex; flex-direction: column; margin-top: 5px; }
@@ -164,6 +206,35 @@
         <button class="btn-sys" onclick="logout()" style="color:var(--color-fuga);">🚪 SALIR</button>
     </div>
 
+    <div class="time-navigator-panel">
+        <div class="time-nav-controls">
+            <select id="navAnio" class="nav-select" onchange="cambiarCicloManual()">
+                <option value="2025">2025</option>
+                <option value="2026" selected>2026</option>
+            </select>
+            <select id="navMesConceptual" class="nav-select" onchange="cambiarCicloManual()" style="color: var(--color-ingresos);">
+                <option value="0">Enero</option>
+                <option value="1">Febrero</option>
+                <option value="2">Marzo</option>
+                <option value="3" selected>Abril</option>
+                <option value="4">Mayo</option>
+                <option value="5">Junio</option>
+                <option value="6">Julio</option>
+                <option value="7">Agosto</option>
+                <option value="8">Septiembre</option>
+                <option value="9">Octubre</option>
+                <option value="10">Noviembre</option>
+                <option value="11">Diciembre</option>
+            </select>
+            <div id="navRangoBadge" class="nav-badge">--/-- al --/--</div>
+        </div>
+        <div class="time-nav-presets">
+            <button class="preset-btn" onclick="setCicloPreset('anterior')" id="btnPresetAnterior">⏮️ ANTERIOR</button>
+            <button class="preset-btn preset-active" onclick="setCicloPreset('actual')" id="btnPresetActual">▶️ ACTUAL</button>
+            <button class="preset-btn" onclick="alert('Módulo de Comparativa en desarrollo (Próxima Fase)')" style="opacity: 0.5;">📊 COMPARAR</button>
+        </div>
+    </div>
+    
     <div class="kpi-row">
         <div class="kpi-card" style="border-top-color: var(--color-ingresos);">
             <h4>Sueldo Mes</h4>
@@ -748,6 +819,89 @@
             }
         });
     }
+    // ==========================================
+    // ⏱️ MOTOR DE NAVEGACIÓN GLOBAL V31.7
+    // ==========================================
+    
+    // Función que traduce el Mes Conceptual (ej. Abril) al Rango Desfasado (30 Mar - 29 Abr)
+    function calcularFechasCiclo(mesConceptual, anio) {
+        // mesConceptual es base 0 (Enero=0, Abril=3)
+        // El ciclo inicia el día 30 del mes ANTERIOR
+        let mesInicio = mesConceptual - 1;
+        let anioInicio = anio;
+        
+        // Si el mes conceptual es Enero (0), el ciclo empieza en Diciembre (-1) del año anterior
+        if (mesInicio < 0) {
+            mesInicio = 11;
+            anioInicio--;
+        }
+        
+        const fechaInicio = new Date(anioInicio, mesInicio, 30);
+        const fechaFin = new Date(anio, mesConceptual, 29);
+        
+        return { inicio: fechaInicio, fin: fechaFin };
+    }
+
+    function cambiarCicloManual() {
+        document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('preset-active'));
+        aplicarCicloAlSistema();
+    }
+
+    function setCicloPreset(tipo) {
+        document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('preset-active'));
+        const mesActual = new Date().getMonth();
+        const anioActual = new Date().getFullYear();
+        
+        let targetMes = mesActual;
+        let targetAnio = anioActual;
+
+        // Lógica para determinar el "Mes Conceptual Actual" basado en si ya pasamos el día 30
+        if (new Date().getDate() >= 30) {
+            targetMes = (mesActual + 1) % 12;
+            if (targetMes === 0) targetAnio++;
+        }
+
+        if (tipo === 'anterior') {
+            document.getElementById('btnPresetAnterior').classList.add('preset-active');
+            targetMes = targetMes - 1;
+            if (targetMes < 0) { targetMes = 11; targetAnio--; }
+        } else if (tipo === 'actual') {
+            document.getElementById('btnPresetActual').classList.add('preset-active');
+        }
+
+        document.getElementById('navMesConceptual').value = targetMes;
+        document.getElementById('navAnio').value = targetAnio;
+        
+        aplicarCicloAlSistema();
+    }
+
+    function aplicarCicloAlSistema() {
+        const mesVal = parseInt(document.getElementById('navMesConceptual').value);
+        const anioVal = parseInt(document.getElementById('navAnio').value);
+        
+        const { inicio, fin } = calcularFechasCiclo(mesVal, anioVal);
+        
+        // Formateamos para el badge superior
+        const formato = { day: '2-digit', month: 'short' };
+        document.getElementById('navRangoBadge').innerText = 
+            `PERIODO: ${inicio.toLocaleDateString('es-CL', formato)} - ${fin.toLocaleDateString('es-CL', formato)}`;
+
+        // Conectamos con el motor existente: Sobrescribimos el valor del input antiguo (o creamos la variable global)
+        const tzoffset = (new Date()).getTimezoneOffset() * 60000;
+        const localISOTime = (new Date(inicio.getTime() - tzoffset)).toISOString().slice(0, 10);
+        
+        // Si aún tienes el inputInicioCiclo en tu HTML, lo actualizamos. Si lo borraste, avísame para ajustar actualizarDashboard.
+        let inputAntiguo = document.getElementById('inputInicioCiclo');
+        if(inputAntiguo) {
+            inputAntiguo.value = localISOTime;
+        }
+        
+        // 🚀 DISPARAMOS LA TELEMETRÍA GLOBAL
+        actualizarDashboard();
+    }
+
+    // Inicializar el navegador al cargar
+    setTimeout(aplicarCicloAlSistema, 1500); // Pequeño delay para asegurar que Firebase cargó
 </script>
 </body>
 </html>
