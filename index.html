@@ -296,43 +296,7 @@
                 <button id="btnGuardar" class="btn-guardar" onclick="agregarMovimiento()">GUARDAR EN BÚNKER</button>
             </div>
 
-            <div class="sidebar-panel">
-                <h4 style="color:var(--color-saldo); margin:0; font-size:0.85rem; text-transform:uppercase; margin-bottom:10px;">REGISTRO MANUAL</h4>
-                <input type="hidden" id="editId">
-                <div class="form-group"><label>Fecha</label><input type="datetime-local" id="inputFecha"></div>
-                <div class="form-group"><label>Flujo</label>
-                    <select id="inputTipo">
-                        <option value="Gasto">Gasto Variable</option>
-                        <option value="Gasto Fijo">Gasto Fijo</option>
-                        <option value="Ingreso">Ingreso Extra</option>
-                        <option value="Por Cobrar">Préstamo (CxC)</option>
-                        <option value="Ahorro">Ahorro / Mov. Neutro</option>
-                    </select>
-                </div>
-                <div class="form-group"><label>Categoría V31.4</label>
-                    <select id="inputCategoria">
-                        <option value="Gastos Fijos (Búnker)">🏠 Gastos Fijos (Búnker)</option>
-                        <option value="Suscripciones">📱 Suscripciones</option>
-                        <option value="Alimentación & Supermercado">🛒 Alimentación & Supermercado</option>
-                        <option value="Dopamina & Antojos">🍔 Dopamina & Antojos</option>
-                        <option value="Ocio & Experiencias">🎸 Ocio & Experiencias</option>
-                        <option value="Transporte & Logística">🚗 Transporte & Log</option>
-                        <option value="Mantenimiento Hardware (Salud)">💊 Salud</option>
-                        <option value="Transferencia Propia / Ahorro">🏦 Transferencia Propia</option>
-                        <option value="Transferencia Recibida">📲 Transferencia Recibida</option>
-                        <option value="Hogar & Búnker">🛠️ Hogar & Búnker</option>
-                        <option value="Red de Apoyo (Familia)">🫂 Red de Apoyo</option>
-                        <option value="Gasto Tarjeta de Crédito">💳 Gasto TC</option>
-                        <option value="Ingreso Adicional">💰 Ingresos</option>
-                        <option value="Sin Categoría">❓ Sin Categoría</option>
-                    </select>
-                </div>
-                <div class="form-group"><label>Descripción</label><input type="text" id="inputNombre"></div>
-                <div class="form-group"><label>Monto</label><input type="text" id="inputMonto" oninput="formatearEntradaNumerica(this)"></div>
-                
-                <button id="btnGuardar" class="btn-guardar" onclick="agregarMovimiento()">GUARDAR EN BÚNKER</button>
-            </div>
-
+           
             <div class="sidebar-panel">
                 <h4 style="margin:0 0 10px 0; font-size:0.85rem; color:var(--text-muted); text-transform:uppercase;">Eficiencia de Gasto</h4>
                 <div class="eficiencia-kpi"><div class="monto">$<span id="txtTotalEvitable">0</span></div><div class="label">Fugas Detectadas</div></div>
