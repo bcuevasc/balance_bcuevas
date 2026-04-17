@@ -12,192 +12,196 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
     
-    <style>
-        /* === TEMA SCADA BYRON === */
-        :root {
-            --bg-body: #0b0e14; --bg-panel: #161b22; --bg-subpanel: #21262d;
-            --text-main: #f0f6fc; --text-muted: #8b949e; --border-color: #30363d;
-            --input-bg: #0d1117; --item-hover: #1c2128;
-            --color-guardar: #238636; --color-ingresos: #1f6feb; --color-gastos: #da3633; 
-            --color-saldo: #3fb950; --color-edit: #d29922; --color-fuga: #ff5252;
-            --color-proyectado: #3f51b5; --color-telegram: #0088cc;
-        }
+    <<style>
+/* === TEMA SCADA BYRON === */
+:root {
+    --bg-body: #0b0e14; --bg-panel: #161b22; --bg-subpanel: #21262d;
+    --text-main: #f0f6fc; --text-muted: #8b949e; --border-color: #30363d;
+    --input-bg: #0d1117; --item-hover: #1c2128;
+    --color-guardar: #238636; --color-ingresos: #1f6feb; --color-gastos: #da3633; 
+    --color-saldo: #3fb950; --color-edit: #d29922; --color-fuga: #ff5252;
+    --color-proyectado: #3f51b5; --color-telegram: #0088cc;
+}
 
-        body.light-theme {
-            --bg-body: #f0f2f5; --bg-panel: #ffffff; --bg-subpanel: #f8f9fa;
-            --text-main: #24292e; --text-muted: #57606a; --border-color: #d0d7de;
-            --input-bg: #ffffff; --item-hover: #e1e4e8;
-        }
+body.light-theme {
+    --bg-body: #f0f2f5; --bg-panel: #ffffff; --bg-subpanel: #f8f9fa;
+    --text-main: #24292e; --text-muted: #57606a; --border-color: #d0d7de;
+    --input-bg: #ffffff; --item-hover: #e1e4e8;
+}
 
-        * { box-sizing: border-box; transition: background-color 0.3s, border-color 0.3s; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
-        
-        /* 🟢 BLOQUEO DE SCROLL GLOBAL: El chasis no se mueve, solo sus componentes internos */
-        body { background-color: var(--bg-body); margin: 0; padding: 0; color: var(--text-main); overflow: hidden; height: 100vh; display: flex; flex-direction: column; }
-        
-        #login-screen { position: fixed; inset: 0; background: #0b0e14; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10000; text-align: center; }
-        .login-box { padding: 40px; background: #161b22; border: 1px solid #30363d; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
-        .btn-google { background: #fff; color: #000; border: none; padding: 12px 24px; border-radius: 6px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 10px; margin-top: 20px; font-size: 1rem; }
+* { box-sizing: border-box; transition: background-color 0.3s, border-color 0.3s; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
 
-        /* 🟢 COMPRESIÓN DE ESPACIOS SUPERIORES */
-        .app-container { display: none; width: 100%; height: 100vh; padding: 8px 12px; flex-direction: column; gap: 8px; margin: 0 auto; max-width: 1920px; }
-        .app-container.active-app { display: flex; }
-        
-        .header-titles { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 4px; margin-bottom: 0; }
-        h2 { color: var(--color-saldo); margin: 0; font-size: 1.2rem; font-weight: 900; text-transform: uppercase; }
-        .cronos { font-family: 'Courier New', Courier, monospace; font-size: 0.85rem; font-weight: 800; color: var(--text-muted); background: var(--bg-panel); padding: 2px 8px; border-radius: 4px; border: 1px solid var(--border-color); }
-        
-        .system-btns { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; justify-content: flex-end; }
-        .btn-sys { background: var(--bg-subpanel); color: var(--text-main); border: 1px solid var(--border-color); padding: 6px 10px; border-radius: 6px; cursor: pointer; font-weight: 800; font-size: 0.7rem; text-transform: uppercase; }
-        .btn-sys:hover { border-color: var(--color-saldo); }
+/* 🟢 BLOQUEO DE SCROLL GLOBAL EN PC */
+body { background-color: var(--bg-body); margin: 0; padding: 0; color: var(--text-main); overflow: hidden; height: 100vh; display: flex; flex-direction: column; }
 
-        .time-navigator-panel {
-            background: var(--bg-panel); border: 1px solid var(--border-color);
-            border-radius: 8px; padding: 8px 15px; margin-bottom: 5px;
-            display: flex; justify-content: space-between; align-items: center;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            border-top: 3px solid var(--color-ingresos);
-        }
-        .time-nav-controls { display: flex; align-items: center; gap: 12px; }
-        .nav-select { background: var(--input-bg); color: var(--text-main); border: 1px solid var(--border-color); padding: 6px 12px; border-radius: 6px; font-weight: 800; text-transform: uppercase; font-size: 0.8rem; outline: none; cursor: pointer; }
-        .nav-select:focus { border-color: var(--color-ingresos); }
-        .nav-badge { font-family: 'Courier New', Courier, monospace; background: rgba(31, 111, 235, 0.1); color: var(--color-ingresos); border: 1px solid rgba(31, 111, 235, 0.3); padding: 4px 10px; border-radius: 4px; font-size: 0.75rem; font-weight: 900; letter-spacing: 0.5px; text-transform: uppercase; }
-        .time-nav-presets { display: flex; gap: 10px; }
-        .preset-btn { background: var(--bg-subpanel); color: var(--text-muted); border: 1px solid var(--border-color); padding: 6px 12px; border-radius: 6px; font-weight: 800; font-size: 0.7rem; cursor: pointer; text-transform: uppercase; transition: all 0.2s; }
-        .preset-btn:hover { border-color: var(--color-ingresos); color: var(--text-main); }
-        .preset-active { background: rgba(31, 111, 235, 0.15); border-color: var(--color-ingresos); color: var(--color-ingresos); }
-        
-        /* 🟢 APLANADO DE KPIs */
-        .kpi-row { display: grid; grid-template-columns: repeat(8, 1fr); gap: 8px; }
-        .kpi-card { padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-panel); border-top: 4px solid var(--border-color); }
-        .kpi-card h4 { margin: 0 0 2px 0; font-size: 0.6rem; text-transform: uppercase; color: var(--text-muted); font-weight: 800; }
-        .kpi-card .value { margin: 0; font-size: 1.15rem; font-weight: 900; color: var(--text-main); display: flex; align-items: center; }
-        .kpi-progress-container { width: 100%; height: 4px; background: rgba(255,255,255,0.05); border-radius: 2px; margin-top: 4px; overflow: hidden; }
-        .kpi-progress-fill { height: 100%; width: 0%; transition: width 0.6s ease; }
-        .kpi-saldo { border: none; background: var(--color-saldo); color: #000; box-shadow: 0 4px 15px rgba(63,185,80,0.2); }
-        .kpi-saldo h4, .kpi-saldo .value { color: #000 !important; font-weight: 900; }
-        .kpi-proyectado { border: none; background: var(--color-proyectado); color: #fff; }
-        .kpi-proyectado h4, .kpi-proyectado .value { color: #fff !important; font-weight: 900; }
+#login-screen { position: fixed; inset: 0; background: #0b0e14; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10000; text-align: center; }
+.login-box { padding: 40px; background: #161b22; border: 1px solid #30363d; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
+.btn-google { background: #fff; color: #000; border: none; padding: 12px 24px; border-radius: 6px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 10px; margin-top: 20px; font-size: 1rem; }
 
-        .master-layout { display: grid; grid-template-columns: 1fr 340px; gap: 12px; margin-top: 5px; flex-grow: 1; min-height: 0; }
-        
-        .left-col { 
-            display: flex; flex-direction: column; gap: 10px; 
-            min-height: 0; height: 100%; overflow: hidden; /* Evita que el contenido desborde la pantalla */
-        }
-        .right-col { display: flex; flex-direction: column; gap: 10px; height: 100%; }
+/* 🟢 COMPRESIÓN DE ESPACIOS SUPERIORES */
+.app-container { display: none; width: 100%; height: 100vh; padding: 8px 12px; flex-direction: column; gap: 8px; margin: 0 auto; max-width: 1920px; }
+.app-container.active-app { display: flex; }
 
-        /* 1. EL ENVOLTORIO QUE SE EXPANDE */
-        .grid-main-wrapper { 
-            background: var(--bg-panel); border-radius: 8px; border: 1px solid var(--border-color); padding: 10px; 
-            display: flex; flex-direction: column; 
-            flex: 1; /* Se expande pero respeta a los vecinos */
-            min-height: 0; /* CRÍTICO: Obliga al navegador a activar el scroll interno */
-        }
-        
-        /* 2. TU BARRA DE BÚSQUEDA (MANTENER INTACTA) */
-        .telemetry-header { 
-            display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; gap: 10px; 
-        }
-        
-        /* 3. LA TABLA TIPO RESORTE */
-        .grid-container { 
-            flex: 1; min-height: 0; overflow-x: auto; overflow-y: auto; 
-            background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 6px; 
-        }
-        
-        .data-grid { width: 100%; border-collapse: collapse; text-align: left; }
-        .data-grid th { position: sticky; top: 0; background: var(--bg-panel); padding: 6px 8px; font-size: 0.65rem; color: var(--color-ingresos); text-transform: uppercase; z-index: 10; border-bottom: 2px solid var(--border-color); white-space: nowrap; cursor: pointer; user-select: none; letter-spacing: 0.5px;}
-        .data-grid td { padding: 4px 8px; font-size: 0.75rem; border-bottom: 1px solid var(--border-color); white-space: nowrap; vertical-align: middle; }
-        .data-grid tbody tr:nth-child(even) { background-color: var(--bg-subpanel); }
-        .data-grid tbody tr:hover { background-color: var(--item-hover); }
+.header-titles { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 4px; margin-bottom: 0; }
+h2 { color: var(--color-saldo); margin: 0; font-size: 1.2rem; font-weight: 900; text-transform: uppercase; }
+.cronos { font-family: 'Courier New', Courier, monospace; font-size: 0.85rem; font-weight: 800; color: var(--text-muted); background: var(--bg-panel); padding: 2px 8px; border-radius: 4px; border: 1px solid var(--border-color); }
 
-        .col-monto { text-align: right; font-family: 'Courier New', Courier, monospace; font-weight: 700; font-size: 0.8rem; letter-spacing: -0.5px; }
-        .col-hora { font-size: 0.6rem; color: var(--text-muted); font-weight: 700; display: block; margin-top: 1px; }
-        .cat-badge { font-size: 0.6rem; padding: 2px 6px; border-radius: 4px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); display: inline-block; margin-top: 2px; color: var(--text-muted); font-weight: 800; }
-        
-        .col-check { width: 40px; text-align: center; cursor: default;}
-        .row-check { cursor: pointer; transform: scale(1.1); accent-color: var(--color-edit); margin: 0; }
-        
-        .status-badge { padding: 2px 6px; border-radius: 4px; font-size: 0.6rem; font-weight: 800; border: 1px solid; }
-        .status-ok { color: var(--color-saldo); border-color: rgba(63,185,80,0.3); background: rgba(63,185,80,0.1); }
-        .status-warn { color: var(--color-edit); border-color: rgba(210,153,34,0.3); background: rgba(210,153,34,0.1); }
-        
-        .impact-icon { font-weight: 900; margin-right: 5px; }
-        .impact-pos { color: var(--color-ingresos); }
-        .impact-neg { color: var(--color-fuga); }
-        .impact-neu { color: #ff9800; }
+.system-btns { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; justify-content: flex-end; }
+.btn-sys { background: var(--bg-subpanel); color: var(--text-main); border: 1px solid var(--border-color); padding: 6px 10px; border-radius: 6px; cursor: pointer; font-weight: 800; font-size: 0.7rem; text-transform: uppercase; }
+.btn-sys:hover { border-color: var(--color-saldo); }
 
-        /* 🟢 APLANADO ESTRATÉGICO DE GRÁFICOS (25% del alto de pantalla) */
-        #charts-grid-container { 
-            display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; 
-            flex-shrink: 0; /* CRÍTICO: Prohíbe que la tabla lo aplaste o lo empuje fuera */
-        }
+.time-navigator-panel {
+    background: var(--bg-panel); border: 1px solid var(--border-color);
+    border-radius: 8px; padding: 8px 15px; margin-bottom: 5px;
+    display: flex; justify-content: space-between; align-items: center;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    border-top: 3px solid var(--color-ingresos);
+}
+.time-nav-controls { display: flex; align-items: center; gap: 12px; }
+.nav-select { background: var(--input-bg); color: var(--text-main); border: 1px solid var(--border-color); padding: 6px 12px; border-radius: 6px; font-weight: 800; text-transform: uppercase; font-size: 0.8rem; outline: none; cursor: pointer; }
+.nav-select:focus { border-color: var(--color-ingresos); }
+.nav-badge { font-family: 'Courier New', Courier, monospace; background: rgba(31, 111, 235, 0.1); color: var(--color-ingresos); border: 1px solid rgba(31, 111, 235, 0.3); padding: 4px 10px; border-radius: 4px; font-size: 0.75rem; font-weight: 900; letter-spacing: 0.5px; text-transform: uppercase; }
+.time-nav-presets { display: flex; gap: 10px; }
+.preset-btn { background: var(--bg-subpanel); color: var(--text-muted); border: 1px solid var(--border-color); padding: 6px 12px; border-radius: 6px; font-weight: 800; font-size: 0.7rem; cursor: pointer; text-transform: uppercase; transition: all 0.2s; }
+.preset-btn:hover { border-color: var(--color-ingresos); color: var(--text-main); }
+.preset-active { background: rgba(31, 111, 235, 0.15); border-color: var(--color-ingresos); color: var(--color-ingresos); }
 
-        /* 5. LAS CAJAS DE GRÁFICOS: Altura blindada */
-        .chart-box { 
-            background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; 
-            height: 25vh; /* Ocupan exactamente el 25% de la pantalla, inamovibles */
-            min-height: 180px; display: flex; flex-direction: column; 
-        }
-        .chart-box h5 { margin: 0 0 5px 0; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; text-align: center; font-weight: 800; }
-        .canvas-container { position: relative; flex-grow: 1; min-height: 0; }
+/* 🟢 APLANADO DE KPIs */
+.kpi-row { display: grid; grid-template-columns: repeat(8, 1fr); gap: 8px; }
+.kpi-card { padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-panel); border-top: 4px solid var(--border-color); }
+.kpi-card h4 { margin: 0 0 2px 0; font-size: 0.6rem; text-transform: uppercase; color: var(--text-muted); font-weight: 800; }
+.kpi-card .value { margin: 0; font-size: 1.15rem; font-weight: 900; color: var(--text-main); display: flex; align-items: center; }
+.kpi-progress-container { width: 100%; height: 4px; background: rgba(255,255,255,0.05); border-radius: 2px; margin-top: 4px; overflow: hidden; }
+.kpi-progress-fill { height: 100%; width: 0%; transition: width 0.6s ease; }
+.kpi-saldo { border: none; background: var(--color-saldo); color: #000; box-shadow: 0 4px 15px rgba(63,185,80,0.2); }
+.kpi-saldo h4, .kpi-saldo .value { color: #000 !important; font-weight: 900; }
+.kpi-proyectado { border: none; background: var(--color-proyectado); color: #fff; }
+.kpi-proyectado h4, .kpi-proyectado .value { color: #fff !important; font-weight: 900; }
 
-        /* 🟢 COMPRESIÓN DEL FORMULARIO LATERAL */
-        .sidebar-panel { background: var(--bg-panel); border-radius: 8px; border: 1px solid var(--border-color); padding: 12px; display: flex; flex-direction: column; }
-        .form-group { margin-bottom: 8px; width: 100%; position: relative; }
-        .form-group label { display: block; font-size: 0.6rem; font-weight: 800; color: var(--text-muted); margin-bottom: 2px; text-transform: uppercase; }
-        
-        .custom-select, .form-group input, .form-group select { width: 100%; border: 1px solid var(--border-color); border-radius: 4px; background-color: var(--input-bg); color: var(--text-main); outline: none; padding: 6px 8px; font-size: 0.8rem; height: 32px; }
-        input[type="date"]::-webkit-calendar-picker-indicator, input[type="datetime-local"]::-webkit-calendar-picker-indicator { filter: invert(1); cursor: pointer; }
+.master-layout { display: grid; grid-template-columns: 1fr 340px; gap: 12px; margin-top: 5px; flex-grow: 1; min-height: 0; }
 
-        .btn-guardar { width: 100%; background-color: var(--color-guardar); color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 800; text-transform: uppercase; padding: 8px; font-size: 0.8rem; margin-top: 5px; }
+/* 1. LA COLUMNA IZQUIERDA */
+.left-col { 
+    display: flex; flex-direction: column; gap: 10px; 
+    min-height: 0; height: 100%; overflow: hidden; 
+}
 
-        .eficiencia-kpi { text-align: center; margin-bottom: 6px; flex-shrink: 0; }
-        .eficiencia-kpi .monto { font-size: 1.6rem; font-weight: 900; color: var(--text-main); line-height: 1.1; }
-        .eficiencia-kpi .label { font-size: 0.6rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; }
-        .bar-container { width: 100%; background: var(--bg-body); border-radius: 4px; height: 10px; overflow: hidden; border: 1px solid rgba(0,0,0,0.2); }
-        .bar-fill { height: 100%; width: 0%; transition: all 0.5s ease; }
+/* 2. EL ENVOLTORIO DE LA TABLA */
+.grid-main-wrapper { 
+    background: var(--bg-panel); border-radius: 8px; border: 1px solid var(--border-color); padding: 10px; 
+    display: flex; flex-direction: column; 
+    flex: 1; min-height: 0; 
+}
 
-        .floating-mass-actions { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #1c2128; border: 1px solid var(--color-edit); border-radius: 50px; padding: 8px 20px; display: flex; align-items: center; justify-content: space-between; gap: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); z-index: 9999; }
+.telemetry-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; gap: 10px; }
 
-        /* 🟢 TRUNCADO DE TEXTO PARA DESCRIPCIONES LARGAS */
-        .col-desc {
-            max-width: 150px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            display: inline-block; /* Necesario para que el truncate funcione en celdas */
-            vertical-align: middle;
-        }
+/* 3. LA TABLA TIPO RESORTE */
+.grid-container { 
+    flex: 1; min-height: 0; overflow-x: auto; overflow-y: auto; 
+    background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 6px; 
+}
 
-        @media (max-width: 1024px) {
-            /* ================================================= */
-            /* 📱 PARCHE UX MÓVIL: ERGONOMÍA TÁCTIL Y MULTILÍNEA */
-            /* ================================================= */
-            
-            /* 1. Permitimos que el texto largo baje a otra línea */
-            .col-desc { 
-                max-width: 130px; /* Le damos más ancho disponible */
-                white-space: normal !important; /* Rompe el límite de 1 sola línea */
-                overflow: visible;
-                line-height: 1.2; /* Interlineado para que no se pegue el texto */
-                padding-top: 4px;
-            }
+.data-grid { width: 100%; border-collapse: collapse; text-align: left; }
+.data-grid th { position: sticky; top: 0; background: var(--bg-panel); padding: 6px 8px; font-size: 0.65rem; color: var(--color-ingresos); text-transform: uppercase; z-index: 10; border-bottom: 2px solid var(--border-color); white-space: nowrap; cursor: pointer; user-select: none; letter-spacing: 0.5px;}
+.data-grid td { padding: 4px 8px; font-size: 0.75rem; border-bottom: 1px solid var(--border-color); white-space: nowrap; vertical-align: middle; }
+.data-grid tbody tr:nth-child(even) { background-color: var(--bg-subpanel); }
+.data-grid tbody tr:hover { background-color: var(--item-hover); }
 
-            /* 2. Filas más altas para precisión de pulgar (Fat Finger Fix) */
-            .data-grid td { 
-                padding: 10px 5px !important; /* El doble de espacio vertical que en PC */
-                vertical-align: middle;
-            }
+.col-monto { text-align: right; font-family: 'Courier New', Courier, monospace; font-weight: 700; font-size: 0.8rem; letter-spacing: -0.5px; }
+.col-hora { font-size: 0.6rem; color: var(--text-muted); font-weight: 700; display: block; margin-top: 1px; }
+.cat-badge { font-size: 0.6rem; padding: 2px 6px; border-radius: 4px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); display: inline-block; margin-top: 2px; color: var(--text-muted); font-weight: 800; }
 
-            /* 3. Botón de edición convertido en botón táctil real */
-            .data-grid .btn-sys {
-                padding: 8px 10px !important;
-                font-size: 1rem !important; /* Lápiz más grande */
-                border-radius: 8px;
-            }
-        }
-    </style>
+.col-check { width: 40px; text-align: center; cursor: default;}
+.row-check { cursor: pointer; transform: scale(1.1); accent-color: var(--color-edit); margin: 0; }
+
+.status-badge { padding: 2px 6px; border-radius: 4px; font-size: 0.6rem; font-weight: 800; border: 1px solid; }
+.status-ok { color: var(--color-saldo); border-color: rgba(63,185,80,0.3); background: rgba(63,185,80,0.1); }
+.status-warn { color: var(--color-edit); border-color: rgba(210,153,34,0.3); background: rgba(210,153,34,0.1); }
+
+.impact-icon { font-weight: 900; margin-right: 5px; }
+.impact-pos { color: var(--color-ingresos); }
+.impact-neg { color: var(--color-fuga); }
+.impact-neu { color: #ff9800; }
+
+/* 4. EL ENVOLTORIO DE GRÁFICOS: Intocable */
+#charts-grid-container { 
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; 
+    flex-shrink: 0; 
+}
+
+/* 5. LAS CAJAS DE GRÁFICOS */
+.chart-box { 
+    background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; 
+    height: 25vh; min-height: 180px; display: flex; flex-direction: column; 
+}
+.chart-box h5 { margin: 0 0 5px 0; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; text-align: center; font-weight: 800; }
+.canvas-container { position: relative; flex-grow: 1; min-height: 0; }
+
+/* 🟢 COLUMNA DERECHA (FORMULARIO Y EFICIENCIA) */
+.right-col { display: flex; flex-direction: column; gap: 10px; height: 100%; }
+.sidebar-panel { background: var(--bg-panel); border-radius: 8px; border: 1px solid var(--border-color); padding: 12px; display: flex; flex-direction: column; }
+.form-group { margin-bottom: 8px; width: 100%; position: relative; }
+.form-group label { display: block; font-size: 0.6rem; font-weight: 800; color: var(--text-muted); margin-bottom: 2px; text-transform: uppercase; }
+
+.custom-select, .form-group input, .form-group select { width: 100%; border: 1px solid var(--border-color); border-radius: 4px; background-color: var(--input-bg); color: var(--text-main); outline: none; padding: 6px 8px; font-size: 0.8rem; height: 32px; }
+input[type="date"]::-webkit-calendar-picker-indicator, input[type="datetime-local"]::-webkit-calendar-picker-indicator { filter: invert(1); cursor: pointer; }
+
+.btn-guardar { width: 100%; background-color: var(--color-guardar); color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 800; text-transform: uppercase; padding: 8px; font-size: 0.8rem; margin-top: 5px; }
+
+.eficiencia-kpi { text-align: center; margin-bottom: 6px; flex-shrink: 0; }
+.eficiencia-kpi .monto { font-size: 1.6rem; font-weight: 900; color: var(--text-main); line-height: 1.1; }
+.eficiencia-kpi .label { font-size: 0.6rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; }
+.bar-container { width: 100%; background: var(--bg-body); border-radius: 4px; height: 10px; overflow: hidden; border: 1px solid rgba(0,0,0,0.2); }
+.bar-fill { height: 100%; width: 0%; transition: all 0.5s ease; }
+
+.floating-mass-actions { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #1c2128; border: 1px solid var(--color-edit); border-radius: 50px; padding: 8px 20px; display: flex; align-items: center; justify-content: space-between; gap: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); z-index: 9999; }
+
+/* ==================================================================== */
+/* 📱 MEDIA QUERY: RESPONSIVE Y UX MÓVIL (IPHONE/ANDROID)              */
+/* ==================================================================== */
+@media (max-width: 1024px) {
+    /* Desbloqueamos el scroll para celular */
+    body { overflow-y: auto !important; height: auto !important; display: block; } 
+    .app-container { height: auto !important; padding: 8px; display: flex; }
+    
+    .header-titles { flex-direction: column; align-items: flex-start; gap: 5px; }
+    .kpi-row { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+    
+    .master-layout { grid-template-columns: 1fr; display: flex; flex-direction: column; }
+    .left-col { height: auto; overflow: visible; }
+    
+    #charts-grid-container { grid-template-columns: 1fr; display: flex; flex-direction: column; gap: 10px; }
+    .chart-box { height: 220px; min-height: 220px; }
+    
+    .hide-mobile { display: none !important; }
+    
+    .grid-container { height: auto; max-height: 500px; min-height: 250px; overflow-y: auto; }
+    
+    .time-navigator-panel { flex-direction: column; gap: 12px; align-items: stretch; }
+    .time-nav-controls, .time-nav-presets { justify-content: space-between; }
+    .preset-btn { flex: 1; text-align: center; }
+    .nav-badge { display: none; }
+
+    /* --- PARCHE UX MÓVIL: ERGONOMÍA TÁCTIL --- */
+    
+    /* 1. Multilínea para que se lea la descripción completa */
+    .data-grid td { 
+        white-space: normal !important; 
+        word-wrap: break-word; 
+        padding: 12px 6px !important; /* Touch targets más grandes (Fat Finger Fix) */
+    }
+    
+    /* 2. Lápiz de edición tipo botón táctil gigante */
+    .data-grid .btn-sys {
+        padding: 10px 12px !important;
+        font-size: 1.2rem !important;
+        border-radius: 8px;
+    }
+    
+    /* 3. Ocultar la palabra EDIT, solo dejamos el emoji */
+    .btn-edit-text { display: none !important; }
+}
+</style>
 </head>
 <body>
 
