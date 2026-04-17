@@ -12,7 +12,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
     
-    <<style>
+    <style>
 /* === TEMA SCADA BYRON === */
 :root {
     --bg-body: #0b0e14; --bg-panel: #161b22; --bg-subpanel: #21262d;
@@ -87,23 +87,34 @@ h2 { color: var(--color-saldo); margin: 0; font-size: 1.2rem; font-weight: 900; 
 }
 
 /* 2. EL ENVOLTORIO DE LA TABLA */
-.grid-main-wrapper { 
-    background: var(--bg-panel); border-radius: 8px; border: 1px solid var(--border-color); padding: 10px; 
-    display: flex; flex-direction: column; 
-    flex: 1; min-height: 0; 
-}
-
-.telemetry-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; gap: 10px; }
-
-/* 3. LA TABLA TIPO RESORTE */
-.grid-container { 
-    flex: 1; min-height: 0; overflow-x: auto; overflow-y: auto; 
-    background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 6px; 
-}
+/* 1. Quitamos el aire al contenedor principal para que la tabla toque los bordes */
+    .grid-main-wrapper { 
+        padding: 0 !important; 
+        overflow: hidden; 
+    }
+    
+    /* 2. Le devolvemos el aire solo a la barra del buscador para que no se asfixie */
+    .telemetry-header { 
+        padding: 12px 12px 4px 12px; 
+        margin-bottom: 0; 
+    }
+    
+    /* 3. Eliminamos el doble borde de la tabla y le damos peso */
+    .grid-container { 
+        border: none !important; 
+        border-radius: 0 !important; 
+        height: 50vh !important; /* Altura firme, sin titubeos */
+        min-height: 300px !important;
+        max-height: none !important;
+    }
 
 .data-grid { width: 100%; border-collapse: collapse; text-align: left; }
 .data-grid th { position: sticky; top: 0; background: var(--bg-panel); padding: 6px 8px; font-size: 0.65rem; color: var(--color-ingresos); text-transform: uppercase; z-index: 10; border-bottom: 2px solid var(--border-color); white-space: nowrap; cursor: pointer; user-select: none; letter-spacing: 0.5px;}
-.data-grid td { padding: 4px 8px; font-size: 0.75rem; border-bottom: 1px solid var(--border-color); white-space: nowrap; vertical-align: middle; }
+/* 🟢 EMPUJE TÁCTICO: Separar botón de edición del scrollbar */
+.data-grid th:last-child, 
+.data-grid td:last-child {
+    padding-right: 24px !important; 
+}
 .data-grid tbody tr:nth-child(even) { background-color: var(--bg-subpanel); }
 .data-grid tbody tr:hover { background-color: var(--item-hover); }
 
@@ -185,7 +196,7 @@ input[type="date"]::-webkit-calendar-picker-indicator, input[type="datetime-loca
     /* --- PARCHE UX MÓVIL: ERGONOMÍA TÁCTIL --- */
     
     /* 1. Multilínea para que se lea la descripción completa */
-    .data-grid td { 
+     { 
         white-space: normal !important; 
         word-wrap: break-word; 
         padding: 12px 6px !important; /* Touch targets más grandes (Fat Finger Fix) */
