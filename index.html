@@ -98,7 +98,10 @@
         .kpi-proyectado h4, .kpi-proyectado .value { color: #fff !important; font-weight: 900; }
 
         .master-layout { display: grid; grid-template-columns: 1fr 340px; gap: 15px; margin-top: 10px; }
-        .left-col, .right-col { display: flex; flex-direction: column; gap: 15px; }
+        
+        /* 🟢 V31.8: BLINDAJE DE COLUMNA IZQUIERDA */
+        .left-col { display: flex; flex-direction: column; gap: 15px; min-width: 0; }
+        .right-col { display: flex; flex-direction: column; gap: 15px; }
 
         .grid-main-wrapper { background: var(--bg-panel); border-radius: 8px; border: 1px solid var(--border-color); padding: 15px; display: flex; flex-direction: column; }
         
@@ -106,7 +109,10 @@
         .lcd-badge { background: #0d1117; border: 1px solid #30363d; border-left: 4px solid var(--color-ingresos); padding: 6px 12px; border-radius: 4px; display: flex; align-items: center; gap: 8px; }
         .lcd-badge .label { font-size: 0.6rem; color: var(--text-muted); font-weight: 800; text-transform: uppercase; }
         .lcd-badge .date-range { font-family: 'Courier New', Courier, monospace; font-size: 0.85rem; color: var(--color-ingresos); font-weight: 900; letter-spacing: 0.5px; }
-        .grid-container { height: 230px; overflow-y: auto; background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 6px; }
+        
+        /* 🟢 V31.8: BLINDAJE DE TABLA CON OVERFLOW-X */
+        .grid-container { height: 230px; overflow-x: auto; overflow-y: auto; background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 6px; }
+        
         .data-grid { width: 100%; border-collapse: collapse; text-align: left; }
         .data-grid th { position: sticky; top: 0; background: var(--bg-subpanel); padding: 10px; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; z-index: 10; border-bottom: 2px solid var(--border-color); white-space: nowrap; cursor: pointer; user-select: none;}
         .data-grid td { padding: 8px 10px; font-size: 0.85rem; border-bottom: 1px solid var(--border-color); white-space: nowrap; vertical-align: middle; }
@@ -235,7 +241,7 @@
                 <button class="btn-sys" onclick="toggleTheme()">☀️/🌙</button>
                 <button class="btn-sys" onclick="triggerSync()">🔄 SYNC</button>
                 <button class="btn-sys" onclick="exportarCSV()">💾 BKUP</button>
-                <button class="btn-sys btn-telegram">🚀 TG</button>`
+                <button class="btn-sys btn-telegram">🚀 TG</button>
                 <button class="btn-sys" onclick="logout()" style="color:var(--color-fuga);">🚪 SALIR</button>
             </div>
 
@@ -477,11 +483,12 @@
         const sueldo = parseInt(document.getElementById('inputSueldo').value.replace(/\./g,'')) || 0;
         const b = document.getElementById('inputBuscador').value.toLowerCase();
         
-        const valT0 = document.getElementById('inputInicioCiclo').value;
-        let T0 = valT0 ? new Date(valT0 + "T00:00:00") : new Date(new Date().getFullYear(), new Date().getMonth(), 1);
-        const TFinal = new Date(T0); TFinal.setMonth(TFinal.getMonth() + 1); 
+        // 🟢 MOTOR V31.8: Bypass del input antiguo, leemos directo del Navegador Global
+        const mesVal = parseInt(document.getElementById('navMesConceptual').value);
+        const anioVal = parseInt(document.getElementById('navAnio').value);
+        const { T0, TFinal, fechaFinVisual } = calcularFechasCiclo(mesVal, anioVal);
         
-        document.getElementById('txtPeriodoBatch').innerText = `${T0.toLocaleDateString('es-CL', {day:'2-digit', month:'2-digit'})} al ${new Date(TFinal.getTime()-86400000).toLocaleDateString('es-CL', {day:'2-digit', month:'2-digit'})}`;
+        document.getElementById('txtPeriodoBatch').innerText = `${T0.toLocaleDateString('es-CL', {day:'2-digit', month:'2-digit'})} al ${fechaFinVisual.toLocaleDateString('es-CL', {day:'2-digit', month:'2-digit'})}`;
 
         let dataMes = listaMovimientos.filter(x => { let d = new Date(x.fechaISO); return d >= T0 && d < TFinal; });
         
@@ -817,19 +824,25 @@
     // ⏱️ MOTOR DE NAVEGACIÓN GLOBAL V31.7
     // ==========================================
     
+    // ==========================================
+    // ⏱️ MOTOR DE NAVEGACIÓN GLOBAL V31.8 (FIX FEBRERO)
+    // ==========================================
+    
     function calcularFechasCiclo(mesConceptual, anio) {
         let mesInicio = mesConceptual - 1;
         let anioInicio = anio;
+        if (mesInicio < 0) { mesInicio = 11; anioInicio--; }
         
-        if (mesInicio < 0) {
-            mesInicio = 11;
-            anioInicio--;
-        }
+        // 🟢 Lógica Anti-Febrero: Si pedimos el día 30 y el mes no da (ej. Feb), anclamos al último día real del mes.
+        let T0 = new Date(anioInicio, mesInicio, 30);
+        if (T0.getMonth() !== mesInicio) T0 = new Date(anioInicio, mesInicio + 1, 0); 
         
-        const fechaInicio = new Date(anioInicio, mesInicio, 30);
-        const fechaFin = new Date(anio, mesConceptual, 29);
-        
-        return { inicio: fechaInicio, fin: fechaFin };
+        let TFinal = new Date(anio, mesConceptual, 30);
+        if (TFinal.getMonth() !== mesConceptual) TFinal = new Date(anio, mesConceptual + 1, 0);
+
+        let fechaFinVisual = new Date(TFinal.getTime() - 86400000); // 1 día menos para la vista
+
+        return { T0, TFinal, fechaFinVisual };
     }
 
     function cambiarCicloManual() {
@@ -867,19 +880,12 @@
     function aplicarCicloAlSistema() {
         const mesVal = parseInt(document.getElementById('navMesConceptual').value);
         const anioVal = parseInt(document.getElementById('navAnio').value);
-        
-        const { inicio, fin } = calcularFechasCiclo(mesVal, anioVal);
+        const { T0, fechaFinVisual } = calcularFechasCiclo(mesVal, anioVal);
         
         const formato = { day: '2-digit', month: 'short' };
         document.getElementById('navRangoBadge').innerText = 
-            `PERIODO: ${inicio.toLocaleDateString('es-CL', formato)} - ${fin.toLocaleDateString('es-CL', formato)}`;
+            `PERIODO: ${T0.toLocaleDateString('es-CL', formato).toUpperCase()} - ${fechaFinVisual.toLocaleDateString('es-CL', formato).toUpperCase()}`;
 
-        const tzoffset = (new Date()).getTimezoneOffset() * 60000;
-        const localISOTime = (new Date(inicio.getTime() - tzoffset)).toISOString().slice(0, 10);
-        
-        let inputAntiguo = document.getElementById('inputInicioCiclo');
-        if(inputAntiguo) { inputAntiguo.value = localISOTime; }
-        
         actualizarDashboard();
     }
 </script>
