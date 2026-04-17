@@ -300,12 +300,9 @@
     <div class="master-layout">
         <div class="left-col">
             <div class="grid-main-wrapper">
-                <div class="telemetry-header">
-                    <div class="lcd-badge">
-                        <span class="label">Ciclo Activo:</span>
-                        <span id="txtPeriodoBatch" class="date-range">--/--/-- al --/--/--</span>
-                    </div>
-                    <input type="text" id="inputBuscador" placeholder="🔍 Filtrar tabla..." oninput="actualizarDashboard()" style="width:250px; background:var(--input-bg); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px; padding:6px 12px; outline:none; font-size:0.8rem;">
+                <div class="telemetry-header" style="margin-bottom: 10px;">
+                    <input type="text" id="inputBuscador" placeholder="🔍 Filtrar movimientos en la tabla..." oninput="actualizarDashboard()" 
+                           style="width: 100%; background: var(--input-bg); color: var(--text-main); border: 1px solid var(--border-color); border-radius: 6px; padding: 10px 15px; outline: none; font-size: 0.85rem; transition: border-color 0.2s;">
                 </div>
                 <div class="grid-container">
                     <table class="data-grid">
