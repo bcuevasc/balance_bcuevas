@@ -165,28 +165,33 @@
     </div>
 
     <div class="kpi-row">
-        <div class="kpi-card" style="border-top-color: var(--color-edit);">
+        <div class="kpi-card" style="border-top-color: var(--color-ingresos);">
             <h4>Sueldo Mes</h4>
             <div class="value">$<input type="text" id="inputSueldo" value="2.382.505" oninput="formatearEntradaNumerica(this); actualizarDashboard();" style="background:transparent; border:none; color:inherit; font-weight:900; width:120px; font-size:1.3rem; outline:none;"></div>
         </div>
-        <div class="kpi-card" style="border-top-color: #e91e63;">
+        
+        <div class="kpi-card" style="border-top-color: var(--color-ingresos);">
+            <h4>Ingresos Extra</h4>
+            <div class="value">$<span id="txtTotalIngresos">0</span></div>
+        </div>
+
+        <div class="kpi-card" style="border-top-color: var(--color-fuga);">
             <h4>Gastos Fijos</h4>
             <div class="value">$<span id="txtTotalFijos">0</span></div>
-            <div class="kpi-progress-container"><div id="barFijos" class="kpi-progress-fill" style="background:#e91e63;"></div></div>
+            <div class="kpi-progress-container"><div id="barFijos" class="kpi-progress-fill" style="background:var(--color-fuga);"></div></div>
         </div>
+
         <div class="kpi-card" style="border-top-color: #ff9800;">
             <h4>Gastos Variables</h4>
             <div class="value">$<span id="txtTotalOtros">0</span></div>
             <div class="kpi-progress-container"><div id="barOtros" class="kpi-progress-fill" style="background:#ff9800;"></div></div>
         </div>
-        <div class="kpi-card" style="border-top-color: var(--color-ingresos);">
-            <h4>Ingresos Extra</h4>
-            <div class="value">$<span id="txtTotalIngresos">0</span></div>
-        </div>
-        <div class="kpi-card" style="border-top-color: #00bcd4;">
+
+        <div class="kpi-card" style="border-top-color: #8b949e;">
             <h4>CxC (Préstamos)</h4>
             <div class="value">$<span id="txtCxC">0</span></div>
         </div>
+
         <div class="kpi-card kpi-saldo" id="cardBalanceReal">
             <div style="display:flex; justify-content:space-between; align-items:flex-start;">
                 <h4>Balance Real</h4>
@@ -194,10 +199,12 @@
             </div>
             <div class="value">$<span id="txtSaldo">0</span></div>
         </div>
+
         <div class="kpi-card kpi-proyectado" id="cardProyectado">
             <h4>Saldo Proyectado</h4>
             <div class="value">$<span id="txtProyectado">0</span></div>
         </div>
+
         <div class="kpi-card" style="border-top-color: #a371f7;">
             <div style="display:flex; justify-content:space-between; align-items:flex-start;">
                 <h4>Proyección Cierre</h4>
@@ -206,7 +213,6 @@
             <div class="value">$<span id="txtProyeccionCierre">0</span></div>
         </div>
     </div>
-
     <div class="master-layout">
         <div class="left-col">
             <div class="grid-main-wrapper">
@@ -253,6 +259,16 @@
 
         <div class="right-col">
             <div class="sidebar-panel">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+                    <label style="font-size:0.65rem; color:var(--text-muted); font-weight:800; text-transform:uppercase;">Inicio de Ciclo (T0)</label>
+                    <button class="btn-sys" style="padding: 4px 8px; border-color: var(--color-fuga); color: var(--color-fuga); background: rgba(255, 82, 82, 0.05);">🧹 LIMPIAR</button>
+                </div>
+                <div class="form-group" style="margin-bottom:0;">
+                    <input type="date" id="inputInicioCiclo" class="custom-select" value="2026-03-30" onchange="actualizarDashboard()">
+                </div>
+            </div>
+
+            <div class="sidebar-panel">
                 <h4 style="color:var(--color-saldo); margin:0; font-size:0.85rem; text-transform:uppercase; margin-bottom:10px;">REGISTRO MANUAL</h4>
                 <input type="hidden" id="editId">
                 
@@ -295,8 +311,6 @@
                 
                 <button id="btnGuardar" class="btn-guardar" onclick="agregarMovimiento()">GUARDAR EN BÚNKER</button>
             </div>
-
-           
             <div class="sidebar-panel">
                 <h4 style="margin:0 0 10px 0; font-size:0.85rem; color:var(--text-muted); text-transform:uppercase;">Eficiencia de Gasto</h4>
                 <div class="eficiencia-kpi"><div class="monto">$<span id="txtTotalEvitable">0</span></div><div class="label">Fugas Detectadas</div></div>
