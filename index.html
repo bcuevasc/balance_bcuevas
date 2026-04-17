@@ -456,14 +456,28 @@
 
         document.getElementById('barFijos').style.width = Math.min((tF / (sueldo || 1)) * 100, 100) + "%";
         document.getElementById('barOtros').style.width = Math.min((tO / (sueldo || 1)) * 100, 100) + "%";
-        // 🟢 Actualización de Barras y Porcentaje de Fugas
+        
+        // 🟢 Actualización de Barras y Lógica de Semáforo de Fugas
         document.getElementById('txtTotalEvitable').innerText = tEvitable.toLocaleString('es-CL');
         const pctFugas = sueldo > 0 ? ((tEvitable / sueldo) * 100).toFixed(1) : 0;
-        document.getElementById('txtPorcentajeFugas').innerText = pctFugas + '%';
-        document.getElementById('barEvitable').style.width = Math.min(pctFugas, 100) + "%";
-        document.getElementById('barEvitable').style.backgroundColor = "var(--color-fuga)";
-        renderizarTabla(sueldo, b);
-        dibujarGraficos(sueldo, [...dataMes].sort((x,y) => x.fechaISO < y.fechaISO ? -1 : 1), gCat, diasCiclo, T0);
+        
+        const txtPctFugas = document.getElementById('txtPorcentajeFugas');
+        const barraEvitable = document.getElementById('barEvitable');
+        
+        txtPctFugas.innerText = pctFugas + '%';
+        barraEvitable.style.width = Math.min(pctFugas, 100) + "%";
+
+        // Motor de Alarma: Verde (<5%), Naranja (5-10%), Rojo (>10%)
+        if (pctFugas < 5) {
+            txtPctFugas.style.color = "var(--color-saldo)"; // Verde - Óptimo
+            barraEvitable.style.backgroundColor = "var(--color-saldo)";
+        } else if (pctFugas <= 10) {
+            txtPctFugas.style.color = "#ff9800"; // Naranja - Advertencia
+            barraEvitable.style.backgroundColor = "#ff9800";
+        } else {
+            txtPctFugas.style.color = "var(--color-fuga)"; // Rojo - Peligro
+            barraEvitable.style.backgroundColor = "var(--color-fuga)";
+        }
     }
 
     function renderizarTabla(sueldoBase, filtroBuscador) {
