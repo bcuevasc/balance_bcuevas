@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Bunker Digital SCADA v31.9.5 - Final Build</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
+    
+    <style>
+/* === TEMA SCADA BYRON === */
+:root {
+    --bg-body: #0b0e14; --bg-panel: #161b22; --bg-subpanel: #21262d;
+    --text-main: #f0f6fc; --text-muted: #8b949e; --border-color: #30363d;
+    --input-bg: #0d1117; --item-hover: #1c2128;
+    --color-guardar: #238636; --color-ingresos: #1f6feb; --color-gastos: #da3633; 
+    --color-saldo: #3fb950; --color-edit: #d29922; --color-fuga: #ff5252;
+    --color-proyectado: #3f51b5; --color-telegram: #0088cc;
+}
+
+body.light-theme {
+    --bg-body: #f0f2f5; --bg-panel: #ffffff; --bg-subpanel: #f8f9fa;
+    --text-main: #24292e; --text-muted: #57606a; --border-color: #d0d7de;
+    --input-bg: #ffffff; --item-hover: #e1e4e8;
+}
+
+* { box-sizing: border-box; transition: background-color 0.3s, border-color 0.3s; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+
+/* 🟢 BLOQUEO DE SCROLL GLOBAL EN PC */
+body { background-color: var(--bg-body); margin: 0; padding: 0; color: var(--text-main); overflow: hidden; height: 100vh; display: flex; flex-direction: column; }
+
+#login-screen { position: fixed; inset: 0; background: #0b0e14; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10000; text-align: center; }
+.login-box { padding: 40px; background: #161b22; border: 1px solid #30363d; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
+.btn-google { background: #fff; color: #000; border: none; padding: 12px 24px; border-radius: 6px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 10px; margin-top: 20px; font-size: 1rem; }
+
+/* 🟢 COMPRESIÓN DE ESPACIOS SUPERIORES */
+.app-container { display: none; width: 100%; height: 100vh; padding: 8px 12px; flex-direction: column; gap: 8px; margin: 0 auto; max-width: 1920px; }
+.app-container.active-app { display: flex; }
+
+.header-titles { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 4px; margin-bottom: 0; }
+h2 { color: var(--color-saldo); margin: 0; font-size: 1.2rem; font-weight: 900; text-transform: uppercase; }
+.cronos { font-family: 'Courier New', Courier, monospace; font-size: 0.85rem; font-weight: 800; color: var(--text-muted); background: var(--bg-panel); padding: 2px 8px; border-radius: 4px; border: 1px solid var(--border-color); }
+
+.system-btns { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; justify-content: flex-end; }
+.btn-sys { background: var(--bg-subpanel); color: var(--text-main); border: 1px solid var(--border-color); padding: 6px 10px; border-radius: 6px; cursor: pointer; font-weight: 800; font-size: 0.7rem; text-transform: uppercase; }
+.btn-sys:hover { border-color: var(--color-saldo); }
+
+.time-navigator-panel {
+    background: var(--bg-panel); border: 1px solid var(--border-color);
+    border-radius: 8px; padding: 8px 15px; margin-bottom: 5px;
+    display: flex; justify-content: space-between; align-items: center;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    border-top: 3px solid var(--color-ingresos);
+}
+.time-nav-controls { display: flex; align-items: center; gap: 12px; }
+.nav-select { background: var(--input-bg); color: var(--text-main); border: 1px solid var(--border-color); padding: 6px 12px; border-radius: 6px; font-weight: 800; text-transform: uppercase; font-size: 0.8rem; outline: none; cursor: pointer; }
+.nav-select:focus { border-color: var(--color-ingresos); }
+.nav-badge { font-family: 'Courier New', Courier, monospace; background: rgba(31, 111, 235, 0.1); color: var(--color-ingresos); border: 1px solid rgba(31, 111, 235, 0.3); padding: 4px 10px; border-radius: 4px; font-size: 0.75rem; font-weight: 900; letter-spacing: 0.5px; text-transform: uppercase; }
+.time-nav-presets { display: flex; gap: 10px; }
+.preset-btn { background: var(--bg-subpanel); color: var(--text-muted); border: 1px solid var(--border-color); padding: 6px 12px; border-radius: 6px; font-weight: 800; font-size: 0.7rem; cursor: pointer; text-transform: uppercase; transition: all 0.2s; }
+.preset-btn:hover { border-color: var(--color-ingresos); color: var(--text-main); }
+.preset-active { background: rgba(31, 111, 235, 0.15); border-color: var(--color-ingresos); color: var(--color-ingresos); }
+
+/* 🟢 APLANADO DE KPIs */
+.kpi-row { display: grid; grid-template-columns: repeat(8, 1fr); gap: 8px; }
+.kpi-card { padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-panel); border-top: 4px solid var(--border-color); }
+.kpi-card h4 { margin: 0 0 2px 0; font-size: 0.6rem; text-transform: uppercase; color: var(--text-muted); font-weight: 800; }
+.kpi-card .value { margin: 0; font-size: 1.15rem; font-weight: 900; color: var(--text-main); display: flex; align-items: center; }
+.kpi-progress-container { width: 100%; height: 4px; background: rgba(255,255,255,0.05); border-radius: 2px; margin-top: 4px; overflow: hidden; }
+.kpi-progress-fill { height: 100%; width: 0%; transition: width 0.6s ease; }
+.kpi-saldo { border: none; background: var(--color-saldo); color: #000; box-shadow: 0 4px 15px rgba(63,185,80,0.2); }
+.kpi-saldo h4, .kpi-saldo .value { color: #000 !important; font-weight: 900; }
+.kpi-proyectado { border: none; background: var(--color-proyectado); color: #fff; }
+.kpi-proyectado h4, .kpi-proyectado .value { color: #fff !important; font-weight: 900; }
+
+.master-layout { display: grid; grid-template-columns: 1fr 340px; gap: 12px; margin-top: 5px; flex-grow: 1; min-height: 0; }
+
+/* 1. LA COLUMNA IZQUIERDA */
+.left-col { 
+    display: flex; flex-direction: column; gap: 10px; 
+    min-height: 0; height: 100%; overflow: hidden; 
+}
+
+/* 2. EL ENVOLTORIO DE LA TABLA (PC) */
+.grid-main-wrapper { 
+    background: var(--bg-panel); border-radius: 8px; border: 1px solid var(--border-color); padding: 10px; 
+    display: flex; flex-direction: column; 
+    flex: 1; min-height: 0; 
+}
+
+.telemetry-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; gap: 10px; }
+
+/* 3. LA TABLA TIPO RESORTE (PC) */
+.grid-container { 
+    flex: 1; min-height: 0; overflow-x: auto; overflow-y: auto; 
+    background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 6px; 
+    /* 🟢 AJUSTE FINÍSIMO: Ocultar barra de scroll visualmente pero permitir scrollear */
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none;  /* IE and Edge */
+}
+.grid-container::-webkit-scrollbar {
+    display: none; /* Chrome, Safari and Opera */
+}
+
+.data-grid { width: 100%; border-collapse: collapse; text-align: left; }
+.data-grid th { position: sticky; top: 0; background: var(--bg-panel); padding: 6px 8px; font-size: 0.65rem; color: var(--color-ingresos); text-transform: uppercase; z-index: 10; border-bottom: 2px solid var(--border-color); white-space: nowrap; cursor: pointer; user-select: none; letter-spacing: 0.5px;}
+.data-grid td { padding: 4px 8px; font-size: 0.75rem; border-bottom: 1px solid var(--border-color); white-space: nowrap; vertical-align: middle; }
+
+/* 🟢 EMPUJE TÁCTICO: Separar botón de edición del borde en PC */
+.data-grid th:last-child, 
+.data-grid td:last-child {
+    padding-right: 24px !important; 
+}
+
+.data-grid tbody tr:nth-child(even) { background-color: var(--bg-subpanel); }
+.data-grid tbody tr:hover { background-color: var(--item-hover); }
+
+.col-monto { text-align: right; font-family: 'Courier New', Courier, monospace; font-weight: 700; font-size: 0.8rem; letter-spacing: -0.5px; }
+.col-hora { font-size: 0.6rem; color: var(--text-muted); font-weight: 700; display: block; margin-top: 1px; }
+.cat-badge { font-size: 0.6rem; padding: 2px 6px; border-radius: 4px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); display: inline-block; margin-top: 2px; color: var(--text-muted); font-weight: 800; }
+
+.col-check { width: 40px; text-align: center; cursor: default;}
+.row-check { cursor: pointer; transform: scale(1.1); accent-color: var(--color-edit); margin: 0; }
+
+.status-badge { padding: 2px 6px; border-radius: 4px; font-size: 0.6rem; font-weight: 800; border: 1px solid; }
+.status-ok { color: var(--color-saldo); border-color: rgba(63,185,80,0.3); background: rgba(63,185,80,0.1); }
+.status-warn { color: var(--color-edit); border-color: rgba(210,153,34,0.3); background: rgba(210,153,34,0.1); }
+
+.impact-icon { font-weight: 900; margin-right: 5px; }
+.impact-pos { color: var(--color-ingresos); }
+.impact-neg { color: var(--color-fuga); }
+.impact-neu { color: #ff9800; }
+
+/* 4. EL ENVOLTORIO DE GRÁFICOS: Intocable */
+#charts-grid-container { 
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; 
+    flex-shrink: 0; 
+}
+
+/* 5. LAS CAJAS DE GRÁFICOS */
+.chart-box { 
+    background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; 
+    height: 25vh; min-height: 180px; display: flex; flex-direction: column; 
+}
+.chart-box h5 { margin: 0 0 5px 0; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; text-align: center; font-weight: 800; }
+.canvas-container { position: relative; flex-grow: 1; min-height: 0; }
+
+/* 🟢 COLUMNA DERECHA (FORMULARIO Y EFICIENCIA) */
+.right-col { display: flex; flex-direction: column; gap: 10px; height: 100%; }
+.sidebar-panel { background: var(--bg-panel); border-radius: 8px; border: 1px solid var(--border-color); padding: 12px; display: flex; flex-direction: column; }
+.form-group { margin-bottom: 8px; width: 100%; position: relative; }
+.form-group label { display: block; font-size: 0.6rem; font-weight: 800; color: var(--text-muted); margin-bottom: 2px; text-transform: uppercase; }
+
+.custom-select, .form-group input, .form-group select { width: 100%; border: 1px solid var(--border-color); border-radius: 4px; background-color: var(--input-bg); color: var(--text-main); outline: none; padding: 6px 8px; font-size: 0.8rem; height: 32px; }
+input[type="date"]::-webkit-calendar-picker-indicator, input[type="datetime-local"]::-webkit-calendar-picker-indicator { filter: invert(1); cursor: pointer; }
+
+.btn-guardar { width: 100%; background-color: var(--color-guardar); color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 800; text-transform: uppercase; padding: 8px; font-size: 0.8rem; margin-top: 5px; }
+
+.eficiencia-kpi { text-align: center; margin-bottom: 6px; flex-shrink: 0; }
+.eficiencia-kpi .monto { font-size: 1.6rem; font-weight: 900; color: var(--text-main); line-height: 1.1; }
+.eficiencia-kpi .label { font-size: 0.6rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; }
+.bar-container { width: 100%; background: var(--bg-body); border-radius: 4px; height: 10px; overflow: hidden; border: 1px solid rgba(0,0,0,0.2); }
+.bar-fill { height: 100%; width: 0%; transition: all 0.5s ease; }
+
+.floating-mass-actions { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #1c2128; border: 1px solid var(--color-edit); border-radius: 50px; padding: 8px 20px; display: flex; align-items: center; justify-content: space-between; gap: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); z-index: 9999; }
+
+/* ==================================================================== */
+/* 📱 MEDIA QUERY: RESPONSIVE Y UX MÓVIL (IPHONE/ANDROID)               */
+/* ==================================================================== */
+@media (max-width: 1024px) {
+    /* 1. SELLO HERMÉTICO: Bloqueo definitivo de scroll horizontal global */
+    body { overflow-y: auto !important; overflow-x: hidden !important; height: auto !important; display: block; } 
+    .app-container { height: auto !important; padding: 8px; display: flex; flex-direction: column; overflow-x: hidden; }
+    
+    .header-titles { flex-direction: column; align-items: flex-start; gap: 5px; }
+    .kpi-row { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+    
+    .master-layout { grid-template-columns: 1fr; display: flex; flex-direction: column; }
+    .left-col { height: auto; overflow: visible; }
+    
+    #charts-grid-container { grid-template-columns: 1fr; display: flex; flex-direction: column; gap: 10px; }
+    .chart-box { height: 220px; min-height: 220px; }
+    
+    .hide-mobile { display: none !important; }
+    
+    /* 🟢 FIX ANTI-FLOTACIÓN MÓVIL (Anclaje sólido de tabla) */
+    .grid-main-wrapper { padding: 0 !important; overflow: hidden; border: none !important; background: transparent !important; }
+    .telemetry-header { padding: 8px; margin-bottom: 0; background: var(--bg-panel); border-radius: 8px 8px 0 0; border: 1px solid var(--border-color); border-bottom: none; }
+    .grid-container { border: 1px solid var(--border-color) !important; border-radius: 0 0 8px 8px !important; height: auto !important; max-height: 50vh !important; min-height: 250px !important; overflow-y: auto; overflow-x: auto; }
+
+    /* 🟢 CALIBRACIÓN DE BOTONES SUPERIORES (Cero Desplazamiento) */
+    .time-navigator-panel { flex-direction: column; gap: 10px; align-items: stretch; padding: 10px; }
+    .time-nav-controls { justify-content: space-between; flex-wrap: wrap; }
+    
+    /* Apilamos los contenedores de botones y forzamos el 100% de ancho */
+    .time-navigator-panel > div:last-child { width: 100%; flex-direction: column; gap: 8px !important; align-items: stretch !important; }
+    
+    .time-nav-presets { width: 100%; justify-content: space-between; gap: 6px; }
+    .preset-btn { flex: 1; text-align: center; padding: 8px 2px; font-size: 0.65rem; }
+    
+    .system-btns { width: 100%; justify-content: center !important; gap: 6px; padding-bottom: 0 !important; }
+    .system-btns .btn-sys { flex: 1 1 30%; padding: 8px 2px; font-size: 0.65rem; }
+    .nav-badge { display: none; }
+
+    /* --- PARCHE UX MÓVIL: ERGONOMÍA TÁCTIL --- */
+    
+    /* 1. Multilínea para que se lea la descripción completa */
+    .data-grid td { 
+        white-space: normal !important; 
+        word-wrap: break-word; 
+        padding: 12px 6px !important; /* Touch targets más grandes (Fat Finger Fix) */
+    }
+    
+    /* Restaurar el padding del último elemento en celular para aprovechar pantalla */
+    .data-grid th:last-child, 
+    .data-grid td:last-child {
+        padding-right: 6px !important; 
+    }
+
+    /* 2. Lápiz de edición tipo botón táctil gigante */
+    .data-grid .btn-sys {
+        padding: 10px 12px !important;
+        font-size: 1.2rem !important;
+        border-radius: 8px;
+    }
+    
+    /* 3. Ocultar la palabra EDIT, solo dejamos el emoji */
+    .btn-edit-text { display: none !important; }
+}
+</style>
+</head>
+<body>
+
+<div id="login-screen">
+    <div class="login-box">
+        <h2 style="color:#fff; margin-bottom:10px;">BUNKER SCADA</h2>
+        <p style="color:var(--text-muted); font-size:0.8rem;">SISTEMA PRIVADO DE GESTIÓN TÁCTICA V31.9.5</p>
+        <button class="btn-google" onclick="loginWithGoogle()">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="20px" height="20px" style="margin-right:10px; vertical-align:middle;">
+                <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.7 17.74 9.5 24 9.5z"/>
+                <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+                <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+                <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+            </svg>
+            ENTRAR CON GOOGLE
+        </button>
+    </div>
+</div>
+
+<div class="app-container" id="reportZone">
+    <div class="header-titles" style="border-bottom: none; padding-bottom: 0;">
+        <div style="display:flex; align-items:center;">
+            <h2>BUNKER DIGITAL SCADA</h2>
+            <div id="user-display" style="margin-left: 15px; font-size: 0.75rem; color: var(--color-saldo); font-weight:800; text-transform:uppercase;"></div>
+        </div>
+        <div id="cronos" class="cronos">--:--:--</div>
+    </div>
+
+    <div class="time-navigator-panel" style="margin-top: 5px;">
+        <div class="time-nav-controls">
+            <select id="navAnio" class="nav-select" onchange="cambiarCicloManual()">
+                <option value="2025">2025</option>
+                <option value="2026" selected>2026</option>
+            </select>
+            <select id="navMesConceptual" class="nav-select" onchange="cambiarCicloManual()" style="color: var(--color-ingresos);">
+                <option value="0">Enero</option>
+                <option value="1">Febrero</option>
+                <option value="2">Marzo</option>
+                <option value="3" selected>Abril</option>
+                <option value="4">Mayo</option>
+                <option value="5">Junio</option>
+                <option value="6">Julio</option>
+                <option value="7">Agosto</option>
+                <option value="8">Septiembre</option>
+                <option value="9">Octubre</option>
+                <option value="10">Noviembre</option>
+                <option value="11">Diciembre</option>
+            </select>
+            <div id="navRangoBadge" class="nav-badge">--/-- al --/--</div>
+        </div>
+        
+        <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap; justify-content: flex-end;">
+            
+            <div class="time-nav-presets">
+                <button class="preset-btn" onclick="setCicloPreset('anterior')" id="btnPresetAnterior">⏮️ ANTERIOR</button>
+                <button class="preset-btn preset-active" onclick="setCicloPreset('actual')" id="btnPresetActual">▶️ ACTUAL</button>
+                <button class="preset-btn" onclick="alert('Módulo de Comparativa en desarrollo')" style="opacity: 0.5;">📊 COMPARAR</button>
+            </div>
+            
+            <div style="width: 1px; height: 25px; background: var(--border-color); display: block;" class="hide-mobile"></div>
+            
+            <div class="system-btns" style="border-bottom: none; padding-bottom: 0;">
+                <button class="btn-sys" onclick="toggleTheme()">☀️/🌙</button>
+                <button class="btn-sys" onclick="triggerSync()">🔄 SYNC</button>
+                <button class="btn-sys" onclick="exportarCSV()">💾 BKUP</button>
+                <button class="btn-sys btn-telegram" onclick="enviarReporteTelegram()">🚀 TELEGRAM</button>
+                <button class="btn-sys" onclick="logout()" style="color:var(--color-fuga);">🚪 SALIR</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="kpi-row">
+        <div class="kpi-card" style="border-top-color: var(--color-ingresos);">
+            <h4>Sueldo Mes</h4>
+            <div class="value">$<input type="text" id="inputSueldo" value="2.382.505" oninput="formatearEntradaNumerica(this); actualizarDashboard();" style="background:transparent; border:none; color:inherit; font-weight:900; width:120px; font-size:1.3rem; outline:none;"></div>
+        </div>
+        
+        <div class="kpi-card" style="border-top-color: var(--color-ingresos);">
+            <h4>Ingresos Extra</h4>
+            <div class="value">$<span id="txtTotalIngresos">0</span></div>
+        </div>
+
+        <div class="kpi-card" style="border-top-color: var(--color-fuga);">
+            <h4>Gastos Fijos</h4>
+            <div class="value">$<span id="txtTotalFijos">0</span></div>
+            <div class="kpi-progress-container"><div id="barFijos" class="kpi-progress-fill" style="background:var(--color-fuga);"></div></div>
+        </div>
+
+        <div class="kpi-card" style="border-top-color: #ff9800;">
+            <h4>Gastos Variables</h4>
+            <div class="value">$<span id="txtTotalOtros">0</span></div>
+            <div class="kpi-progress-container"><div id="barOtros" class="kpi-progress-fill" style="background:#ff9800;"></div></div>
+        </div>
+
+        <div class="kpi-card" style="border-top-color: #8b949e;">
+            <h4>CxC (Préstamos)</h4>
+            <div class="value">$<span id="txtCxC">0</span></div>
+        </div>
+
+        <div class="kpi-card kpi-saldo" id="cardBalanceReal">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                <h4>Balance Real</h4>
+                <div id="badgeDias" style="font-size: 0.6rem; background: rgba(0,0,0,0.15); padding: 2px 6px; border-radius: 4px; font-weight: 800;">-- DÍAS</div>
+            </div>
+            <div class="value">$<span id="txtSaldo">0</span></div>
+        </div>
+
+        <div class="kpi-card kpi-proyectado" id="cardProyectado">
+            <h4>Saldo Proyectado</h4>
+            <div class="value">$<span id="txtProyectado">0</span></div>
+        </div>
+
+        <div class="kpi-card" style="border-top-color: #a371f7;">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                <h4>Proyección Cierre</h4>
+                <div style="font-size: 0.6rem; background: rgba(163, 113, 247, 0.15); color: #a371f7; padding: 2px 6px; border-radius: 4px; font-weight: 800;">APC</div>
+            </div>
+            <div class="value">$<span id="txtProyeccionCierre">0</span></div>
+        </div>
+    </div>
+    
+    <div class="master-layout">
+        <div class="left-col">
+            <div class="grid-main-wrapper">
+                <div class="telemetry-header">
+                    <input type="text" id="inputBuscador" placeholder="🔍 Filtrar tabla..." oninput="actualizarDashboard()" style="width:250px; background:var(--input-bg); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px; padding:6px 12px; outline:none; font-size:0.8rem;">
+                </div>
+                <div class="grid-container">
+                    <table class="data-grid">
+                        <thead>
+                            <tr>
+                                <th class="col-check hide-mobile"><input type="checkbox" id="checkAll" onchange="toggleAllChecks()"></th>
+                                <th class="hide-mobile" style="width: 40px; text-align: center;">N°</th>
+                                <th onclick="sortTable('fechaISO')">Fecha</th>
+                                <th onclick="sortTable('nombre')">Descripción</th>
+                                <th class="hide-mobile" onclick="sortTable('catV')">Categoría</th>
+                                <th onclick="sortTable('monto')" style="text-align: right;">Monto</th>
+                                <th class="hide-mobile" style="text-align: right;">Saldo Hist.</th>
+                                <th class="hide-mobile" style="text-align: center;">% Fuga</th>
+                                <th class="hide-mobile" style="text-align: center;">Status</th>
+                                <th style="text-align: center; width: 40px;">⚙️</th>
+                            </tr>
+                        </thead>
+                        <tbody id="listaDetalle"></tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <div id="charts-grid-container">
+                <div class="chart-box">
+                    <h5>Velocidad Consumo (Burn-Down)</h5>
+                    <div class="canvas-container"><canvas id="chartBurnDown"></canvas></div>
+                    <div id="burnDownAlert" style="text-align:center; font-size:0.75rem; font-weight:800; margin-top:5px; height:15px;"></div>
+                </div>
+                <div class="chart-box">
+                    <h5>Pareto de Gasto V30</h5>
+                    <div class="canvas-container"><canvas id="chartPareto"></canvas></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="right-col">
+            <div class="sidebar-panel">
+                <h4 style="color:var(--color-saldo); margin:0; font-size:0.85rem; text-transform:uppercase; margin-bottom:10px;">REGISTRO MANUAL</h4>
+                <input type="hidden" id="editId">
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: -5px;">
+                    <div class="form-group"><label>Fecha</label><input type="datetime-local" id="inputFecha"></div>
+                    <div class="form-group"><label>Flujo</label>
+                        <select id="inputTipo">
+                            <option value="Gasto">Gasto Variable</option>
+                            <option value="Gasto Fijo">Gasto Fijo</option>
+                            <option value="Ingreso">Ingreso Extra</option>
+                            <option value="Por Cobrar">Préstamo (CxC)</option>
+                            <option value="Ahorro">Ahorro / Mov. Neutro</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group"><label>Categoría V31.4</label>
+                    <select id="inputCategoria">
+                        <option value="Gastos Fijos (Búnker)">🏠 Gastos Fijos (Búnker)</option>
+                        <option value="Suscripciones">📱 Suscripciones</option>
+                        <option value="Alimentación & Supermercado">🛒 Alimentación & Supermercado</option>
+                        <option value="Dopamina & Antojos">🍔 Dopamina & Antojos</option>
+                        <option value="Ocio & Experiencias">🎸 Ocio & Experiencias</option>
+                        <option value="Transporte & Logística">🚗 Transporte & Log</option>
+                        <option value="Mantenimiento Hardware (Salud)">💊 Salud</option>
+                        <option value="Transferencia Propia / Ahorro">🏦 Transferencia Propia</option>
+                        <option value="Transferencia Recibida">📲 Transferencia Recibida</option>
+                        <option value="Hogar & Búnker">🛠️ Hogar & Búnker</option>
+                        <option value="Red de Apoyo (Familia)">🫂 Red de Apoyo</option>
+                        <option value="Gasto Tarjeta de Crédito">💳 Gasto TC</option>
+                        <option value="Ingreso Adicional">💰 Ingresos</option>
+                        <option value="Sin Categoría">❓ Sin Categoría</option>
+                    </select>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 110px; gap: 10px;">
+                    <div class="form-group"><label>Descripción</label><input type="text" id="inputNombre"></div>
+                    <div class="form-group"><label>Monto</label><input type="text" id="inputMonto" oninput="formatearEntradaNumerica(this)"></div>
+                </div>
+                
+                <button id="btnGuardar" class="btn-guardar" onclick="agregarMovimiento()">GUARDAR EN BÚNKER</button>
+            </div>
+            
+            <div class="sidebar-panel">
+                <h4 style="margin:0 0 10px 0; font-size:0.85rem; color:var(--text-muted); text-transform:uppercase;">Eficiencia de Gasto</h4>
+                <div class="eficiencia-kpi"><div class="monto">$<span id="txtTotalEvitable">0</span></div><div class="label">Fugas Detectadas</div></div>
+                <div class="bar-container"><div id="barEvitable" class="bar-fill"></div></div>
+                <div style="margin-top:12px; padding-top:10px; border-top:1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center;">
+                    <span style="font-size:0.65rem; color:var(--text-muted); font-weight:800; text-transform:uppercase;">% Sueldo a Fugas:</span>
+                    <span id="txtPorcentajeFugas" style="font-size:0.9rem; font-weight:900; color:var(--color-fuga);">0%</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="massActionsBar" class="floating-mass-actions" style="display: none;">
+        <span id="massCount">0 seleccionado(s)</span>
+        <div class="mass-actions-controls">
+            <select id="massCategorySelect" class="custom-select" style="width:180px;">
+                <option value="">-- Recategorizar a --</option>
+                <option value="Gastos Fijos (Búnker)">🏠 Gastos Fijos</option>
+                <option value="Alimentación & Supermercado">🛒 Alimentación Base</option>
+                <option value="Dopamina & Antojos">🍔 Dopamina</option>
+                <option value="Transferencia Recibida">📲 Transferencia Recibida</option>
+                <option value="Transferencia Propia / Ahorro">🏦 Transferencia Propia</option>
+                <option value="Ingreso Adicional">💰 Ingreso Extra</option>
+            </select>
+            <button class="btn-sys" onclick="massCategorize()">APLICAR</button>
+            <button class="btn-sys" onclick="massDelete()" style="color:var(--color-fuga);">🗑️</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const BYRON_EMAIL = "bvhcc94@gmail.com"; 
+    const CREDIT_SETPOINT = -300000; 
+    const catEvitables = ["Dopamina & Antojos"]; 
+
+    const catEmojis = {
+        "Transferencia": "🔄",
+        "Gastos Fijos (Búnker)": "🏠", "Suscripciones": "📱", "Alimentación & Supermercado": "🛒",
+        "Dopamina & Antojos": "🍔", "Ocio & Experiencias": "🎸", "Transporte & Logística": "🚗", 
+        "Mantenimiento Hardware (Salud)": "💊", "Transferencia Propia / Ahorro": "🏦", "Hogar & Búnker": "🛠️",
+        "Red de Apoyo (Familia)": "🫂", "Gasto Tarjeta de Crédito": "💳",
+        "Ingreso Adicional": "💰", "Transferencia Recibida": "📲", "Ruido de Sistema": "⚙️", "Sin Categoría": "❓"
+    };
+
+    firebase.initializeApp({
+        apiKey: "AIzaSyBiYETN_JipXWhMq9gKz-2Pap-Ce4ZJNAI",
+        authDomain: "finanzas-bcuevas.firebaseapp.com",
+        projectId: "finanzas-bcuevas",
+        storageBucket: "finanzas-bcuevas.firebasestorage.app"
+    });
+
+    const db = firebase.firestore();
+    const auth = firebase.auth();
+    
+    let listaMovimientos = [];
+    let datosMesGlobal = []; 
+    let chartBD = null, chartP = null;
+    let currentSort = { column: 'fechaISO', direction: 'desc' }; 
+    let modoEdicionActivo = false;
+
+    function loginWithGoogle() { auth.signInWithRedirect(new firebase.auth.GoogleAuthProvider()); }
+    function logout() { auth.signOut().then(() => window.location.reload()); }
+
+    auth.onAuthStateChanged(user => {
+        if (user && user.email.toLowerCase() === BYRON_EMAIL.toLowerCase()) {
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('reportZone').classList.add('active-app');
+            document.getElementById('user-display').innerText = user.displayName;
+            
+            db.collection("movimientos").onSnapshot(snap => {
+                listaMovimientos = [];
+                snap.forEach(doc => {
+                    let d = doc.data(); d.firestoreId = doc.id;
+                    d.fechaISO = d.fecha?.toDate ? d.fecha.toDate().toISOString() : (d.fecha || new Date().toISOString());
+                    d.monto = Number(d.monto) || 0;
+                    listaMovimientos.push(d);
+                });
+                aplicarCicloAlSistema();
+            });
+        }
+    });
+
+    function triggerSync() {
+        const scriptURL = "https://script.google.com/macros/s/AKfycbwKlub0qrv8_d24ZuyKKNryqOw1E68xv1_JvPOoEUc6W8TICllFfodNcwkigQE_7AuoNg/exec"; 
+        const btn = document.querySelector('button[onclick="triggerSync()"]');
+        const origText = btn.innerHTML;
+        btn.innerHTML = "⏳ SYNC...";
+        btn.disabled = true;
+
+        fetch(scriptURL, { mode: 'no-cors' })
+            .then(() => {
+                alert("✅ Comando de sincronización transmitido con éxito al Búnker Central.");
+                btn.innerHTML = origText;
+                btn.disabled = false;
+            })
+            .catch(error => {
+                alert("❌ Falla de antena (Error de Red local): " + error);
+                btn.innerHTML = origText;
+                btn.disabled = false;
+            });
+    }
+
+    function enviarReporteTelegram() {
+        const botToken = "8614679709:AAEJGy9yAlKnhjVmJ0VUZpT-YmZQ6J5IOps";
+        const chatId = "1484213465";
+        
+        if (botToken === "TU_BOT_TOKEN_AQUI") return alert("⚠️ Canal apagado");
+
+        const btn = document.querySelector('button[onclick="enviarReporteTelegram()"]');
+        const origText = btn.innerHTML;
+        btn.innerHTML = "📸 CAPTURANDO..."; btn.disabled = true;
+
+        const saldoActual = document.getElementById('txtSaldo').innerText;
+        const totalFugas = document.getElementById('txtPorcentajeFugas').innerText;
+        const periodo = document.getElementById('navRangoBadge').innerText;
+        
+        const mensaje = `🏭 *BÚNKER SCADA - TELEMETRÍA VISUAL*\n🗓️ ${periodo}\n\n💰 Saldo Operativo: $${saldoActual}\n🚨 Nivel de Fugas: ${totalFugas}\n\nTransmisión finalizada.`;
+        const targetElement = document.getElementById('reportZone');
+
+        html2canvas(targetElement, { scale: 1.5, backgroundColor: "#0b0e14", useCORS: true }).then(canvas => {
+            btn.innerHTML = "🚀 ENVIANDO...";
+            canvas.toBlob(function(blob) {
+                const formData = new FormData();
+                formData.append('chat_id', chatId);
+                formData.append('photo', blob, 'scada_report.png');
+                formData.append('caption', mensaje);
+                formData.append('parse_mode', 'Markdown');
+
+                fetch(`https://api.telegram.org/bot${botToken}/sendPhoto`, { method: 'POST', body: formData })
+                .then(res => { if(res.ok) alert("📸🚀 Reporte transmitido."); else alert("❌ Error en transmisión."); })
+                .catch(err => alert("❌ Falla en la antena: " + err))
+                .finally(() => { btn.innerHTML = origText; btn.disabled = false; });
+            }, 'image/png');
+        }).catch(err => { alert("❌ Falla óptica: " + err); btn.innerHTML = origText; btn.disabled = false; });
+    }
+
+    function exportarCSV() {
+        if (!listaMovimientos || listaMovimientos.length === 0) return alert("⚠️ No hay datos.");
+        const btn = document.querySelector('button[onclick="exportarCSV()"]');
+        const origText = btn.innerHTML; btn.innerHTML = "⏳ BKUP..."; btn.disabled = true;
+
+        let csvContent = "Fecha,Descripción,Categoría,Flujo,Monto\n";
+        [...listaMovimientos].sort((a,b) => a.fechaISO < b.fechaISO ? -1 : 1).forEach(row => {
+            let fecha = new Date(row.fechaISO).toLocaleDateString('es-CL');
+            let desc = row.nombre ? row.nombre.replace(/,/g, " ") : "Sin descripción"; 
+            csvContent += `${fecha},${desc},${row.categoria || "Sin Categoría"},${row.tipo || "Gasto"},${row.monto || 0}\n`;
+        });
+
+        const blob = new Blob(["\ufeff", csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a"); link.setAttribute("href", url); link.setAttribute("download", `Bunker_Backup_${new Date().toISOString().slice(0,10)}.csv`);
+        document.body.appendChild(link); link.click(); document.body.removeChild(link);
+        btn.innerHTML = origText; btn.disabled = false;
+    }
+
+    function actualizarDashboard() {
+        const sueldo = parseInt(document.getElementById('inputSueldo').value.replace(/\./g,'')) || 0;
+        const b = document.getElementById('inputBuscador').value.toLowerCase();
+        
+        const mesVal = parseInt(document.getElementById('navMesConceptual').value);
+        const anioVal = parseInt(document.getElementById('navAnio').value);
+        const { T0, TFinal, fechaFinVisual } = calcularFechasCiclo(mesVal, anioVal);
+        
+        let dataMes = listaMovimientos.filter(x => { let d = new Date(x.fechaISO); return d >= T0 && d < TFinal; });
+        
+        dataMes.forEach(x => {
+            x.catV = x.categoria || 'Sin Categoría';
+            if (x.monto <= 1000 && x.catV === 'Sin Categoría') x.catV = "Ruido de Sistema";
+            x.esIn = x.tipo === 'Ingreso' || x.catV === 'Transferencia Recibida' || x.catV === 'Ingreso Adicional';
+            x.esNeutro = x.tipo === 'Por Cobrar' || x.tipo === 'Ahorro' || x.catV === 'Transferencia Propia / Ahorro';
+        });
+
+        datosMesGlobal = [...dataMes];
+        let saldoAcc = sueldo, tI = 0, tF = 0, tO = 0, tC = 0, tEvitable = 0, gCat = {};
+        
+        [...dataMes].sort((x,y) => x.fechaISO < y.fechaISO ? -1 : 1).forEach(x => {
+            if (x.esIn) { tI += x.monto; saldoAcc += x.monto; }
+            else if (x.tipo === 'Por Cobrar') tC += x.monto;
+            else if (!x.esNeutro) {
+                saldoAcc -= x.monto;
+                if (x.tipo === 'Gasto Fijo') tF += x.monto; else tO += x.monto;
+                gCat[x.catV] = (gCat[x.catV] || 0) + x.monto;
+            }
+            if (catEvitables.includes(x.catV)) tEvitable += x.monto;
+        });
+
+        document.getElementById('txtTotalFijos').innerText = tF.toLocaleString('es-CL');
+        document.getElementById('txtTotalOtros').innerText = tO.toLocaleString('es-CL');
+        document.getElementById('txtTotalIngresos').innerText = tI.toLocaleString('es-CL');
+        document.getElementById('txtCxC').innerText = tC.toLocaleString('es-CL');
+        document.getElementById('txtSaldo').innerText = saldoAcc.toLocaleString('es-CL');
+        
+        const saldoProyVal = saldoAcc + tC;
+        const txtSaldoProy = document.getElementById('txtProyectado');
+        if (saldoProyVal < CREDIT_SETPOINT) txtSaldoProy.innerHTML = '<span style="color:var(--color-fuga)">⚠️ ' + saldoProyVal.toLocaleString('es-CL') + '</span>';
+        else txtSaldoProy.innerText = saldoProyVal.toLocaleString('es-CL');
+
+        const diasCiclo = Math.round((TFinal - T0) / 86400000);
+        const hoy = new Date();
+        let diasT = (hoy >= T0 && hoy < TFinal) ? Math.max(Math.floor((hoy - T0) / 86400000) + 1, 1) : (hoy >= TFinal ? diasCiclo : 0);
+        document.getElementById('badgeDias').innerText = `${Math.max(diasCiclo - diasT, 0)} DÍAS`;
+        
+        let proyC = saldoAcc - ((tO / Math.max(diasT, 1)) * Math.max(diasCiclo - diasT, 0));
+        document.getElementById('txtProyeccionCierre').innerText = Math.round(proyC).toLocaleString('es-CL');
+
+        document.getElementById('barFijos').style.width = Math.min((tF / (sueldo || 1)) * 100, 100) + "%";
+        document.getElementById('barOtros').style.width = Math.min((tO / (sueldo || 1)) * 100, 100) + "%";
+        
+        document.getElementById('txtTotalEvitable').innerText = tEvitable.toLocaleString('es-CL');
+        const pctFugas = sueldo > 0 ? ((tEvitable / sueldo) * 100).toFixed(1) : 0;
+        const txtPctFugas = document.getElementById('txtPorcentajeFugas');
+        const barraEvitable = document.getElementById('barEvitable');
+        
+        txtPctFugas.innerText = pctFugas + '%';
+        barraEvitable.style.width = Math.min(pctFugas, 100) + "%";
+
+        if (pctFugas < 5) { txtPctFugas.style.color = "var(--color-saldo)"; barraEvitable.style.backgroundColor = "var(--color-saldo)"; } 
+        else if (pctFugas <= 10) { txtPctFugas.style.color = "#ff9800"; barraEvitable.style.backgroundColor = "#ff9800"; } 
+        else { txtPctFugas.style.color = "var(--color-fuga)"; barraEvitable.style.backgroundColor = "var(--color-fuga)"; }
+
+        renderizarTabla(sueldo, b);
+        dibujarGraficos(sueldo, [...dataMes].sort((x,y) => x.fechaISO < y.fechaISO ? -1 : 1), gCat, diasCiclo, T0);
+    }    
+    
+    function renderizarTabla(sueldoBase, filtroBuscador) {
+        let datos = [...datosMesGlobal];
+        if (filtroBuscador) datos = datos.filter(x => x.nombre?.toLowerCase().includes(filtroBuscador) || x.catV.toLowerCase().includes(filtroBuscador));
+
+        datos.sort((a, b) => {
+            let valA = a[currentSort.column], valB = b[currentSort.column];
+            if (currentSort.column === 'nombre' || currentSort.column === 'catV') { valA = valA?.toLowerCase() || ''; valB = valB?.toLowerCase() || ''; }
+            if (valA < valB) return currentSort.direction === 'asc' ? -1 : 1;
+            if (valA > valB) return currentSort.direction === 'asc' ? 1 : -1;
+            return 0;
+        });
+
+        let saldoRelativo = sueldoBase;
+        datos.forEach((x, idx) => {
+            x.indiceVista = datos.length - idx;
+            if (x.esIn) saldoRelativo += x.monto; else if (!x.esNeutro) saldoRelativo -= x.monto;
+            x.saldoCalculadoVista = saldoRelativo;
+        });
+
+        const l = document.getElementById('listaDetalle'); 
+        let htmlBuffer = ''; 
+        
+        datos.forEach(x => {
+            const em = catEmojis[x.catV] || "❓";
+            let d = new Date(x.fechaISO);
+            let dS = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')} <span class="col-hora">${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}</span>`;
+            
+            let iconImpacto = x.esIn ? `<span class="impact-icon impact-pos">(+)</span>` : x.esNeutro ? `<span class="impact-icon impact-neu">(=)</span>` : `<span class="impact-icon impact-neg">(-)</span>`;
+            let colorMonto = x.esIn ? "var(--color-ingresos)" : x.esNeutro ? "#ff9800" : "var(--text-main)";
+            let statusBadge = x.catV === 'Sin Categoría' ? `<span class="status-badge status-warn">REVISAR</span>` : `<span class="status-badge status-ok">OK</span>`;
+            let bgEdicion = (document.getElementById('editId').value === x.firestoreId) ? 'background-color: rgba(210, 153, 34, 0.15); border-left: 3px solid var(--color-edit);' : '';
+
+            // 🛡️ SANITIZACIÓN ANTI-CRASH V31.9.5
+            const nombreSeguro = x.nombre || "Dato no identificado";
+            const montoSeguro = (typeof x.monto === 'number' && !isNaN(x.monto)) ? x.monto : 0;
+            const saldoSeguro = (typeof x.saldoCalculadoVista === 'number' && !isNaN(x.saldoCalculadoVista)) ? x.saldoCalculadoVista : 0;
+            const colorSaldo = saldoSeguro < 0 ? 'var(--color-fuga)' : 'var(--text-muted)';
+
+            htmlBuffer += `<tr style="${bgEdicion}">
+                <td class="col-check hide-mobile"><input type="checkbox" class="row-check" value="${x.firestoreId}" onchange="updateMassActions()"></td>
+                <td class="hide-mobile" style="text-align:center; font-size:0.75rem; font-weight:800; color:var(--text-muted);">${x.indiceVista}</td>
+                <td style="font-size:0.75rem; color:var(--text-muted);">${dS}</td>
+                <td class="col-desc" style="font-weight:700;" title="${nombreSeguro}">${nombreSeguro}</td>
+                <td class="hide-mobile" style="font-size:0.75rem;"><span class="cat-badge">${em} ${x.catV}</span></td>
+                
+                <td class="col-monto" style="color:${colorMonto};">${iconImpacto}$${montoSeguro.toLocaleString('es-CL')}</td>
+                <td class="col-monto hide-mobile" style="color:${colorSaldo};">$${saldoSeguro.toLocaleString('es-CL')}</td>
+                
+                <td class="hide-mobile" style="text-align:center; font-size:0.7rem; color:var(--text-muted);">${catEvitables.includes(x.catV) ? '100%' : '0%'}</td>
+                <td class="hide-mobile" style="text-align:center;">${statusBadge}</td>
+                <td style="text-align:center; padding: 2px;">
+                    <button class="btn-sys" style="padding:4px; border-color:var(--color-edit); color:var(--color-edit);" onclick="editarMovimiento('${x.firestoreId}')">✏️<span class="btn-edit-text"> EDIT</span></button>
+                </td>
+            </tr>`;
+        });
+        l.innerHTML = htmlBuffer; 
+    }
+
+    function sortTable(column) {
+        if (currentSort.column === column) currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+        else { currentSort.column = column; currentSort.direction = 'asc'; }
+        document.querySelectorAll('.data-grid th').forEach(th => th.innerHTML = th.innerHTML.replace(/ ▲| ▼/g, ''));
+        const activeTh = Array.from(document.querySelectorAll('.data-grid th')).find(th => th.getAttribute('onclick')?.includes(column));
+        if (activeTh) activeTh.innerHTML += currentSort.direction === 'asc' ? ' ▲' : ' ▼';
+        actualizarDashboard();
+    }
+
+    function editarMovimiento(id) {
+        const mov = listaMovimientos.find(m => m.firestoreId === id);
+        if(!mov) return alert("Registro no encontrado.");
+
+        document.getElementById('editId').value = mov.firestoreId; 
+        document.getElementById('inputNombre').value = mov.nombre;
+        document.getElementById('inputMonto').value = mov.monto.toLocaleString('es-CL');
+        document.getElementById('inputCategoria').value = mov.categoria || 'Sin Categoría';
+        
+        let tipoC = mov.tipo || 'Gasto';
+        if (mov.catV === 'Transferencia Recibida' || mov.catV === 'Ingreso Adicional') tipoC = 'Ingreso';
+        if (mov.catV === 'Transferencia Propia / Ahorro') tipoC = 'Ahorro';
+        document.getElementById('inputTipo').value = tipoC;
+        
+        try {
+            let d = new Date(mov.fechaISO);
+            let dLocal = new Date(d.getTime() - (d.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
+            document.getElementById('inputFecha').value = dLocal;
+        } catch(e) { console.error(e); }
+
+        const btn = document.getElementById('btnGuardar');
+        btn.innerHTML = "💾 ACTUALIZAR REGISTRO"; btn.style.backgroundColor = "var(--color-edit)";
+        modoEdicionActivo = true;
+
+        if (window.innerWidth <= 1024) window.scrollTo({ top: 0, behavior: 'smooth' });
+        actualizarDashboard(); 
+    }
+
+    function agregarMovimiento() {
+        const m = parseInt(document.getElementById('inputMonto').value.replace(/\./g, ''));
+        const n = document.getElementById('inputNombre').value;
+        const c = document.getElementById('inputCategoria').value;
+        const t = document.getElementById('inputTipo').value;
+        const fInput = document.getElementById('inputFecha').value;
+        const editId = document.getElementById('editId').value;
+
+        if (!m || !n || !fInput) return alert("⚠️ Faltan datos críticos.");
+
+        const btn = document.getElementById('btnGuardar');
+        btn.innerHTML = "⏳ GUARDANDO..."; btn.disabled = true;
+
+        const dataPayload = { nombre: n, monto: m, categoria: c, tipo: t, fecha: new Date(fInput), status: 'Manual' };
+
+        let op = (modoEdicionActivo && editId) ? db.collection("movimientos").doc(editId).update(dataPayload) : db.collection("movimientos").add(dataPayload);
+
+        op.then(() => {
+            document.getElementById('editId').value = ''; document.getElementById('inputNombre').value = ''; document.getElementById('inputMonto').value = '';
+            btn.innerHTML = "GUARDAR EN BÚNKER"; btn.style.backgroundColor = "var(--color-guardar)"; btn.disabled = false; modoEdicionActivo = false;
+        }).catch(err => { alert("❌ Error: " + err.message); btn.innerHTML = "ERROR"; btn.disabled = false; });
+    }
+
+    function formatearEntradaNumerica(i) { let v = i.value.replace(/\D/g,''); i.value = v ? parseInt(v).toLocaleString('es-CL') : ''; }
+    function toggleTheme() { document.body.classList.toggle('light-theme'); }
+    setInterval(() => { document.getElementById('cronos').innerText = new Date().toLocaleString('es-CL').toUpperCase(); }, 1000);
+
+    function toggleAllChecks() {
+        const check = document.getElementById('checkAll').checked;
+        document.querySelectorAll('.row-check').forEach(cb => cb.checked = check);
+        updateMassActions();
+    }
+
+    function updateMassActions() {
+        const cnt = document.querySelectorAll('.row-check:not(#checkAll):checked').length;
+        document.getElementById('massActionsBar').style.display = cnt > 0 ? 'flex' : 'none';
+        document.getElementById('massCount').innerText = `${cnt} seleccionado(s)`;
+        if(cnt === 0) document.getElementById('checkAll').checked = false;
+    }
+
+    function massDelete() {
+        const ids = Array.from(document.querySelectorAll('.row-check:not(#checkAll):checked')).map(cb => cb.value);
+        if(ids.length === 0 || !confirm(`⚠️ ¿Eliminar ${ids.length} registro(s)?`)) return;
+        const btn = document.querySelector('button[onclick="massDelete()"]'); const orig = btn.innerHTML; btn.innerHTML = '⏳';
+        Promise.all(ids.map(id => db.collection("movimientos").doc(id).delete())).then(() => {
+            document.getElementById('massActionsBar').style.display = 'none'; document.getElementById('checkAll').checked = false; btn.innerHTML = orig;
+        });
+    }
+
+    function massCategorize() {
+        const ids = Array.from(document.querySelectorAll('.row-check:not(#checkAll):checked')).map(cb => cb.value);
+        const cat = document.getElementById('massCategorySelect').value;
+        if(ids.length === 0 || !cat || !confirm(`¿Categorizar como "${cat}"?`)) return;
+        const btn = document.querySelector('button[onclick="massCategorize()"]'); const orig = btn.innerHTML; btn.innerHTML = '⏳';
+        Promise.all(ids.map(id => db.collection("movimientos").doc(id).update({categoria: cat}))).then(() => {
+            document.getElementById('massActionsBar').style.display = 'none'; document.getElementById('checkAll').checked = false; document.getElementById('massCategorySelect').value = ''; btn.innerHTML = orig;
+        });
+    }
+
+    function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0) {
+        if(chartBD) chartBD.destroy(); if(chartP) chartP.destroy();
+        const cT = getComputedStyle(document.body).getPropertyValue('--text-main').trim(); const cG = getComputedStyle(document.body).getPropertyValue('--border-color').trim(); const cF = getComputedStyle(document.body).getPropertyValue('--color-fuga').trim();
+        
+        let actual = [], ideal = [], acc = sueldo, diaQ = null; let daily = Array(diasCiclo + 1).fill(0);
+        let labelsX = [], colorLabelsX = [], colorGridX = []; const nombresMes = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"];
+
+        chronData.forEach(m => {
+            let diff = Math.floor((new Date(m.fechaISO) - T0) / 86400000) + 1;
+            if(diff >= 1 && diff <= diasCiclo) { if(m.esIn) daily[diff] += m.monto; else if(!m.esNeutro) daily[diff] -= m.monto; }
+        });
+
+        let limit = Math.floor((new Date() - T0) / 86400000) + 1;
+        for(let i=1; i<=diasCiclo; i++) {
+            ideal.push(sueldo - (sueldo/diasCiclo)*i); acc += daily[i]; if (acc < 0 && diaQ === null) diaQ = i; actual.push(i > limit ? null : acc);
+            let f = new Date(T0.getTime() + (i-1)*86400000); let dia = String(f.getDate()).padStart(2, '0');
+            if (f.getDate() === 1) { labelsX.push(`${dia} ${nombresMes[f.getMonth()]}`); colorLabelsX.push('#ff9800'); colorGridX.push('#ff9800'); } 
+            else { labelsX.push(dia); colorLabelsX.push(cT); colorGridX.push(cG); }
+        }
+
+        chartBD = new Chart(document.getElementById('chartBurnDown'), {
+            type: 'line', 
+            data: { labels: labelsX, datasets: [
+                { label: 'Consumo Real', data: actual, borderColor: '#1f6feb', borderWidth: 3, fill: {target:'origin', above:'rgba(31,111,235,0.05)', below:'rgba(218,54,51,0.2)'}, segment: {borderColor: c => c.p0.parsed.y < 0 ? cF : '#1f6feb'} },
+                { label: 'Gasto Ideal', data: ideal, borderColor: 'rgba(63,185,80,0.3)', borderDash:[5,5], pointRadius:0 }
+            ]},
+            options: { maintainAspectRatio:false, plugins:{legend:{display:true, labels:{color:cT, font:{size:10, weight:'bold'}}}}, scales:{ x:{ticks:{color: colorLabelsX, maxRotation: 45, minRotation: 45, font: (c) => ({ weight: colorLabelsX[c.index] === '#ff9800' ? '900' : 'bold', size: 10 }) }, grid:{color: colorGridX, drawBorder:false, lineWidth: (c) => colorGridX[c.index] === '#ff9800' ? 2 : 1 } }, y:{ticks:{color:cT, callback:v=>'$'+(v/1000)+'k'}, grid:{color: c => c.tick.value === 0 ? cF : cG}} } }
+        });
+
+        const sorted = Object.entries(cats).sort((a,b)=>b[1]-a[1]).slice(0,8); const totalTop8 = sorted.reduce((sum, val) => sum + val[1], 0) || 1;
+        let acumulado = 0; const dataAcumulada = sorted.map(c => { acumulado += c[1]; return (acumulado / totalTop8) * 100; });
+
+        chartP = new Chart(document.getElementById('chartPareto'), {
+            type: 'bar', 
+            data: { labels: sorted.map(c => c[0].split(' ')[0]), datasets: [
+                { type: 'line', label: '% Acumulado', data: dataAcumulada, borderColor: '#ff9800', borderWidth: 2, borderDash: [5, 5], pointBackgroundColor: '#ff9800', pointRadius: 3, fill: false, yAxisID: 'y1' },
+                { type: 'bar', label: 'Gasto', data: sorted.map(c => c[1]), backgroundColor: sorted.map(c => c[0] === 'Dopamina & Antojos' ? '#ff5252' : '#1f6feb'), borderRadius: 4, yAxisID: 'y' }
+            ]},
+            options: { maintainAspectRatio:false, plugins:{legend:{display:true, labels:{color:cT, font:{size:10, weight:'bold'}}}}, scales:{ x:{ticks:{color:cT, font:{size:9}}}, y:{ type: 'linear', position: 'left', ticks:{color:cT, callback:v=>'$'+(v/1000)+'k'} }, y1:{ type: 'linear', position: 'right', min: 0, max: 100, grid: { drawOnChartArea: false }, ticks:{color:'#ff9800', callback:v=>v+'%', font:{weight:'bold'}} } } }
+        });
+    }
+
+    function calcularFechasCiclo(mesConceptual, anio) {
+        let mesInicio = mesConceptual - 1; let anioInicio = anio; if (mesInicio < 0) { mesInicio = 11; anioInicio--; }
+        let T0 = new Date(anioInicio, mesInicio, 30); if (T0.getMonth() !== mesInicio) T0 = new Date(anioInicio, mesInicio + 1, 0); 
+        let TFinal = new Date(anio, mesConceptual, 30); if (TFinal.getMonth() !== mesConceptual) TFinal = new Date(anio, mesConceptual + 1, 0);
+        return { T0, TFinal, fechaFinVisual: new Date(TFinal.getTime() - 86400000) };
+    }
+
+    function cambiarCicloManual() { document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('preset-active')); aplicarCicloAlSistema(); }
+
+    function setCicloPreset(tipo) {
+        document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('preset-active'));
+        const m = new Date().getMonth(); let tM = m; let tA = new Date().getFullYear();
+        if (new Date().getDate() >= 30) { tM = (m + 1) % 12; if (tM === 0) tA++; }
+        if (tipo === 'anterior') { document.getElementById('btnPresetAnterior').classList.add('preset-active'); tM = tM - 1; if (tM < 0) { tM = 11; tA--; } } 
+        else if (tipo === 'actual') { document.getElementById('btnPresetActual').classList.add('preset-active'); }
+        document.getElementById('navMesConceptual').value = tM; document.getElementById('navAnio').value = tA;
+        aplicarCicloAlSistema();
+    }
+
+    function aplicarCicloAlSistema() {
+        const { T0, fechaFinVisual } = calcularFechasCiclo(parseInt(document.getElementById('navMesConceptual').value), parseInt(document.getElementById('navAnio').value));
+        document.getElementById('navRangoBadge').innerText = `PERIODO: ${T0.toLocaleDateString('es-CL', {day:'2-digit', month:'short'}).toUpperCase()} - ${fechaFinVisual.toLocaleDateString('es-CL', {day:'2-digit', month:'short'}).toUpperCase()}`;
+        actualizarDashboard();
+    }
+</script>
+</body>
+</html>
