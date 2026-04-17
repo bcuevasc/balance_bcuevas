@@ -47,7 +47,7 @@
         .btn-sys { background: var(--bg-subpanel); color: var(--text-main); border: 1px solid var(--border-color); padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: 800; font-size: 0.75rem; text-transform: uppercase; }
         .btn-sys:hover { border-color: var(--color-saldo); }
 
-        /* === V31.7: NAVEGADOR TEMPORAL GLOBAL (AHORA FUERA DEL MEDIA QUERY) === */
+        /* === V31.7: NAVEGADOR TEMPORAL GLOBAL === */
         .time-navigator-panel {
             background: var(--bg-panel); border: 1px solid var(--border-color);
             border-radius: 8px; padding: 12px 20px; margin-bottom: 15px;
@@ -99,7 +99,6 @@
 
         .master-layout { display: grid; grid-template-columns: 1fr 340px; gap: 15px; margin-top: 10px; }
         
-        /* 🟢 V31.8: BLINDAJE DE COLUMNA IZQUIERDA */
         .left-col { display: flex; flex-direction: column; gap: 15px; min-width: 0; }
         .right-col { display: flex; flex-direction: column; gap: 15px; }
 
@@ -110,18 +109,31 @@
         .lcd-badge .label { font-size: 0.6rem; color: var(--text-muted); font-weight: 800; text-transform: uppercase; }
         .lcd-badge .date-range { font-family: 'Courier New', Courier, monospace; font-size: 0.85rem; color: var(--color-ingresos); font-weight: 900; letter-spacing: 0.5px; }
         
-        /* 🟢 V31.8: BLINDAJE DE TABLA CON OVERFLOW-X */
-        .grid-container { height: 230px; overflow-x: auto; overflow-y: auto; background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 6px; }
+        /* 🟢 V31.9: MOTOR PRO - COMPRESIÓN Y DENSIDAD */
+        /* Liberamos la altura de 230px para usar viewport o un maximo mas holgado */
+        .grid-container { height: 380px; max-height: 50vh; overflow-x: auto; overflow-y: auto; background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 6px; }
         
         .data-grid { width: 100%; border-collapse: collapse; text-align: left; }
-        .data-grid th { position: sticky; top: 0; background: var(--bg-subpanel); padding: 10px; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; z-index: 10; border-bottom: 2px solid var(--border-color); white-space: nowrap; cursor: pointer; user-select: none;}
-        .data-grid td { padding: 8px 10px; font-size: 0.85rem; border-bottom: 1px solid var(--border-color); white-space: nowrap; vertical-align: middle; }
-        .col-hora { font-size: 0.65rem; color: var(--text-muted); font-weight: 700; display: block; margin-top: 2px; }
         
-        .cat-badge { font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); display: inline-block; margin-top: 4px; color: var(--text-muted); font-weight: 800; }
+        /* Encabezados Pegajosos Mejorados */
+        .data-grid th { position: sticky; top: 0; background: var(--bg-panel); padding: 8px 10px; font-size: 0.7rem; color: var(--color-ingresos); text-transform: uppercase; z-index: 10; border-bottom: 2px solid var(--border-color); white-space: nowrap; cursor: pointer; user-select: none; letter-spacing: 0.5px;}
+        
+        /* Celdas Compactadas (de 8px a 5px de aire vertical) */
+        .data-grid td { padding: 5px 10px; font-size: 0.8rem; border-bottom: 1px solid var(--border-color); white-space: nowrap; vertical-align: middle; }
+        
+        /* Efecto Cebra Inteligente (usa el color de subpanel que ya cambia en modo claro/oscuro) */
+        .data-grid tbody tr:nth-child(even) { background-color: var(--bg-subpanel); }
+        .data-grid tbody tr:hover { background-color: var(--item-hover); }
+
+        /* Alineación Numérica Industrial */
+        <td class="col-monto">$6.000</td>
+
+        .col-hora { font-size: 0.65rem; color: var(--text-muted); font-weight: 700; display: block; margin-top: 1px; }
+        
+        .cat-badge { font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); display: inline-block; margin-top: 2px; color: var(--text-muted); font-weight: 800; }
         
         .col-check { width: 40px; text-align: center; cursor: default;}
-        .row-check { cursor: pointer; transform: scale(1.3); accent-color: var(--color-edit); margin: 0; }
+        .row-check { cursor: pointer; transform: scale(1.2); accent-color: var(--color-edit); margin: 0; }
         
         .status-badge { padding: 3px 8px; border-radius: 4px; font-size: 0.65rem; font-weight: 800; border: 1px solid; }
         .status-ok { color: var(--color-saldo); border-color: rgba(63,185,80,0.3); background: rgba(63,185,80,0.1); }
@@ -164,7 +176,7 @@
             #charts-grid-container { grid-template-columns: 1fr; display: flex; flex-direction: column; gap: 10px; }
             .chart-box { height: 260px; padding: 10px; }
             .hide-mobile { display: none !important; }
-            .grid-container { max-height: 400px; }
+            .grid-container { max-height: 400px; height: auto; }
             .sidebar-panel { width: 100%; padding: 12px; }
             .btn-guardar { height: 50px; font-size: 1rem; }
             
@@ -175,7 +187,7 @@
             .preset-btn { flex: 1; text-align: center; padding: 10px 5px; }
             .nav-badge { display: none; }
         }
-    </style>
+</style>
 </head>
 <body>
 
@@ -301,10 +313,6 @@
         <div class="left-col">
             <div class="grid-main-wrapper">
                 <div class="telemetry-header">
-                    <div class="lcd-badge">
-                        <span class="label">Ciclo Activo:</span>
-                        <span id="txtPeriodoBatch" class="date-range">--/--/-- al --/--/--</span>
-                    </div>
                     <input type="text" id="inputBuscador" placeholder="🔍 Filtrar tabla..." oninput="actualizarDashboard()" style="width:250px; background:var(--input-bg); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px; padding:6px 12px; outline:none; font-size:0.8rem;">
                 </div>
                 <div class="grid-container">
@@ -728,14 +736,27 @@
             let statusBadge = x.catV === 'Sin Categoría' ? `<span class="status-badge status-warn">REVISAR</span>` : `<span class="status-badge status-ok">OK</span>`;
             let bgEdicion = (document.getElementById('editId').value === x.firestoreId) ? 'background-color: rgba(210, 153, 34, 0.15); border-left: 3px solid var(--color-edit);' : '';
 
+            // ========================================================
+            // 🛡️ MOTOR PRO: SANITIZACIÓN ANTI-CRASH
+            // ========================================================
+            const nombreSeguro = x.nombre || "Dato no identificado";
+            
+            // Si Firebase tira un error o un null, inyectamos un 0 silencioso
+            const montoSeguro = (typeof x.monto === 'number' && !isNaN(x.monto)) ? x.monto : 0;
+            const saldoSeguro = (typeof x.saldoCalculadoVista === 'number' && !isNaN(x.saldoCalculadoVista)) ? x.saldoCalculadoVista : 0;
+            const colorSaldo = saldoSeguro < 0 ? 'var(--color-fuga)' : 'var(--text-muted)';
+
+            // 🟢 CLASE .col-monto INYECTADA EN AMBAS COLUMNAS DE DINERO
             htmlBuffer += `<tr style="${bgEdicion}">
                 <td class="col-check hide-mobile"><input type="checkbox" class="row-check" value="${x.firestoreId}" onchange="updateMassActions()"></td>
                 <td class="hide-mobile" style="text-align:center; font-size:0.75rem; font-weight:800; color:var(--text-muted);">${x.indiceVista}</td>
                 <td style="font-size:0.75rem; color:var(--text-muted);">${dS}</td>
-                <td style="font-weight:700;">${x.nombre}</td>
+                <td style="font-weight:700;">${nombreSeguro}</td>
                 <td class="hide-mobile" style="font-size:0.75rem;"><span class="cat-badge">${em} ${x.catV}</span></td>
-                <td style="font-weight:800; color:${colorMonto}; white-space: nowrap;">${iconImpacto}$${x.monto.toLocaleString('es-CL')}</td>
-                <td class="hide-mobile" style="text-align:right; font-weight:800; color:${x.saldoCalculadoVista<0?'var(--color-fuga)':'var(--text-muted)'}">$${x.saldoCalculadoVista.toLocaleString('es-CL')}</td>
+                
+                <td class="col-monto" style="color:${colorMonto};">${iconImpacto}$${montoSeguro.toLocaleString('es-CL')}</td>
+                <td class="col-monto hide-mobile" style="color:${colorSaldo};">$${saldoSeguro.toLocaleString('es-CL')}</td>
+                
                 <td class="hide-mobile" style="text-align:center; font-size:0.7rem; color:var(--text-muted);">${catEvitables.includes(x.catV) ? '100%' : '0%'}</td>
                 <td class="hide-mobile" style="text-align:center;">${statusBadge}</td>
                 <td class="hide-mobile" style="text-align:center;">
