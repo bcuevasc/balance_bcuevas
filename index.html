@@ -253,13 +253,47 @@
 
         <div class="right-col">
             <div class="sidebar-panel">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
-                    <label style="font-size:0.65rem; color:var(--text-muted); font-weight:800; text-transform:uppercase;">Inicio de Ciclo (T0)</label>
-                    <button class="btn-sys" style="padding: 4px 8px; border-color: var(--color-fuga); color: var(--color-fuga); background: rgba(255, 82, 82, 0.05);">🧹 LIMPIAR</button>
+                <h4 style="color:var(--color-saldo); margin:0; font-size:0.85rem; text-transform:uppercase; margin-bottom:10px;">REGISTRO MANUAL</h4>
+                <input type="hidden" id="editId">
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: -5px;">
+                    <div class="form-group"><label>Fecha</label><input type="datetime-local" id="inputFecha"></div>
+                    <div class="form-group"><label>Flujo</label>
+                        <select id="inputTipo">
+                            <option value="Gasto">Gasto Variable</option>
+                            <option value="Gasto Fijo">Gasto Fijo</option>
+                            <option value="Ingreso">Ingreso Extra</option>
+                            <option value="Por Cobrar">Préstamo (CxC)</option>
+                            <option value="Ahorro">Ahorro / Mov. Neutro</option>
+                        </select>
+                    </div>
                 </div>
-                <div class="form-group" style="margin-bottom:0;">
-                    <input type="date" id="inputInicioCiclo" class="custom-select" value="2026-03-30" onchange="actualizarDashboard()">
+
+                <div class="form-group"><label>Categoría V31.4</label>
+                    <select id="inputCategoria">
+                        <option value="Gastos Fijos (Búnker)">🏠 Gastos Fijos (Búnker)</option>
+                        <option value="Suscripciones">📱 Suscripciones</option>
+                        <option value="Alimentación & Supermercado">🛒 Alimentación & Supermercado</option>
+                        <option value="Dopamina & Antojos">🍔 Dopamina & Antojos</option>
+                        <option value="Ocio & Experiencias">🎸 Ocio & Experiencias</option>
+                        <option value="Transporte & Logística">🚗 Transporte & Log</option>
+                        <option value="Mantenimiento Hardware (Salud)">💊 Salud</option>
+                        <option value="Transferencia Propia / Ahorro">🏦 Transferencia Propia</option>
+                        <option value="Transferencia Recibida">📲 Transferencia Recibida</option>
+                        <option value="Hogar & Búnker">🛠️ Hogar & Búnker</option>
+                        <option value="Red de Apoyo (Familia)">🫂 Red de Apoyo</option>
+                        <option value="Gasto Tarjeta de Crédito">💳 Gasto TC</option>
+                        <option value="Ingreso Adicional">💰 Ingresos</option>
+                        <option value="Sin Categoría">❓ Sin Categoría</option>
+                    </select>
                 </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 110px; gap: 10px;">
+                    <div class="form-group"><label>Descripción</label><input type="text" id="inputNombre"></div>
+                    <div class="form-group"><label>Monto</label><input type="text" id="inputMonto" oninput="formatearEntradaNumerica(this)"></div>
+                </div>
+                
+                <button id="btnGuardar" class="btn-guardar" onclick="agregarMovimiento()">GUARDAR EN BÚNKER</button>
             </div>
 
             <div class="sidebar-panel">
