@@ -170,12 +170,12 @@ input[type="date"]::-webkit-calendar-picker-indicator, input[type="datetime-loca
 .floating-mass-actions { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #1c2128; border: 1px solid var(--color-edit); border-radius: 50px; padding: 8px 20px; display: flex; align-items: center; justify-content: space-between; gap: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); z-index: 9999; }
 
 /* ==================================================================== */
-/* 📱 MEDIA QUERY: RESPONSIVE Y UX MÓVIL (IPHONE/ANDROID)              */
+/* 📱 MEDIA QUERY: RESPONSIVE Y UX MÓVIL (IPHONE/ANDROID)               */
 /* ==================================================================== */
 @media (max-width: 1024px) {
-    /* Desbloqueamos el scroll para celular */
-    body { overflow-y: auto !important; height: auto !important; display: block; } 
-    .app-container { height: auto !important; padding: 8px; display: flex; }
+    /* 1. SELLO HERMÉTICO: Bloqueo definitivo de scroll horizontal global */
+    body { overflow-y: auto !important; overflow-x: hidden !important; height: auto !important; display: block; } 
+    .app-container { height: auto !important; padding: 8px; display: flex; flex-direction: column; overflow-x: hidden; }
     
     .header-titles { flex-direction: column; align-items: flex-start; gap: 5px; }
     .kpi-row { grid-template-columns: repeat(2, 1fr); gap: 8px; }
@@ -191,11 +191,25 @@ input[type="date"]::-webkit-calendar-picker-indicator, input[type="datetime-loca
     /* 🟢 FIX ANTI-FLOTACIÓN MÓVIL (Anclaje sólido de tabla) */
     .grid-main-wrapper { padding: 0 !important; overflow: hidden; border: none !important; background: transparent !important; }
     .telemetry-header { padding: 8px; margin-bottom: 0; background: var(--bg-panel); border-radius: 8px 8px 0 0; border: 1px solid var(--border-color); border-bottom: none; }
-    .grid-container { border: 1px solid var(--border-color) !important; border-radius: 0 0 8px 8px !important; height: auto !important; max-height: 50vh !important; min-height: 250px !important; overflow-y: auto; }
+    .grid-container { border: 1px solid var(--border-color) !important; border-radius: 0 0 8px 8px !important; height: auto !important; max-height: 50vh !important; min-height: 250px !important; overflow-y: auto; overflow-x: auto; }
+
+    /* 🟢 CALIBRACIÓN DE BOTONES SUPERIORES (Cero Desplazamiento) */
+    .time-navigator-panel { flex-direction: column; gap: 10px; align-items: stretch; padding: 10px; }
+    .time-nav-controls { justify-content: space-between; flex-wrap: wrap; }
+    
+    /* Apilamos los contenedores de botones y forzamos el 100% de ancho */
+    .time-navigator-panel > div:last-child { width: 100%; flex-direction: column; gap: 8px !important; align-items: stretch !important; }
+    
+    .time-nav-presets { width: 100%; justify-content: space-between; gap: 6px; }
+    .preset-btn { flex: 1; text-align: center; padding: 8px 2px; font-size: 0.65rem; }
+    
+    .system-btns { width: 100%; justify-content: center !important; gap: 6px; padding-bottom: 0 !important; }
+    .system-btns .btn-sys { flex: 1 1 30%; padding: 8px 2px; font-size: 0.65rem; }
+    .nav-badge { display: none; }
 
     /* --- PARCHE UX MÓVIL: ERGONOMÍA TÁCTIL --- */
     
-    /* 1. Multilínea para que se lea la descripción completa (SINTAXIS CORREGIDA) */
+    /* 1. Multilínea para que se lea la descripción completa */
     .data-grid td { 
         white-space: normal !important; 
         word-wrap: break-word; 
