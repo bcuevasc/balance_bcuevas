@@ -241,7 +241,7 @@
                 <button class="btn-sys" onclick="toggleTheme()">☀️/🌙</button>
                 <button class="btn-sys" onclick="triggerSync()">🔄 SYNC</button>
                 <button class="btn-sys" onclick="exportarCSV()">💾 BKUP</button>
-                <button class="btn-sys btn-telegram">🚀 TG</button>
+                <button class="btn-sys btn-telegram" onclick="enviarReporteTelegram()">🚀 TELEGRAM</button>
                 <button class="btn-sys" onclick="logout()" style="color:var(--color-fuga);">🚪 SALIR</button>
             </div>
 
@@ -417,9 +417,8 @@
         </div>
     </div>
 </div>
-
 <script>
-    // ==========================================
+// ==========================================
     // ⚙️ CONFIGURACIÓN & ESTADO GLOBAL V31.7
     // ==========================================
     const BYRON_EMAIL = "bvhcc94@gmail.com"; 
@@ -475,6 +474,105 @@
             });
         }
     });
+
+    // ==========================================
+    // 📡 MÓDULO DE COMUNICACIONES EXTERNAS & RESPALDOS
+    // ==========================================
+
+    function triggerSync() {
+        // ⚠️ OPERADOR: Reemplaza esta URL con la tuya de Google Apps Script (Web App)
+        const scriptURL = "TU_URL_DE_APPS_SCRIPT_AQUI"; 
+        
+        if (scriptURL === "TU_URL_DE_APPS_SCRIPT_AQUI") {
+            alert("⚠️ Enlace roto: Ingresa la URL de tu Web App de Apps Script en el código fuente.");
+            return;
+        }
+
+        const btn = document.querySelector('button[onclick="triggerSync()"]');
+        const origText = btn.innerHTML;
+        btn.innerHTML = "⏳ SYNC...";
+        btn.disabled = true;
+
+        fetch(scriptURL)
+            .then(response => response.text())
+            .then(data => {
+                alert("✅ Sincronización exitosa: " + data);
+                btn.innerHTML = origText;
+                btn.disabled = false;
+            })
+            .catch(error => {
+                alert("❌ Falla de telemetría (CORS/Red): " + error);
+                btn.innerHTML = origText;
+                btn.disabled = false;
+            });
+    }
+
+    function enviarReporteTelegram() {
+        // ⚠️ OPERADOR: Necesitas el Token de tu Bot y tu Chat ID de Telegram
+        const botToken = "TU_BOT_TOKEN_AQUI";
+        const chatId = "TU_CHAT_ID_AQUI";
+        
+        if (botToken === "TU_BOT_TOKEN_AQUI") {
+            alert("⚠️ Canal apagado: Configura el Token de Telegram en el código.");
+            return;
+        }
+
+        const saldoActual = document.getElementById('txtSaldo').innerText;
+        const totalFugas = document.getElementById('txtPorcentajeFugas').innerText;
+        const mensaje = `🏭 *BÚNKER SCADA - REPORTE DE TURNO*\n\n💰 Saldo Operativo: $${saldoActual}\n🚨 Nivel de Fugas: ${totalFugas}\n\nTransmisión finalizada.`;
+
+        const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
+        
+        fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ chat_id: chatId, text: mensaje, parse_mode: 'Markdown' })
+        })
+        .then(res => {
+            if(res.ok) alert("🚀 Reporte transmitido a Telegram.");
+            else alert("❌ Error en la transmisión.");
+        })
+        .catch(err => alert("❌ Falla en la antena de transmisión: " + err));
+    }
+
+    function exportarCSV() {
+        if (!listaMovimientos || listaMovimientos.length === 0) {
+            alert("⚠️ No hay datos en caché para respaldar.");
+            return;
+        }
+
+        const btn = document.querySelector('button[onclick="exportarCSV()"]');
+        const origText = btn.innerHTML;
+        btn.innerHTML = "⏳ BKUP...";
+        btn.disabled = true;
+
+        let csvContent = "Fecha,Descripción,Categoría,Flujo,Monto\n";
+        let datosOrdenados = [...listaMovimientos].sort((a,b) => a.fechaISO < b.fechaISO ? -1 : 1);
+
+        datosOrdenados.forEach(row => {
+            let fecha = new Date(row.fechaISO).toLocaleDateString('es-CL');
+            let desc = row.nombre ? row.nombre.replace(/,/g, " ") : "Sin descripción"; 
+            let cat = row.categoria || "Sin Categoría";
+            let tipo = row.tipo || "Gasto";
+            let monto = row.monto || 0;
+            
+            csvContent += `${fecha},${desc},${cat},${tipo},${monto}\n`;
+        });
+
+        const blob = new Blob(["\ufeff", csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.setAttribute("href", url);
+        link.setAttribute("download", `Bunker_Backup_${new Date().toISOString().slice(0,10)}.csv`);
+        link.style.visibility = 'hidden';
+        
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        btn.innerHTML = origText;
+        btn.disabled = false;
+    }
 
     // ==========================================
     // 🧠 CEREBRO DEL DASHBOARD (KPIs y Tabla)
@@ -560,8 +658,7 @@
 
         renderizarTabla(sueldo, b);
         dibujarGraficos(sueldo, [...dataMes].sort((x,y) => x.fechaISO < y.fechaISO ? -1 : 1), gCat, diasCiclo, T0);
-    }
-    
+    }    
     function renderizarTabla(sueldoBase, filtroBuscador) {
         let datos = [...datosMesGlobal];
         if (filtroBuscador) datos = datos.filter(x => x.nombre?.toLowerCase().includes(filtroBuscador) || x.catV.toLowerCase().includes(filtroBuscador));
