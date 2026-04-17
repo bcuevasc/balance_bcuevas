@@ -442,7 +442,7 @@
     let currentSort = { column: 'fechaISO', direction: 'desc' }; 
     let modoEdicionActivo = false;
 
-    function loginWithGoogle() { auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
+    function loginWithGoogle() { auth.signInWithRedirect(new firebase.auth.GoogleAuthProvider()); }
     function logout() { auth.signOut().then(() => window.location.reload()); }
 
     auth.onAuthStateChanged(user => {
