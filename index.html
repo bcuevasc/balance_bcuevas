@@ -83,12 +83,22 @@
         .left-col { display: flex; flex-direction: column; gap: 10px; min-width: 0; height: 100%; justify-content: space-between;}
         .right-col { display: flex; flex-direction: column; gap: 10px; height: 100%; }
 
-        .grid-main-wrapper { background: var(--bg-panel); border-radius: 8px; border: 1px solid var(--border-color); padding: 10px; display: flex; flex-direction: column; flex-grow: 1; min-height: 0;}
+/* 1. EL ENVOLTORIO QUE SE EXPANDE */
+        .grid-main-wrapper { 
+            background: var(--bg-panel); border-radius: 8px; border: 1px solid var(--border-color); padding: 10px; display: flex; flex-direction: column; 
+            flex-grow: 1; min-height: 0; 
+        }
         
-        .telemetry-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; gap: 10px; }
+        /* 2. TU BARRA DE BÚSQUEDA (MANTENER INTACTA) */
+        .telemetry-header { 
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; gap: 10px; 
+        }
         
-        /* 🟢 REDUCCIÓN BRUTAL DE LA TABLA (25% del alto de pantalla) */
-        .grid-container { height: 28vh; min-height: 180px; overflow-x: auto; overflow-y: auto; background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 6px; }
+        /* 3. LA TABLA TIPO RESORTE */
+        .grid-container { 
+            flex-grow: 1; height: auto; min-height: 150px; 
+            overflow-x: auto; overflow-y: auto; background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 6px; 
+        }
         
         .data-grid { width: 100%; border-collapse: collapse; text-align: left; }
         .data-grid th { position: sticky; top: 0; background: var(--bg-panel); padding: 6px 8px; font-size: 0.65rem; color: var(--color-ingresos); text-transform: uppercase; z-index: 10; border-bottom: 2px solid var(--border-color); white-space: nowrap; cursor: pointer; user-select: none; letter-spacing: 0.5px;}
