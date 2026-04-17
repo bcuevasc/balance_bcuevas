@@ -477,18 +477,13 @@
         } else {
             txtPctFugas.style.color = "var(--color-fuga)"; // Rojo - Peligro
             barraEvitable.style.backgroundColor = "var(--color-fuga)";
-        // ... (tu código del semáforo arriba)
-        } else {
-            txtPctFugas.style.color = "var(--color-fuga)"; // Rojo - Peligro
-            barraEvitable.style.backgroundColor = "var(--color-fuga)";
         }
 
-        // 🟢 ACTUADORES DE PANTALLA: ¡Estas son las líneas que faltaban!
+        // 🟢 ACTUADORES DE PANTALLA: Pintan el DOM al final del ciclo
         renderizarTabla(sueldo, b);
         dibujarGraficos(sueldo, [...dataMes].sort((x,y) => x.fechaISO < y.fechaISO ? -1 : 1), gCat, diasCiclo, T0);
-    } // <-- Este es el cierre de la función actualizarDashboard()
     }
-
+    
     function renderizarTabla(sueldoBase, filtroBuscador) {
         let datos = [...datosMesGlobal];
         if (filtroBuscador) datos = datos.filter(x => x.nombre?.toLowerCase().includes(filtroBuscador) || x.catV.toLowerCase().includes(filtroBuscador));
