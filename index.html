@@ -171,23 +171,31 @@
         }
 
         @media (max-width: 1024px) {
-            body { overflow-y: auto; height: auto; } /* En celular sí permitimos scroll */
-            .app-container { height: auto; padding: 8px; }
-            .header-titles { flex-direction: column; align-items: flex-start; gap: 5px; }
-            .kpi-row { grid-template-columns: repeat(2, 1fr); gap: 8px; }
-            .master-layout { grid-template-columns: 1fr; display: flex; flex-direction: column; }
-            #charts-grid-container { grid-template-columns: 1fr; display: flex; flex-direction: column; gap: 10px; }
-            .chart-box { height: 220px; }
-            .hide-mobile { display: none !important; }
-            .time-navigator-panel { flex-direction: column; gap: 12px; align-items: stretch; }
-            .time-nav-controls, .time-nav-presets { justify-content: space-between; }
-            .preset-btn { flex: 1; text-align: center; }
-            .nav-badge { display: none; }
+            /* ================================================= */
+            /* 📱 PARCHE UX MÓVIL: ERGONOMÍA TÁCTIL Y MULTILÍNEA */
+            /* ================================================= */
             
-            /* 🟢 COMPRESIÓN MÓVIL TÁCTICA */
-            .col-desc { max-width: 90px; } /* Más corto en celular */
-            .btn-edit-text { display: none; } /* Oculta la palabra EDIT, deja solo el lápiz */
-            .grid-container { height: 35vh !important; min-height: 200px !important; } /* Tabla más corta para llegar rápido al formulario */
+            /* 1. Permitimos que el texto largo baje a otra línea */
+            .col-desc { 
+                max-width: 130px; /* Le damos más ancho disponible */
+                white-space: normal !important; /* Rompe el límite de 1 sola línea */
+                overflow: visible;
+                line-height: 1.2; /* Interlineado para que no se pegue el texto */
+                padding-top: 4px;
+            }
+
+            /* 2. Filas más altas para precisión de pulgar (Fat Finger Fix) */
+            .data-grid td { 
+                padding: 10px 5px !important; /* El doble de espacio vertical que en PC */
+                vertical-align: middle;
+            }
+
+            /* 3. Botón de edición convertido en botón táctil real */
+            .data-grid .btn-sys {
+                padding: 8px 10px !important;
+                font-size: 1rem !important; /* Lápiz más grande */
+                border-radius: 8px;
+            }
         }
     </style>
 </head>
