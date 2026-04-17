@@ -504,32 +504,72 @@
             });
     }
 
+    // 2. Transmisión de Reporte VISUAL a Telegram
     function enviarReporteTelegram() {
         // ⚠️ OPERADOR: Necesitas el Token de tu Bot y tu Chat ID de Telegram
-        const botToken = "8614679709:AAEJGy9yAlKnhjVmJ0VUZpT-YmZQ6J5IOps";
-        const chatId = "1484213465";
+        const botToken = "TU_BOT_TOKEN_AQUI";
+        const chatId = "TU_CHAT_ID_AQUI";
         
         if (botToken === "TU_BOT_TOKEN_AQUI") {
             alert("⚠️ Canal apagado: Configura el Token de Telegram en el código.");
             return;
         }
 
+        const btn = document.querySelector('button[onclick="enviarReporteTelegram()"]');
+        const origText = btn.innerHTML;
+        btn.innerHTML = "📸 CAPTURANDO...";
+        btn.disabled = true;
+
         const saldoActual = document.getElementById('txtSaldo').innerText;
         const totalFugas = document.getElementById('txtPorcentajeFugas').innerText;
-        const mensaje = `🏭 *BÚNKER SCADA - REPORTE DE TURNO*\n\n💰 Saldo Operativo: $${saldoActual}\n🚨 Nivel de Fugas: ${totalFugas}\n\nTransmisión finalizada.`;
-
-        const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
+        const periodo = document.getElementById('navRangoBadge').innerText;
         
-        fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ chat_id: chatId, text: mensaje, parse_mode: 'Markdown' })
-        })
-        .then(res => {
-            if(res.ok) alert("🚀 Reporte transmitido a Telegram.");
-            else alert("❌ Error en la transmisión.");
-        })
-        .catch(err => alert("❌ Falla en la antena de transmisión: " + err));
+        // El texto que irá debajo de la foto
+        const mensaje = `🏭 *BÚNKER SCADA - TELEMETRÍA VISUAL*\n🗓️ ${periodo}\n\n💰 Saldo Operativo: $${saldoActual}\n🚨 Nivel de Fugas: ${totalFugas}\n\nTransmisión finalizada.`;
+
+        // 🟢 Apuntamos las cámaras al contenedor principal del Dashboard
+        const targetElement = document.getElementById('reportZone');
+
+        // Disparamos html2canvas
+        html2canvas(targetElement, { 
+            scale: 1.5, // Resolución HD de la captura
+            backgroundColor: "#0b0e14", // Forzamos el fondo oscuro del chasis
+            useCORS: true 
+        }).then(canvas => {
+            btn.innerHTML = "🚀 ENVIANDO...";
+            
+            // Convertimos la captura en un archivo de imagen (Blob)
+            canvas.toBlob(function(blob) {
+                // Preparamos el "Paquete" para Telegram (Imagen + Texto)
+                const formData = new FormData();
+                formData.append('chat_id', chatId);
+                formData.append('photo', blob, 'scada_report.png');
+                formData.append('caption', mensaje);
+                formData.append('parse_mode', 'Markdown');
+
+                // 🟢 Endpoint cambiado a sendPhoto
+                const url = `https://api.telegram.org/bot${botToken}/sendPhoto`;
+                
+                fetch(url, {
+                    method: 'POST',
+                    body: formData // Ya no enviamos JSON, enviamos un archivo multipart
+                })
+                .then(res => {
+                    if(res.ok) alert("📸🚀 Reporte visual transmitido con éxito a Telegram.");
+                    else alert("❌ Error en la transmisión del paquete de datos.");
+                })
+                .catch(err => alert("❌ Falla en la antena de transmisión: " + err))
+                .finally(() => {
+                    btn.innerHTML = origText;
+                    btn.disabled = false;
+                });
+            }, 'image/png');
+            
+        }).catch(err => {
+            alert("❌ Falla crítica en los lentes ópticos del SCADA: " + err);
+            btn.innerHTML = origText;
+            btn.disabled = false;
+        });
     }
 
     function exportarCSV() {
