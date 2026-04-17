@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Bunker Digital SCADA v31.7 - Edición Activa</title>
+    <title>Bunker Digital SCADA v31.9 - Motor Pro</title>
     
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -47,7 +47,6 @@
         .btn-sys { background: var(--bg-subpanel); color: var(--text-main); border: 1px solid var(--border-color); padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: 800; font-size: 0.75rem; text-transform: uppercase; }
         .btn-sys:hover { border-color: var(--color-saldo); }
 
-        /* === V31.7: NAVEGADOR TEMPORAL GLOBAL === */
         .time-navigator-panel {
             background: var(--bg-panel); border: 1px solid var(--border-color);
             border-radius: 8px; padding: 12px 20px; margin-bottom: 15px;
@@ -109,27 +108,16 @@
         .lcd-badge .label { font-size: 0.6rem; color: var(--text-muted); font-weight: 800; text-transform: uppercase; }
         .lcd-badge .date-range { font-family: 'Courier New', Courier, monospace; font-size: 0.85rem; color: var(--color-ingresos); font-weight: 900; letter-spacing: 0.5px; }
         
-        /* 🟢 V31.9: MOTOR PRO - COMPRESIÓN Y DENSIDAD */
-        /* Liberamos la altura de 230px para usar viewport o un maximo mas holgado */
         .grid-container { height: 380px; max-height: 50vh; overflow-x: auto; overflow-y: auto; background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 6px; }
         
         .data-grid { width: 100%; border-collapse: collapse; text-align: left; }
-        
-        /* Encabezados Pegajosos Mejorados */
         .data-grid th { position: sticky; top: 0; background: var(--bg-panel); padding: 8px 10px; font-size: 0.7rem; color: var(--color-ingresos); text-transform: uppercase; z-index: 10; border-bottom: 2px solid var(--border-color); white-space: nowrap; cursor: pointer; user-select: none; letter-spacing: 0.5px;}
-        
-        /* Celdas Compactadas (de 8px a 5px de aire vertical) */
         .data-grid td { padding: 5px 10px; font-size: 0.8rem; border-bottom: 1px solid var(--border-color); white-space: nowrap; vertical-align: middle; }
-        
-        /* Efecto Cebra Inteligente (usa el color de subpanel que ya cambia en modo claro/oscuro) */
         .data-grid tbody tr:nth-child(even) { background-color: var(--bg-subpanel); }
         .data-grid tbody tr:hover { background-color: var(--item-hover); }
 
-        /* Alineación Numérica Industrial */
-        <td class="col-monto">$6.000</td>
-
+        .col-monto { text-align: right; font-family: 'Courier New', Courier, monospace; font-weight: 700; font-size: 0.85rem; letter-spacing: -0.5px; }
         .col-hora { font-size: 0.65rem; color: var(--text-muted); font-weight: 700; display: block; margin-top: 1px; }
-        
         .cat-badge { font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); display: inline-block; margin-top: 2px; color: var(--text-muted); font-weight: 800; }
         
         .col-check { width: 40px; text-align: center; cursor: default;}
@@ -179,22 +167,20 @@
             .grid-container { max-height: 400px; height: auto; }
             .sidebar-panel { width: 100%; padding: 12px; }
             .btn-guardar { height: 50px; font-size: 1rem; }
-            
-            /* Ajustes Móviles Navegador */
             .time-navigator-panel { flex-direction: column; gap: 12px; align-items: stretch; padding: 10px; }
             .time-nav-controls { justify-content: space-between; }
             .time-nav-presets { justify-content: space-between; }
             .preset-btn { flex: 1; text-align: center; padding: 10px 5px; }
             .nav-badge { display: none; }
         }
-</style>
+    </style>
 </head>
 <body>
 
 <div id="login-screen">
     <div class="login-box">
         <h2 style="color:#fff; margin-bottom:10px;">BUNKER SCADA</h2>
-        <p style="color:var(--text-muted); font-size:0.8rem;">SISTEMA PRIVADO DE GESTIÓN TÁCTICA V31.7</p>
+        <p style="color:var(--text-muted); font-size:0.8rem;">SISTEMA PRIVADO DE GESTIÓN TÁCTICA V31.9</p>
         <button class="btn-google" onclick="loginWithGoogle()">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="20px" height="20px" style="margin-right:10px; vertical-align:middle;">
                 <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.7 17.74 9.5 24 9.5z"/>
@@ -256,7 +242,6 @@
                 <button class="btn-sys btn-telegram" onclick="enviarReporteTelegram()">🚀 TELEGRAM</button>
                 <button class="btn-sys" onclick="logout()" style="color:var(--color-fuga);">🚪 SALIR</button>
             </div>
-
         </div>
     </div>
 
@@ -309,6 +294,7 @@
             <div class="value">$<span id="txtProyeccionCierre">0</span></div>
         </div>
     </div>
+    
     <div class="master-layout">
         <div class="left-col">
             <div class="grid-main-wrapper">
@@ -324,7 +310,7 @@
                                 <th onclick="sortTable('fechaISO')">Fecha</th>
                                 <th onclick="sortTable('nombre')">Descripción</th>
                                 <th class="hide-mobile" onclick="sortTable('catV')">Categoría</th>
-                                <th onclick="sortTable('monto')">Monto</th>
+                                <th onclick="sortTable('monto')" style="text-align: right;">Monto</th>
                                 <th class="hide-mobile" style="text-align: right;">Saldo Hist.</th>
                                 <th class="hide-mobile" style="text-align: center;">% Fuga</th>
                                 <th class="hide-mobile" style="text-align: center;">Status</th>
@@ -350,10 +336,6 @@
         </div>
 
         <div class="right-col">
-            <div class="sidebar-panel" style="display: none;">
-                <input type="date" id="inputInicioCiclo" class="custom-select" value="2026-03-30">
-            </div>
-
             <div class="sidebar-panel">
                 <h4 style="color:var(--color-saldo); margin:0; font-size:0.85rem; text-transform:uppercase; margin-bottom:10px;">REGISTRO MANUAL</h4>
                 <input type="hidden" id="editId">
@@ -397,6 +379,7 @@
                 
                 <button id="btnGuardar" class="btn-guardar" onclick="agregarMovimiento()">GUARDAR EN BÚNKER</button>
             </div>
+            
             <div class="sidebar-panel">
                 <h4 style="margin:0 0 10px 0; font-size:0.85rem; color:var(--text-muted); text-transform:uppercase;">Eficiencia de Gasto</h4>
                 <div class="eficiencia-kpi"><div class="monto">$<span id="txtTotalEvitable">0</span></div><div class="label">Fugas Detectadas</div></div>
@@ -406,6 +389,7 @@
                     <span id="txtPorcentajeFugas" style="font-size:0.9rem; font-weight:900; color:var(--color-fuga);">0%</span>
                 </div>
             </div>
+        </div>
     </div>
     
     <div id="massActionsBar" class="floating-mass-actions" style="display: none;">
@@ -425,10 +409,8 @@
         </div>
     </div>
 </div>
+
 <script>
-// ==========================================
-    // ⚙️ CONFIGURACIÓN & ESTADO GLOBAL V31.7
-    // ==========================================
     const BYRON_EMAIL = "bvhcc94@gmail.com"; 
     const CREDIT_SETPOINT = -300000; 
     const catEvitables = ["Dopamina & Antojos"]; 
@@ -458,9 +440,6 @@
     let currentSort = { column: 'fechaISO', direction: 'desc' }; 
     let modoEdicionActivo = false;
 
-    // ==========================================
-    // 🔐 AUTH & FIREBASE CONEXIÓN
-    // ==========================================
     function loginWithGoogle() { auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
     function logout() { auth.signOut().then(() => window.location.reload()); }
 
@@ -478,29 +457,20 @@
                     d.monto = Number(d.monto) || 0;
                     listaMovimientos.push(d);
                 });
-                aplicarCicloAlSistema(); // Llama al navegador de tiempo al cargar data
+                aplicarCicloAlSistema();
             });
         }
     });
 
-    // ==========================================
-    // 📡 MÓDULO DE COMUNICACIONES EXTERNAS & RESPALDOS
-    // ==========================================
-
     function triggerSync() {
-        // Enlace oficial de la API de Apps Script
         const scriptURL = "https://script.google.com/macros/s/AKfycbwKlub0qrv8_d24ZuyKKNryqOw1E68xv1_JvPOoEUc6W8TICllFfodNcwkigQE_7AuoNg/exec"; 
-        
         const btn = document.querySelector('button[onclick="triggerSync()"]');
         const origText = btn.innerHTML;
         btn.innerHTML = "⏳ SYNC...";
         btn.disabled = true;
 
-        // 🟢 FIX: Agregamos { mode: 'no-cors' } para puentear la seguridad del navegador
         fetch(scriptURL, { mode: 'no-cors' })
             .then(() => {
-                // Como la respuesta es "opaca" por seguridad, no leemos la data, 
-                // pero sabemos que el disparo fue exitoso.
                 alert("✅ Comando de sincronización transmitido con éxito al Búnker Central.");
                 btn.innerHTML = origText;
                 btn.disabled = false;
@@ -512,126 +482,69 @@
             });
     }
 
-    // 2. Transmisión de Reporte VISUAL a Telegram
     function enviarReporteTelegram() {
-        // ⚠️ OPERADOR: Necesitas el Token de tu Bot y tu Chat ID de Telegram
         const botToken = "8614679709:AAEJGy9yAlKnhjVmJ0VUZpT-YmZQ6J5IOps";
         const chatId = "1484213465";
         
-        if (botToken === "TU_BOT_TOKEN_AQUI") {
-            alert("⚠️ Canal apagado: Configura el Token de Telegram en el código.");
-            return;
-        }
+        if (botToken === "TU_BOT_TOKEN_AQUI") return alert("⚠️ Canal apagado");
 
         const btn = document.querySelector('button[onclick="enviarReporteTelegram()"]');
         const origText = btn.innerHTML;
-        btn.innerHTML = "📸 CAPTURANDO...";
-        btn.disabled = true;
+        btn.innerHTML = "📸 CAPTURANDO..."; btn.disabled = true;
 
         const saldoActual = document.getElementById('txtSaldo').innerText;
         const totalFugas = document.getElementById('txtPorcentajeFugas').innerText;
         const periodo = document.getElementById('navRangoBadge').innerText;
         
-        // El texto que irá debajo de la foto
         const mensaje = `🏭 *BÚNKER SCADA - TELEMETRÍA VISUAL*\n🗓️ ${periodo}\n\n💰 Saldo Operativo: $${saldoActual}\n🚨 Nivel de Fugas: ${totalFugas}\n\nTransmisión finalizada.`;
-
-        // 🟢 Apuntamos las cámaras al contenedor principal del Dashboard
         const targetElement = document.getElementById('reportZone');
 
-        // Disparamos html2canvas
-        html2canvas(targetElement, { 
-            scale: 1.5, // Resolución HD de la captura
-            backgroundColor: "#0b0e14", // Forzamos el fondo oscuro del chasis
-            useCORS: true 
-        }).then(canvas => {
+        html2canvas(targetElement, { scale: 1.5, backgroundColor: "#0b0e14", useCORS: true }).then(canvas => {
             btn.innerHTML = "🚀 ENVIANDO...";
-            
-            // Convertimos la captura en un archivo de imagen (Blob)
             canvas.toBlob(function(blob) {
-                // Preparamos el "Paquete" para Telegram (Imagen + Texto)
                 const formData = new FormData();
                 formData.append('chat_id', chatId);
                 formData.append('photo', blob, 'scada_report.png');
                 formData.append('caption', mensaje);
                 formData.append('parse_mode', 'Markdown');
 
-                // 🟢 Endpoint cambiado a sendPhoto
-                const url = `https://api.telegram.org/bot${botToken}/sendPhoto`;
-                
-                fetch(url, {
-                    method: 'POST',
-                    body: formData // Ya no enviamos JSON, enviamos un archivo multipart
-                })
-                .then(res => {
-                    if(res.ok) alert("📸🚀 Reporte visual transmitido con éxito a Telegram.");
-                    else alert("❌ Error en la transmisión del paquete de datos.");
-                })
-                .catch(err => alert("❌ Falla en la antena de transmisión: " + err))
-                .finally(() => {
-                    btn.innerHTML = origText;
-                    btn.disabled = false;
-                });
+                fetch(`https://api.telegram.org/bot${botToken}/sendPhoto`, { method: 'POST', body: formData })
+                .then(res => { if(res.ok) alert("📸🚀 Reporte transmitido."); else alert("❌ Error en transmisión."); })
+                .catch(err => alert("❌ Falla en la antena: " + err))
+                .finally(() => { btn.innerHTML = origText; btn.disabled = false; });
             }, 'image/png');
-            
-        }).catch(err => {
-            alert("❌ Falla crítica en los lentes ópticos del SCADA: " + err);
-            btn.innerHTML = origText;
-            btn.disabled = false;
-        });
+        }).catch(err => { alert("❌ Falla óptica: " + err); btn.innerHTML = origText; btn.disabled = false; });
     }
 
     function exportarCSV() {
-        if (!listaMovimientos || listaMovimientos.length === 0) {
-            alert("⚠️ No hay datos en caché para respaldar.");
-            return;
-        }
-
+        if (!listaMovimientos || listaMovimientos.length === 0) return alert("⚠️ No hay datos.");
         const btn = document.querySelector('button[onclick="exportarCSV()"]');
-        const origText = btn.innerHTML;
-        btn.innerHTML = "⏳ BKUP...";
-        btn.disabled = true;
+        const origText = btn.innerHTML; btn.innerHTML = "⏳ BKUP..."; btn.disabled = true;
 
         let csvContent = "Fecha,Descripción,Categoría,Flujo,Monto\n";
-        let datosOrdenados = [...listaMovimientos].sort((a,b) => a.fechaISO < b.fechaISO ? -1 : 1);
-
-        datosOrdenados.forEach(row => {
+        [...listaMovimientos].sort((a,b) => a.fechaISO < b.fechaISO ? -1 : 1).forEach(row => {
             let fecha = new Date(row.fechaISO).toLocaleDateString('es-CL');
             let desc = row.nombre ? row.nombre.replace(/,/g, " ") : "Sin descripción"; 
-            let cat = row.categoria || "Sin Categoría";
-            let tipo = row.tipo || "Gasto";
-            let monto = row.monto || 0;
-            
-            csvContent += `${fecha},${desc},${cat},${tipo},${monto}\n`;
+            csvContent += `${fecha},${desc},${row.categoria || "Sin Categoría"},${row.tipo || "Gasto"},${row.monto || 0}\n`;
         });
 
         const blob = new Blob(["\ufeff", csvContent], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.setAttribute("href", url);
-        link.setAttribute("download", `Bunker_Backup_${new Date().toISOString().slice(0,10)}.csv`);
-        link.style.visibility = 'hidden';
-        
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-
-        btn.innerHTML = origText;
-        btn.disabled = false;
+        const link = document.createElement("a"); link.setAttribute("href", url); link.setAttribute("download", `Bunker_Backup_${new Date().toISOString().slice(0,10)}.csv`);
+        document.body.appendChild(link); link.click(); document.body.removeChild(link);
+        btn.innerHTML = origText; btn.disabled = false;
     }
 
-    // ==========================================
-    // 🧠 CEREBRO DEL DASHBOARD (KPIs y Tabla)
-    // ==========================================
     function actualizarDashboard() {
         const sueldo = parseInt(document.getElementById('inputSueldo').value.replace(/\./g,'')) || 0;
         const b = document.getElementById('inputBuscador').value.toLowerCase();
         
-        // 🟢 MOTOR V31.8: Bypass del input antiguo, leemos directo del Navegador Global
         const mesVal = parseInt(document.getElementById('navMesConceptual').value);
         const anioVal = parseInt(document.getElementById('navAnio').value);
         const { T0, TFinal, fechaFinVisual } = calcularFechasCiclo(mesVal, anioVal);
         
-        document.getElementById('txtPeriodoBatch').innerText = `${T0.toLocaleDateString('es-CL', {day:'2-digit', month:'2-digit'})} al ${fechaFinVisual.toLocaleDateString('es-CL', {day:'2-digit', month:'2-digit'})}`;
+        // 🔥 ESTA ES LA LÍNEA QUE CRASHEABA EL SISTEMA (Eliminada):
+        // document.getElementById('txtPeriodoBatch').innerText = ...
 
         let dataMes = listaMovimientos.filter(x => { let d = new Date(x.fechaISO); return d >= T0 && d < TFinal; });
         
@@ -648,8 +561,7 @@
         [...dataMes].sort((x,y) => x.fechaISO < y.fechaISO ? -1 : 1).forEach(x => {
             if (x.esIn) { tI += x.monto; saldoAcc += x.monto; }
             else if (x.tipo === 'Por Cobrar') tC += x.monto;
-            else if (x.esNeutro) { /* Nada */ }
-            else {
+            else if (!x.esNeutro) {
                 saldoAcc -= x.monto;
                 if (x.tipo === 'Gasto Fijo') tF += x.monto; else tO += x.monto;
                 gCat[x.catV] = (gCat[x.catV] || 0) + x.monto;
@@ -679,31 +591,22 @@
         document.getElementById('barFijos').style.width = Math.min((tF / (sueldo || 1)) * 100, 100) + "%";
         document.getElementById('barOtros').style.width = Math.min((tO / (sueldo || 1)) * 100, 100) + "%";
         
-        // 🟢 Actualización de Barras y Lógica de Semáforo de Fugas
         document.getElementById('txtTotalEvitable').innerText = tEvitable.toLocaleString('es-CL');
         const pctFugas = sueldo > 0 ? ((tEvitable / sueldo) * 100).toFixed(1) : 0;
-        
         const txtPctFugas = document.getElementById('txtPorcentajeFugas');
         const barraEvitable = document.getElementById('barEvitable');
         
         txtPctFugas.innerText = pctFugas + '%';
         barraEvitable.style.width = Math.min(pctFugas, 100) + "%";
 
-        // Motor de Alarma: Verde (<5%), Naranja (5-10%), Rojo (>10%)
-        if (pctFugas < 5) {
-            txtPctFugas.style.color = "var(--color-saldo)"; 
-            barraEvitable.style.backgroundColor = "var(--color-saldo)";
-        } else if (pctFugas <= 10) {
-            txtPctFugas.style.color = "#ff9800"; 
-            barraEvitable.style.backgroundColor = "#ff9800";
-        } else {
-            txtPctFugas.style.color = "var(--color-fuga)"; 
-            barraEvitable.style.backgroundColor = "var(--color-fuga)";
-        }
+        if (pctFugas < 5) { txtPctFugas.style.color = "var(--color-saldo)"; barraEvitable.style.backgroundColor = "var(--color-saldo)"; } 
+        else if (pctFugas <= 10) { txtPctFugas.style.color = "#ff9800"; barraEvitable.style.backgroundColor = "#ff9800"; } 
+        else { txtPctFugas.style.color = "var(--color-fuga)"; barraEvitable.style.backgroundColor = "var(--color-fuga)"; }
 
         renderizarTabla(sueldo, b);
         dibujarGraficos(sueldo, [...dataMes].sort((x,y) => x.fechaISO < y.fechaISO ? -1 : 1), gCat, diasCiclo, T0);
     }    
+    
     function renderizarTabla(sueldoBase, filtroBuscador) {
         let datos = [...datosMesGlobal];
         if (filtroBuscador) datos = datos.filter(x => x.nombre?.toLowerCase().includes(filtroBuscador) || x.catV.toLowerCase().includes(filtroBuscador));
@@ -736,17 +639,12 @@
             let statusBadge = x.catV === 'Sin Categoría' ? `<span class="status-badge status-warn">REVISAR</span>` : `<span class="status-badge status-ok">OK</span>`;
             let bgEdicion = (document.getElementById('editId').value === x.firestoreId) ? 'background-color: rgba(210, 153, 34, 0.15); border-left: 3px solid var(--color-edit);' : '';
 
-            // ========================================================
-            // 🛡️ MOTOR PRO: SANITIZACIÓN ANTI-CRASH
-            // ========================================================
+            // 🛡️ SANITIZACIÓN ANTI-CRASH V31.9
             const nombreSeguro = x.nombre || "Dato no identificado";
-            
-            // Si Firebase tira un error o un null, inyectamos un 0 silencioso
             const montoSeguro = (typeof x.monto === 'number' && !isNaN(x.monto)) ? x.monto : 0;
             const saldoSeguro = (typeof x.saldoCalculadoVista === 'number' && !isNaN(x.saldoCalculadoVista)) ? x.saldoCalculadoVista : 0;
             const colorSaldo = saldoSeguro < 0 ? 'var(--color-fuga)' : 'var(--text-muted)';
 
-            // 🟢 CLASE .col-monto INYECTADA EN AMBAS COLUMNAS DE DINERO
             htmlBuffer += `<tr style="${bgEdicion}">
                 <td class="col-check hide-mobile"><input type="checkbox" class="row-check" value="${x.firestoreId}" onchange="updateMassActions()"></td>
                 <td class="hide-mobile" style="text-align:center; font-size:0.75rem; font-weight:800; color:var(--text-muted);">${x.indiceVista}</td>
@@ -776,9 +674,6 @@
         actualizarDashboard();
     }
 
-    // ==========================================
-    // ✏️ MOTOR DE EDICIÓN Y GUARDADO
-    // ==========================================
     function editarMovimiento(id) {
         const mov = listaMovimientos.find(m => m.firestoreId === id);
         if(!mov) return alert("Registro no encontrado.");
@@ -800,8 +695,7 @@
         } catch(e) { console.error(e); }
 
         const btn = document.getElementById('btnGuardar');
-        btn.innerHTML = "💾 ACTUALIZAR REGISTRO";
-        btn.style.backgroundColor = "var(--color-edit)";
+        btn.innerHTML = "💾 ACTUALIZAR REGISTRO"; btn.style.backgroundColor = "var(--color-edit)";
         modoEdicionActivo = true;
 
         if (window.innerWidth <= 1024) window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -826,19 +720,11 @@
         let op = (modoEdicionActivo && editId) ? db.collection("movimientos").doc(editId).update(dataPayload) : db.collection("movimientos").add(dataPayload);
 
         op.then(() => {
-            document.getElementById('editId').value = '';
-            document.getElementById('inputNombre').value = '';
-            document.getElementById('inputMonto').value = '';
-            btn.innerHTML = "GUARDAR EN BÚNKER";
-            btn.style.backgroundColor = "var(--color-guardar)";
-            btn.disabled = false;
-            modoEdicionActivo = false;
+            document.getElementById('editId').value = ''; document.getElementById('inputNombre').value = ''; document.getElementById('inputMonto').value = '';
+            btn.innerHTML = "GUARDAR EN BÚNKER"; btn.style.backgroundColor = "var(--color-guardar)"; btn.disabled = false; modoEdicionActivo = false;
         }).catch(err => { alert("❌ Error: " + err.message); btn.innerHTML = "ERROR"; btn.disabled = false; });
     }
 
-    // ==========================================
-    // 🧹 UTILIDADES, GRÁFICOS Y ACCIONES MASIVAS
-    // ==========================================
     function formatearEntradaNumerica(i) { let v = i.value.replace(/\D/g,''); i.value = v ? parseInt(v).toLocaleString('es-CL') : ''; }
     function toggleTheme() { document.body.classList.toggle('light-theme'); }
     setInterval(() => { document.getElementById('cronos').innerText = new Date().toLocaleString('es-CL').toUpperCase(); }, 1000);
@@ -859,8 +745,7 @@
     function massDelete() {
         const ids = Array.from(document.querySelectorAll('.row-check:not(#checkAll):checked')).map(cb => cb.value);
         if(ids.length === 0 || !confirm(`⚠️ ¿Eliminar ${ids.length} registro(s)?`)) return;
-        const btn = document.querySelector('button[onclick="massDelete()"]');
-        const orig = btn.innerHTML; btn.innerHTML = '⏳';
+        const btn = document.querySelector('button[onclick="massDelete()"]'); const orig = btn.innerHTML; btn.innerHTML = '⏳';
         Promise.all(ids.map(id => db.collection("movimientos").doc(id).delete())).then(() => {
             document.getElementById('massActionsBar').style.display = 'none'; document.getElementById('checkAll').checked = false; btn.innerHTML = orig;
         });
@@ -870,8 +755,7 @@
         const ids = Array.from(document.querySelectorAll('.row-check:not(#checkAll):checked')).map(cb => cb.value);
         const cat = document.getElementById('massCategorySelect').value;
         if(ids.length === 0 || !cat || !confirm(`¿Categorizar como "${cat}"?`)) return;
-        const btn = document.querySelector('button[onclick="massCategorize()"]');
-        const orig = btn.innerHTML; btn.innerHTML = '⏳';
+        const btn = document.querySelector('button[onclick="massCategorize()"]'); const orig = btn.innerHTML; btn.innerHTML = '⏳';
         Promise.all(ids.map(id => db.collection("movimientos").doc(id).update({categoria: cat}))).then(() => {
             document.getElementById('massActionsBar').style.display = 'none'; document.getElementById('checkAll').checked = false; document.getElementById('massCategorySelect').value = ''; btn.innerHTML = orig;
         });
@@ -879,44 +763,22 @@
 
     function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0) {
         if(chartBD) chartBD.destroy(); if(chartP) chartP.destroy();
-        const cT = getComputedStyle(document.body).getPropertyValue('--text-main').trim();
-        const cG = getComputedStyle(document.body).getPropertyValue('--border-color').trim();
-        const cF = getComputedStyle(document.body).getPropertyValue('--color-fuga').trim();
+        const cT = getComputedStyle(document.body).getPropertyValue('--text-main').trim(); const cG = getComputedStyle(document.body).getPropertyValue('--border-color').trim(); const cF = getComputedStyle(document.body).getPropertyValue('--color-fuga').trim();
         
-        let actual = [], ideal = [], acc = sueldo, diaQ = null;
-        let daily = Array(diasCiclo + 1).fill(0);
-        
-        let labelsX = [];
-        let colorLabelsX = [];
-        let colorGridX = [];
-        const nombresMes = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"];
+        let actual = [], ideal = [], acc = sueldo, diaQ = null; let daily = Array(diasCiclo + 1).fill(0);
+        let labelsX = [], colorLabelsX = [], colorGridX = []; const nombresMes = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"];
 
         chronData.forEach(m => {
             let diff = Math.floor((new Date(m.fechaISO) - T0) / 86400000) + 1;
-            if(diff >= 1 && diff <= diasCiclo) {
-                if(m.esIn) daily[diff] += m.monto; else if(!m.esNeutro) daily[diff] -= m.monto;
-            }
+            if(diff >= 1 && diff <= diasCiclo) { if(m.esIn) daily[diff] += m.monto; else if(!m.esNeutro) daily[diff] -= m.monto; }
         });
 
-        let hoy = new Date(); let limit = Math.floor((hoy - T0) / 86400000) + 1;
+        let limit = Math.floor((new Date() - T0) / 86400000) + 1;
         for(let i=1; i<=diasCiclo; i++) {
-            ideal.push(sueldo - (sueldo/diasCiclo)*i);
-            acc += daily[i];
-            if (acc < 0 && diaQ === null) diaQ = i;
-            actual.push(i > limit ? null : acc);
-
-            let fechaIteracion = new Date(T0.getTime() + (i-1)*86400000);
-            let dia = String(fechaIteracion.getDate()).padStart(2, '0');
-
-            if (fechaIteracion.getDate() === 1) {
-                labelsX.push(`${dia} ${nombresMes[fechaIteracion.getMonth()]}`);
-                colorLabelsX.push('#ff9800'); 
-                colorGridX.push('#ff9800');   
-            } else {
-                labelsX.push(dia);
-                colorLabelsX.push(cT);
-                colorGridX.push(cG); 
-            }
+            ideal.push(sueldo - (sueldo/diasCiclo)*i); acc += daily[i]; if (acc < 0 && diaQ === null) diaQ = i; actual.push(i > limit ? null : acc);
+            let f = new Date(T0.getTime() + (i-1)*86400000); let dia = String(f.getDate()).padStart(2, '0');
+            if (f.getDate() === 1) { labelsX.push(`${dia} ${nombresMes[f.getMonth()]}`); colorLabelsX.push('#ff9800'); colorGridX.push('#ff9800'); } 
+            else { labelsX.push(dia); colorLabelsX.push(cT); colorGridX.push(cG); }
         }
 
         chartBD = new Chart(document.getElementById('chartBurnDown'), {
@@ -925,122 +787,44 @@
                 { label: 'Consumo Real', data: actual, borderColor: '#1f6feb', borderWidth: 3, fill: {target:'origin', above:'rgba(31,111,235,0.05)', below:'rgba(218,54,51,0.2)'}, segment: {borderColor: c => c.p0.parsed.y < 0 ? cF : '#1f6feb'} },
                 { label: 'Gasto Ideal', data: ideal, borderColor: 'rgba(63,185,80,0.3)', borderDash:[5,5], pointRadius:0 }
             ]},
-            options: { 
-                maintainAspectRatio:false, 
-                plugins:{legend:{display:true, labels:{color:cT, font:{size:10, weight:'bold'}}}}, 
-                scales:{ 
-                    x:{
-                        ticks:{
-                            color: colorLabelsX, 
-                            maxRotation: 45,     
-                            minRotation: 45,
-                            font: (context) => {
-                                return { weight: colorLabelsX[context.index] === '#ff9800' ? '900' : 'bold', size: 10 };
-                            }
-                        }, 
-                        grid:{
-                            color: colorGridX,   
-                            drawBorder:false,
-                            lineWidth: (context) => colorGridX[context.index] === '#ff9800' ? 2 : 1 
-                        }
-                    }, 
-                    y:{ticks:{color:cT, callback:v=>'$'+(v/1000)+'k'}, grid:{color: c => c.tick.value === 0 ? cF : cG}} 
-                } 
-            }
+            options: { maintainAspectRatio:false, plugins:{legend:{display:true, labels:{color:cT, font:{size:10, weight:'bold'}}}}, scales:{ x:{ticks:{color: colorLabelsX, maxRotation: 45, minRotation: 45, font: (c) => ({ weight: colorLabelsX[c.index] === '#ff9800' ? '900' : 'bold', size: 10 }) }, grid:{color: colorGridX, drawBorder:false, lineWidth: (c) => colorGridX[c.index] === '#ff9800' ? 2 : 1 } }, y:{ticks:{color:cT, callback:v=>'$'+(v/1000)+'k'}, grid:{color: c => c.tick.value === 0 ? cF : cG}} } }
         });
 
-        const sorted = Object.entries(cats).sort((a,b)=>b[1]-a[1]).slice(0,8);
-        const totalTop8 = sorted.reduce((sum, val) => sum + val[1], 0) || 1;
-        let acumulado = 0;
-        const dataAcumulada = sorted.map(c => { acumulado += c[1]; return (acumulado / totalTop8) * 100; });
+        const sorted = Object.entries(cats).sort((a,b)=>b[1]-a[1]).slice(0,8); const totalTop8 = sorted.reduce((sum, val) => sum + val[1], 0) || 1;
+        let acumulado = 0; const dataAcumulada = sorted.map(c => { acumulado += c[1]; return (acumulado / totalTop8) * 100; });
 
         chartP = new Chart(document.getElementById('chartPareto'), {
             type: 'bar', 
-            data: { 
-                labels: sorted.map(c => c[0].split(' ')[0]), 
-                datasets: [
-                    { type: 'line', label: '% Acumulado', data: dataAcumulada, borderColor: '#ff9800', borderWidth: 2, borderDash: [5, 5], pointBackgroundColor: '#ff9800', pointRadius: 3, fill: false, yAxisID: 'y1' },
-                    { type: 'bar', label: 'Gasto', data: sorted.map(c => c[1]), backgroundColor: sorted.map(c => c[0] === 'Dopamina & Antojos' ? '#ff5252' : '#1f6feb'), borderRadius: 4, yAxisID: 'y' }
-                ] 
-            },
-            options: { 
-                maintainAspectRatio:false, 
-                plugins:{legend:{display:true, labels:{color:cT, font:{size:10, weight:'bold'}}}}, 
-                scales:{ 
-                    x:{ticks:{color:cT, font:{size:9}}}, 
-                    y:{ type: 'linear', position: 'left', ticks:{color:cT, callback:v=>'$'+(v/1000)+'k'} },
-                    y1:{ type: 'linear', position: 'right', min: 0, max: 100, grid: { drawOnChartArea: false }, ticks:{color:'#ff9800', callback:v=>v+'%', font:{weight:'bold'}} }
-                } 
-            }
+            data: { labels: sorted.map(c => c[0].split(' ')[0]), datasets: [
+                { type: 'line', label: '% Acumulado', data: dataAcumulada, borderColor: '#ff9800', borderWidth: 2, borderDash: [5, 5], pointBackgroundColor: '#ff9800', pointRadius: 3, fill: false, yAxisID: 'y1' },
+                { type: 'bar', label: 'Gasto', data: sorted.map(c => c[1]), backgroundColor: sorted.map(c => c[0] === 'Dopamina & Antojos' ? '#ff5252' : '#1f6feb'), borderRadius: 4, yAxisID: 'y' }
+            ]},
+            options: { maintainAspectRatio:false, plugins:{legend:{display:true, labels:{color:cT, font:{size:10, weight:'bold'}}}}, scales:{ x:{ticks:{color:cT, font:{size:9}}}, y:{ type: 'linear', position: 'left', ticks:{color:cT, callback:v=>'$'+(v/1000)+'k'} }, y1:{ type: 'linear', position: 'right', min: 0, max: 100, grid: { drawOnChartArea: false }, ticks:{color:'#ff9800', callback:v=>v+'%', font:{weight:'bold'}} } } }
         });
     }
 
-    // ==========================================
-    // ⏱️ MOTOR DE NAVEGACIÓN GLOBAL V31.7
-    // ==========================================
-    
-    // ==========================================
-    // ⏱️ MOTOR DE NAVEGACIÓN GLOBAL V31.8 (FIX FEBRERO)
-    // ==========================================
-    
     function calcularFechasCiclo(mesConceptual, anio) {
-        let mesInicio = mesConceptual - 1;
-        let anioInicio = anio;
-        if (mesInicio < 0) { mesInicio = 11; anioInicio--; }
-        
-        // 🟢 Lógica Anti-Febrero: Si pedimos el día 30 y el mes no da (ej. Feb), anclamos al último día real del mes.
-        let T0 = new Date(anioInicio, mesInicio, 30);
-        if (T0.getMonth() !== mesInicio) T0 = new Date(anioInicio, mesInicio + 1, 0); 
-        
-        let TFinal = new Date(anio, mesConceptual, 30);
-        if (TFinal.getMonth() !== mesConceptual) TFinal = new Date(anio, mesConceptual + 1, 0);
-
-        let fechaFinVisual = new Date(TFinal.getTime() - 86400000); // 1 día menos para la vista
-
-        return { T0, TFinal, fechaFinVisual };
+        let mesInicio = mesConceptual - 1; let anioInicio = anio; if (mesInicio < 0) { mesInicio = 11; anioInicio--; }
+        let T0 = new Date(anioInicio, mesInicio, 30); if (T0.getMonth() !== mesInicio) T0 = new Date(anioInicio, mesInicio + 1, 0); 
+        let TFinal = new Date(anio, mesConceptual, 30); if (TFinal.getMonth() !== mesConceptual) TFinal = new Date(anio, mesConceptual + 1, 0);
+        return { T0, TFinal, fechaFinVisual: new Date(TFinal.getTime() - 86400000) };
     }
 
-    function cambiarCicloManual() {
-        document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('preset-active'));
-        aplicarCicloAlSistema();
-    }
+    function cambiarCicloManual() { document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('preset-active')); aplicarCicloAlSistema(); }
 
     function setCicloPreset(tipo) {
         document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('preset-active'));
-        const mesActual = new Date().getMonth();
-        const anioActual = new Date().getFullYear();
-        
-        let targetMes = mesActual;
-        let targetAnio = anioActual;
-
-        if (new Date().getDate() >= 30) {
-            targetMes = (mesActual + 1) % 12;
-            if (targetMes === 0) targetAnio++;
-        }
-
-        if (tipo === 'anterior') {
-            document.getElementById('btnPresetAnterior').classList.add('preset-active');
-            targetMes = targetMes - 1;
-            if (targetMes < 0) { targetMes = 11; targetAnio--; }
-        } else if (tipo === 'actual') {
-            document.getElementById('btnPresetActual').classList.add('preset-active');
-        }
-
-        document.getElementById('navMesConceptual').value = targetMes;
-        document.getElementById('navAnio').value = targetAnio;
-        
+        const m = new Date().getMonth(); let tM = m; let tA = new Date().getFullYear();
+        if (new Date().getDate() >= 30) { tM = (m + 1) % 12; if (tM === 0) tA++; }
+        if (tipo === 'anterior') { document.getElementById('btnPresetAnterior').classList.add('preset-active'); tM = tM - 1; if (tM < 0) { tM = 11; tA--; } } 
+        else if (tipo === 'actual') { document.getElementById('btnPresetActual').classList.add('preset-active'); }
+        document.getElementById('navMesConceptual').value = tM; document.getElementById('navAnio').value = tA;
         aplicarCicloAlSistema();
     }
 
     function aplicarCicloAlSistema() {
-        const mesVal = parseInt(document.getElementById('navMesConceptual').value);
-        const anioVal = parseInt(document.getElementById('navAnio').value);
-        const { T0, fechaFinVisual } = calcularFechasCiclo(mesVal, anioVal);
-        
-        const formato = { day: '2-digit', month: 'short' };
-        document.getElementById('navRangoBadge').innerText = 
-            `PERIODO: ${T0.toLocaleDateString('es-CL', formato).toUpperCase()} - ${fechaFinVisual.toLocaleDateString('es-CL', formato).toUpperCase()}`;
-
+        const { T0, fechaFinVisual } = calcularFechasCiclo(parseInt(document.getElementById('navMesConceptual').value), parseInt(document.getElementById('navAnio').value));
+        document.getElementById('navRangoBadge').innerText = `PERIODO: ${T0.toLocaleDateString('es-CL', {day:'2-digit', month:'short'}).toUpperCase()} - ${fechaFinVisual.toLocaleDateString('es-CL', {day:'2-digit', month:'short'}).toUpperCase()}`;
         actualizarDashboard();
     }
 </script>
