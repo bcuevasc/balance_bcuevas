@@ -365,7 +365,8 @@ input[type="date"]::-webkit-calendar-picker-indicator, input[type="datetime-loca
                         <thead>
                             <tr>
                                 <th class="col-check hide-mobile"><input type="checkbox" id="checkAll" onchange="toggleAllChecks()"></th>
-                                <th class="hide-mobile" style="width: 40px; text-align: center;">N°</th>
+<th style="width: 30px; text-align: center;">✋</th>
+<th class="hide-mobile" style="width: 40px; text-align: center;">N°</th>
                                 <th onclick="sortTable('fechaISO')">Fecha</th>
                                 <th onclick="sortTable('nombre')">Descripción</th>
                                 <th class="hide-mobile" onclick="sortTable('catV')">Categoría</th>
@@ -701,12 +702,12 @@ input[type="date"]::-webkit-calendar-picker-indicator, input[type="datetime-loca
             const saldoSeguro = (typeof x.saldoCalculadoVista === 'number' && !isNaN(x.saldoCalculadoVista)) ? x.saldoCalculadoVista : 0;
             const colorSaldo = saldoSeguro < 0 ? 'var(--color-fuga)' : 'var(--text-muted)';
 
-            htmlBuffer += `<tr style="${bgEdicion}">
+            // REEMPLAZA EL INICIO DEL htmlBuffer POR ESTO:
+            htmlBuffer += `<tr style="${bgEdicion}" draggable="true" ondragstart="dragStart(event, '${x.firestoreId}')" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dropRow(event, '${x.firestoreId}')">
                 <td class="col-check hide-mobile"><input type="checkbox" class="row-check" value="${x.firestoreId}" onchange="updateMassActions()"></td>
+                <td style="cursor: grab; text-align: center; color: var(--text-muted); font-size: 1.2rem;">☰</td>
                 <td class="hide-mobile" style="text-align:center; font-size:0.75rem; font-weight:800; color:var(--text-muted);">${x.indiceVista}</td>
                 <td style="font-size:0.75rem; color:var(--text-muted);">${dS}</td>
-                <td class="col-desc" style="font-weight:700;" title="${nombreSeguro}">${nombreSeguro}</td>
-                <td class="hide-mobile" style="font-size:0.75rem;"><span class="cat-badge">${em} ${x.catV}</span></td>
                 
                 <td class="col-monto" style="color:${colorMonto};">${iconImpacto}$${montoSeguro.toLocaleString('es-CL')}</td>
                 <td class="col-monto hide-mobile" style="color:${colorSaldo};">$${saldoSeguro.toLocaleString('es-CL')}</td>
@@ -883,6 +884,77 @@ input[type="date"]::-webkit-calendar-picker-indicator, input[type="datetime-loca
         document.getElementById('navRangoBadge').innerText = `PERIODO: ${T0.toLocaleDateString('es-CL', {day:'2-digit', month:'short'}).toUpperCase()} - ${fechaFinVisual.toLocaleDateString('es-CL', {day:'2-digit', month:'short'}).toUpperCase()}`;
         actualizarDashboard();
     }
+    // ====================================================================
+    // ⚙️ MODO CUADRATURA TEMPORAL: MANIPULACIÓN DEL TIEMPO (DRAG & DROP)
+    // ====================================================================
+    let draggedRowId = null;
+
+    function dragStart(e, id) {
+        draggedRowId = id;
+        e.dataTransfer.effectAllowed = 'move';
+        setTimeout(() => e.target.style.opacity = '0.4', 0);
+    }
+
+    function dragOver(e) {
+        e.preventDefault();
+        e.target.closest('tr').style.borderTop = '3px solid var(--color-ingresos)';
+    }
+
+    function dragLeave(e) {
+        e.target.closest('tr').style.borderTop = '';
+    }
+
+    function dropRow(e, targetId) {
+        e.preventDefault();
+        e.target.closest('tr').style.borderTop = '';
+        
+        if (!draggedRowId || draggedRowId === targetId) return;
+
+        // SEGURO TÁCTICO: Solo opera si la tabla está ordenada por fecha
+        if (currentSort.column !== 'fechaISO') {
+            return alert("⚠️ ALARMA: Para recalibrar el tiempo, la tabla debe estar ordenada por Fecha.");
+        }
+
+        // Simular la vista actual ordenada
+        let vistaActual = [...datosMesGlobal].sort((a, b) => {
+             if (a.fechaISO < b.fechaISO) return currentSort.direction === 'asc' ? -1 : 1;
+             if (a.fechaISO > b.fechaISO) return currentSort.direction === 'asc' ? 1 : -1;
+             return 0;
+        });
+
+        let draggedIdx = vistaActual.findIndex(x => x.firestoreId === draggedRowId);
+        let targetIdx = vistaActual.findIndex(x => x.firestoreId === targetId);
+
+        // Identificar los vecinos para hacer el "sandwich" de tiempo
+        let t1_idx = targetIdx > draggedIdx ? targetIdx : targetIdx - 1;
+        let t2_idx = targetIdx > draggedIdx ? targetIdx + 1 : targetIdx;
+
+        let t1_ms = t1_idx >= 0 ? new Date(vistaActual[t1_idx].fechaISO).getTime() : null;
+        let t2_ms = t2_idx < vistaActual.length ? new Date(vistaActual[t2_idx].fechaISO).getTime() : null;
+
+        let newTimeMs;
+        let dir = currentSort.direction;
+
+        // Cálculos de Interpolación
+        if (t1_ms && t2_ms) {
+            newTimeMs = t1_ms + (t2_ms - t1_ms) / 2; // Punto medio exacto
+        } else if (!t1_ms) { // Movido al tope de la lista
+            newTimeMs = t2_ms + (dir === 'desc' ? 60000 : -60000); 
+        } else if (!t2_ms) { // Movido al fondo de la lista
+            newTimeMs = t1_ms + (dir === 'desc' ? -60000 : 60000);
+        }
+
+        if(confirm("⚙️ ¿Inyectar nuevo Timestamp para forzar cuadratura?")) {
+            db.collection("movimientos").doc(draggedRowId).update({
+                fecha: new Date(newTimeMs)
+            }).then(() => console.log("Timestamp recalibrado en Firebase."));
+        }
+        draggedRowId = null;
+    }
+
+    document.addEventListener('dragend', (e) => {
+        if(e.target.tagName === 'TR') e.target.style.opacity = '1';
+    });
 </script>
 </body>
 </html>
