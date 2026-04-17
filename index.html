@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Bunker Digital SCADA v31.4 - Edición Activa</title>
+    <title>Bunker Digital SCADA v31.7 - Edición Activa</title>
     
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -46,6 +46,42 @@
         .system-btns { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; justify-content: flex-end; padding-bottom: 8px; border-bottom: 1px solid var(--border-color); }
         .btn-sys { background: var(--bg-subpanel); color: var(--text-main); border: 1px solid var(--border-color); padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: 800; font-size: 0.75rem; text-transform: uppercase; }
         .btn-sys:hover { border-color: var(--color-saldo); }
+
+        /* === V31.7: NAVEGADOR TEMPORAL GLOBAL (AHORA FUERA DEL MEDIA QUERY) === */
+        .time-navigator-panel {
+            background: var(--bg-panel); border: 1px solid var(--border-color);
+            border-radius: 8px; padding: 12px 20px; margin-bottom: 15px;
+            display: flex; justify-content: space-between; align-items: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            border-top: 3px solid var(--color-ingresos);
+        }
+        .time-nav-controls { display: flex; align-items: center; gap: 12px; }
+        .nav-select {
+            background: var(--input-bg); color: var(--text-main);
+            border: 1px solid var(--border-color); padding: 8px 15px;
+            border-radius: 6px; font-weight: 800; text-transform: uppercase;
+            font-size: 0.85rem; outline: none; cursor: pointer;
+        }
+        .nav-select:focus { border-color: var(--color-ingresos); }
+        .nav-badge {
+            font-family: 'Courier New', Courier, monospace;
+            background: rgba(31, 111, 235, 0.1); color: var(--color-ingresos);
+            border: 1px solid rgba(31, 111, 235, 0.3); padding: 6px 12px;
+            border-radius: 4px; font-size: 0.8rem; font-weight: 900;
+            letter-spacing: 0.5px; text-transform: uppercase;
+        }
+        .time-nav-presets { display: flex; gap: 10px; }
+        .preset-btn {
+            background: var(--bg-subpanel); color: var(--text-muted);
+            border: 1px solid var(--border-color); padding: 8px 15px;
+            border-radius: 6px; font-weight: 800; font-size: 0.75rem;
+            cursor: pointer; text-transform: uppercase; transition: all 0.2s;
+        }
+        .preset-btn:hover { border-color: var(--color-ingresos); color: var(--text-main); }
+        .preset-active {
+            background: rgba(31, 111, 235, 0.15); border-color: var(--color-ingresos);
+            color: var(--color-ingresos);
+        }
         
         .kpi-row { display: grid; grid-template-columns: repeat(8, 1fr); gap: 10px; }
         .kpi-card { padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-panel); border-top: 4px solid var(--border-color); }
@@ -117,48 +153,6 @@
             .app-container { padding: 8px; gap: 8px; }
             .header-titles { flex-direction: column; align-items: flex-start; gap: 5px; }
             .system-btns { justify-content: space-between; padding-bottom: 10px; }
-            /* === V31.7: NAVEGADOR TEMPORAL GLOBAL === */
-        .time-navigator-panel {
-            background: var(--bg-panel); border: 1px solid var(--border-color);
-            border-radius: 8px; padding: 12px 20px; margin-bottom: 15px;
-            display: flex; justify-content: space-between; align-items: center;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            border-top: 3px solid var(--color-ingresos);
-        }
-        .time-nav-controls { display: flex; align-items: center; gap: 12px; }
-        .nav-select {
-            background: var(--input-bg); color: var(--text-main);
-            border: 1px solid var(--border-color); padding: 8px 15px;
-            border-radius: 6px; font-weight: 800; text-transform: uppercase;
-            font-size: 0.85rem; outline: none; cursor: pointer;
-        }
-        .nav-select:focus { border-color: var(--color-ingresos); }
-        .nav-badge {
-            font-family: 'Courier New', Courier, monospace;
-            background: rgba(31, 111, 235, 0.1); color: var(--color-ingresos);
-            border: 1px solid rgba(31, 111, 235, 0.3); padding: 6px 12px;
-            border-radius: 4px; font-size: 0.8rem; font-weight: 900;
-            letter-spacing: 0.5px; text-transform: uppercase;
-        }
-        .time-nav-presets { display: flex; gap: 10px; }
-        .preset-btn {
-            background: var(--bg-subpanel); color: var(--text-muted);
-            border: 1px solid var(--border-color); padding: 8px 15px;
-            border-radius: 6px; font-weight: 800; font-size: 0.75rem;
-            cursor: pointer; text-transform: uppercase; transition: all 0.2s;
-        }
-        .preset-btn:hover { border-color: var(--color-ingresos); color: var(--text-main); }
-        .preset-active {
-            background: rgba(31, 111, 235, 0.15); border-color: var(--color-ingresos);
-            color: var(--color-ingresos);
-        }
-        
-        @media (max-width: 1024px) {
-            .time-navigator-panel { flex-direction: column; gap: 12px; align-items: stretch; padding: 10px; }
-            .time-nav-controls { justify-content: space-between; }
-            .time-nav-presets { justify-content: space-between; }
-            .preset-btn { flex: 1; text-align: center; padding: 10px 5px; }
-        }
             .btn-sys { flex: 1 1 30%; text-align: center; padding: 10px 5px; margin-bottom: 4px; font-size: 0.65rem; }
             .kpi-row { grid-template-columns: repeat(2, 1fr); gap: 8px; }
             .master-layout { grid-template-columns: 1fr; display: flex; flex-direction: column; margin-top: 5px; }
@@ -168,6 +162,13 @@
             .grid-container { max-height: 400px; }
             .sidebar-panel { width: 100%; padding: 12px; }
             .btn-guardar { height: 50px; font-size: 1rem; }
+            
+            /* Ajustes Móviles Navegador */
+            .time-navigator-panel { flex-direction: column; gap: 12px; align-items: stretch; padding: 10px; }
+            .time-nav-controls { justify-content: space-between; }
+            .time-nav-presets { justify-content: space-between; }
+            .preset-btn { flex: 1; text-align: center; padding: 10px 5px; }
+            .nav-badge { display: none; }
         }
     </style>
 </head>
@@ -176,7 +177,7 @@
 <div id="login-screen">
     <div class="login-box">
         <h2 style="color:#fff; margin-bottom:10px;">BUNKER SCADA</h2>
-        <p style="color:var(--text-muted); font-size:0.8rem;">SISTEMA PRIVADO DE GESTIÓN TÁCTICA V31.4</p>
+        <p style="color:var(--text-muted); font-size:0.8rem;">SISTEMA PRIVADO DE GESTIÓN TÁCTICA V31.7</p>
         <button class="btn-google" onclick="loginWithGoogle()">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="20px" height="20px" style="margin-right:10px; vertical-align:middle;">
                 <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.7 17.74 9.5 24 9.5z"/>
@@ -329,14 +330,8 @@
         </div>
 
         <div class="right-col">
-            <div class="sidebar-panel">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
-                    <label style="font-size:0.65rem; color:var(--text-muted); font-weight:800; text-transform:uppercase;">Inicio de Ciclo (T0)</label>
-                    <button class="btn-sys" style="padding: 4px 8px; border-color: var(--color-fuga); color: var(--color-fuga); background: rgba(255, 82, 82, 0.05);">🧹 LIMPIAR</button>
-                </div>
-                <div class="form-group" style="margin-bottom:0;">
-                    <input type="date" id="inputInicioCiclo" class="custom-select" value="2026-03-30" onchange="actualizarDashboard()">
-                </div>
+            <div class="sidebar-panel" style="display: none;">
+                <input type="date" id="inputInicioCiclo" class="custom-select" value="2026-03-30">
             </div>
 
             <div class="sidebar-panel">
@@ -413,7 +408,7 @@
 
 <script>
     // ==========================================
-    // ⚙️ CONFIGURACIÓN & ESTADO GLOBAL V31.4
+    // ⚙️ CONFIGURACIÓN & ESTADO GLOBAL V31.7
     // ==========================================
     const BYRON_EMAIL = "bvhcc94@gmail.com"; 
     const CREDIT_SETPOINT = -300000; 
@@ -464,7 +459,7 @@
                     d.monto = Number(d.monto) || 0;
                     listaMovimientos.push(d);
                 });
-                actualizarDashboard();
+                aplicarCicloAlSistema(); // Llama al navegador de tiempo al cargar data
             });
         }
     });
@@ -540,17 +535,16 @@
 
         // Motor de Alarma: Verde (<5%), Naranja (5-10%), Rojo (>10%)
         if (pctFugas < 5) {
-            txtPctFugas.style.color = "var(--color-saldo)"; // Verde - Óptimo
+            txtPctFugas.style.color = "var(--color-saldo)"; 
             barraEvitable.style.backgroundColor = "var(--color-saldo)";
         } else if (pctFugas <= 10) {
-            txtPctFugas.style.color = "#ff9800"; // Naranja - Advertencia
+            txtPctFugas.style.color = "#ff9800"; 
             barraEvitable.style.backgroundColor = "#ff9800";
         } else {
-            txtPctFugas.style.color = "var(--color-fuga)"; // Rojo - Peligro
+            txtPctFugas.style.color = "var(--color-fuga)"; 
             barraEvitable.style.backgroundColor = "var(--color-fuga)";
         }
 
-        // 🟢 ACTUADORES DE PANTALLA: Pintan el DOM al final del ciclo
         renderizarTabla(sueldo, b);
         dibujarGraficos(sueldo, [...dataMes].sort((x,y) => x.fechaISO < y.fechaISO ? -1 : 1), gCat, diasCiclo, T0);
     }
@@ -575,7 +569,7 @@
         });
 
         const l = document.getElementById('listaDetalle'); 
-        let htmlBuffer = ''; // 🟢 Buffer de inyección
+        let htmlBuffer = ''; 
         
         datos.forEach(x => {
             const em = catEmojis[x.catV] || "❓";
@@ -602,7 +596,7 @@
                 </td>
             </tr>`;
         });
-        l.innerHTML = htmlBuffer; // 🟢 Inyección única al DOM
+        l.innerHTML = htmlBuffer; 
     }
 
     function sortTable(column) {
@@ -618,7 +612,6 @@
     // ✏️ MOTOR DE EDICIÓN Y GUARDADO
     // ==========================================
     function editarMovimiento(id) {
-        console.log("Cargando al panel el ID:", id); 
         const mov = listaMovimientos.find(m => m.firestoreId === id);
         if(!mov) return alert("Registro no encontrado.");
 
@@ -725,7 +718,6 @@
         let actual = [], ideal = [], acc = sueldo, diaQ = null;
         let daily = Array(diasCiclo + 1).fill(0);
         
-        // 🟢 Arrays Dinámicos para el Eje X (Texto y Líneas)
         let labelsX = [];
         let colorLabelsX = [];
         let colorGridX = [];
@@ -745,17 +737,14 @@
             if (acc < 0 && diaQ === null) diaQ = i;
             actual.push(i > limit ? null : acc);
 
-            // 🟢 Lógica del "01 ABR"
             let fechaIteracion = new Date(T0.getTime() + (i-1)*86400000);
             let dia = String(fechaIteracion.getDate()).padStart(2, '0');
 
             if (fechaIteracion.getDate() === 1) {
-                // Es el día 1 del mes: Formato "01 MMM" y color naranja
                 labelsX.push(`${dia} ${nombresMes[fechaIteracion.getMonth()]}`);
                 colorLabelsX.push('#ff9800'); 
                 colorGridX.push('#ff9800');   
             } else {
-                // Día normal
                 labelsX.push(dia);
                 colorLabelsX.push(cT);
                 colorGridX.push(cG); 
@@ -774,18 +763,17 @@
                 scales:{ 
                     x:{
                         ticks:{
-                            color: colorLabelsX, // 🟢 Aplica el array de colores
-                            maxRotation: 45,     // 🟢 Fuerza la inclinación a 45 grados
+                            color: colorLabelsX, 
+                            maxRotation: 45,     
                             minRotation: 45,
                             font: (context) => {
-                                // Pone en negrita (900) el día 1, el resto normal
                                 return { weight: colorLabelsX[context.index] === '#ff9800' ? '900' : 'bold', size: 10 };
                             }
                         }, 
                         grid:{
-                            color: colorGridX,   // 🟢 Pinta solo la línea del día 1 de naranja
+                            color: colorGridX,   
                             drawBorder:false,
-                            lineWidth: (context) => colorGridX[context.index] === '#ff9800' ? 2 : 1 // Hace la línea naranja un poco más gruesa
+                            lineWidth: (context) => colorGridX[context.index] === '#ff9800' ? 2 : 1 
                         }
                     }, 
                     y:{ticks:{color:cT, callback:v=>'$'+(v/1000)+'k'}, grid:{color: c => c.tick.value === 0 ? cF : cG}} 
@@ -793,7 +781,6 @@
             }
         });
 
-        // 🟢 Preparación de datos para el Pareto de doble eje
         const sorted = Object.entries(cats).sort((a,b)=>b[1]-a[1]).slice(0,8);
         const totalTop8 = sorted.reduce((sum, val) => sum + val[1], 0) || 1;
         let acumulado = 0;
@@ -819,18 +806,15 @@
             }
         });
     }
+
     // ==========================================
     // ⏱️ MOTOR DE NAVEGACIÓN GLOBAL V31.7
     // ==========================================
     
-    // Función que traduce el Mes Conceptual (ej. Abril) al Rango Desfasado (30 Mar - 29 Abr)
     function calcularFechasCiclo(mesConceptual, anio) {
-        // mesConceptual es base 0 (Enero=0, Abril=3)
-        // El ciclo inicia el día 30 del mes ANTERIOR
         let mesInicio = mesConceptual - 1;
         let anioInicio = anio;
         
-        // Si el mes conceptual es Enero (0), el ciclo empieza en Diciembre (-1) del año anterior
         if (mesInicio < 0) {
             mesInicio = 11;
             anioInicio--;
@@ -855,7 +839,6 @@
         let targetMes = mesActual;
         let targetAnio = anioActual;
 
-        // Lógica para determinar el "Mes Conceptual Actual" basado en si ya pasamos el día 30
         if (new Date().getDate() >= 30) {
             targetMes = (mesActual + 1) % 12;
             if (targetMes === 0) targetAnio++;
@@ -881,27 +864,18 @@
         
         const { inicio, fin } = calcularFechasCiclo(mesVal, anioVal);
         
-        // Formateamos para el badge superior
         const formato = { day: '2-digit', month: 'short' };
         document.getElementById('navRangoBadge').innerText = 
             `PERIODO: ${inicio.toLocaleDateString('es-CL', formato)} - ${fin.toLocaleDateString('es-CL', formato)}`;
 
-        // Conectamos con el motor existente: Sobrescribimos el valor del input antiguo (o creamos la variable global)
         const tzoffset = (new Date()).getTimezoneOffset() * 60000;
         const localISOTime = (new Date(inicio.getTime() - tzoffset)).toISOString().slice(0, 10);
         
-        // Si aún tienes el inputInicioCiclo en tu HTML, lo actualizamos. Si lo borraste, avísame para ajustar actualizarDashboard.
         let inputAntiguo = document.getElementById('inputInicioCiclo');
-        if(inputAntiguo) {
-            inputAntiguo.value = localISOTime;
-        }
+        if(inputAntiguo) { inputAntiguo.value = localISOTime; }
         
-        // 🚀 DISPARAMOS LA TELEMETRÍA GLOBAL
         actualizarDashboard();
     }
-
-    // Inicializar el navegador al cargar
-    setTimeout(aplicarCicloAlSistema, 1500); // Pequeño delay para asegurar que Firebase cargó
 </script>
 </body>
 </html>
