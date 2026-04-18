@@ -245,11 +245,11 @@ function renderizarListas(sueldoBase, filtroBuscador) {
         // 📱 INYECCIÓN: VISTA MÓVIL (TARJETAS)
         // ==========================================
         if (contenedorMovil) {
-            htmlMovil += `<div class="mobile-card" onclick="openBottomSheet('${x.firestoreId}', '${nombreSeguro}', ${montoSeguro})" style="background: var(--bg-panel); border-radius: 12px; padding: 15px; display: flex; align-items: center; border: 1px solid var(--border-color); margin-bottom: 10px;">
+            htmlMovil += `<div class="mobile-card" onclick="openBottomSheet('${x.firestoreId}', '${nombreSeguro.replace(/'/g, "\\'")}', ${montoSeguro})" style="background: var(--bg-card) !important; border-radius: 12px; padding: 15px; display: flex; align-items: center; border: 1px solid var(--border-subtle); margin-bottom: 10px;">
                 <div style="font-size: 1.5rem; margin-right: 15px; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 50%;">${em}</div>
                 <div style="flex: 1;">
                     <div style="font-weight: bold; font-size: 0.95rem; margin-bottom: 3px;">${nombreSeguro}</div>
-                    <div style="font-size: 0.7rem; color: var(--text-muted);">${dSMovil} • ${x.catV}</div>
+                    <div style="font-size: 0.7rem; color: var(--text-dim);">${dSMovil} • ${x.catV}</div>
                 </div>
                 <div style="font-family: monospace; font-weight: 900; font-size: 1.1rem; color:${colorMonto}">${x.esIn?'+':(x.esNeutro?'=':'-')}$${montoSeguro.toLocaleString('es-CL')}</div>
             </div>`;
