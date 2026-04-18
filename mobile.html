@@ -310,35 +310,23 @@
         const chatId = "1484213465";
         const btn = document.getElementById('btnTelegramMobile');
         const origText = btn.innerHTML;
-        btn.innerHTML = "📸 CAPTURANDO..."; btn.disabled = true;
+        btn.innerHTML = "🚀 ENVIANDO..."; btn.disabled = true;
 
         const saldoActual = document.getElementById('txtSaldo').innerText;
+        const fijos = document.getElementById('txtTotalFijos').innerText;
+        const otros = document.getElementById('txtTotalOtros').innerText;
         const periodo = document.getElementById('navRangoBadge').innerText;
-        const mensaje = `🏭 *BÚNKER SCADA MÓVIL*\n🗓️ ${periodo}\n\n💰 Saldo Operativo: $${saldoActual}\n\nTransmisión desde terreno.`;
         
-        // Saltamos al Radar rápido para tomar la foto
-        switchTabApp('dash', document.querySelectorAll('.nav-item')[0]);
+        const mensaje = `🏭 *BÚNKER SCADA TÁCTICO*\n🗓️ ${periodo}\n\n💰 *SALDO OPERATIVO:* $${saldoActual}\n🔴 *Gastos Fijos:* $${fijos}\n🟠 *Variables:* $${otros}\n\n_Transmisión desde terreno._`;
         
-        setTimeout(() => {
-            html2canvas(document.getElementById('reportZone'), { scale: 1.5, backgroundColor: "#0b0e14", useCORS: true }).then(canvas => {
-                btn.innerHTML = "🚀 ENVIANDO...";
-                canvas.toBlob(function(blob) {
-                    const formData = new FormData();
-                    formData.append('chat_id', chatId);
-                    formData.append('photo', blob, 'scada_report.png');
-                    formData.append('caption', mensaje);
-                    formData.append('parse_mode', 'Markdown');
-
-                    fetch(`https://api.telegram.org/bot${botToken}/sendPhoto`, { method: 'POST', body: formData })
-                    .then(res => { if(res.ok) alert("📸🚀 Reporte transmitido."); else alert("❌ Error en transmisión."); })
-                    .catch(err => alert("❌ Falla de red: " + err))
-                    .finally(() => { 
-                        btn.innerHTML = origText; btn.disabled = false; 
-                        switchTabApp('settings', document.querySelectorAll('.nav-item')[3]); // Volvemos a Ajustes
-                    });
-                }, 'image/png');
-            }).catch(err => { alert("❌ Falla óptica: " + err); btn.innerHTML = origText; btn.disabled = false; });
-        }, 500); // Pequeño delay para que la pantalla termine de cambiar antes de la foto
+        fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, { 
+            method: 'POST', 
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ chat_id: chatId, text: mensaje, parse_mode: 'Markdown' })
+        })
+        .then(res => { if(res.ok) alert("✅ Reporte transmitido."); else alert("❌ Error de API Telegram."); })
+        .catch(err => alert("❌ Falla de red: " + err))
+        .finally(() => { btn.innerHTML = origText; btn.disabled = false; });
     }
 </script>
 
