@@ -31,7 +31,7 @@ let modoEdicionActivo = false;
 let sueldosHistoricos = {}; 
 const SUELDO_BASE_DEFAULT = 3602505;
 
-function loginWithGoogle() { auth.signInWithRedirect(new firebase.auth.GoogleAuthProvider()); }
+function loginWithGoogle() { auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
 function logout() { auth.signOut().then(() => window.location.reload()); }
 
 auth.onAuthStateChanged(user => {
