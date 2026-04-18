@@ -369,24 +369,49 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0) {
     const cG = getComputedStyle(document.body).getPropertyValue('--border-color').trim(); 
     const cF = getComputedStyle(document.body).getPropertyValue('--color-fuga').trim();
     
+    // 🟢 1. LÓGICA DE VENTANA (SLIDERS X-AXIS) 🟢
+    let startDay = 0;
+    let endDay = diasCiclo;
+    
+    const rngInicio = document.getElementById('rangeInicio');
+    const rngFin = document.getElementById('rangeFin');
+    
+    if(rngInicio && rngFin) {
+        startDay = parseInt(rngInicio.value);
+        endDay = parseInt(rngFin.value);
+        
+        if(rngInicio.max != diasCiclo) {
+            rngInicio.max = diasCiclo; rngFin.max = diasCiclo;
+            if(rngFin.value > diasCiclo) rngFin.value = diasCiclo;
+        }
+    }
+
     let daily = Array(diasCiclo + 1).fill(0);
     chronData.forEach(m => {
         let diff = Math.floor((new Date(m.fechaISO) - T0) / 86400000) + 1;
         if(diff >= 1 && diff <= diasCiclo) { if(m.esIn) daily[diff] += m.monto; else if(!m.esNeutro) daily[diff] -= m.monto; }
     });
 
-    let actual = [sueldo]; 
-    let ideal = [sueldo]; 
-    let labelsX = ["INI"]; 
-    let colorLabelsX = [cT]; 
-    let colorGridX = [cG]; 
+    let actual = []; 
+    let ideal = []; 
+    let labelsX = []; 
+    let colorLabelsX = []; 
+    let colorGridX = []; 
     
-    let acc = sueldo;
+    // Calcular el saldo base exacto en el "Día de Inicio" seleccionado
+    let baseSueldo = sueldo;
+    for(let i=1; i<=startDay; i++) { baseSueldo += daily[i]; }
+
+    let acc = startDay === 0 ? sueldo : baseSueldo;
     let diaQ = null; 
     let limit = Math.floor((new Date() - T0) / 86400000) + 1;
     const nombresMes = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"];
 
-    for(let i=1; i<=diasCiclo; i++) {
+    if (startDay === 0) {
+        actual.push(sueldo); ideal.push(sueldo); labelsX.push("INI"); colorLabelsX.push(cT); colorGridX.push(cG);
+    }
+
+    for(let i = Math.max(1, startDay); i <= endDay; i++) {
         ideal.push(sueldo - (sueldo/diasCiclo)*i); 
         acc += daily[i]; 
         if (acc < 0 && diaQ === null) diaQ = i; 
@@ -402,15 +427,41 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0) {
         }
     }
 
+    // 🟢 2. CÁLCULO DE AUTO-ZOOM (Y-AXIS DINÁMICO) 🟢
+    let valoresValidos = [...actual, ...ideal].filter(v => v !== null && v !== undefined);
+    let minY = valoresValidos.length > 0 ? Math.min(...valoresValidos) : 0;
+    let maxY = valoresValidos.length > 0 ? Math.max(...valoresValidos) : sueldo;
+
+    // Inyectamos un "amortiguador" del 10% arriba y abajo para que se vea estético
+    let rangoY = Math.abs(maxY - minY);
+    let paddingY = rangoY === 0 ? (sueldo * 0.05) : (rangoY * 0.1); 
+
     chartBD = new Chart(document.getElementById('chartBurnDown'), {
         type: 'line', 
         data: { labels: labelsX, datasets: [
             { label: 'Consumo Real', data: actual, borderColor: '#1f6feb', borderWidth: 3, fill: {target:'origin', above:'rgba(31,111,235,0.05)', below:'rgba(218,54,51,0.2)'}, segment: {borderColor: c => c.p0.parsed.y < 0 ? cF : '#1f6feb'} },
             { label: 'Gasto Ideal', data: ideal, borderColor: 'rgba(63,185,80,0.3)', borderDash:[5,5], pointRadius:0 }
         ]},
-        options: { maintainAspectRatio:false, plugins:{legend:{display:true, labels:{color:cT, font:{size:10, weight:'bold'}}}}, scales:{ x:{ticks:{color: colorLabelsX, maxRotation: 45, minRotation: 45, font: (c) => ({ weight: colorLabelsX[c.index] === '#ff9800' ? '900' : 'bold', size: 10 }) }, grid:{color: colorGridX, drawBorder:false, lineWidth: (c) => colorGridX[c.index] === '#ff9800' ? 2 : 1 } }, y:{ticks:{color:cT, callback:v=>'$'+(v/1000)+'k'}, grid:{color: c => c.tick.value === 0 ? cF : cG}} } }
+        options: { 
+            maintainAspectRatio: false, 
+            animation: false, // Apagamos la animación para que el slider se sienta fluido al arrastrarlo
+            plugins: { legend: { display: true, labels: { color: cT, font: { size: 10, weight: 'bold' } } } }, 
+            scales: { 
+                x: { 
+                    ticks: { color: colorLabelsX, maxRotation: 45, minRotation: 45, font: (c) => ({ weight: colorLabelsX[c.index] === '#ff9800' ? '900' : 'bold', size: 10 }) }, 
+                    grid: { color: colorGridX, drawBorder: false, lineWidth: (c) => colorGridX[c.index] === '#ff9800' ? 2 : 1 } 
+                }, 
+                y: { 
+                    min: minY - paddingY,  // Aplicamos la cota inferior estricta
+                    max: maxY + paddingY,  // Aplicamos la cota superior estricta
+                    ticks: { color: cT, callback: v => '$' + (v / 1000).toFixed(0) + 'k' }, 
+                    grid: { color: c => c.tick.value === 0 ? cF : cG } 
+                } 
+            } 
+        }
     });
 
+    // 🟢 3. PARETO (SIN CAMBIOS) 🟢
     const sorted = Object.entries(cats).sort((a,b)=>b[1]-a[1]).slice(0,8); const totalTop8 = sorted.reduce((sum, val) => sum + val[1], 0) || 1;
     let acumulado = 0; const dataAcumulada = sorted.map(c => { acumulado += c[1]; return (acumulado / totalTop8) * 100; });
 
@@ -430,7 +481,6 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0) {
         options: { maintainAspectRatio:false, plugins:{legend:{display:true, labels:{color:cT, font:{size:10, weight:'bold'}}}}, scales:{ x:{ticks:{color:cT, font:{size:9}}}, y:{ type: 'linear', position: 'left', ticks:{color:cT, callback:v=>'$'+(v/1000)+'k'} }, y1:{ type: 'linear', position: 'right', min: 0, max: 100, grid: { drawOnChartArea: false }, ticks:{color:'#ff9800', callback:v=>v+'%', font:{weight:'bold'}} } } }
     });
 }
-
 function calcularFechasCiclo(mesConceptual, anio) {
     let mesInicio = mesConceptual - 1; let anioInicio = anio; if (mesInicio < 0) { mesInicio = 11; anioInicio--; }
     let T0 = new Date(anioInicio, mesInicio, 30); if (T0.getMonth() !== mesInicio) T0 = new Date(anioInicio, mesInicio + 1, 0); 
