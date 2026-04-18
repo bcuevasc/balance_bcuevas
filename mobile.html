@@ -8,7 +8,88 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script><!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Bunker SCADA - Desktop</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
+    <style>
+        :root { --bg-body: #0b0e14; --bg-panel: #161b22; --bg-subpanel: #21262d; --text-main: #f0f6fc; --text-muted: #8b949e; --border-color: #30363d; --input-bg: #0d1117; --item-hover: #1c2128; --color-guardar: #238636; --color-ingresos: #1f6feb; --color-gastos: #da3633; --color-saldo: #3fb950; --color-edit: #d29922; --color-fuga: #ff5252; --color-proyectado: #3f51b5; }
+        * { box-sizing: border-box; font-family: -apple-system, sans-serif; }
+        body { background-color: var(--bg-body); margin: 0; color: var(--text-main); overflow: hidden; height: 100vh; display: flex; flex-direction: column; }
+        #login-screen { position: fixed; inset: 0; background: #0b0e14; display: flex; align-items: center; justify-content: center; z-index: 10000; }
+        .login-box { padding: 40px; background: #161b22; border: 1px solid #30363d; border-radius: 12px; }
+        .app-container { display: none; width: 100%; height: 100vh; padding: 12px; flex-direction: column; gap: 8px; margin: 0 auto; max-width: 1920px; }
+        .app-container.active-app { display: flex; }
+        .time-navigator-panel { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 8px; padding: 8px 15px; display: flex; justify-content: space-between; }
+        .kpi-row { display: grid; grid-template-columns: repeat(8, 1fr); gap: 8px; }
+        .kpi-card { padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-panel); }
+        .kpi-card h4 { margin: 0; font-size: 0.6rem; color: var(--text-muted); text-transform: uppercase; }
+        .kpi-card .value { margin: 0; font-size: 1.15rem; font-weight: 900; }
+        .master-layout { display: grid; grid-template-columns: 1fr 340px; gap: 12px; flex-grow: 1; min-height: 0; }
+        .grid-container { flex: 1; overflow: auto; background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 6px; }
+        .data-grid { width: 100%; border-collapse: collapse; }
+        .data-grid th, .data-grid td { padding: 6px 8px; border-bottom: 1px solid var(--border-color); text-align: left; }
+        .data-grid th { background: var(--bg-panel); position: sticky; top: 0; font-size: 0.7rem; color: var(--color-ingresos); }
+        .sidebar-panel { background: var(--bg-panel); border-radius: 8px; border: 1px solid var(--border-color); padding: 15px; margin-bottom: 10px;}
+        input, select { width: 100%; padding: 8px; background: var(--input-bg); color: white; border: 1px solid var(--border-color); border-radius: 4px; margin-bottom: 10px; }
+        .btn-guardar { width: 100%; padding: 10px; background: var(--color-guardar); color: white; border: none; font-weight: bold; cursor: pointer; border-radius: 4px; }
+    </style>
+</head>
+<body>
+
+<div id="login-screen"><div class="login-box"><button onclick="loginWithGoogle()" style="padding:10px; font-weight:bold;">ENTRAR AL SCADA</button></div></div>
+
+<div class="app-container" id="reportZone">
+    <div style="display:flex; justify-content:space-between; border-bottom:1px solid #30363d;">
+        <h2>BUNKER DIGITAL SCADA <span id="user-display" style="font-size:0.8rem; color:#3fb950;"></span></h2>
+    </div>
+
+    <div class="time-navigator-panel">
+        <div>
+            <select id="navAnio" onchange="aplicarCicloAlSistema()"><option value="2026" selected>2026</option></select>
+            <select id="navMesConceptual" onchange="aplicarCicloAlSistema()"><option value="3" selected>Abril</option><option value="4">Mayo</option></select>
+            <span id="navRangoBadge" style="margin-left:10px; font-family:monospace; color:#1f6feb;"></span>
+        </div>
+    </div>
+
+    <div class="kpi-row">
+        <div class="kpi-card"><h4>Sueldo Mes</h4><div class="value">$<input type="text" id="inputSueldo" value="3.602.505" onchange="guardarSueldoEnNube()" style="background:transparent; border:none; width:120px; outline:none; font-weight:bold; font-size:1.2rem; padding:0;"></div></div>
+        <div class="kpi-card"><h4>Balance Real</h4><div class="value" style="color:#3fb950">$<span id="txtSaldo">0</span></div></div>
+        <div class="kpi-card"><h4>Gastos Fijos</h4><div class="value" style="color:#ff5252">$<span id="txtTotalFijos">0</span></div></div>
+        <div class="kpi-card"><h4>Gastos Variables</h4><div class="value" style="color:#ff9800">$<span id="txtTotalOtros">0</span></div></div>
+    </div>
+
+    <div class="master-layout">
+        <div class="grid-container">
+            <table class="data-grid">
+                <thead><tr><th>☰</th><th>N°</th><th>Fecha</th><th>Descripción</th><th>Categoría</th><th>Monto</th><th>Saldo Hist.</th><th>Acción</th></tr></thead>
+                <tbody id="listaDetalle"></tbody>
+            </table>
+        </div>
+        
+        <div>
+            <div class="sidebar-panel">
+                <h4 style="color:#3fb950;">REGISTRO MANUAL</h4>
+                <input type="hidden" id="editId">
+                <input type="datetime-local" id="inputFecha">
+                <select id="inputTipo"><option value="Gasto">Gasto</option><option value="Ingreso">Ingreso</option></select>
+                <select id="inputCategoria"><option value="Gastos Fijos (Búnker)">Gastos Fijos</option><option value="Dopamina & Antojos">Dopamina</option><option value="Sin Categoría">Otros</option></select>
+                <input type="text" id="inputNombre" placeholder="Descripción">
+                <input type="text" id="inputMonto" placeholder="Monto" oninput="formatearEntradaNumerica(this)">
+                <button id="btnGuardar" class="btn-guardar" onclick="agregarMovimiento()">GUARDAR EN BÚNKER</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="motor.js"></script>
+</body>
+</html>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
     
     <style>
