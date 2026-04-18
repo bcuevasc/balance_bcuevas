@@ -218,9 +218,6 @@ function renderizarListas(sueldoBase, filtroBuscador) {
         const saldoSeguro = (typeof x.saldoCalculadoVista === 'number' && !isNaN(x.saldoCalculadoVista)) ? x.saldoCalculadoVista : 0;
         const colorSaldo = saldoSeguro < 0 ? 'var(--color-fuga)' : 'var(--text-muted)';
 
-        // ==========================================
-        // 🖥️ INYECCIÓN: VISTA PC (11 COLUMNAS EXACTAS)
-        // ==========================================
         if (contenedorPC) {
             htmlPC += `<tr style="${bgEdicion}" draggable="true" ondragstart="dragStart(event, '${x.firestoreId}')" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dropRow(event, '${x.firestoreId}')">
                 <td class="col-check hide-mobile"><input type="checkbox" class="row-check" value="${x.firestoreId}" onchange="updateMassActions()"></td>
@@ -241,11 +238,8 @@ function renderizarListas(sueldoBase, filtroBuscador) {
             </tr>`;
         }
 
-        // ==========================================
-        // 📱 INYECCIÓN: VISTA MÓVIL (TARJETAS CON BOTTOM SHEET)
-        // ==========================================
         if (contenedorMovil) {
-            htmlMovil += `<div class="mobile-card" onclick="openBottomSheet('${x.firestoreId}', '${nombreSeguro.replace(/'/g, "\\'")}', ${montoSeguro})" style="background: var(--bg-card) !important; border-radius: 12px; padding: 15px; display: flex; align-items: center; border: 1px solid var(--border-subtle); margin-bottom: 10px;">
+            htmlMovil += `<div class="mobile-card" onclick="editarMovimiento('${x.firestoreId}')" style="background: var(--bg-card) !important; border-radius: 12px; padding: 15px; display: flex; align-items: center; border: 1px solid var(--border-subtle); margin-bottom: 10px;">
                 <div style="font-size: 1.5rem; margin-right: 15px; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 50%;">${em}</div>
                 <div style="flex: 1;">
                     <div style="font-weight: bold; font-size: 0.95rem; margin-bottom: 3px;">${nombreSeguro}</div>
@@ -310,7 +304,6 @@ function agregarMovimiento() {
 
     const btn = document.getElementById('btnGuardar');
     btn.innerHTML = "⏳ GUARDANDO..."; btn.disabled = true;
-    document.activeElement.blur(); // Fuerzo el cierre del teclado nativo
 
     const dataPayload = { nombre: n, monto: m, categoria: c, tipo: t, fecha: new Date(fInput), status: 'Manual' };
 
@@ -363,11 +356,19 @@ function massCategorize() {
     });
 }
 
+// 🟢 RE-CALIBRACIÓN DE GRÁFICOS: INI COMO DÍA 0 🟢
 function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0) {
     if(chartBD) chartBD.destroy(); if(chartP) chartP.destroy();
-    const cT = getComputedStyle(document.body).getPropertyValue('--text-main').trim(); 
-    const cG = getComputedStyle(document.body).getPropertyValue('--border-color').trim(); 
-    const cF = getComputedStyle(document.body).getPropertyValue('--color-fuga').trim();
+    
+    // Fallbacks de color si no se detectan las variables CSS
+    const getC = (v, fallback) => {
+        const val = getComputedStyle(document.body).getPropertyValue(v).trim();
+        return val !== '' ? val : fallback;
+    };
+    
+    const cT = getC('--text-main', '#f0f6fc'); 
+    const cG = getC('--border-color', '#30363d'); 
+    const cF = getC('--color-fuga', '#ff5252');
     
     let daily = Array(diasCiclo + 1).fill(0);
     chronData.forEach(m => {
@@ -402,6 +403,13 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0) {
         }
     }
 
+    const aliasMap = {
+        "Gastos Fijos (Búnker)": "Fijos", "Mantenimiento Hardware (Salud)": "Salud", 
+        "Alimentación & Supermercado": "Super", "Transferencia Propia / Ahorro": "Ahorro",
+        "Ocio & Experiencias": "Ocio", "Transporte & Logística": "Transp", 
+        "Dopamina & Antojos": "Dopa", "Transferencia Recibida": "Ingreso"
+    };
+
     chartBD = new Chart(document.getElementById('chartBurnDown'), {
         type: 'line', 
         data: { labels: labelsX, datasets: [
@@ -413,13 +421,6 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0) {
 
     const sorted = Object.entries(cats).sort((a,b)=>b[1]-a[1]).slice(0,8); const totalTop8 = sorted.reduce((sum, val) => sum + val[1], 0) || 1;
     let acumulado = 0; const dataAcumulada = sorted.map(c => { acumulado += c[1]; return (acumulado / totalTop8) * 100; });
-
-    const aliasMap = {
-        "Gastos Fijos (Búnker)": "Fijos", "Mantenimiento Hardware (Salud)": "Salud", 
-        "Alimentación & Supermercado": "Super", "Transferencia Propia / Ahorro": "Ahorro",
-        "Ocio & Experiencias": "Ocio", "Transporte & Logística": "Transp", 
-        "Dopamina & Antojos": "Dopa", "Transferencia Recibida": "Ingreso"
-    };
 
     chartP = new Chart(document.getElementById('chartPareto'), {
         type: 'bar', 
