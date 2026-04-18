@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Bunker Móvil HUD</title>
     
+    <link rel="apple-touch-icon" href="bunker-icon.png">
+    
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
@@ -19,27 +21,21 @@
         
         * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; -webkit-tap-highlight-color: transparent; }
         
-        body { 
-            background-color: var(--bg-base); color: var(--text-main); 
-            margin: 0; padding-bottom: 90px; 
-            overscroll-behavior-y: none;
-        }
+        body { background-color: var(--bg-base); color: var(--text-main); margin: 0; padding-bottom: 90px; overscroll-behavior-y: none; }
 
-        /* LOGIN REDISEÑADO */
+        /* LOGIN */
         #login-screen { position: fixed; inset: 0; background: var(--bg-base); display: flex; align-items: center; justify-content: center; z-index: 10000; flex-direction: column; }
         .btn-google { background: #fff; color: #000; border: none; padding: 16px 32px; border-radius: 50px; font-weight: 900; font-size: 1rem; box-shadow: 0 10px 30px rgba(255,255,255,0.1); }
 
-        /* HEADER INVISIBLE */
+        /* HEADER E INTERFAZ */
         .top-bar { padding: 20px 20px 10px 20px; display: flex; justify-content: space-between; align-items: center; }
         .brand { font-size: 0.85rem; font-weight: 900; letter-spacing: 1px; color: var(--text-dim); }
         .user-tag { font-size: 0.75rem; color: var(--accent-green); background: rgba(63,185,80,0.1); padding: 4px 10px; border-radius: 20px; font-weight: bold; }
 
-        /* HUD MAESTRO (BALANCE REAL) */
         .master-hud { text-align: center; padding: 20px 20px 30px 20px; }
         .hud-label { font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase; font-weight: 800; letter-spacing: 1px; margin-bottom: 5px; }
         .hud-value { font-size: 3.2rem; font-weight: 900; letter-spacing: -1px; line-height: 1; margin: 0; color: var(--text-main); }
         
-        /* MINI-TELEMETRÍA (ESCLAVOS) */
         .slave-kpis { display: flex; gap: 15px; padding: 0 20px; margin-bottom: 25px; }
         .slave-pill { flex: 1; background: var(--bg-card); border: 1px solid var(--border-subtle); padding: 12px; border-radius: 16px; display: flex; flex-direction: column; align-items: center; }
         .slave-pill .label { font-size: 0.65rem; color: var(--text-dim); text-transform: uppercase; font-weight: bold; margin-bottom: 4px;}
@@ -47,21 +43,16 @@
         .val-red { color: var(--accent-red); }
         .val-orange { color: #ff9800; }
 
-        /* LISTA DE MOVIMIENTOS FLUIDA */
         .list-header { padding: 0 20px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: flex-end; }
         .list-title { font-size: 0.9rem; font-weight: 800; color: var(--text-main); margin: 0; }
         .list-badge { font-size: 0.65rem; color: var(--accent-blue); font-family: monospace; font-weight: bold; }
         
         #listaMovilDetalle { padding: 0 15px; display: flex; flex-direction: column; gap: 8px; }
         
-        .mobile-card { 
-            background: var(--bg-card) !important; border: 1px solid var(--border-subtle) !important; 
-            border-radius: 16px !important; padding: 16px !important; 
-            display: flex; align-items: center; transition: transform 0.1s;
-        }
+        .mobile-card { background: var(--bg-card) !important; border: 1px solid var(--border-subtle) !important; border-radius: 16px !important; padding: 16px !important; display: flex; align-items: center; transition: transform 0.1s; cursor: pointer;}
         .mobile-card:active { transform: scale(0.98); background: var(--bg-elevated) !important; }
 
-        /* PESTAÑA REGISTRO (FORMULARIO LIMPIO) */
+        /* PESTAÑA REGISTRO */
         #tab-add { display: none; padding: 20px; animation: fadeIn 0.3s; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         
@@ -72,10 +63,7 @@
 
         .form-group { margin-bottom: 15px; }
         .form-group label { display: block; font-size: 0.75rem; font-weight: bold; color: var(--text-dim); margin-bottom: 8px; margin-left: 5px; text-transform: uppercase; }
-        input[type="text"]:not(.monto-gigante), select, input[type="datetime-local"] { 
-            width: 100%; padding: 16px; background: var(--bg-card); color: white; 
-            border: 1px solid var(--border-subtle); border-radius: 14px; font-size: 1rem; outline: none; 
-        }
+        input[type="text"]:not(.monto-gigante), select, input[type="datetime-local"] { width: 100%; padding: 16px; background: var(--bg-card); color: white; border: 1px solid var(--border-subtle); border-radius: 14px; font-size: 1rem; outline: none; }
         input[type="date"]::-webkit-calendar-picker-indicator, input[type="datetime-local"]::-webkit-calendar-picker-indicator { filter: invert(1); }
         
         .btn-guardar { width: 100%; padding: 20px; background: var(--accent-green); color: #000; border: none; font-weight: 900; border-radius: 16px; font-size: 1.1rem; text-transform: uppercase; margin-top: 20px; }
@@ -85,48 +73,23 @@
         .settings-card { background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 16px; padding: 20px; margin-bottom: 15px; }
         .btn-danger { width: 100%; padding: 16px; background: rgba(255, 82, 82, 0.1); color: var(--accent-red); border: 1px solid rgba(255, 82, 82, 0.3); font-weight: bold; border-radius: 12px; margin-top: 20px; }
 
-        /* BOTTOM NAV REDISEÑADA (CON FAB CENTRAL) */
-        .bottom-nav { 
-            position: fixed; bottom: 0; left: 0; width: 100%; 
-            background: rgba(11, 14, 20, 0.9); backdrop-filter: blur(10px);
-            border-top: 1px solid var(--border-subtle); 
-            display: flex; justify-content: space-around; align-items: center;
-            padding: 10px 10px 25px 10px; z-index: 1000;
-        }
-        .nav-item { color: var(--text-dim); text-align: center; font-size: 0.65rem; font-weight: 800; padding: 10px; flex: 1; text-transform: uppercase; transition: color 0.2s; }
+        /* BOTTOM NAV REDISEÑADA */
+        .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(11, 14, 20, 0.9); backdrop-filter: blur(10px); border-top: 1px solid var(--border-subtle); display: flex; justify-content: space-around; align-items: center; padding: 10px 10px 25px 10px; z-index: 1000; }
+        .nav-item { color: var(--text-dim); text-align: center; font-size: 0.65rem; font-weight: 800; padding: 10px; flex: 1; text-transform: uppercase; transition: color 0.2s; cursor: pointer; }
         .nav-item.active { color: var(--text-main); }
         .nav-item i { display: block; font-size: 1.4rem; margin-bottom: 4px; font-style: normal; }
         
-        .nav-fab {
-            background: var(--accent-blue); color: #fff;
-            width: 60px; height: 60px; border-radius: 30px;
-            display: flex; justify-content: center; align-items: center;
-            font-size: 2rem; font-weight: 300; margin: -30px 15px 0 15px;
-            box-shadow: 0 10px 25px rgba(31, 111, 235, 0.4);
-            transition: transform 0.2s;
-        }
+        .nav-fab { background: var(--accent-blue); color: #fff; width: 60px; height: 60px; border-radius: 30px; display: flex; justify-content: center; align-items: center; font-size: 2rem; font-weight: 300; margin: -30px 15px 0 15px; box-shadow: 0 10px 25px rgba(31, 111, 235, 0.4); transition: transform 0.2s; cursor: pointer; }
         .nav-fab:active { transform: scale(0.9); }
 
-        /* 🟢 NUEVO: BOTTOM SHEET (Menú de Acción Táctico) 🟢 */
-        #bottom-sheet-overlay {
-            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); 
-            z-index: 9999; backdrop-filter: blur(3px); opacity: 0; transition: opacity 0.3s;
-        }
-        #bottom-sheet {
-            position: fixed; bottom: -100%; left: 0; width: 100%; 
-            background: var(--bg-card); border-radius: 24px 24px 0 0; 
-            padding: 25px 20px 40px 20px; z-index: 10000;
-            box-shadow: 0 -10px 30px rgba(0,0,0,0.5); border-top: 1px solid var(--border-subtle);
-            transition: bottom 0.3s cubic-bezier(0.1, 1, 0.2, 1);
-        }
+        /* 🟢 BOTTOM SHEET (Menú de Edición Táctico) 🟢 */
+        #bottom-sheet-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 9999; backdrop-filter: blur(3px); opacity: 0; transition: opacity 0.3s; }
+        #bottom-sheet { position: fixed; bottom: -100%; left: 0; width: 100%; background: var(--bg-card); border-radius: 24px 24px 0 0; padding: 25px 20px 40px 20px; z-index: 10000; box-shadow: 0 -10px 30px rgba(0,0,0,0.5); border-top: 1px solid var(--border-subtle); transition: bottom 0.3s cubic-bezier(0.1, 1, 0.2, 1); }
         .sheet-handle { width: 40px; height: 5px; background: var(--text-dim); border-radius: 5px; margin: 0 auto 20px auto; opacity: 0.5; }
         .sheet-title { font-size: 1.1rem; font-weight: 900; margin-bottom: 5px; color: var(--text-main); text-align: center; }
         .sheet-subtitle { font-size: 0.8rem; color: var(--text-dim); margin-bottom: 25px; text-align: center; font-weight: bold; }
         
-        .sheet-btn { 
-            width: 100%; padding: 18px; border-radius: 14px; font-weight: 900; font-size: 1rem; 
-            margin-bottom: 12px; display: flex; align-items: center; justify-content: center; gap: 10px; border: none;
-        }
+        .sheet-btn { width: 100%; padding: 18px; border-radius: 14px; font-weight: 900; font-size: 1rem; margin-bottom: 12px; display: flex; align-items: center; justify-content: center; gap: 10px; border: none; cursor: pointer; }
         .sheet-btn-edit { background: rgba(31, 111, 235, 0.1); color: var(--accent-blue); border: 1px solid rgba(31, 111, 235, 0.3); }
         .sheet-btn-delete { background: rgba(255, 82, 82, 0.1); color: var(--accent-red); border: 1px solid rgba(255, 82, 82, 0.3); }
         .sheet-btn-cancel { background: var(--bg-elevated); color: var(--text-dim); }
@@ -144,7 +107,6 @@
 </div>
 
 <div class="app-container" id="reportZone">
-    
     <div class="top-bar">
         <div class="brand">SCADA V3.0</div>
         <div id="user-display" class="user-tag"></div>
@@ -155,119 +117,54 @@
             <div class="hud-label">Saldo Operativo</div>
             <div class="hud-value">$<span id="txtSaldo">0</span></div>
         </div>
-
         <div class="slave-kpis">
-            <div class="slave-pill">
-                <div class="label">Gastos Fijos</div>
-                <div class="val val-red">$<span id="txtTotalFijos">0</span></div>
-            </div>
-            <div class="slave-pill">
-                <div class="label">Variables</div>
-                <div class="val val-orange">$<span id="txtTotalOtros">0</span></div>
-            </div>
+            <div class="slave-pill"><div class="label">Gastos Fijos</div><div class="val val-red">$<span id="txtTotalFijos">0</span></div></div>
+            <div class="slave-pill"><div class="label">Variables</div><div class="val val-orange">$<span id="txtTotalOtros">0</span></div></div>
         </div>
-        
-        <div class="list-header">
-            <h4 class="list-title">Registro Táctico</h4>
-            <div id="navRangoBadge" class="list-badge"></div>
-        </div>
-        
+        <div class="list-header"><h4 class="list-title">Registro Táctico</h4><div id="navRangoBadge" class="list-badge"></div></div>
         <div id="listaMovilDetalle"></div>
     </div>
 
     <div id="tab-add">
         <input type="hidden" id="editId">
-        
         <div class="huge-input-wrapper">
             <label>Monto de Transacción</label>
             <input type="text" id="inputMonto" class="monto-gigante" placeholder="$ 0" oninput="formatearEntradaNumerica(this)">
         </div>
-
-        <div class="form-group">
-            <label>Descripción</label>
-            <input type="text" id="inputNombre" placeholder="¿En qué gastaste?">
-        </div>
-
+        <div class="form-group"><label>Descripción</label><input type="text" id="inputNombre" placeholder="¿En qué gastaste?"></div>
         <div style="display: flex; gap: 10px;">
-            <div class="form-group" style="flex: 1;">
-                <label>Flujo</label>
-                <select id="inputTipo">
-                    <option value="Gasto">Gasto Var.</option>
-                    <option value="Gasto Fijo">Fijo</option>
-                    <option value="Ingreso">Ingreso</option>
-                    <option value="Por Cobrar">CxC</option>
-                    <option value="Ahorro">Ahorro</option>
-                </select>
-            </div>
-            <div class="form-group" style="flex: 1;">
-                <label>Fecha</label>
-                <input type="datetime-local" id="inputFecha">
-            </div>
+            <div class="form-group" style="flex: 1;"><label>Flujo</label><select id="inputTipo"><option value="Gasto">Gasto Var.</option><option value="Gasto Fijo">Fijo</option><option value="Ingreso">Ingreso</option><option value="Por Cobrar">CxC</option><option value="Ahorro">Ahorro</option></select></div>
+            <div class="form-group" style="flex: 1;"><label>Fecha</label><input type="datetime-local" id="inputFecha"></div>
         </div>
-
         <div class="form-group">
             <label>Categoría V31.4</label>
             <select id="inputCategoria">
-                <option value="Gastos Fijos (Búnker)">🏠 Gastos Fijos</option>
-                <option value="Suscripciones">📱 Suscripciones</option>
-                <option value="Alimentación & Supermercado">🛒 Supermercado</option>
-                <option value="Dopamina & Antojos">🍔 Dopamina</option>
-                <option value="Ocio & Experiencias">🎸 Ocio & Experiencias</option>
-                <option value="Transporte & Logística">🚗 Transporte</option>
-                <option value="Mantenimiento Hardware (Salud)">💊 Salud</option>
-                <option value="Transferencia Propia / Ahorro">🏦 Transf. Propia</option>
-                <option value="Transferencia Recibida">📲 Transf. Recibida</option>
-                <option value="Hogar & Búnker">🛠️ Búnker</option>
-                <option value="Red de Apoyo (Familia)">🫂 Red Apoyo</option>
-                <option value="Gasto Tarjeta de Crédito">💳 Tarjeta Crédito</option>
-                <option value="Ingreso Adicional">💰 Ingreso Extra</option>
-                <option value="Sin Categoría">❓ Otro</option>
+                <option value="Gastos Fijos (Búnker)">🏠 Gastos Fijos</option><option value="Suscripciones">📱 Suscripciones</option><option value="Alimentación & Supermercado">🛒 Supermercado</option><option value="Dopamina & Antojos">🍔 Dopamina</option><option value="Ocio & Experiencias">🎸 Ocio & Experiencias</option><option value="Transporte & Logística">🚗 Transporte</option><option value="Mantenimiento Hardware (Salud)">💊 Salud</option><option value="Transferencia Propia / Ahorro">🏦 Transf. Propia</option><option value="Transferencia Recibida">📲 Transf. Recibida</option><option value="Hogar & Búnker">🛠️ Búnker</option><option value="Red de Apoyo (Familia)">🫂 Red Apoyo</option><option value="Gasto Tarjeta de Crédito">💳 Tarjeta Crédito</option><option value="Ingreso Adicional">💰 Ingreso Extra</option><option value="Sin Categoría">❓ Otro</option>
             </select>
         </div>
-
         <button id="btnGuardar" class="btn-guardar" onclick="agregarMovimiento()">REGISTRAR</button>
     </div>
 
     <div id="tab-settings">
         <h3 style="margin-top:0; color:var(--text-main);">Panel de Control</h3>
-        
         <div class="settings-card">
-            <div class="form-group">
-                <label>Sueldo Base Operativo</label>
-                <input type="text" id="inputSueldo" style="font-size: 1.5rem; font-weight: bold; color: var(--accent-green);" oninput="formatearEntradaNumerica(this)" onchange="guardarSueldoEnNube()">
-            </div>
+            <div class="form-group"><label>Sueldo Base Operativo</label><input type="text" id="inputSueldo" style="font-size: 1.5rem; font-weight: bold; color: var(--accent-green);" oninput="formatearEntradaNumerica(this)" onchange="guardarSueldoEnNube()"></div>
         </div>
-
         <div class="settings-card">
             <label style="display: block; font-size: 0.75rem; font-weight: bold; color: var(--text-dim); margin-bottom: 8px; text-transform: uppercase;">Navegador de Tiempo</label>
             <div style="display: flex; gap: 10px;">
-                <select id="navMesConceptual" onchange="aplicarCicloAlSistema()">
-                    <option value="0">Enero</option><option value="1">Febrero</option><option value="2">Marzo</option>
-                    <option value="3" selected>Abril</option><option value="4">Mayo</option><option value="5">Junio</option>
-                    <option value="6">Julio</option><option value="7">Agosto</option><option value="8">Septiembre</option>
-                    <option value="9">Octubre</option><option value="10">Noviembre</option><option value="11">Diciembre</option>
-                </select>
-                <select id="navAnio" onchange="aplicarCicloAlSistema()">
-                    <option value="2025">2025</option><option value="2026" selected>2026</option>
-                </select>
+                <select id="navMesConceptual" onchange="aplicarCicloAlSistema()"><option value="0">Enero</option><option value="1">Febrero</option><option value="2">Marzo</option><option value="3" selected>Abril</option><option value="4">Mayo</option><option value="5">Junio</option><option value="6">Julio</option><option value="7">Agosto</option><option value="8">Septiembre</option><option value="9">Octubre</option><option value="10">Noviembre</option><option value="11">Diciembre</option></select>
+                <select id="navAnio" onchange="aplicarCicloAlSistema()"><option value="2025">2025</option><option value="2026" selected>2026</option></select>
             </div>
         </div>
-
         <button class="btn-danger" onclick="logout()">CERRAR SESIÓN</button>
     </div>
 
     <div class="bottom-nav">
-        <div class="nav-item active" onclick="switchTabApp('dash', this)">
-            <i>📡</i>Radar
-        </div>
-        
+        <div class="nav-item active" onclick="switchTabApp('dash', this)"><i>📡</i>Radar</div>
         <div class="nav-fab" onclick="switchTabApp('add', null)">+</div>
-        
-        <div class="nav-item" onclick="switchTabApp('settings', this)">
-            <i>⚙️</i>Ajustes
-        </div>
+        <div class="nav-item" onclick="switchTabApp('settings', this)"><i>⚙️</i>Ajustes</div>
     </div>
-
 </div>
 
 <div id="bottom-sheet-overlay" onclick="closeBottomSheet()"></div>
@@ -275,27 +172,18 @@
     <div class="sheet-handle"></div>
     <div id="sheet-title" class="sheet-title">Nombre del Gasto</div>
     <div id="sheet-subtitle" class="sheet-subtitle">$0</div>
-    
     <input type="hidden" id="sheet-id-target">
-    
-    <button class="sheet-btn sheet-btn-edit" onclick="actionEdit()">
-        ✏️ Editar Registro
-    </button>
-    <button class="sheet-btn sheet-btn-delete" onclick="actionDelete()">
-        🗑️ Eliminar Definitivo
-    </button>
-    <button class="sheet-btn sheet-btn-cancel" onclick="closeBottomSheet()">
-        Cancelar
-    </button>
+    <button class="sheet-btn sheet-btn-edit" onclick="actionEdit()">✏️ Editar Registro</button>
+    <button class="sheet-btn sheet-btn-delete" onclick="actionDelete()">🗑️ Eliminar Definitivo</button>
+    <button class="sheet-btn sheet-btn-cancel" onclick="closeBottomSheet()">Cancelar</button>
 </div>
 
 <script>
-    // FIX: NUEVA FUNCIÓN DE NAVEGACIÓN INDEPENDIENTE
+    // FIX DE NAVEGACIÓN
     function switchTabApp(tab, element) {
         document.getElementById('tab-dash').style.display = 'none';
         document.getElementById('tab-add').style.display = 'none';
         document.getElementById('tab-settings').style.display = 'none';
-        
         document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
         
         if (tab === 'dash') {
@@ -303,33 +191,29 @@
         } else if (tab === 'add') {
             document.getElementById('tab-add').style.display = 'block';
             if(!document.getElementById('editId').value) {
-                let now = new Date();
-                now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+                let now = new Date(); now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
                 document.getElementById('inputFecha').value = now.toISOString().slice(0,16);
             }
         } else if (tab === 'settings') {
             document.getElementById('tab-settings').style.display = 'block';
         }
-        
         if(element) element.classList.add('active');
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
     
-    // ESTO PERMITE QUE EL MOTOR.JS COMUNIQUE SIN ROMPER NADA
+    // PUENTE CON EL MOTOR.JS
     window.switchTab = function(target) {
         if(target === 'list') switchTabApp('dash', document.querySelectorAll('.nav-item')[0]);
         if(target === 'add') switchTabApp('add', null);
     };
 
-    // 🟢 LÓGICA DEL BOTTOM SHEET 🟢
+    // LÓGICA DEL BOTTOM SHEET
     function openBottomSheet(id, nombre, monto) {
         document.getElementById('sheet-title').innerText = nombre || "Registro Sin Nombre";
         document.getElementById('sheet-subtitle').innerText = "$" + monto.toLocaleString('es-CL');
         document.getElementById('sheet-id-target').value = id;
-        
         const overlay = document.getElementById('bottom-sheet-overlay');
         const sheet = document.getElementById('bottom-sheet');
-        
         overlay.style.display = 'block';
         setTimeout(() => overlay.style.opacity = '1', 10);
         setTimeout(() => sheet.style.bottom = '0', 50);
@@ -338,7 +222,6 @@
     function closeBottomSheet() {
         const overlay = document.getElementById('bottom-sheet-overlay');
         const sheet = document.getElementById('bottom-sheet');
-        
         sheet.style.bottom = '-100%';
         overlay.style.opacity = '0';
         setTimeout(() => overlay.style.display = 'none', 300);
@@ -347,7 +230,7 @@
     function actionEdit() {
         const id = document.getElementById('sheet-id-target').value;
         closeBottomSheet();
-        editarMovimiento(id); // Llama a la función del motor.js y te lleva a la pestaña de registro
+        editarMovimiento(id); 
     }
 
     function actionDelete() {
@@ -355,12 +238,11 @@
         if(confirm("¿Estás seguro de eliminar este registro del Búnker?")) {
             db.collection("movimientos").doc(id).delete().then(() => {
                 closeBottomSheet();
+                // Opcional: mostrar un mini aviso de borrado exitoso
             }).catch(err => alert("Error al eliminar: " + err));
         }
     }
 </script>
-
 <script src="motor.js"></script>
-
 </body>
 </html>
