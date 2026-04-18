@@ -9,7 +9,7 @@ const catEmojis = {
     "Transferencia": "🔄", "Gastos Fijos (Búnker)": "🏠", "Suscripciones": "📱", "Alimentación & Supermercado": "🛒",
     "Dopamina & Antojos": "🍔", "Ocio & Experiencias": "🎸", "Transporte & Logística": "🚗", 
     "Mantenimiento Hardware (Salud)": "💊", "Transferencia Propia / Ahorro": "🏦", "Hogar & Búnker": "🛠️",
-    "Red de Apoyo (Familia)": "🫂", "Gasto Tarjeta de Crédito": "💳", "Ingreso Adicional": "💰", onclick="edit
+    "Red de Apoyo (Familia)": "🫂", "Gasto Tarjeta de Crédito": "💳", "Ingreso Adicional": "💰", 
     "Transferencia Recibida": "📲", "Ruido de Sistema": "⚙️", "Sin Categoría": "❓"
 };
 
@@ -242,7 +242,7 @@ function renderizarListas(sueldoBase, filtroBuscador) {
         }
 
         // ==========================================
-        // 📱 INYECCIÓN: VISTA MÓVIL (TARJETAS)
+        // 📱 INYECCIÓN: VISTA MÓVIL (TARJETAS CON BOTTOM SHEET)
         // ==========================================
         if (contenedorMovil) {
             htmlMovil += `<div class="mobile-card" onclick="openBottomSheet('${x.firestoreId}', '${nombreSeguro.replace(/'/g, "\\'")}', ${montoSeguro})" style="background: var(--bg-card) !important; border-radius: 12px; padding: 15px; display: flex; align-items: center; border: 1px solid var(--border-subtle); margin-bottom: 10px;">
@@ -374,7 +374,6 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0) {
         if(diff >= 1 && diff <= diasCiclo) { if(m.esIn) daily[diff] += m.monto; else if(!m.esNeutro) daily[diff] -= m.monto; }
     });
 
-    // 🟢 RECALIBRACIÓN: INYECTAMOS EL "DÍA 0" CON EL SUELDO INTACTO
     let actual = [sueldo]; 
     let ideal = [sueldo]; 
     let labelsX = ["INI"]; 
@@ -423,6 +422,7 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0) {
         options: { maintainAspectRatio:false, plugins:{legend:{display:true, labels:{color:cT, font:{size:10, weight:'bold'}}}}, scales:{ x:{ticks:{color:cT, font:{size:9}}}, y:{ type: 'linear', position: 'left', ticks:{color:cT, callback:v=>'$'+(v/1000)+'k'} }, y1:{ type: 'linear', position: 'right', min: 0, max: 100, grid: { drawOnChartArea: false }, ticks:{color:'#ff9800', callback:v=>v+'%', font:{weight:'bold'}} } } }
     });
 }
+
 function calcularFechasCiclo(mesConceptual, anio) {
     let mesInicio = mesConceptual - 1; let anioInicio = anio; if (mesInicio < 0) { mesInicio = 11; anioInicio--; }
     let T0 = new Date(anioInicio, mesInicio, 30); if (T0.getMonth() !== mesInicio) T0 = new Date(anioInicio, mesInicio + 1, 0); 
