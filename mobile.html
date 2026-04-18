@@ -132,10 +132,20 @@
             <input type="text" id="inputMonto" class="monto-gigante" placeholder="$ 0" oninput="formatearEntradaNumerica(this)">
         </div>
         <div class="form-group"><label>Descripción</label><input type="text" id="inputNombre" placeholder="¿En qué gastaste?"></div>
-        <div style="display: flex; gap: 10px;">
-            <div class="form-group" style="flex: 1;"><label>Flujo</label><select id="inputTipo"><option value="Gasto">Gasto Var.</option><option value="Gasto Fijo">Fijo</option><option value="Ingreso">Ingreso</option><option value="Por Cobrar">CxC</option><option value="Ahorro">Ahorro</option></select></div>
-            <div class="form-group" style="flex: 1;"><label>Fecha</label><input type="datetime-local" id="inputFecha"></div>
-        </div>
+        <div class="form-group">
+    <label>Flujo</label>
+    <select id="inputTipo">
+        <option value="Gasto">Gasto Var.</option>
+        <option value="Gasto Fijo">Fijo</option>
+        <option value="Ingreso">Ingreso</option>
+        <option value="Por Cobrar">CxC</option>
+        <option value="Ahorro">Ahorro</option>
+    </select>
+</div>
+<div class="form-group">
+    <label>Fecha</label>
+    <input type="datetime-local" id="inputFecha">
+</div>
         <div class="form-group">
             <label>Categoría V31.4</label>
             <select id="inputCategoria">
@@ -144,7 +154,23 @@
         </div>
         <button id="btnGuardar" class="btn-guardar" onclick="agregarMovimiento()">REGISTRAR</button>
     </div>
+    <div id="tab-trend" style="display: none; padding: 20px; animation: fadeIn 0.3s;">
+        <h3 style="margin-top:0; color:var(--text-main); font-weight: 900; letter-spacing: 1px;">TELEMETRÍA</h3>
+        
+        <div class="settings-card" style="padding: 15px;">
+            <label style="display: block; font-size: 0.7rem; font-weight: bold; color: var(--text-dim); margin-bottom: 10px; text-transform: uppercase;">Velocidad de Consumo (Burn-Down)</label>
+            <div style="height: 250px; position: relative; width: 100%;">
+                <canvas id="chartBurnDown"></canvas>
+            </div>
+        </div>
 
+        <div class="settings-card" style="padding: 15px; margin-top: 15px;">
+            <label style="display: block; font-size: 0.7rem; font-weight: bold; color: var(--text-dim); margin-bottom: 10px; text-transform: uppercase;">Pareto de Gasto V30</label>
+            <div style="height: 250px; position: relative; width: 100%;">
+                <canvas id="chartPareto"></canvas>
+            </div>
+        </div>
+    </div>
     <div id="tab-settings">
         <h3 style="margin-top:0; color:var(--text-main);">Panel de Control</h3>
         <div class="settings-card">
@@ -162,6 +188,7 @@
 
     <div class="bottom-nav">
         <div class="nav-item active" onclick="switchTabApp('dash', this)"><i>📡</i>Radar</div>
+        <div class="nav-item" onclick="switchTabApp('trend', this)"><i>📈</i>Tren</div>
         <div class="nav-fab" onclick="switchTabApp('add', null)">+</div>
         <div class="nav-item" onclick="switchTabApp('settings', this)"><i>⚙️</i>Ajustes</div>
     </div>
@@ -184,6 +211,8 @@
         document.getElementById('tab-dash').style.display = 'none';
         document.getElementById('tab-add').style.display = 'none';
         document.getElementById('tab-settings').style.display = 'none';
+        document.getElementById('tab-trend').style.display = 'none'; // NUEVO
+        
         document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
         
         if (tab === 'dash') {
@@ -194,18 +223,19 @@
                 let now = new Date(); now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
                 document.getElementById('inputFecha').value = now.toISOString().slice(0,16);
             }
+        } else if (tab === 'trend') {
+            // NUEVO: Pestaña Tendencias
+            document.getElementById('tab-trend').style.display = 'block';
+            // Forzar recálculo para que los gráficos no se aplasten al aparecer
+            if(typeof chartBD !== 'undefined' && chartBD) chartBD.resize();
+            if(typeof chartP !== 'undefined' && chartP) chartP.resize();
         } else if (tab === 'settings') {
             document.getElementById('tab-settings').style.display = 'block';
         }
+        
         if(element) element.classList.add('active');
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
-    
-    // PUENTE CON EL MOTOR.JS
-    window.switchTab = function(target) {
-        if(target === 'list') switchTabApp('dash', document.querySelectorAll('.nav-item')[0]);
-        if(target === 'add') switchTabApp('add', null);
-    };
 
     // LÓGICA DEL BOTTOM SHEET
     function openBottomSheet(id, nombre, monto) {
