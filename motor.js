@@ -9,7 +9,7 @@ const catEmojis = {
     "Transferencia": "🔄", "Gastos Fijos (Búnker)": "🏠", "Suscripciones": "📱", "Alimentación & Supermercado": "🛒",
     "Dopamina & Antojos": "🍔", "Ocio & Experiencias": "🎸", "Transporte & Logística": "🚗", 
     "Mantenimiento Hardware (Salud)": "💊", "Transferencia Propia / Ahorro": "🏦", "Hogar & Búnker": "🛠️",
-    "Red de Apoyo (Familia)": "🫂", "Gasto Tarjeta de Crédito": "💳", "Ingreso Adicional": "💰", 
+    "Red de Apoyo (Familia)": "🫂", "Gasto Tarjeta de Crédito": "💳", "Ingreso Adicional": "💰", onclick="edit
     "Transferencia Recibida": "📲", "Ruido de Sistema": "⚙️", "Sin Categoría": "❓"
 };
 
@@ -245,7 +245,7 @@ function renderizarListas(sueldoBase, filtroBuscador) {
         // 📱 INYECCIÓN: VISTA MÓVIL (TARJETAS)
         // ==========================================
         if (contenedorMovil) {
-            htmlMovil += `<div class="mobile-card" onclick="editarMovimiento('${x.firestoreId}')" style="background: var(--bg-panel); border-radius: 12px; padding: 15px; display: flex; align-items: center; border: 1px solid var(--border-color); margin-bottom: 10px;">
+            htmlMovil += `<div class="mobile-card" onclick="openBottomSheet('${x.firestoreId}', '${nombreSeguro}', ${montoSeguro})" style="background: var(--bg-panel); border-radius: 12px; padding: 15px; display: flex; align-items: center; border: 1px solid var(--border-color); margin-bottom: 10px;">
                 <div style="font-size: 1.5rem; margin-right: 15px; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 50%;">${em}</div>
                 <div style="flex: 1;">
                     <div style="font-weight: bold; font-size: 0.95rem; margin-bottom: 3px;">${nombreSeguro}</div>
