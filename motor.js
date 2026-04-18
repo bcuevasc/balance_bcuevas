@@ -364,22 +364,42 @@ function massCategorize() {
 
 function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0) {
     if(chartBD) chartBD.destroy(); if(chartP) chartP.destroy();
-    const cT = getComputedStyle(document.body).getPropertyValue('--text-main').trim(); const cG = getComputedStyle(document.body).getPropertyValue('--border-color').trim(); const cF = getComputedStyle(document.body).getPropertyValue('--color-fuga').trim();
+    const cT = getComputedStyle(document.body).getPropertyValue('--text-main').trim(); 
+    const cG = getComputedStyle(document.body).getPropertyValue('--border-color').trim(); 
+    const cF = getComputedStyle(document.body).getPropertyValue('--color-fuga').trim();
     
-    let actual = [], ideal = [], acc = sueldo, diaQ = null; let daily = Array(diasCiclo + 1).fill(0);
-    let labelsX = [], colorLabelsX = [], colorGridX = []; const nombresMes = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"];
-
+    let daily = Array(diasCiclo + 1).fill(0);
     chronData.forEach(m => {
         let diff = Math.floor((new Date(m.fechaISO) - T0) / 86400000) + 1;
         if(diff >= 1 && diff <= diasCiclo) { if(m.esIn) daily[diff] += m.monto; else if(!m.esNeutro) daily[diff] -= m.monto; }
     });
 
+    // 🟢 RECALIBRACIÓN: INYECTAMOS EL "DÍA 0" CON EL SUELDO INTACTO
+    let actual = [sueldo]; 
+    let ideal = [sueldo]; 
+    let labelsX = ["INI"]; 
+    let colorLabelsX = [cT]; 
+    let colorGridX = [cG]; 
+    
+    let acc = sueldo;
+    let diaQ = null; 
     let limit = Math.floor((new Date() - T0) / 86400000) + 1;
+    const nombresMes = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"];
+
     for(let i=1; i<=diasCiclo; i++) {
-        ideal.push(sueldo - (sueldo/diasCiclo)*i); acc += daily[i]; if (acc < 0 && diaQ === null) diaQ = i; actual.push(i > limit ? null : acc);
-        let f = new Date(T0.getTime() + (i-1)*86400000); let dia = String(f.getDate()).padStart(2, '0');
-        if (f.getDate() === 1) { labelsX.push(`${dia} ${nombresMes[f.getMonth()]}`); colorLabelsX.push('#ff9800'); colorGridX.push('#ff9800'); } 
-        else { labelsX.push(dia); colorLabelsX.push(cT); colorGridX.push(cG); }
+        ideal.push(sueldo - (sueldo/diasCiclo)*i); 
+        acc += daily[i]; 
+        if (acc < 0 && diaQ === null) diaQ = i; 
+        actual.push(i > limit ? null : acc);
+        
+        let f = new Date(T0.getTime() + (i-1)*86400000); 
+        let dia = String(f.getDate()).padStart(2, '0');
+        if (f.getDate() === 1) { 
+            labelsX.push(`${dia} ${nombresMes[f.getMonth()]}`); 
+            colorLabelsX.push('#ff9800'); colorGridX.push('#ff9800'); 
+        } else { 
+            labelsX.push(dia); colorLabelsX.push(cT); colorGridX.push(cG); 
+        }
     }
 
     chartBD = new Chart(document.getElementById('chartBurnDown'), {
@@ -403,7 +423,6 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0) {
         options: { maintainAspectRatio:false, plugins:{legend:{display:true, labels:{color:cT, font:{size:10, weight:'bold'}}}}, scales:{ x:{ticks:{color:cT, font:{size:9}}}, y:{ type: 'linear', position: 'left', ticks:{color:cT, callback:v=>'$'+(v/1000)+'k'} }, y1:{ type: 'linear', position: 'right', min: 0, max: 100, grid: { drawOnChartArea: false }, ticks:{color:'#ff9800', callback:v=>v+'%', font:{weight:'bold'}} } } }
     });
 }
-
 function calcularFechasCiclo(mesConceptual, anio) {
     let mesInicio = mesConceptual - 1; let anioInicio = anio; if (mesInicio < 0) { mesInicio = 11; anioInicio--; }
     let T0 = new Date(anioInicio, mesInicio, 30); if (T0.getMonth() !== mesInicio) T0 = new Date(anioInicio, mesInicio + 1, 0); 
