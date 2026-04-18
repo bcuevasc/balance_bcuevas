@@ -481,29 +481,6 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0) {
         options: { maintainAspectRatio:false, plugins:{legend:{display:true, labels:{color:cT, font:{size:10, weight:'bold'}}}}, scales:{ x:{ticks:{color:cT, font:{size:9}}}, y:{ type: 'linear', position: 'left', ticks:{color:cT, callback:v=>'$'+(v/1000)+'k'} }, y1:{ type: 'linear', position: 'right', min: 0, max: 100, grid: { drawOnChartArea: false }, ticks:{color:'#ff9800', callback:v=>v+'%', font:{weight:'bold'}} } } }
     });
 }
-function calcularFechasCiclo(mesConceptual, anio) {
-    let mesInicio = mesConceptual - 1; let anioInicio = anio; if (mesInicio < 0) { mesInicio = 11; anioInicio--; }
-    let T0 = new Date(anioInicio, mesInicio, 30); if (T0.getMonth() !== mesInicio) T0 = new Date(anioInicio, mesInicio + 1, 0); 
-    let TFinal = new Date(anio, mesConceptual, 30); if (TFinal.getMonth() !== mesConceptual) TFinal = new Date(anio, mesConceptual + 1, 0);
-    return { T0, TFinal, fechaFinVisual: new Date(TFinal.getTime() - 86400000) };
-}
-
-function cambiarCicloManual() { document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('preset-active')); aplicarCicloAlSistema(); }
-
-function setCicloPreset(tipo) {
-    document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('preset-active'));
-    const m = new Date().getMonth(); let tM = m; let tA = new Date().getFullYear();
-    if (new Date().getDate() >= 30) { tM = (m + 1) % 12; if (tM === 0) tA++; }
-    if (tipo === 'anterior') { const btn = document.getElementById('btnPresetAnterior'); if(btn) btn.classList.add('preset-active'); tM = tM - 1; if (tM < 0) { tM = 11; tA--; } } 
-    else if (tipo === 'actual') { const btn = document.getElementById('btnPresetActual'); if(btn) btn.classList.add('preset-active'); }
-    
-    const navMes = document.getElementById('navMesConceptual');
-    const navAnio = document.getElementById('navAnio');
-    if(navMes) navMes.value = tM; 
-    if(navAnio) navAnio.value = tA;
-    aplicarCicloAlSistema();
-}
-
 function aplicarCicloAlSistema() {
     const navMes = document.getElementById('navMesConceptual');
     const navAnio = document.getElementById('navAnio');
