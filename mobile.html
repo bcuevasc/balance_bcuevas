@@ -7,6 +7,9 @@
     
     <link rel="apple-touch-icon" href="bunker-icon.png">
     
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
@@ -23,11 +26,9 @@
         
         body { background-color: var(--bg-base); color: var(--text-main); margin: 0; padding-bottom: 90px; overscroll-behavior-y: none; }
 
-        /* LOGIN */
         #login-screen { position: fixed; inset: 0; background: var(--bg-base); display: flex; align-items: center; justify-content: center; z-index: 10000; flex-direction: column; }
         .btn-google { background: #fff; color: #000; border: none; padding: 16px 32px; border-radius: 50px; font-weight: 900; font-size: 1rem; box-shadow: 0 10px 30px rgba(255,255,255,0.1); }
 
-        /* HEADER E INTERFAZ */
         .top-bar { padding: 20px 20px 10px 20px; display: flex; justify-content: space-between; align-items: center; }
         .brand { font-size: 0.85rem; font-weight: 900; letter-spacing: 1px; color: var(--text-dim); }
         .user-tag { font-size: 0.75rem; color: var(--accent-green); background: rgba(63,185,80,0.1); padding: 4px 10px; border-radius: 20px; font-weight: bold; }
@@ -52,8 +53,8 @@
         .mobile-card { background: var(--bg-card) !important; border: 1px solid var(--border-subtle) !important; border-radius: 16px !important; padding: 16px !important; display: flex; align-items: center; transition: transform 0.1s; cursor: pointer;}
         .mobile-card:active { transform: scale(0.98); background: var(--bg-elevated) !important; }
 
-        /* PESTAÑA REGISTRO */
-        #tab-add { display: none; padding: 20px; animation: fadeIn 0.3s; }
+        /* ANIMACIONES Y TABS */
+        #tab-add, #tab-trend, #tab-settings { display: none; padding: 20px; animation: fadeIn 0.3s; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         
         .huge-input-wrapper { background: var(--bg-card); border-radius: 20px; padding: 25px 20px; margin-bottom: 20px; text-align: center; border: 1px solid var(--accent-blue); }
@@ -68,12 +69,14 @@
         
         .btn-guardar { width: 100%; padding: 20px; background: var(--accent-green); color: #000; border: none; font-weight: 900; border-radius: 16px; font-size: 1.1rem; text-transform: uppercase; margin-top: 20px; }
 
-        /* PESTAÑA AJUSTES */
-        #tab-settings { display: none; padding: 20px; }
+        /* PESTAÑA AJUSTES Y BOTONES DE SISTEMA */
         .settings-card { background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 16px; padding: 20px; margin-bottom: 15px; }
         .btn-danger { width: 100%; padding: 16px; background: rgba(255, 82, 82, 0.1); color: var(--accent-red); border: 1px solid rgba(255, 82, 82, 0.3); font-weight: bold; border-radius: 12px; margin-top: 20px; }
+        
+        .action-btn { width: 100%; padding: 15px; border-radius: 12px; font-weight: 800; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid var(--border-subtle); background: var(--bg-elevated); color: var(--text-main); cursor: pointer; transition: 0.2s; }
+        .action-btn:active { transform: scale(0.95); }
+        .action-btn.telegram { color: #0088cc; border-color: rgba(0, 136, 204, 0.3); background: rgba(0, 136, 204, 0.1); }
 
-        /* BOTTOM NAV REDISEÑADA */
         .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(11, 14, 20, 0.9); backdrop-filter: blur(10px); border-top: 1px solid var(--border-subtle); display: flex; justify-content: space-around; align-items: center; padding: 10px 10px 25px 10px; z-index: 1000; }
         .nav-item { color: var(--text-dim); text-align: center; font-size: 0.65rem; font-weight: 800; padding: 10px; flex: 1; text-transform: uppercase; transition: color 0.2s; cursor: pointer; }
         .nav-item.active { color: var(--text-main); }
@@ -82,7 +85,6 @@
         .nav-fab { background: var(--accent-blue); color: #fff; width: 60px; height: 60px; border-radius: 30px; display: flex; justify-content: center; align-items: center; font-size: 2rem; font-weight: 300; margin: -30px 15px 0 15px; box-shadow: 0 10px 25px rgba(31, 111, 235, 0.4); transition: transform 0.2s; cursor: pointer; }
         .nav-fab:active { transform: scale(0.9); }
 
-        /* 🟢 BOTTOM SHEET (Menú de Edición Táctico) 🟢 */
         #bottom-sheet-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 9999; backdrop-filter: blur(3px); opacity: 0; transition: opacity 0.3s; }
         #bottom-sheet { position: fixed; bottom: -100%; left: 0; width: 100%; background: var(--bg-card); border-radius: 24px 24px 0 0; padding: 25px 20px 40px 20px; z-index: 10000; box-shadow: 0 -10px 30px rgba(0,0,0,0.5); border-top: 1px solid var(--border-subtle); transition: bottom 0.3s cubic-bezier(0.1, 1, 0.2, 1); }
         .sheet-handle { width: 40px; height: 5px; background: var(--text-dim); border-radius: 5px; margin: 0 auto 20px auto; opacity: 0.5; }
@@ -133,19 +135,15 @@
         </div>
         <div class="form-group"><label>Descripción</label><input type="text" id="inputNombre" placeholder="¿En qué gastaste?"></div>
         <div class="form-group">
-    <label>Flujo</label>
-    <select id="inputTipo">
-        <option value="Gasto">Gasto Var.</option>
-        <option value="Gasto Fijo">Fijo</option>
-        <option value="Ingreso">Ingreso</option>
-        <option value="Por Cobrar">CxC</option>
-        <option value="Ahorro">Ahorro</option>
-    </select>
-</div>
-<div class="form-group">
-    <label>Fecha</label>
-    <input type="datetime-local" id="inputFecha">
-</div>
+            <label>Flujo</label>
+            <select id="inputTipo">
+                <option value="Gasto">Gasto Var.</option><option value="Gasto Fijo">Fijo</option><option value="Ingreso">Ingreso</option><option value="Por Cobrar">CxC</option><option value="Ahorro">Ahorro</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Fecha</label>
+            <input type="datetime-local" id="inputFecha">
+        </div>
         <div class="form-group">
             <label>Categoría V31.4</label>
             <select id="inputCategoria">
@@ -154,8 +152,9 @@
         </div>
         <button id="btnGuardar" class="btn-guardar" onclick="agregarMovimiento()">REGISTRAR</button>
     </div>
-    <div id="tab-trend" style="display: none; padding: 20px; animation: fadeIn 0.3s;">
-        <h3 style="margin-top:0; color:var(--text-main); font-weight: 900; letter-spacing: 1px;">TELEMETRÍA</h3>
+    
+    <div id="tab-trend">
+        <h3 style="margin-top:0; color:var(--text-main); font-weight: 900; letter-spacing: 1px;">TELEMETRÍA VISUAL</h3>
         
         <div class="settings-card" style="padding: 15px;">
             <label style="display: block; font-size: 0.7rem; font-weight: bold; color: var(--text-dim); margin-bottom: 10px; text-transform: uppercase;">Velocidad de Consumo (Burn-Down)</label>
@@ -165,17 +164,20 @@
         </div>
 
         <div class="settings-card" style="padding: 15px; margin-top: 15px;">
-            <label style="display: block; font-size: 0.7rem; font-weight: bold; color: var(--text-dim); margin-bottom: 10px; text-transform: uppercase;">Pareto de Gasto V30</label>
+            <label style="display: block; font-size: 0.7rem; font-weight: bold; color: var(--text-dim); margin-bottom: 10px; text-transform: uppercase;">Gastos por Categoría (Pareto)</label>
             <div style="height: 250px; position: relative; width: 100%;">
                 <canvas id="chartPareto"></canvas>
             </div>
         </div>
     </div>
+
     <div id="tab-settings">
         <h3 style="margin-top:0; color:var(--text-main);">Panel de Control</h3>
+        
         <div class="settings-card">
             <div class="form-group"><label>Sueldo Base Operativo</label><input type="text" id="inputSueldo" style="font-size: 1.5rem; font-weight: bold; color: var(--accent-green);" oninput="formatearEntradaNumerica(this)" onchange="guardarSueldoEnNube()"></div>
         </div>
+        
         <div class="settings-card">
             <label style="display: block; font-size: 0.75rem; font-weight: bold; color: var(--text-dim); margin-bottom: 8px; text-transform: uppercase;">Navegador de Tiempo</label>
             <div style="display: flex; gap: 10px;">
@@ -183,12 +185,24 @@
                 <select id="navAnio" onchange="aplicarCicloAlSistema()"><option value="2025">2025</option><option value="2026" selected>2026</option></select>
             </div>
         </div>
-        <button class="btn-danger" onclick="logout()">CERRAR SESIÓN</button>
+
+        <div class="settings-card">
+            <label style="display: block; font-size: 0.75rem; font-weight: bold; color: var(--text-dim); margin-bottom: 15px; text-transform: uppercase;">Comandos del Sistema</label>
+            <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                <button class="action-btn" onclick="triggerSyncMobile()" id="btnSyncMobile">
+                    🔄 Sincronizar
+                </button>
+                <button class="action-btn telegram" onclick="enviarTelegramMobile()" id="btnTelegramMobile">
+                    🚀 Telegram
+                </button>
+            </div>
+            <button class="btn-danger" onclick="logout()">CERRAR SESIÓN</button>
+        </div>
     </div>
 
     <div class="bottom-nav">
         <div class="nav-item active" onclick="switchTabApp('dash', this)"><i>📡</i>Radar</div>
-        <div class="nav-item" onclick="switchTabApp('trend', this)"><i>📈</i>Tren</div>
+        <div class="nav-item" onclick="switchTabApp('trend', this)"><i>📈</i>Trends</div>
         <div class="nav-fab" onclick="switchTabApp('add', null)">+</div>
         <div class="nav-item" onclick="switchTabApp('settings', this)"><i>⚙️</i>Ajustes</div>
     </div>
@@ -206,12 +220,12 @@
 </div>
 
 <script>
-    // FIX DE NAVEGACIÓN
+    // LÓGICA DE NAVEGACIÓN
     function switchTabApp(tab, element) {
         document.getElementById('tab-dash').style.display = 'none';
         document.getElementById('tab-add').style.display = 'none';
         document.getElementById('tab-settings').style.display = 'none';
-        document.getElementById('tab-trend').style.display = 'none'; // NUEVO
+        document.getElementById('tab-trend').style.display = 'none'; 
         
         document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
         
@@ -224,11 +238,9 @@
                 document.getElementById('inputFecha').value = now.toISOString().slice(0,16);
             }
         } else if (tab === 'trend') {
-            // NUEVO: Pestaña Tendencias
             document.getElementById('tab-trend').style.display = 'block';
-            // Forzar recálculo para que los gráficos no se aplasten al aparecer
-            if(typeof chartBD !== 'undefined' && chartBD) chartBD.resize();
-            if(typeof chartP !== 'undefined' && chartP) chartP.resize();
+            // FORZAR DIBUJADO DE GRÁFICOS AL ABRIR LA PESTAÑA PARA QUE NO SE APLASTEN
+            if(typeof actualizarDashboard === 'function') actualizarDashboard();
         } else if (tab === 'settings') {
             document.getElementById('tab-settings').style.display = 'block';
         }
@@ -236,6 +248,11 @@
         if(element) element.classList.add('active');
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
+    
+    window.switchTab = function(target) {
+        if(target === 'list') switchTabApp('dash', document.querySelectorAll('.nav-item')[0]);
+        if(target === 'add') switchTabApp('add', null);
+    };
 
     // LÓGICA DEL BOTTOM SHEET
     function openBottomSheet(id, nombre, monto) {
@@ -268,11 +285,64 @@
         if(confirm("¿Estás seguro de eliminar este registro del Búnker?")) {
             db.collection("movimientos").doc(id).delete().then(() => {
                 closeBottomSheet();
-                // Opcional: mostrar un mini aviso de borrado exitoso
             }).catch(err => alert("Error al eliminar: " + err));
         }
     }
+
+    // 🟢 FUNCIONES TÁCTICAS: TELEGRAM Y SYNC MÓVIL 🟢
+    function triggerSyncMobile() {
+        const scriptURL = "https://script.google.com/macros/s/AKfycbwKlub0qrv8_d24ZuyKKNryqOw1E68xv1_JvPOoEUc6W8TICllFfodNcwkigQE_7AuoNg/exec"; 
+        const btn = document.getElementById('btnSyncMobile');
+        const origText = btn.innerHTML;
+        btn.innerHTML = "⏳ SYNC..."; btn.disabled = true;
+
+        fetch(scriptURL, { mode: 'no-cors' }).then(() => {
+            alert("✅ Sincronización transmitida al Búnker.");
+            btn.innerHTML = origText; btn.disabled = false;
+        }).catch(error => {
+            alert("❌ Falla de red: " + error);
+            btn.innerHTML = origText; btn.disabled = false;
+        });
+    }
+
+    function enviarTelegramMobile() {
+        const botToken = "8614679709:AAEJGy9yAlKnhjVmJ0VUZpT-YmZQ6J5IOps";
+        const chatId = "1484213465";
+        const btn = document.getElementById('btnTelegramMobile');
+        const origText = btn.innerHTML;
+        btn.innerHTML = "📸 CAPTURANDO..."; btn.disabled = true;
+
+        const saldoActual = document.getElementById('txtSaldo').innerText;
+        const periodo = document.getElementById('navRangoBadge').innerText;
+        const mensaje = `🏭 *BÚNKER SCADA MÓVIL*\n🗓️ ${periodo}\n\n💰 Saldo Operativo: $${saldoActual}\n\nTransmisión desde terreno.`;
+        
+        // Saltamos al Radar rápido para tomar la foto
+        switchTabApp('dash', document.querySelectorAll('.nav-item')[0]);
+        
+        setTimeout(() => {
+            html2canvas(document.getElementById('reportZone'), { scale: 1.5, backgroundColor: "#0b0e14", useCORS: true }).then(canvas => {
+                btn.innerHTML = "🚀 ENVIANDO...";
+                canvas.toBlob(function(blob) {
+                    const formData = new FormData();
+                    formData.append('chat_id', chatId);
+                    formData.append('photo', blob, 'scada_report.png');
+                    formData.append('caption', mensaje);
+                    formData.append('parse_mode', 'Markdown');
+
+                    fetch(`https://api.telegram.org/bot${botToken}/sendPhoto`, { method: 'POST', body: formData })
+                    .then(res => { if(res.ok) alert("📸🚀 Reporte transmitido."); else alert("❌ Error en transmisión."); })
+                    .catch(err => alert("❌ Falla de red: " + err))
+                    .finally(() => { 
+                        btn.innerHTML = origText; btn.disabled = false; 
+                        switchTabApp('settings', document.querySelectorAll('.nav-item')[3]); // Volvemos a Ajustes
+                    });
+                }, 'image/png');
+            }).catch(err => { alert("❌ Falla óptica: " + err); btn.innerHTML = origText; btn.disabled = false; });
+        }, 500); // Pequeño delay para que la pantalla termine de cambiar antes de la foto
+    }
 </script>
+
 <script src="motor.js"></script>
+
 </body>
 </html>
