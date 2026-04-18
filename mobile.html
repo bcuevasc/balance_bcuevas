@@ -54,7 +54,6 @@
         
         #listaMovilDetalle { padding: 0 15px; display: flex; flex-direction: column; gap: 8px; }
         
-        /* Rediseño de la tarjeta inyectada por el motor */
         .mobile-card { 
             background: var(--bg-card) !important; border: 1px solid var(--border-subtle) !important; 
             border-radius: 16px !important; padding: 16px !important; 
@@ -81,7 +80,7 @@
         
         .btn-guardar { width: 100%; padding: 20px; background: var(--accent-green); color: #000; border: none; font-weight: 900; border-radius: 16px; font-size: 1.1rem; text-transform: uppercase; margin-top: 20px; }
 
-        /* PESTAÑA AJUSTES (DONDE ESCONDEMOS LA BASURA) */
+        /* PESTAÑA AJUSTES */
         #tab-settings { display: none; padding: 20px; }
         .settings-card { background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 16px; padding: 20px; margin-bottom: 15px; }
         .btn-danger { width: 100%; padding: 16px; background: rgba(255, 82, 82, 0.1); color: var(--accent-red); border: 1px solid rgba(255, 82, 82, 0.3); font-weight: bold; border-radius: 12px; margin-top: 20px; }
@@ -98,7 +97,6 @@
         .nav-item.active { color: var(--text-main); }
         .nav-item i { display: block; font-size: 1.4rem; margin-bottom: 4px; font-style: normal; }
         
-        /* El Botón de Acción Flotante (FAB) */
         .nav-fab {
             background: var(--accent-blue); color: #fff;
             width: 60px; height: 60px; border-radius: 30px;
@@ -108,6 +106,30 @@
             transition: transform 0.2s;
         }
         .nav-fab:active { transform: scale(0.9); }
+
+        /* 🟢 NUEVO: BOTTOM SHEET (Menú de Acción Táctico) 🟢 */
+        #bottom-sheet-overlay {
+            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); 
+            z-index: 9999; backdrop-filter: blur(3px); opacity: 0; transition: opacity 0.3s;
+        }
+        #bottom-sheet {
+            position: fixed; bottom: -100%; left: 0; width: 100%; 
+            background: var(--bg-card); border-radius: 24px 24px 0 0; 
+            padding: 25px 20px 40px 20px; z-index: 10000;
+            box-shadow: 0 -10px 30px rgba(0,0,0,0.5); border-top: 1px solid var(--border-subtle);
+            transition: bottom 0.3s cubic-bezier(0.1, 1, 0.2, 1);
+        }
+        .sheet-handle { width: 40px; height: 5px; background: var(--text-dim); border-radius: 5px; margin: 0 auto 20px auto; opacity: 0.5; }
+        .sheet-title { font-size: 1.1rem; font-weight: 900; margin-bottom: 5px; color: var(--text-main); text-align: center; }
+        .sheet-subtitle { font-size: 0.8rem; color: var(--text-dim); margin-bottom: 25px; text-align: center; font-weight: bold; }
+        
+        .sheet-btn { 
+            width: 100%; padding: 18px; border-radius: 14px; font-weight: 900; font-size: 1rem; 
+            margin-bottom: 12px; display: flex; align-items: center; justify-content: center; gap: 10px; border: none;
+        }
+        .sheet-btn-edit { background: rgba(31, 111, 235, 0.1); color: var(--accent-blue); border: 1px solid rgba(31, 111, 235, 0.3); }
+        .sheet-btn-delete { background: rgba(255, 82, 82, 0.1); color: var(--accent-red); border: 1px solid rgba(255, 82, 82, 0.3); }
+        .sheet-btn-cancel { background: var(--bg-elevated); color: var(--text-dim); }
 
         .app-container { display: none; }
         .app-container.active-app { display: block; }
@@ -235,21 +257,41 @@
     </div>
 
     <div class="bottom-nav">
-        <div class="nav-item active" onclick="switchTab('dash', this)">
+        <div class="nav-item active" onclick="switchTabApp('dash', this)">
             <i>📡</i>Radar
         </div>
         
-        <div class="nav-fab" onclick="switchTab('add', null)">+</div>
+        <div class="nav-fab" onclick="switchTabApp('add', null)">+</div>
         
-        <div class="nav-item" onclick="switchTab('settings', this)">
+        <div class="nav-item" onclick="switchTabApp('settings', this)">
             <i>⚙️</i>Ajustes
         </div>
     </div>
 
 </div>
 
+<div id="bottom-sheet-overlay" onclick="closeBottomSheet()"></div>
+<div id="bottom-sheet">
+    <div class="sheet-handle"></div>
+    <div id="sheet-title" class="sheet-title">Nombre del Gasto</div>
+    <div id="sheet-subtitle" class="sheet-subtitle">$0</div>
+    
+    <input type="hidden" id="sheet-id-target">
+    
+    <button class="sheet-btn sheet-btn-edit" onclick="actionEdit()">
+        ✏️ Editar Registro
+    </button>
+    <button class="sheet-btn sheet-btn-delete" onclick="actionDelete()">
+        🗑️ Eliminar Definitivo
+    </button>
+    <button class="sheet-btn sheet-btn-cancel" onclick="closeBottomSheet()">
+        Cancelar
+    </button>
+</div>
+
 <script>
-    function switchTab(tab, element) {
+    // FIX: NUEVA FUNCIÓN DE NAVEGACIÓN INDEPENDIENTE
+    function switchTabApp(tab, element) {
         document.getElementById('tab-dash').style.display = 'none';
         document.getElementById('tab-add').style.display = 'none';
         document.getElementById('tab-settings').style.display = 'none';
@@ -273,11 +315,49 @@
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
     
-    function switchTabWrapper(target) {
-        if(target === 'list') switchTab('dash', document.querySelectorAll('.nav-item')[0]);
-        if(target === 'add') switchTab('add', null);
+    // ESTO PERMITE QUE EL MOTOR.JS COMUNIQUE SIN ROMPER NADA
+    window.switchTab = function(target) {
+        if(target === 'list') switchTabApp('dash', document.querySelectorAll('.nav-item')[0]);
+        if(target === 'add') switchTabApp('add', null);
+    };
+
+    // 🟢 LÓGICA DEL BOTTOM SHEET 🟢
+    function openBottomSheet(id, nombre, monto) {
+        document.getElementById('sheet-title').innerText = nombre || "Registro Sin Nombre";
+        document.getElementById('sheet-subtitle').innerText = "$" + monto.toLocaleString('es-CL');
+        document.getElementById('sheet-id-target').value = id;
+        
+        const overlay = document.getElementById('bottom-sheet-overlay');
+        const sheet = document.getElementById('bottom-sheet');
+        
+        overlay.style.display = 'block';
+        setTimeout(() => overlay.style.opacity = '1', 10);
+        setTimeout(() => sheet.style.bottom = '0', 50);
     }
-    window.switchTab = switchTabWrapper;
+
+    function closeBottomSheet() {
+        const overlay = document.getElementById('bottom-sheet-overlay');
+        const sheet = document.getElementById('bottom-sheet');
+        
+        sheet.style.bottom = '-100%';
+        overlay.style.opacity = '0';
+        setTimeout(() => overlay.style.display = 'none', 300);
+    }
+
+    function actionEdit() {
+        const id = document.getElementById('sheet-id-target').value;
+        closeBottomSheet();
+        editarMovimiento(id); // Llama a la función del motor.js y te lleva a la pestaña de registro
+    }
+
+    function actionDelete() {
+        const id = document.getElementById('sheet-id-target').value;
+        if(confirm("¿Estás seguro de eliminar este registro del Búnker?")) {
+            db.collection("movimientos").doc(id).delete().then(() => {
+                closeBottomSheet();
+            }).catch(err => alert("Error al eliminar: " + err));
+        }
+    }
 </script>
 
 <script src="motor.js"></script>
