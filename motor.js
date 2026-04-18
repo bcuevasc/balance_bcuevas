@@ -310,6 +310,7 @@ function agregarMovimiento() {
 
     const btn = document.getElementById('btnGuardar');
     btn.innerHTML = "⏳ GUARDANDO..."; btn.disabled = true;
+    document.activeElement.blur(); // Fuerzo el cierre del teclado nativo
 
     const dataPayload = { nombre: n, monto: m, categoria: c, tipo: t, fecha: new Date(fInput), status: 'Manual' };
 
