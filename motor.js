@@ -413,9 +413,16 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0) {
     const sorted = Object.entries(cats).sort((a,b)=>b[1]-a[1]).slice(0,8); const totalTop8 = sorted.reduce((sum, val) => sum + val[1], 0) || 1;
     let acumulado = 0; const dataAcumulada = sorted.map(c => { acumulado += c[1]; return (acumulado / totalTop8) * 100; });
 
+    const aliasMap = {
+        "Gastos Fijos (Búnker)": "Fijos", "Mantenimiento Hardware (Salud)": "Salud", 
+        "Alimentación & Supermercado": "Super", "Transferencia Propia / Ahorro": "Ahorro",
+        "Ocio & Experiencias": "Ocio", "Transporte & Logística": "Transp", 
+        "Dopamina & Antojos": "Dopa", "Transferencia Recibida": "Ingreso"
+    };
+
     chartP = new Chart(document.getElementById('chartPareto'), {
         type: 'bar', 
-        data: { labels: sorted.map(c => c[0].split(' ')[0]), datasets: [
+        data: { labels: sorted.map(c => aliasMap[c[0]] || c[0].split(' ')[0]), datasets: [
             { type: 'line', label: '% Acumulado', data: dataAcumulada, borderColor: '#ff9800', borderWidth: 2, borderDash: [5, 5], pointBackgroundColor: '#ff9800', pointRadius: 3, fill: false, yAxisID: 'y1' },
             { type: 'bar', label: 'Gasto', data: sorted.map(c => c[1]), backgroundColor: sorted.map(c => c[0] === 'Dopamina & Antojos' ? '#ff5252' : '#1f6feb'), borderRadius: 4, yAxisID: 'y' }
         ]},
