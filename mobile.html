@@ -3,98 +3,248 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Bunker App</title>
+    <title>Bunker Móvil Táctico</title>
+    
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
+    
     <style>
-        :root { --bg-body: #0b0e14; --bg-panel: #161b22; --text-main: #f0f6fc; --text-muted: #8b949e; --border-color: #30363d; --color-ingresos: #1f6feb; --color-saldo: #3fb950; }
-        * { box-sizing: border-box; font-family: -apple-system, sans-serif; }
-        body { background-color: var(--bg-body); color: var(--text-main); margin: 0; padding-bottom: 70px; }
+        /* TEMA SCADA MÓVIL */
+        :root { 
+            --bg-body: #0b0e14; --bg-panel: #161b22; 
+            --text-main: #f0f6fc; --text-muted: #8b949e; 
+            --border-color: #30363d; --input-bg: #0d1117;
+            --color-ingresos: #1f6feb; --color-saldo: #3fb950; --color-fuga: #ff5252;
+            --color-edit: #d29922; --color-guardar: #238636;
+        }
         
+        * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+        
+        body { 
+            background-color: var(--bg-body); color: var(--text-main); 
+            margin: 0; padding-bottom: 80px; /* Espacio para el menú inferior */
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        /* LOGIN */
+        #login-screen { position: fixed; inset: 0; background: var(--bg-body); display: flex; align-items: center; justify-content: center; z-index: 10000; flex-direction: column;}
+        .btn-google { background: #fff; color: #000; border: none; padding: 15px 30px; border-radius: 8px; font-weight: 900; font-size: 1.1rem; cursor: pointer; }
+
         /* HEADER FIJO */
-        .app-header { position: sticky; top: 0; background: var(--bg-panel); padding: 15px; border-bottom: 1px solid var(--border-color); z-index: 100; display:flex; justify-content:space-between; align-items:center;}
-        .app-header h2 { margin: 0; font-size: 1.1rem; color: var(--color-saldo); }
-        
+        .app-header { 
+            position: sticky; top: 0; background: var(--bg-panel); 
+            padding: 15px; border-bottom: 1px solid var(--border-color); 
+            z-index: 100; display: flex; flex-direction: column; gap: 10px;
+        }
+        .header-top { display: flex; justify-content: space-between; align-items: center; }
+        .app-header h2 { margin: 0; font-size: 1.2rem; color: var(--color-saldo); text-transform: uppercase; font-weight: 900; }
+        .time-controls { display: flex; gap: 10px; }
+        .nav-select { background: var(--input-bg); color: var(--text-main); border: 1px solid var(--border-color); padding: 8px; border-radius: 6px; font-weight: bold; width: 100%; outline: none;}
+
         /* TARJETAS KPI (Resumen Rápido) */
         .kpi-container { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 15px; }
-        .kpi-card { background: var(--bg-panel); padding: 15px; border-radius: 12px; border: 1px solid var(--border-color); }
-        .kpi-card h4 { margin: 0 0 5px 0; font-size: 0.7rem; color: var(--text-muted); }
+        .kpi-card { background: var(--bg-panel); padding: 15px; border-radius: 12px; border: 1px solid var(--border-color); border-top: 3px solid var(--border-color); }
+        .kpi-card h4 { margin: 0 0 5px 0; font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; }
         .kpi-card .value { margin: 0; font-size: 1.4rem; font-weight: 900; }
-        
-        /* CONTENEDOR DE TARJETAS DE GASTO */
+
+        /* LISTA DE MOVIMIENTOS (INYECTADA POR MOTOR.JS) */
         #listaMovilDetalle { padding: 0 15px; display: flex; flex-direction: column; gap: 10px; }
-        .mobile-card { background: var(--bg-panel); border-radius: 12px; padding: 15px; display: flex; align-items: center; border: 1px solid var(--border-color); }
-        .mc-icon { font-size: 1.5rem; margin-right: 15px; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 50%; }
-        .mc-body { flex: 1; }
-        .mc-title { font-weight: bold; font-size: 0.95rem; margin-bottom: 3px; }
-        .mc-subtitle { font-size: 0.7rem; color: var(--text-muted); }
-        .mc-amount { font-family: monospace; font-weight: 900; font-size: 1.1rem; }
 
-        /* FORMULARIO (Oculto por defecto) */
+        /* FORMULARIO GIGANTE PARA TERRENO */
         #tab-add { display: none; padding: 20px; }
-        input, select { width: 100%; padding: 12px; background: #0d1117; color: white; border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 15px; font-size: 1rem; }
-        .btn-guardar { width: 100%; padding: 15px; background: #238636; color: white; border: none; font-weight: bold; border-radius: 8px; font-size: 1rem; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; font-size: 0.75rem; font-weight: bold; color: var(--text-muted); margin-bottom: 5px; text-transform: uppercase; }
+        input, select { width: 100%; padding: 15px; background: var(--input-bg); color: white; border: 1px solid var(--border-color); border-radius: 8px; font-size: 1rem; outline: none; }
+        input[type="date"]::-webkit-calendar-picker-indicator, input[type="datetime-local"]::-webkit-calendar-picker-indicator { filter: invert(1); }
+        
+        .monto-gigante { font-size: 2rem !important; font-weight: 900 !important; color: var(--color-saldo) !important; text-align: center; }
+        
+        .btn-guardar { width: 100%; padding: 18px; background: var(--color-guardar); color: white; border: none; font-weight: 900; border-radius: 8px; font-size: 1.1rem; text-transform: uppercase; margin-top: 10px; box-shadow: 0 4px 15px rgba(35, 134, 54, 0.3); }
 
-        /* BOTTOM NAVIGATION BAR */
-        .bottom-nav { position: fixed; bottom: 0; width: 100%; background: var(--bg-panel); border-top: 1px solid var(--border-color); display: flex; justify-content: space-around; padding: 10px; padding-bottom: 25px; z-index: 1000; }
-        .nav-item { color: var(--text-muted); text-align: center; font-size: 0.7rem; font-weight: bold; padding: 10px; flex: 1; cursor: pointer; }
+        /* BOTTOM NAVIGATION BAR (Navegación tipo App de Banco) */
+        .bottom-nav { 
+            position: fixed; bottom: 0; left: 0; width: 100%; 
+            background: var(--bg-panel); border-top: 1px solid var(--border-color); 
+            display: flex; justify-content: space-around; padding: 10px 0 20px 0; 
+            z-index: 1000; box-shadow: 0 -5px 20px rgba(0,0,0,0.5);
+        }
+        .nav-item { color: var(--text-muted); text-align: center; font-size: 0.75rem; font-weight: 800; padding: 10px; flex: 1; text-transform: uppercase; }
         .nav-item.active { color: var(--color-ingresos); }
-        .nav-item i { display: block; font-size: 1.4rem; margin-bottom: 4px; }
+        .nav-item i { display: block; font-size: 1.6rem; margin-bottom: 4px; font-style: normal; }
 
-        #login-screen { position: fixed; inset: 0; background: #0b0e14; display: flex; align-items: center; justify-content: center; z-index: 10000; }
+        .app-container { display: none; }
+        .app-container.active-app { display: block; }
     </style>
 </head>
-<body class="mobile-layout">
+<body>
 
-<div id="login-screen"><button onclick="loginWithGoogle()" style="padding:15px; font-size:1rem;">ENTRAR BÚNKER</button></div>
+<div id="login-screen">
+    <h2 style="color:var(--text-muted); margin-bottom: 20px;">BÚNKER SCADA MÓVIL</h2>
+    <button class="btn-google" onclick="loginWithGoogle()">ENTRAR AL SISTEMA</button>
+</div>
 
 <div class="app-container" id="reportZone">
+    
     <div class="app-header">
-        <h2>BÚNKER MÓVIL</h2>
-        <span id="user-display" style="font-size:0.7rem; color:var(--text-muted);"></span>
-        <select id="navAnio" style="display:none;"><option value="2026" selected>2026</option></select>
-        <select id="navMesConceptual" style="display:none;"><option value="3" selected>Abril</option></select>
+        <div class="header-top">
+            <h2>BÚNKER TÁCTICO</h2>
+            <span id="user-display" style="font-size:0.75rem; color:var(--text-muted); font-weight: bold;"></span>
+        </div>
+        <div class="time-controls">
+            <select id="navAnio" class="nav-select" onchange="aplicarCicloAlSistema()">
+                <option value="2025">2025</option>
+                <option value="2026" selected>2026</option>
+            </select>
+            <select id="navMesConceptual" class="nav-select" onchange="aplicarCicloAlSistema()" style="color: var(--color-ingresos);">
+                <option value="0">Enero</option>
+                <option value="1">Febrero</option>
+                <option value="2">Marzo</option>
+                <option value="3" selected>Abril</option>
+                <option value="4">Mayo</option>
+                <option value="5">Junio</option>
+                <option value="6">Julio</option>
+                <option value="7">Agosto</option>
+                <option value="8">Septiembre</option>
+                <option value="9">Octubre</option>
+                <option value="10">Noviembre</option>
+                <option value="11">Diciembre</option>
+            </select>
+        </div>
     </div>
 
     <div id="tab-dash">
         <div class="kpi-container">
-            <div class="kpi-card" style="border-color:var(--color-saldo)"><h4>Balance Real</h4><div class="value" style="color:var(--color-saldo)">$<span id="txtSaldo">0</span></div></div>
-            <div class="kpi-card"><h4>Sueldo</h4><div class="value">$<input type="text" id="inputSueldo" style="border:none; background:transparent; font-size:1.4rem; font-weight:900; padding:0; margin:0;" onchange="guardarSueldoEnNube()"></div></div>
-            <div class="kpi-card"><h4>Gastos Fijos</h4><div class="value" style="color:#ff5252">$<span id="txtTotalFijos">0</span></div></div>
-            <div class="kpi-card"><h4>Variables</h4><div class="value" style="color:#ff9800">$<span id="txtTotalOtros">0</span></div></div>
+            <div class="kpi-card" style="border-top-color: var(--color-saldo);">
+                <h4>Balance Real</h4>
+                <div class="value" style="color:var(--color-saldo)">$<span id="txtSaldo">0</span></div>
+            </div>
+            <div class="kpi-card" style="border-top-color: var(--color-ingresos);">
+                <h4>Sueldo Base</h4>
+                <div class="value">$<input type="text" id="inputSueldo" style="border:none; background:transparent; font-size:inherit; font-weight:inherit; color:inherit; width: 100%; outline: none; padding: 0;" oninput="formatearEntradaNumerica(this)" onchange="guardarSueldoEnNube()"></div>
+            </div>
+            <div class="kpi-card" style="border-top-color: var(--color-fuga);">
+                <h4>Gastos Fijos</h4>
+                <div class="value" style="color:var(--color-fuga)">$<span id="txtTotalFijos">0</span></div>
+            </div>
+            <div class="kpi-card" style="border-top-color: #ff9800;">
+                <h4>Variables</h4>
+                <div class="value" style="color:#ff9800">$<span id="txtTotalOtros">0</span></div>
+            </div>
         </div>
-        <h4 style="margin-left:15px; color:var(--text-muted);">Últimos Movimientos</h4>
+        
+        <div style="display:flex; justify-content: space-between; align-items: center; padding: 0 15px; margin-bottom: 10px;">
+            <h4 style="color:var(--text-muted); font-size: 0.8rem; text-transform: uppercase; margin: 0;">Últimos Movimientos</h4>
+            <div id="navRangoBadge" style="font-size: 0.65rem; color: var(--color-ingresos); font-family: monospace; font-weight: bold;"></div>
+        </div>
+        
         <div id="listaMovilDetalle"></div>
     </div>
 
     <div id="tab-add">
-        <h3 style="margin-top:0; color:var(--color-saldo);">NUEVO REGISTRO</h3>
         <input type="hidden" id="editId">
-        <input type="datetime-local" id="inputFecha">
-        <select id="inputTipo"><option value="Gasto">Gasto Variable</option><option value="Gasto Fijo">Gasto Fijo</option><option value="Ingreso">Ingreso</option></select>
-        <select id="inputCategoria"><option value="Gastos Fijos (Búnker)">Gastos Fijos</option><option value="Dopamina & Antojos">Dopamina</option><option value="Alimentación & Supermercado">Alimentación</option><option value="Sin Categoría">Otros</option></select>
-        <input type="text" id="inputNombre" placeholder="Descripción de la compra...">
-        <input type="number" id="inputMonto" placeholder="$ Monto" style="font-size:1.5rem; font-weight:bold; color:var(--color-saldo);">
-        <button id="btnGuardar" class="btn-guardar" onclick="agregarMovimiento()">GUARDAR TRANSACCIÓN</button>
+        
+        <div class="form-group">
+            <label>Monto del Movimiento</label>
+            <input type="text" id="inputMonto" class="monto-gigante" placeholder="$ 0" oninput="formatearEntradaNumerica(this)">
+        </div>
+
+        <div class="form-group">
+            <label>Descripción rápida</label>
+            <input type="text" id="inputNombre" placeholder="Ej: Supermercado Lider...">
+        </div>
+
+        <div class="form-group">
+            <label>Fecha y Hora</label>
+            <input type="datetime-local" id="inputFecha">
+        </div>
+
+        <div class="form-group">
+            <label>Flujo de Dinero</label>
+            <select id="inputTipo">
+                <option value="Gasto">Gasto Variable</option>
+                <option value="Gasto Fijo">Gasto Fijo</option>
+                <option value="Ingreso">Ingreso Extra</option>
+                <option value="Por Cobrar">Préstamo (CxC)</option>
+                <option value="Ahorro">Ahorro / Mov. Neutro</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Categoría V31.4</label>
+            <select id="inputCategoria">
+                <option value="Gastos Fijos (Búnker)">🏠 Gastos Fijos (Búnker)</option>
+                <option value="Suscripciones">📱 Suscripciones</option>
+                <option value="Alimentación & Supermercado">🛒 Alimentación & Supermercado</option>
+                <option value="Dopamina & Antojos">🍔 Dopamina & Antojos</option>
+                <option value="Ocio & Experiencias">🎸 Ocio & Experiencias</option>
+                <option value="Transporte & Logística">🚗 Transporte & Log</option>
+                <option value="Mantenimiento Hardware (Salud)">💊 Salud</option>
+                <option value="Transferencia Propia / Ahorro">🏦 Transferencia Propia</option>
+                <option value="Transferencia Recibida">📲 Transferencia Recibida</option>
+                <option value="Hogar & Búnker">🛠️ Hogar & Búnker</option>
+                <option value="Red de Apoyo (Familia)">🫂 Red de Apoyo</option>
+                <option value="Gasto Tarjeta de Crédito">💳 Gasto TC</option>
+                <option value="Ingreso Adicional">💰 Ingresos</option>
+                <option value="Sin Categoría">❓ Sin Categoría</option>
+            </select>
+        </div>
+
+        <button id="btnGuardar" class="btn-guardar" onclick="agregarMovimiento()">GUARDAR EN LA NUBE</button>
     </div>
 
     <div class="bottom-nav">
-        <div class="nav-item active" onclick="switchTab('dash')"><i>📊</i>Radar</div>
-        <div class="nav-item" onclick="switchTab('add')"><i>➕</i>Registro</div>
+        <div class="nav-item active" onclick="switchTab('dash', this)">
+            <i>📊</i>Radar
+        </div>
+        <div class="nav-item" onclick="switchTab('add', this)">
+            <i>➕</i>Registro
+        </div>
+        <div class="nav-item" onclick="logout()" style="color: var(--color-fuga);">
+            <i>🚪</i>Salir
+        </div>
     </div>
+
 </div>
 
 <script>
-    // Lógica Simple para Navegar entre pestañas en el celular
-    function switchTab(tab) {
-        document.getElementById('tab-dash').style.display = tab === 'dash' ? 'block' : 'none';
-        document.getElementById('tab-add').style.display = tab === 'add' ? 'block' : 'none';
+    function switchTab(tab, element) {
+        // Ocultar todas las pestañas
+        document.getElementById('tab-dash').style.display = 'none';
+        document.getElementById('tab-add').style.display = 'none';
+        
+        // Quitar la clase active de todos los botones
         document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-        event.currentTarget.classList.add('active');
-        if(tab==='add') document.getElementById('inputFecha').value = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+        
+        // Mostrar la pestaña seleccionada y activar botón
+        if (tab === 'dash') {
+            document.getElementById('tab-dash').style.display = 'block';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        } else if (tab === 'add') {
+            document.getElementById('tab-add').style.display = 'block';
+            // Si es un registro nuevo (no edición), setear fecha actual
+            if(!document.getElementById('editId').value) {
+                let now = new Date();
+                now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+                document.getElementById('inputFecha').value = now.toISOString().slice(0,16);
+            }
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+        
+        if(element) element.classList.add('active');
+        else document.querySelectorAll('.nav-item')[tab === 'dash' ? 0 : 1].classList.add('active');
     }
+    
+    // Función wrapper para volver al listado tras guardar
+    function switchTabWrapper(target) {
+        if(target === 'list') switchTab('dash');
+        if(target === 'add') switchTab('add');
+    }
+    // Sobrescribimos la llamada del motor para adaptarla a la app nativa
+    window.switchTab = switchTabWrapper;
 </script>
+
 <script src="motor.js"></script>
+
 </body>
 </html>
