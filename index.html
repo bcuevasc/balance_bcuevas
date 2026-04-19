@@ -97,7 +97,7 @@ input[type="date"]::-webkit-calendar-picker-indicator, input[type="datetime-loca
 <div id="login-screen">
     <div class="login-box">
         <h2 style="color:#fff; margin-bottom:10px;">BUNKER SCADA</h2>
-        <p style="color:var(--text-muted); font-size:0.8rem;">SISTEMA PRIVADO DE GESTIÓN TÁCTICA V31.9.5</p>
+        <p style="color:var(--text-muted); font-size:0.8rem;">SISTEMA PRIVADO DE GESTIÓN TÁCTICA V31.9.6</p>
         <button class="btn-google" onclick="loginWithGoogle()">ENTRAR CON GOOGLE</button>
     </div>
 </div>
@@ -126,6 +126,8 @@ input[type="date"]::-webkit-calendar-picker-indicator, input[type="datetime-loca
             <div style="width: 1px; height: 25px; background: var(--border-color); display: block;" class="hide-mobile"></div>
             <div class="system-btns" style="border-bottom: none; padding-bottom: 0;">
                 <button class="btn-sys" onclick="toggleTheme()">☀️/🌙</button>
+                <button class="btn-sys" onclick="triggerSync()">🔄 SYNC</button>
+                <button class="btn-sys btn-telegram" style="color:var(--color-telegram);" onclick="enviarReporteTelegram()">🚀 TELEGRAM</button>
                 <button class="btn-sys" onclick="logout()" style="color:var(--color-fuga);">🚪 SALIR</button>
             </div>
         </div>
