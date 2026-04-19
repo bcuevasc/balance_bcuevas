@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Bunker Digital SCADA v7.6</title>
+    <title>Bunker Digital SCADA v7.6.3</title>
     
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -26,7 +26,7 @@ h2 { color: var(--color-ingresos); margin: 0; font-size: 1.2rem; font-weight: 90
 .cronos { font-family: 'Courier New', Courier, monospace; font-size: 0.85rem; font-weight: 800; color: var(--text-muted); background: var(--bg-panel); padding: 2px 8px; border-radius: 4px; border: 1px solid var(--border-color); }
 .system-btns { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; justify-content: flex-end; }
 .btn-sys { background: var(--bg-subpanel); color: var(--text-main); border: 1px solid var(--border-color); padding: 6px 10px; border-radius: 6px; cursor: pointer; font-weight: 800; font-size: 0.7rem; text-transform: uppercase; }
-.btn-sys:hover { border-color: var(--color-ingresos); color: var(--color-ingresos); }
+.btn-sys:hover { border-color: var(--color-saldo); }
 .time-navigator-panel { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 8px; padding: 8px 15px; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.2); border-top: 3px solid var(--color-ingresos); }
 .time-nav-controls { display: flex; align-items: center; gap: 12px; }
 .nav-select { background: var(--input-bg); color: var(--text-main); border: 1px solid var(--border-color); padding: 6px 12px; border-radius: 6px; font-weight: 800; text-transform: uppercase; font-size: 0.8rem; outline: none; cursor: pointer; }
@@ -68,15 +68,14 @@ h2 { color: var(--color-ingresos); margin: 0; font-size: 1.2rem; font-weight: 90
 .impact-neg { color: var(--color-fuga); }
 .impact-neu { color: #ff9800; }
 
-/* 🟢 GRILLA INFERIOR 40/20/20/20 (SIN SLIDERS) 🟢 */
+/* 🟢 GRILLA INFERIOR 40/20/20/20 Y BURN-DOWN OVERLAY 🟢 */
 #charts-grid-container { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 15px; flex-shrink: 0; }
-.chart-box { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; height: 220px; display: flex; flex-direction: column; position: relative; }
+.chart-box { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; height: 240px; display: flex; flex-direction: column; position: relative; }
 .chart-box h5 { margin: 0 0 5px 0; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; text-align: center; font-weight: 800; z-index: 10;}
 .canvas-container { position: relative; flex-grow: 1; min-height: 0; width: 100%; height: 100%; }
 
-/* Controles Burn-Down Overlay (Píldoras Flotantes) */
 .bd-overlay-kpis { position: absolute; top: 10px; width: calc(100% - 24px); display: flex; justify-content: space-between; z-index: 20; pointer-events: none;}
-.bd-badge { padding: 4px 8px; font-size: 0.65rem; font-weight: bold; color: var(--text-main); background: rgba(0,0,0,0.5); border-radius: 6px; border: 1px solid var(--border-color); backdrop-filter: blur(4px); }
+.bd-badge { padding: 2px 5px; font-size: 0.65rem; font-weight: bold; color: var(--text-main); text-shadow: 0px 2px 4px rgba(0,0,0,0.9); }
 
 .right-col { display: flex; flex-direction: column; gap: 10px; height: 100%; }
 .sidebar-panel { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; }
@@ -99,7 +98,7 @@ input[type="date"]::-webkit-calendar-picker-indicator, input[type="datetime-loca
 <div id="login-screen">
     <div class="login-box">
         <h2 style="color:var(--color-ingresos); margin-bottom:10px;">BUNKER SCADA</h2>
-        <p style="color:var(--text-muted); font-size:0.8rem;">SISTEMA PRIVADO DE GESTIÓN TÁCTICA V7.6.2</p>
+        <p style="color:var(--text-muted); font-size:0.8rem;">SISTEMA PRIVADO DE GESTIÓN TÁCTICA V7.6.3</p>
         <button class="btn-google" onclick="loginWithGoogle()">ENTRAR CON GOOGLE</button>
     </div>
 </div>
@@ -115,8 +114,8 @@ input[type="date"]::-webkit-calendar-picker-indicator, input[type="datetime-loca
 
     <div class="time-navigator-panel" style="margin-top: 5px;">
         <div class="time-nav-controls">
-            <select id="navAnio" class="nav-select" onchange="actualizarDashboard()"><option value="2025">2025</option><option value="2026" selected>2026</option></select>
-            <select id="navMesConceptual" class="nav-select" onchange="actualizarDashboard()" style="color: var(--color-ingresos);"><option value="0">Enero</option><option value="1">Febrero</option><option value="2">Marzo</option><option value="3" selected>Abril</option><option value="4">Mayo</option><option value="5">Junio</option><option value="6">Julio</option><option value="7">Agosto</option><option value="8">Septiembre</option><option value="9">Octubre</option><option value="10">Noviembre</option><option value="11">Diciembre</option></select>
+            <select id="navAnio" class="nav-select" onchange="aplicarCicloAlSistema()"><option value="2025">2025</option><option value="2026" selected>2026</option></select>
+            <select id="navMesConceptual" class="nav-select" onchange="aplicarCicloAlSistema()" style="color: var(--color-ingresos);"><option value="0">Enero</option><option value="1">Febrero</option><option value="2">Marzo</option><option value="3" selected>Abril</option><option value="4">Mayo</option><option value="5">Junio</option><option value="6">Julio</option><option value="7">Agosto</option><option value="8">Septiembre</option><option value="9">Octubre</option><option value="10">Noviembre</option><option value="11">Diciembre</option></select>
             <div id="navRangoBadge" class="nav-badge">--/-- al --/--</div>
         </div>
         
@@ -180,7 +179,6 @@ input[type="date"]::-webkit-calendar-picker-indicator, input[type="datetime-loca
             </div>
             
             <div id="charts-grid-container">
-                
                 <div class="chart-box" style="padding-bottom: 20px;">
                     <div class="bd-overlay-kpis">
                         <div class="bd-badge">TRAMO: <span id="txtGastoTramo" style="color:var(--color-fuga)">$0</span></div>
