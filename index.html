@@ -176,10 +176,11 @@ input[type="date"]::-webkit-calendar-picker-indicator, input[type="datetime-loca
             </div>
             
             <div id="charts-grid-container">
-                <div class="chart-box">
+                <div class="chart-box" style="height: auto; min-height: 250px;">
                     <h5>Velocidad Consumo (Burn-Down)</h5>
-                    <div class="canvas-container"><canvas id="chartBurnDown"></canvas></div>
-                    <div style="padding-top: 5px; display: flex; flex-direction: column; gap: 2px;">
+                    <div class="canvas-container" style="height: 180px;"><canvas id="chartBurnDown"></canvas></div>
+                    
+                    <div style="padding-top: 10px; margin-top: 5px; border-top: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 5px;">
                         <div style="display:flex; justify-content: space-between; font-size:0.6rem; color:var(--text-muted); font-weight:bold;">
                             <span>INICIO: <span id="valSliderIn">0</span></span><span>FIN: <span id="valSliderFin">30</span></span>
                         </div>
@@ -187,8 +188,19 @@ input[type="date"]::-webkit-calendar-picker-indicator, input[type="datetime-loca
                             <input type="range" id="sliderIn" min="0" max="30" value="0" style="flex:1;" oninput="document.getElementById('valSliderIn').innerText=this.value; hacerZoomGrafico(this.value, document.getElementById('sliderFin').value)">
                             <input type="range" id="sliderFin" min="0" max="30" value="30" style="flex:1;" oninput="document.getElementById('valSliderFin').innerText=this.value; hacerZoomGrafico(document.getElementById('sliderIn').value, this.value)">
                         </div>
+                        
+                        <div style="display: flex; gap: 10px; margin-top: 5px;">
+                            <div style="flex:1; background: var(--bg-subpanel); padding: 5px; border-radius: 4px; text-align: center;">
+                                <div style="font-size: 0.55rem; color: var(--text-muted); font-weight: 800; text-transform: uppercase;">Promedio Gasto</div>
+                                <div style="font-size: 0.9rem; font-weight: 900; color: #ff9800;" id="txtPromedioZoom">$0</div>
+                            </div>
+                            <div style="flex:1; background: var(--bg-subpanel); padding: 5px; border-radius: 4px; text-align: center;">
+                                <div style="font-size: 0.55rem; color: var(--text-muted); font-weight: 800; text-transform: uppercase;">Día de Ruina</div>
+                                <div style="font-size: 0.9rem; font-weight: 900; color: var(--color-fuga);"><span id="txtRuinaZoom">∞</span> <span style="font-size:0.6rem;">DÍAS</span></div>
+                            </div>
+                        </div>
                     </div>
-                </div>
+                </div>                </div>
                 <div class="chart-box">
                     <h5>Pareto de Gasto V30</h5>
                     <div class="canvas-container"><canvas id="chartPareto"></canvas></div>
