@@ -70,7 +70,7 @@ const auth = firebase.auth();
 
 let listaMovimientos = [];
 let datosMesGlobal = []; 
-let chartBD = null, chartP = null;
+let chartBD = null, chartP = null, chartDiario = null;
 let currentSort = { column: 'fechaISO', direction: 'desc' }; 
 let modoEdicionActivo = false;
 let sueldosHistoricos = {}; 
@@ -368,12 +368,13 @@ function massDelete() { const ids = Array.from(document.querySelectorAll('.row-c
 function massCategorize() { const ids = Array.from(document.querySelectorAll('.row-check:not(#checkAll):checked')).map(cb => cb.value); const cat = document.getElementById('massCategorySelect').value; if(ids.length === 0 || !cat || !confirm(`¿Categorizar como "${cat}"?`)) return; const btn = document.querySelector('button[onclick="massCategorize()"]'); const orig = btn.innerHTML; btn.innerHTML = '⏳'; Promise.all(ids.map(id => db.collection("movimientos").doc(id).update({categoria: cat}))).then(() => { document.getElementById('massActionsBar').style.display = 'none'; document.getElementById('checkAll').checked = false; document.getElementById('massCategorySelect').value = ''; btn.innerHTML = orig; }); }
 
 function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0) {
-    if(chartBD) chartBD.destroy(); if(chartP) chartP.destroy();
+    if(chartBD) chartBD.destroy(); if(chartP) chartP.destroy(); if(chartDiario) chartDiario.destroy();
     const cT = getComputedStyle(document.body).getPropertyValue('--text-main').trim() || "#f0f6fc"; 
     const cG = getComputedStyle(document.body).getPropertyValue('--border-color').trim() || "#30363d"; 
     const cF = getComputedStyle(document.body).getPropertyValue('--color-fuga').trim() || "#ff5252";
     
     let daily = Array(diasCiclo + 1).fill(0);
+    let dailyGastos = Array(diasCiclo + 1).fill(0); // 🟢 Nuevo array solo para los gastos físicos
     let msT0 = T0.getTime();
 
     chronData.forEach(m => {
@@ -381,25 +382,28 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0) {
         let diff = Math.floor((d.getTime() - msT0) / 86400000) + 1;
         if(diff >= 1 && diff <= diasCiclo) { 
             if(m.esIn) daily[diff] += m.monto; 
-            else if(!m.esNeutro) daily[diff] -= m.monto; 
+            else if(!m.esNeutro) { 
+                daily[diff] -= m.monto; 
+                dailyGastos[diff] += m.monto; // Guardamos el gasto puro para las barras
+            } 
         }
     });
 
-    let actual = [sueldo]; let ideal = [sueldo]; let labelsX = ["INI"]; let colorLabelsX = [cT]; let colorGridX = [cG]; 
-    let acc = sueldo; let diaQ = null; let limit = Math.floor((Date.now() - msT0) / 86400000) + 1;
+    let actual = [sueldo], ideal = [sueldo], labelsX = ["INI"], colorLabelsX = [cT], colorGridX = [cG]; 
+    let acc = sueldo, limit = Math.floor((Date.now() - msT0) / 86400000) + 1;
     const nombresMes = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"];
 
     for(let i=1; i<=diasCiclo; i++) {
         ideal.push(sueldo - (sueldo/diasCiclo)*i); 
         acc += daily[i]; 
-        if (acc < 0 && diaQ === null) diaQ = i; 
         actual.push(i > limit ? null : acc);
         let f = new Date(msT0 + (i-1)*86400000); let dia = String(f.getDate()).padStart(2, '0');
         if (f.getDate() === 1) { labelsX.push(`${dia} ${nombresMes[f.getMonth()]}`); colorLabelsX.push('#ff9800'); colorGridX.push('#ff9800'); } 
         else { labelsX.push(dia); colorLabelsX.push(cT); colorGridX.push(cG); }
     }
 
-    bdDataMaster = { labels: [...labelsX], actual: [...actual], ideal: [...ideal], daily: [...daily], colorsX: [...colorLabelsX], colorsG: [...colorGridX] };
+    // 🟢 Añadimos dailyGastos a la Master 🟢
+    bdDataMaster = { labels: [...labelsX], actual: [...actual], ideal: [...ideal], daily: [...daily], dailyGastos: [...dailyGastos], colorsX: [...colorLabelsX], colorsG: [...colorGridX] };
 
     chartBD = new Chart(document.getElementById('chartBurnDown'), {
         type: 'line', 
@@ -413,7 +417,7 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0) {
                 x:{ticks:{color: colorLabelsX, maxRotation: 45, minRotation: 45, font: (c) => ({ weight: colorLabelsX[c.index] === '#ff9800' ? '900' : 'bold', size: 10 }) }, grid:{color: colorGridX, drawBorder:false, lineWidth: (c) => colorGridX[c.index] === '#ff9800' ? 2 : 1 } }, 
                 y:{
                     max: sueldo,
-                    ticks:{color:cT, callback:v=>'$'+(v/1000)+'k'}, grid:{color: c => c.tick.value === 0 ? cF : cG}
+                    ticks:{color:cT, callback:v=>'$'+Math.round(v/1000)+'k'}, grid:{color: c => c.tick.value === 0 ? cF : cG}
                 } 
             } 
         }
@@ -428,10 +432,26 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0) {
             { type: 'line', label: '% Acumulado', data: dataAcumulada, borderColor: '#ff9800', borderWidth: 2, borderDash: [5, 5], pointBackgroundColor: '#ff9800', pointRadius: 3, fill: false, yAxisID: 'y1' },
             { type: 'bar', label: 'Gasto', data: sorted.map(c => c[1]), backgroundColor: sorted.map(c => c[0] === 'Dopamina & Antojos' ? '#ff5252' : '#1f6feb'), borderRadius: 4, yAxisID: 'y' }
         ]},
-        options: { maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{ x:{ticks:{color:cT, font:{size:9}}}, y:{ type: 'linear', position: 'left', ticks:{color:cT, callback:v=>'$'+(v/1000)+'k'} }, y1:{ type: 'linear', position: 'right', min: 0, max: 100, grid: { drawOnChartArea: false }, ticks:{color:'#ff9800', callback:v=>v+'%', font:{weight:'bold'}} } } }
+        options: { maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{ x:{ticks:{color:cT, font:{size:9}}}, y:{ type: 'linear', position: 'left', ticks:{color:cT, callback:v=>'$'+Math.round(v/1000)+'k'} }, y1:{ type: 'linear', position: 'right', min: 0, max: 100, grid: { drawOnChartArea: false }, ticks:{color:'#ff9800', callback:v=>Math.round(v)+'%', font:{weight:'bold'}} } } }
     });
-}
 
+    // 🟢 MÓDULO 2: RENDERIZAR GRÁFICO DIARIO (Si el canvas existe) 🟢
+    const ctxDiario = document.getElementById('chartDiario');
+    if(ctxDiario) {
+        // Quitamos el "INI" (índice 0) para que cuadre con los días reales
+        chartDiario = new Chart(ctxDiario, {
+            type: 'bar',
+            data: { labels: labelsX.slice(1), datasets: [{ label: 'Gasto Físico', data: dailyGastos.slice(1), backgroundColor: '#da3633', borderRadius: 4 }] },
+            options: { 
+                maintainAspectRatio: false, plugins: { legend: { display: false } }, 
+                scales: { 
+                    x: { ticks: { color: colorLabelsX.slice(1), font:{size:9} }, grid: { display:false } }, 
+                    y: { ticks: { color: cT, callback: v => '$' + Math.round(v / 1000) + 'k' }, grid: { color: cG } } 
+                } 
+            }
+        });
+    }
+}
 function calcularFechasCiclo(mesConceptual, anio) {
     let mesInicio = mesConceptual - 1; let anioInicio = anio; if (mesInicio < 0) { mesInicio = 11; anioInicio--; }
     let T0 = new Date(anioInicio, mesInicio, 30); if (T0.getMonth() !== mesInicio) T0 = new Date(anioInicio, mesInicio + 1, 0); 
@@ -499,13 +519,27 @@ window.hacerZoomGrafico = function(diaIn, diaFin) {
         let maxReal = Math.max(...validActuals);
         const inputSueldo = document.getElementById('inputSueldo');
         const sueldo = inputSueldo ? (parseInt(inputSueldo.value.replace(/\./g,'')) || 0) : SUELDO_BASE_DEFAULT;
-        chartBD.options.scales.y.max = maxReal > (sueldo * 0.8) ? sueldo : (maxReal > 0 ? maxReal * 1.1 : 0);
+        
+        if (maxReal <= 0) {
+            chartBD.options.scales.y.max = sueldo > 0 ? sueldo : 100000; 
+        } else {
+            let calculado = maxReal > (sueldo * 0.8) ? sueldo : maxReal * 1.1;
+            chartBD.options.scales.y.max = Math.ceil(calculado / 1000) * 1000; 
+        }
     }
 
     chartBD.data.labels = slicedLabels;
     chartBD.data.datasets[0].data = slicedActual;
     chartBD.data.datasets[1].data = slicedIdeal;
     chartBD.update();
+
+    // 🟢 MÓDULO 2: APLICAR ZOOM AL GRÁFICO DIARIO 🟢
+    if(chartDiario) {
+        let slicedDiario = bdDataMaster.dailyGastos.slice(inicio + 1, fin + 1);
+        chartDiario.data.labels = slicedLabels.slice(1); // Desfase por el "INI"
+        chartDiario.data.datasets[0].data = slicedDiario;
+        chartDiario.update();
+    }
 
     let slicedDaily = bdDataMaster.daily.slice(inicio + 1, fin + 1); 
     let gastoTotalTramo = 0;
