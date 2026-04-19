@@ -1,5 +1,5 @@
 // ==========================================================
-// 🧠 BÚNKER SCADA - MOTOR LÓGICO V8.2 (MÓDULO TC Y LIQUIDEZ)
+// 🧠 BÚNKER SCADA - MOTOR LÓGICO V8.3 (DRAG & DROP ENTRE PANELES)
 // ==========================================================
 const BYRON_EMAIL = "bvhcc94@gmail.com"; 
 const CREDIT_SETPOINT = -300000; 
@@ -35,11 +35,9 @@ document.addEventListener("DOMContentLoaded", () => {
         selectManual.innerHTML = optionsHTML;
         
         selectManual.addEventListener('change', (e) => {
-            // Auto-Fuga
             const fEl = document.getElementById('inputFuga');
             if(fEl) fEl.value = (e.target.value === "Dopamina & Antojos") ? "100" : "0";
             
-            // Auto-Cuotas (Muestra el selector solo si es TC)
             const boxC = document.getElementById('boxCuotas');
             if(boxC) boxC.style.display = (e.target.value === "Gasto Tarjeta de Crédito") ? "grid" : "none";
         });
@@ -67,12 +65,9 @@ let chartBD = null, chartP = null, chartDiario = null, chartRadar = null;
 let currentSort = { column: 'fechaISO', direction: 'desc' }; 
 let modoEdicionActivo = false, sueldosHistoricos = {}; 
 
-// 🟢 FUNCIÓN INTELIGENTE DE HERENCIA DE SUELDO 🟢
 function obtenerSueldoMes(anio, mes) {
     let llave = `${anio}_${mes}`;
     if (sueldosHistoricos[llave]) return sueldosHistoricos[llave];
-    
-    // Si no hay sueldo este mes, busca el del mes anterior
     let prevMes = mes - 1; let prevAnio = anio;
     if(prevMes < 0) { prevMes = 11; prevAnio--; }
     let llavePrev = `${prevAnio}_${prevMes}`;
@@ -83,7 +78,7 @@ window.mostrarToast = function(mensaje) {
     let toast = document.getElementById('toast-notif');
     if(!toast) {
         toast = document.createElement('div'); toast.id = 'toast-notif';
-        toast.style.cssText = 'position:fixed; top:-100px; left:50%; transform:translateX(-50%); background:var(--color-ingresos, #1f6feb); color:#fff; padding:12px 24px; border-radius:30px; font-weight:900; font-size:0.85rem; z-index:10000; transition:top 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow:0 10px 25px rgba(31,111,235,0.4); text-transform:uppercase; letter-spacing:0.5px;';
+        toast.style.cssText = 'position:fixed; top:-100px; left:50%; transform:translateX(-50%); background:var(--color-ingresos, #1f6feb); color:#fff; padding:12px 24px; border-radius:30px; font-weight:900; font-size:0.85rem; z-index:10000; transition:top 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow:0 10px 25px rgba(31,111,235,0.4); text-transform:uppercase; letter-spacing:0.5px; pointer-events:none;';
         document.body.appendChild(toast);
     }
     toast.innerHTML = '✅ ' + mensaje;
@@ -160,15 +155,14 @@ function actualizarDashboard() {
 
     datosMesGlobal = [...dataMes];
     let saldoAcc = sueldo, tI = 0, tF = 0, tO = 0, tC = 0, tEvitable = 0, gCat = {};
-    let datosTC = [], totalTC = 0; // 🟢 NUEVAS VARIABLES TC 🟢
+    let datosTC = [], totalTC = 0;
     
     [...dataMes].sort((x,y) => x.fechaISO < y.fechaISO ? -1 : 1).forEach(x => {
-        // 🟢 INTERCEPCIÓN DE TARJETA DE CRÉDITO 🟢
         if (x.catV === 'Gasto Tarjeta de Crédito') {
             datosTC.push(x);
             totalTC += x.monto;
         } 
-        else { // Flujo Efectivo Normal
+        else { 
             if (x.esIn) { tI += x.monto; saldoAcc += x.monto; }
             else if (x.tipo === 'Por Cobrar') tC += x.monto;
             else if (!x.esNeutro) {
@@ -217,11 +211,10 @@ function actualizarDashboard() {
         else { txtPctFugas.style.color = "var(--color-fuga)"; barraEvitable.style.backgroundColor = "var(--color-fuga)"; }
     }
 
-    // Filtramos la data pura para gráficos (excluye TC)
     let dataGraficos = dataMes.filter(x => x.catV !== 'Gasto Tarjeta de Crédito');
     
     renderizarListas(sueldo, b);
-    renderizarListaTC(datosTC); // 🟢 RENDERIZADO TC 🟢
+    renderizarListaTC(datosTC); 
     
     if(document.getElementById('chartBurnDown')) dibujarGraficos(sueldo, [...dataGraficos].sort((x,y) => x.fechaISO < y.fechaISO ? -1 : 1), gCat, diasCiclo, T0);
     
@@ -229,7 +222,6 @@ function actualizarDashboard() {
     setTxt('txtPromedioZoom', Math.round((tO + tF) / diasCiclo));
 }    
 
-// 🟢 FUNCIÓN RENDERIZADO MÓDULO TARJETAS 🟢
 function renderizarListaTC(datos) {
     const contenedorPC = document.getElementById('listaDetalleTC');
     const contenedorMovil = document.getElementById('listaMovilTC');
@@ -245,7 +237,8 @@ function renderizarListaTC(datos) {
         const clickAction = `editarMovimiento('${x.firestoreId}')`;
         
         if(contenedorPC) {
-            htmlPC += `<tr style="border-bottom:1px solid var(--border-color); cursor:pointer;" onclick="${clickAction}">
+            // Fíjate que añadimos draggable="true" aquí también
+            htmlPC += `<tr style="border-bottom:1px solid var(--border-color); cursor:pointer;" draggable="true" ondragstart="dragStart(event, '${x.firestoreId}')" onclick="${clickAction}">
                 <td style="font-size:0.65rem; color:var(--text-muted); padding:6px 4px;">${dateStr}</td>
                 <td style="font-size:0.75rem; font-weight:700; padding:6px 4px;">${x.nombre}</td>
                 <td style="font-size:0.65rem; color:var(--accent-blue); padding:6px 4px; text-align:center;">${cuotaStr}</td>
@@ -279,7 +272,7 @@ function renderizarListaTC(datos) {
 }
 
 function renderizarListas(sueldoBase, filtroBuscador) {
-    let datos = [...datosMesGlobal].filter(x => x.catV !== 'Gasto Tarjeta de Crédito'); // Filtramos TC de la lista principal
+    let datos = [...datosMesGlobal].filter(x => x.catV !== 'Gasto Tarjeta de Crédito'); 
     if (filtroBuscador) datos = datos.filter(x => x.nombre?.toLowerCase().includes(filtroBuscador) || x.catV.toLowerCase().includes(filtroBuscador));
 
     datos.sort((a, b) => {
@@ -431,7 +424,6 @@ function agregarMovimiento() {
     const iFugaEl = document.getElementById('inputFuga');
     const pctFuga = iFugaEl ? parseInt(iFugaEl.value) : (catEvitables.includes(c) ? 100 : 0);
     
-    // 🟢 LECTURA DE CUOTAS 🟢
     const cuotasEl = document.getElementById('inputCuotas');
     const cantCuotas = (cuotasEl && c === "Gasto Tarjeta de Crédito") ? parseInt(cuotasEl.value) : 1;
 
@@ -596,14 +588,84 @@ function aplicarCicloAlSistema() {
     cargarSueldoVisual(); actualizarDashboard();
 }
 
+// 🟢 LÓGICA DE DRAG AND DROP (TABLA Y PANELES) 🟢
 let draggedRowId = null;
-function dragStart(e, id) { draggedRowId = id; e.dataTransfer.effectAllowed = 'move'; setTimeout(() => e.target.style.opacity = '0.4', 0); }
-function dragOver(e) { e.preventDefault(); e.target.closest('tr').style.borderTop = '3px solid var(--color-ingresos)'; }
-function dragLeave(e) { e.target.closest('tr').style.borderTop = ''; }
-function dropRow(e, targetId) {
-    e.preventDefault(); e.target.closest('tr').style.borderTop = '';
+
+window.dragStart = function(e, id) { 
+    draggedRowId = id; 
+    e.dataTransfer.effectAllowed = 'move'; 
+    setTimeout(() => e.target.style.opacity = '0.4', 0); 
+}
+
+window.dragOverPanel = function(e, tipo) {
+    e.preventDefault();
+    const panel = e.currentTarget;
+    panel.style.transition = "border-color 0.2s, box-shadow 0.2s";
+    if (tipo === 'tc') {
+        panel.style.borderColor = "var(--color-fuga)";
+        panel.style.boxShadow = "0 0 15px rgba(218, 54, 51, 0.2)";
+    } else {
+        panel.style.borderColor = "var(--color-ingresos)";
+        panel.style.boxShadow = "0 0 15px rgba(31, 111, 235, 0.2)";
+    }
+}
+
+window.dragLeavePanel = function(e, tipo) {
+    const panel = e.currentTarget;
+    if (tipo === 'tc') {
+        panel.style.borderColor = "rgba(218, 54, 51, 0.3)";
+    } else {
+        panel.style.borderColor = "var(--border-color)";
+    }
+    panel.style.boxShadow = "none";
+}
+
+window.dropOnPanel = function(e, tipo) {
+    e.preventDefault();
+    dragLeavePanel(e, tipo); // Resetea los colores
+    if (!draggedRowId) return;
+
+    const mov = listaMovimientos.find(m => m.firestoreId === draggedRowId);
+    if (!mov) return;
+
+    if (tipo === 'tc' && mov.catV !== 'Gasto Tarjeta de Crédito') {
+        if(confirm("💳 ¿Transferir este gasto a la Deuda de Tarjeta de Crédito?")) {
+            db.collection("movimientos").doc(draggedRowId).update({
+                categoria: "Gasto Tarjeta de Crédito",
+                tipo: "Gasto"
+            });
+            if(typeof mostrarToast === 'function') mostrarToast("TRANSFERIDO A TARJETA DE CRÉDITO");
+        }
+    } else if (tipo === 'main' && mov.catV === 'Gasto Tarjeta de Crédito') {
+        if(confirm("🔄 ¿Devolver a Flujo de Efectivo (Como Ruido de Sistema)?")) {
+            db.collection("movimientos").doc(draggedRowId).update({
+                categoria: "Ruido de Sistema",
+                tipo: "Gasto",
+                cuotas: 1
+            });
+            if(typeof mostrarToast === 'function') mostrarToast("DEVUELTO A FLUJO DE EFECTIVO");
+        }
+    }
+    draggedRowId = null;
+}
+
+window.dragOver = function(e) { 
+    e.preventDefault(); 
+    e.currentTarget.style.borderTop = '3px solid var(--color-ingresos)'; 
+}
+
+window.dragLeave = function(e) { 
+    e.currentTarget.style.borderTop = ''; 
+}
+
+window.dropRow = function(e, targetId) {
+    e.preventDefault(); 
+    e.stopPropagation(); // 🟢 CRÍTICO: Evita que el panel reciba el drop si lo sueltas en una fila
+    e.currentTarget.style.borderTop = '';
+    
     if (!draggedRowId || draggedRowId === targetId) return;
     if (currentSort.column !== 'fechaISO') return alert("⚠️ ALARMA: Para recalibrar el tiempo, la tabla debe estar ordenada por Fecha.");
+    
     let vistaActual = [...datosMesGlobal].sort((a, b) => { if (a.fechaISO < b.fechaISO) return currentSort.direction === 'asc' ? -1 : 1; if (a.fechaISO > b.fechaISO) return currentSort.direction === 'asc' ? 1 : -1; return 0; });
     let draggedIdx = vistaActual.findIndex(x => x.firestoreId === draggedRowId);
     let targetIdx = vistaActual.findIndex(x => x.firestoreId === targetId);
@@ -612,10 +674,14 @@ function dropRow(e, targetId) {
     let t1_ms = t1_idx >= 0 ? new Date(vistaActual[t1_idx].fechaISO).getTime() : null;
     let t2_ms = t2_idx < vistaActual.length ? new Date(vistaActual[t2_idx].fechaISO).getTime() : null;
     let newTimeMs; let dir = currentSort.direction;
+    
     if (t1_ms && t2_ms) newTimeMs = t1_ms + (t2_ms - t1_ms) / 2;
     else if (!t1_ms) newTimeMs = t2_ms + (dir === 'desc' ? 60000 : -60000); 
     else if (!t2_ms) newTimeMs = t1_ms + (dir === 'desc' ? -60000 : 60000);
-    if(confirm("⚙️ ¿Inyectar nuevo Timestamp para forzar cuadratura?")) { db.collection("movimientos").doc(draggedRowId).update({ fecha: new Date(newTimeMs) }); }
+    
+    if(confirm("⚙️ ¿Inyectar nuevo Timestamp para forzar cuadratura?")) { 
+        db.collection("movimientos").doc(draggedRowId).update({ fecha: new Date(newTimeMs) }); 
+    }
     draggedRowId = null;
 }
 document.addEventListener('dragend', (e) => { if(e.target.tagName === 'TR') e.target.style.opacity = '1'; });
