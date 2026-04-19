@@ -68,7 +68,7 @@
 <div id="login-screen">🛡️<h2 style="color:white; margin: 20px 0; font-weight:900;">BÚNKER SCADA</h2><button onclick="loginWithGoogle()" style="padding:15px 30px; border-radius:30px; font-weight:bold;">AUTENTICAR</button></div>
 
 <div class="app-container" id="reportZone">
-    <div class="top-bar"><div class="brand">SCADA V31.9.5</div><div id="user-display" class="user-tag" style="color:var(--accent-blue); background:rgba(31, 111, 235, 0.1);">BYRON</div></div>
+    <div class="top-bar"><div class="brand">SCADA MÓVIL V6</div><div id="user-display" class="user-tag" style="color:var(--accent-blue); background:rgba(31, 111, 235, 0.1);">BYRON</div></div>
 
     <div id="tab-dash">
         <div class="master-hud"><div class="hud-value">$<span id="txtSaldo">0</span></div></div>
@@ -131,9 +131,9 @@
 
     <div id="tab-settings">
         <h3 style="font-weight:900;">SISTEMA</h3>
-        <div class="mobile-card" style="display:block; background:var(--bg-card) !important;"><label style="font-size:0.75rem; font-weight:800; color:var(--text-dim); margin-bottom:10px; display:block;">Sueldo Base Operativo</label><input type="text" id="inputSueldo" style="font-size: 1.5rem; font-weight: 900; color: var(--accent-green); background:transparent; border:none; width:100%; outline:none; border-bottom:1px solid var(--border-subtle); border-radius:0; padding-bottom:5px;" onchange="guardarSueldoEnNube()"></div>
-        <div class="mobile-card" style="display:block; margin-top:15px; background:var(--bg-card) !important;"><label style="font-size:0.75rem; font-weight:800; color:var(--text-dim); margin-bottom:10px; display:block;">Navegador de Tiempo</label>
-            <div style="display:flex; gap:10px;"><select id="navMesConceptual" onchange="aplicarCicloAlSistema()"><option value="0">Enero</option><option value="1">Febrero</option><option value="2">Marzo</option><option value="3" selected>Abril</option><option value="4">Mayo</option></select><select id="navAnio" onchange="aplicarCicloAlSistema()"><option value="2025">2025</option><option value="2026" selected>2026</option></select></div>
+        <div class="mobile-card" style="display:block; background:var(--bg-card) !important; padding:15px !important;"><label style="font-size:0.75rem; font-weight:800; color:var(--text-dim); margin-bottom:10px; display:block;">Sueldo Base Operativo</label><input type="text" id="inputSueldo" style="font-size: 1.5rem; font-weight: 900; color: var(--accent-green); background:transparent; border:none; width:100%; outline:none; border-bottom:1px solid var(--border-subtle); border-radius:0; padding-bottom:5px;" onchange="guardarSueldoEnNube()"></div>
+        <div class="mobile-card" style="display:block; margin-top:15px; background:var(--bg-card) !important; padding:15px !important;"><label style="font-size:0.75rem; font-weight:800; color:var(--text-dim); margin-bottom:10px; display:block;">Navegador de Tiempo</label>
+            <div style="display:flex; gap:10px;"><select id="navMesConceptual" onchange="aplicarCicloAlSistema()"><option value="0">Enero</option><option value="1">Febrero</option><option value="2">Marzo</option><option value="3" selected>Abril</option><option value="4">Mayo</option><option value="5">Junio</option><option value="6">Julio</option><option value="7">Agosto</option><option value="8">Septiembre</option><option value="9">Octubre</option><option value="10">Noviembre</option><option value="11">Diciembre</option></select><select id="navAnio" onchange="aplicarCicloAlSistema()"><option value="2025">2025</option><option value="2026" selected>2026</option></select></div>
         </div>
         <button class="sheet-btn" style="background:rgba(255, 82, 82, 0.1); color:var(--accent-red); margin-top:20px;" onclick="logout()">CERRAR SESIÓN</button>
     </div>
@@ -176,5 +176,6 @@
     function openBottomSheet(id, n, m) { document.getElementById('sheet-title').innerText = n; document.getElementById('sheet-subtitle').innerText = "$" + m.toLocaleString('es-CL'); document.getElementById('sheet-id-target').value = id; const overlay = document.getElementById('bottom-sheet-overlay'); const sheet = document.getElementById('bottom-sheet'); overlay.style.display = 'block'; setTimeout(() => { overlay.style.opacity = '1'; sheet.style.bottom = '0'; }, 10); }
     function closeBottomSheet() { const overlay = document.getElementById('bottom-sheet-overlay'); document.getElementById('bottom-sheet').style.bottom = '-100%'; overlay.style.opacity = '0'; setTimeout(()=> overlay.style.display = 'none', 300); }
 </script>
+<script src="motor.js"></script>
 </body>
 </html>
