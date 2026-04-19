@@ -1,5 +1,5 @@
 // ==========================================================
-// 🧠 BÚNKER SCADA - MOTOR LÓGICO V7.0 (BROCHE DE ORO)
+// 🧠 BÚNKER SCADA - MOTOR LÓGICO V7.5.1 (HOTFIX FINAL ERGONOMÍA)
 // ==========================================================
 const BYRON_EMAIL = "bvhcc94@gmail.com"; 
 const CREDIT_SETPOINT = -300000; 
@@ -366,7 +366,7 @@ function updateMassActions() { const bar = document.getElementById('massActionsB
 function massDelete() { const ids = Array.from(document.querySelectorAll('.row-check:not(#checkAll):checked')).map(cb => cb.value); if(ids.length === 0 || !confirm(`⚠️ ¿Eliminar ${ids.length} registro(s)?`)) return; const btn = document.querySelector('button[onclick="massDelete()"]'); const orig = btn.innerHTML; btn.innerHTML = '⏳'; Promise.all(ids.map(id => db.collection("movimientos").doc(id).delete())).then(() => { document.getElementById('massActionsBar').style.display = 'none'; document.getElementById('checkAll').checked = false; btn.innerHTML = orig; }); }
 function massCategorize() { const ids = Array.from(document.querySelectorAll('.row-check:not(#checkAll):checked')).map(cb => cb.value); const cat = document.getElementById('massCategorySelect').value; if(ids.length === 0 || !cat || !confirm(`¿Categorizar como "${cat}"?`)) return; const btn = document.querySelector('button[onclick="massCategorize()"]'); const orig = btn.innerHTML; btn.innerHTML = '⏳'; Promise.all(ids.map(id => db.collection("movimientos").doc(id).update({categoria: cat}))).then(() => { document.getElementById('massActionsBar').style.display = 'none'; document.getElementById('checkAll').checked = false; document.getElementById('massCategorySelect').value = ''; btn.innerHTML = orig; }); }
 
-// 🟢 FUNCIÓN DE DIBUJADO DE 4 GRÁFICOS (FASE 3 + OUTLIERS CORREGIDO) 🟢
+// 🟢 FUNCIÓN DE DIBUJADO DE 4 GRÁFICOS (V7.5) 🟢
 function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0) {
     if(chartBD) chartBD.destroy(); if(chartP) chartP.destroy(); 
     if(chartDiario) chartDiario.destroy(); if(chartRadar) chartRadar.destroy();
@@ -392,6 +392,8 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0) {
     });
 
     let actual = [sueldo], ideal = [sueldo], labelsX = ["INI"], colorLabelsX = [cT], colorGridX = [cG]; 
+    let labelsReales = ["INI"]; // 🟢 FECHAS REALES PARA EL EJE X DEL GRÁFICO DIARIO 🟢
+    
     let acc = sueldo, limit = Math.floor((Date.now() - msT0) / 86400000) + 1;
     const nombresMes = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"];
 
@@ -399,12 +401,15 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0) {
         ideal.push(sueldo - (sueldo/diasCiclo)*i); 
         acc += daily[i]; 
         actual.push(i > limit ? null : acc);
-        let f = new Date(msT0 + (i-1)*86400000); let dia = String(f.getDate()).padStart(2, '0');
+        let f = new Date(msT0 + (i-1)*86400000); 
+        let dia = String(f.getDate()).padStart(2, '0');
+        labelsReales.push(`${dia} ${nombresMes[f.getMonth()]}`); // "16 ABR"
+        
         if (f.getDate() === 1) { labelsX.push(`${dia} ${nombresMes[f.getMonth()]}`); colorLabelsX.push('#ff9800'); colorGridX.push('#ff9800'); } 
         else { labelsX.push(dia); colorLabelsX.push(cT); colorGridX.push(cG); }
     }
 
-    bdDataMaster = { labels: [...labelsX], actual: [...actual], ideal: [...ideal], daily: [...daily], dailyGastosVar: [...dailyGastosVar], colorsX: [...colorLabelsX], colorsG: [...colorGridX] };
+    bdDataMaster = { labels: [...labelsX], labelsReales: [...labelsReales], actual: [...actual], ideal: [...ideal], daily: [...daily], dailyGastosVar: [...dailyGastosVar], colorsX: [...colorLabelsX], colorsG: [...colorGridX] };
 
     // 1. BURN-DOWN
     chartBD = new Chart(document.getElementById('chartBurnDown'), {
@@ -419,7 +424,6 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0) {
                 x:{ticks:{color: colorLabelsX, maxRotation: 45, minRotation: 45, font: (c) => ({ weight: colorLabelsX[c.index] === '#ff9800' ? '900' : 'bold', size: 10 }) }, grid:{color: colorGridX, drawBorder:false, lineWidth: (c) => colorGridX[c.index] === '#ff9800' ? 2 : 1 } }, 
                 y:{ max: sueldo, ticks:{color:cT, callback:v=>'$'+Math.round(v/1000)+'k'}, grid:{color: c => c.tick.value === 0 ? cF : cG} } 
             },
-            // 🟢 ERGONOMÍA: Quitamos el padding inferior del gráfico para que ocupe todo el espacio 🟢
             layout: { padding: { bottom: 0 } }
         }
     });
@@ -439,20 +443,20 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0) {
         options: { maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{ x:{ticks:{color:cT, font:{size:9}}}, y:{ type: 'linear', position: 'left', ticks:{color:cT, callback:v=>'$'+Math.round(v/1000)+'k'} }, y1:{ type: 'linear', position: 'right', min: 0, max: 100, grid: { drawOnChartArea: false }, ticks:{color:'#ff9800', callback:v=>Math.round(v)+'%', font:{weight:'bold'}} } } }
     });
 
-    // 3. PULSO DIARIO VARIABLE (Con corrección de Outliers - Muestra solo últimos 7 días con actividad)
+    // 3. PULSO DIARIO VARIABLE (ERGONOMÍA: MUESTRA SOLO FECHAS CON ACTIVIDAD RECIENTE)
     const ctxDiario = document.getElementById('chartDiario');
     if(ctxDiario) {
         let lastDayWithData = diasCiclo;
         while(lastDayWithData > 0 && dailyGastosVar[lastDayWithData] === 0) lastDayWithData--;
-        let startDayForBars = Math.max(1, lastDayWithData - 6); // 7 días hacia atrás
+        let startDayForBars = Math.max(1, lastDayWithData - 6); // Forzamos 7 días de visión
         
-        let barLabels = labelsX.slice(startDayForBars, lastDayWithData + 1);
+        let barLabels = labelsReales.slice(startDayForBars, lastDayWithData + 1); // Usamos las etiquetas reales (Ej: 16 ABR)
         let barData = dailyGastosVar.slice(startDayForBars, lastDayWithData + 1);
 
         chartDiario = new Chart(ctxDiario, {
             type: 'bar',
             data: { labels: barLabels, datasets: [{ label: 'Gasto Físico', data: barData, backgroundColor: '#da3633', borderRadius: 4 }] },
-            options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: colorLabelsX.slice(startDayForBars, lastDayWithData + 1), font:{size:9} }, grid: { display:false } }, y: { ticks: { color: cT, callback: v => '$' + Math.round(v / 1000) + 'k' }, grid: { color: cG } } } }
+            options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: cT, font:{size:9} }, grid: { display:false } }, y: { ticks: { color: cT, callback: v => '$' + Math.round(v / 1000) + 'k' }, grid: { color: cG } } } }
         });
     }
 
@@ -476,58 +480,9 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0) {
     }
 }
 
-function calcularFechasCiclo(mesConceptual, anio) {
-    let mesInicio = mesConceptual - 1; let anioInicio = anio; if (mesInicio < 0) { mesInicio = 11; anioInicio--; }
-    let T0 = new Date(anioInicio, mesInicio, 30); if (T0.getMonth() !== mesInicio) T0 = new Date(anioInicio, mesInicio + 1, 0); 
-    let TFinal = new Date(anio, mesConceptual, 30); if (TFinal.getMonth() !== mesConceptual) TFinal = new Date(anio, mesConceptual + 1, 0);
-    return { T0, TFinal, fechaFinVisual: new Date(TFinal.getTime() - 86400000) };
-}
-
-function cambiarCicloManual() { document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('preset-active')); aplicarCicloAlSistema(); }
-function setCicloPreset(tipo) {
-    document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('preset-active'));
-    const m = new Date().getMonth(); let tM = m; let tA = new Date().getFullYear();
-    if (new Date().getDate() >= 30) { tM = (m + 1) % 12; if (tM === 0) tA++; }
-    if (tipo === 'anterior') { const btn = document.getElementById('btnPresetAnterior'); if(btn) btn.classList.add('preset-active'); tM = tM - 1; if (tM < 0) { tM = 11; tA--; } } 
-    else if (tipo === 'actual') { const btn = document.getElementById('btnPresetActual'); if(btn) btn.classList.add('preset-active'); }
-    const navMes = document.getElementById('navMesConceptual'); const navAnio = document.getElementById('navAnio');
-    if(navMes) navMes.value = tM; if(navAnio) navAnio.value = tA;
-    aplicarCicloAlSistema();
-}
-
-function aplicarCicloAlSistema() {
-    const navMes = document.getElementById('navMesConceptual');
-    const navAnio = document.getElementById('navAnio');
-    if(!navMes || !navAnio) return;
-    const { T0, fechaFinVisual } = calcularFechasCiclo(parseInt(navMes.value), parseInt(navAnio.value));
-    const badge = document.getElementById('navRangoBadge');
-    if(badge) badge.innerText = `PERIODO: ${T0.toLocaleDateString('es-CL', {day:'2-digit', month:'short'}).toUpperCase()} - ${fechaFinVisual.toLocaleDateString('es-CL', {day:'2-digit', month:'short'}).toUpperCase()}`;
-    cargarSueldoVisual(); actualizarDashboard();
-}
-
-let draggedRowId = null;
-function dragStart(e, id) { draggedRowId = id; e.dataTransfer.effectAllowed = 'move'; setTimeout(() => e.target.style.opacity = '0.4', 0); }
-function dragOver(e) { e.preventDefault(); e.target.closest('tr').style.borderTop = '3px solid var(--color-ingresos)'; }
-function dragLeave(e) { e.target.closest('tr').style.borderTop = ''; }
-function dropRow(e, targetId) {
-    e.preventDefault(); e.target.closest('tr').style.borderTop = '';
-    if (!draggedRowId || draggedRowId === targetId) return;
-    if (currentSort.column !== 'fechaISO') return alert("⚠️ ALARMA: Para recalibrar el tiempo, la tabla debe estar ordenada por Fecha.");
-    let vistaActual = [...datosMesGlobal].sort((a, b) => { if (a.fechaISO < b.fechaISO) return currentSort.direction === 'asc' ? -1 : 1; if (a.fechaISO > b.fechaISO) return currentSort.direction === 'asc' ? 1 : -1; return 0; });
-    let draggedIdx = vistaActual.findIndex(x => x.firestoreId === draggedRowId);
-    let targetIdx = vistaActual.findIndex(x => x.firestoreId === targetId);
-    let t1_idx = targetIdx > draggedIdx ? targetIdx : targetIdx - 1;
-    let t2_idx = targetIdx > draggedIdx ? targetIdx + 1 : targetIdx;
-    let t1_ms = t1_idx >= 0 ? new Date(vistaActual[t1_idx].fechaISO).getTime() : null;
-    let t2_ms = t2_idx < vistaActual.length ? new Date(vistaActual[t2_idx].fechaISO).getTime() : null;
-    let newTimeMs; let dir = currentSort.direction;
-    if (t1_ms && t2_ms) newTimeMs = t1_ms + (t2_ms - t1_ms) / 2;
-    else if (!t1_ms) newTimeMs = t2_ms + (dir === 'desc' ? 60000 : -60000); 
-    else if (!t2_ms) newTimeMs = t1_ms + (dir === 'desc' ? -60000 : 60000);
-    if(confirm("⚙️ ¿Inyectar nuevo Timestamp para forzar cuadratura?")) { db.collection("movimientos").doc(draggedRowId).update({ fecha: new Date(newTimeMs) }); }
-    draggedRowId = null;
-}
-document.addEventListener('dragend', (e) => { if(e.target.tagName === 'TR') e.target.style.opacity = '1'; });
+// =====================================================================
+// MANEJADORES GLOBALES (NUBE Y ZOOM)
+// =====================================================================
 
 window.hacerZoomGrafico = function(diaIn, diaFin) {
     if(!chartBD || !bdDataMaster) return;
@@ -563,7 +518,6 @@ window.hacerZoomGrafico = function(diaIn, diaFin) {
     let domProm = document.getElementById('txtPromedioZoom'); if(domProm) domProm.innerText = '$' + promDiario.toLocaleString('es-CL');
 };
 
-// 🟢 RUTINAS GLOBALES DE NUBE (TELEGRAM & SYNC) 🟢
 window.triggerSync = function() {
     const btn = document.querySelector('button[onclick="triggerSync()"]') || document.querySelector('.btn-sys');
     const origText = btn ? btn.innerText : '';
