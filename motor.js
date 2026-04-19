@@ -1,5 +1,5 @@
 // ==========================================================
-// 🧠 BÚNKER SCADA - MOTOR LÓGICO V7.5.1
+// 🧠 BÚNKER SCADA - MOTOR LÓGICO V7.6 (HOTFIX FINAL ERGONOMÍA)
 // ==========================================================
 const BYRON_EMAIL = "bvhcc94@gmail.com"; 
 const CREDIT_SETPOINT = -300000; 
@@ -366,7 +366,7 @@ function updateMassActions() { const bar = document.getElementById('massActionsB
 function massDelete() { const ids = Array.from(document.querySelectorAll('.row-check:not(#checkAll):checked')).map(cb => cb.value); if(ids.length === 0 || !confirm(`⚠️ ¿Eliminar ${ids.length} registro(s)?`)) return; const btn = document.querySelector('button[onclick="massDelete()"]'); const orig = btn.innerHTML; btn.innerHTML = '⏳'; Promise.all(ids.map(id => db.collection("movimientos").doc(id).delete())).then(() => { document.getElementById('massActionsBar').style.display = 'none'; document.getElementById('checkAll').checked = false; btn.innerHTML = orig; }); }
 function massCategorize() { const ids = Array.from(document.querySelectorAll('.row-check:not(#checkAll):checked')).map(cb => cb.value); const cat = document.getElementById('massCategorySelect').value; if(ids.length === 0 || !cat || !confirm(`¿Categorizar como "${cat}"?`)) return; const btn = document.querySelector('button[onclick="massCategorize()"]'); const orig = btn.innerHTML; btn.innerHTML = '⏳'; Promise.all(ids.map(id => db.collection("movimientos").doc(id).update({categoria: cat}))).then(() => { document.getElementById('massActionsBar').style.display = 'none'; document.getElementById('checkAll').checked = false; document.getElementById('massCategorySelect').value = ''; btn.innerHTML = orig; }); }
 
-// 🟢 FUNCIÓN DE DIBUJADO DE 4 GRÁFICOS (V7.5.1) 🟢
+// 🟢 FUNCIÓN DE DIBUJADO DE 4 GRÁFICOS (V7.6) 🟢
 function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0) {
     if(chartBD) chartBD.destroy(); if(chartP) chartP.destroy(); 
     if(chartDiario) chartDiario.destroy(); if(chartRadar) chartRadar.destroy();
@@ -392,7 +392,7 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0) {
     });
 
     let actual = [sueldo], ideal = [sueldo], labelsX = ["INI"], colorLabelsX = [cT], colorGridX = [cG]; 
-    let labelsReales = ["INI"]; 
+    let labelsFechas = ["INI"]; 
     
     let acc = sueldo, limit = Math.floor((Date.now() - msT0) / 86400000) + 1;
     const nombresMes = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"];
@@ -403,15 +403,17 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0) {
         actual.push(i > limit ? null : acc);
         let f = new Date(msT0 + (i-1)*86400000); 
         let dia = String(f.getDate()).padStart(2, '0');
-        labelsReales.push(`${dia} ${nombresMes[f.getMonth()]}`); 
+        let mesStr = nombresMes[f.getMonth()];
         
-        if (f.getDate() === 1) { labelsX.push(`${dia} ${nombresMes[f.getMonth()]}`); colorLabelsX.push('#ff9800'); colorGridX.push('#ff9800'); } 
+        labelsFechas.push(`${dia} ${mesStr}`); 
+        
+        if (f.getDate() === 1) { labelsX.push(`${dia} ${mesStr}`); colorLabelsX.push('#ff9800'); colorGridX.push('#ff9800'); } 
         else { labelsX.push(dia); colorLabelsX.push(cT); colorGridX.push(cG); }
     }
 
-    bdDataMaster = { labels: [...labelsX], labelsReales: [...labelsReales], actual: [...actual], ideal: [...ideal], daily: [...daily], dailyGastosVar: [...dailyGastosVar], colorsX: [...colorLabelsX], colorsG: [...colorGridX] };
+    bdDataMaster = { labels: [...labelsX], labelsFechas: [...labelsFechas], actual: [...actual], ideal: [...ideal], daily: [...daily], dailyGastosVar: [...dailyGastosVar], colorsX: [...colorLabelsX], colorsG: [...colorGridX] };
 
-    // 1. BURN-DOWN
+    // 1. BURN-DOWN (SIN PADDING PARA OVERLAY)
     chartBD = new Chart(document.getElementById('chartBurnDown'), {
         type: 'line', 
         data: { labels: labelsX, datasets: [
@@ -424,7 +426,7 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0) {
                 x:{ticks:{color: colorLabelsX, maxRotation: 45, minRotation: 45, font: (c) => ({ weight: colorLabelsX[c.index] === '#ff9800' ? '900' : 'bold', size: 10 }) }, grid:{color: colorGridX, drawBorder:false, lineWidth: (c) => colorGridX[c.index] === '#ff9800' ? 2 : 1 } }, 
                 y:{ max: sueldo, ticks:{color:cT, callback:v=>'$'+Math.round(v/1000)+'k'}, grid:{color: c => c.tick.value === 0 ? cF : cG} } 
             },
-            layout: { padding: { bottom: 0 } }
+            layout: { padding: { bottom: 0, top: 0 } }
         }
     });
 
@@ -443,14 +445,14 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0) {
         options: { maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{ x:{ticks:{color:cT, font:{size:9}}}, y:{ type: 'linear', position: 'left', ticks:{color:cT, callback:v=>'$'+Math.round(v/1000)+'k'} }, y1:{ type: 'linear', position: 'right', min: 0, max: 100, grid: { drawOnChartArea: false }, ticks:{color:'#ff9800', callback:v=>Math.round(v)+'%', font:{weight:'bold'}} } } }
     });
 
-    // 3. PULSO DIARIO VARIABLE (ERGONOMÍA: MUESTRA SOLO FECHAS CON ACTIVIDAD RECIENTE)
+    // 3. PULSO DIARIO VARIABLE (ERGONOMÍA: EJE X MUESTRA FECHAS REALES, MAX 7 DÍAS)
     const ctxDiario = document.getElementById('chartDiario');
     if(ctxDiario) {
         let lastDayWithData = diasCiclo;
         while(lastDayWithData > 0 && dailyGastosVar[lastDayWithData] === 0) lastDayWithData--;
         let startDayForBars = Math.max(1, lastDayWithData - 6); 
         
-        let barLabels = labelsReales.slice(startDayForBars, lastDayWithData + 1); 
+        let barLabels = labelsFechas.slice(startDayForBars, lastDayWithData + 1); 
         let barData = dailyGastosVar.slice(startDayForBars, lastDayWithData + 1);
 
         chartDiario = new Chart(ctxDiario, {
