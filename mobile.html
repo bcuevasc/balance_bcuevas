@@ -25,7 +25,6 @@
         .slave-kpis { display: flex; gap: 15px; padding: 0 20px; margin-bottom: 25px; }
         .slave-pill { flex: 1; background: var(--bg-card); border: 1px solid var(--border-subtle); padding: 15px; border-radius: 20px; display: flex; flex-direction: column; align-items: center; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
 
-        /* PANTALLA INFINITA & TIME-BOXING */
         #listaMovilDetalle { padding: 0 10px; display: flex; flex-direction: column; gap: 4px; margin-top: -10px; }
         .mobile-card { 
             background: transparent !important; border: none !important; border-radius: 16px !important; 
@@ -35,7 +34,6 @@
         .mobile-card:active { transform: scale(0.98); background: rgba(255,255,255,0.03) !important; }
         .date-header { padding-left: 5px; font-size: 0.65rem; font-weight: 900; color: var(--text-dim); text-transform: uppercase; margin: 15px 0 5px 5px; letter-spacing: 1px; }
 
-        /* TABS (VITAL PARA NO MONTAR VISTAS) */
         .tab-content { display: none; padding: 20px; animation: fadeIn 0.2s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         
@@ -64,7 +62,7 @@
 <div id="login-screen">🛡️<h2 style="color:white; margin: 20px 0; font-weight:900;">BÚNKER SCADA</h2><button onclick="loginWithGoogle()" style="padding:15px 30px; border-radius:30px; font-weight:bold;">AUTENTICAR</button></div>
 
 <div class="app-container" id="reportZone">
-    <div class="top-bar"><div class="brand">SCADA MÓVIL V6</div><div id="user-display" class="user-tag" style="color:var(--accent-blue); background:rgba(31, 111, 235, 0.1);">BYRON</div></div>
+    <div class="top-bar"><div class="brand">SCADA MÓVIL V7.0</div><div id="user-display" class="user-tag" style="color:var(--accent-blue); background:rgba(31, 111, 235, 0.1);">BYRON</div></div>
 
     <div id="tab-dash" class="tab-content" style="display:block;">
         <div class="master-hud"><div class="hud-value">$<span id="txtSaldo">0</span></div></div>
@@ -79,12 +77,14 @@
         <h3 style="margin-top:0; font-weight:900;">TELEMETRÍA</h3>
         <div id="navRangoBadge" style="font-size:0.75rem; color:var(--text-dim); margin-bottom:15px; font-weight:bold; text-transform:uppercase;"></div>
         
-        <div style="display:flex; background: rgba(255,255,255,0.05); border-radius: 10px; padding: 4px; margin-bottom: 15px; border: 1px solid var(--border-subtle);">
-            <button id="btnToggleBD" onclick="document.getElementById('viewBurnDown').style.display='block'; document.getElementById('viewPareto').style.display='none'; this.style.background='var(--accent-blue)'; this.style.color='#fff'; document.getElementById('btnToggleP').style.background='transparent'; document.getElementById('btnToggleP').style.color='var(--text-dim)';" style="flex:1; padding: 10px; border-radius: 8px; border:none; background: var(--accent-blue); color: #fff; font-weight: 900; font-size: 0.75rem; transition: 0.2s;">📉 BURN-DOWN</button>
-            <button id="btnToggleP" onclick="document.getElementById('viewPareto').style.display='block'; document.getElementById('viewBurnDown').style.display='none'; this.style.background='#ff9800'; this.style.color='#fff'; document.getElementById('btnToggleBD').style.background='transparent'; document.getElementById('btnToggleBD').style.color='var(--text-dim)';" style="flex:1; padding: 10px; border-radius: 8px; border:none; background: transparent; color: var(--text-dim); font-weight: 900; font-size: 0.75rem; transition: 0.2s;">📊 PARETO</button>
-        </div>
+        <select style="margin-bottom: 15px; font-weight:bold; color:var(--accent-blue);" onchange="document.querySelectorAll('.v-chart').forEach(v=>v.style.display='none'); document.getElementById(this.value).style.display='block';">
+            <option value="vBD">📉 VELOCIDAD (BURN-DOWN)</option>
+            <option value="vDI">📊 PULSO VARIABLE (7 DÍAS)</option>
+            <option value="vPA">📈 PARETO (TOP FUGAS)</option>
+            <option value="vRA">💠 PERFIL DE GASTO (RADAR)</option>
+        </select>
         
-        <div id="viewBurnDown" style="display:block; padding:15px; background:var(--bg-card); border-radius: 16px; border:1px solid var(--border-subtle);">
+        <div id="vBD" class="v-chart" style="display:block; padding:15px; background:var(--bg-card); border-radius: 16px; border:1px solid var(--border-subtle);">
             <div style="height:220px;"><canvas id="chartBurnDown"></canvas></div>
             <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border-subtle);">
                 <div style="display:flex; justify-content: space-between; font-size:0.6rem; color:var(--text-muted); font-weight:bold; margin-bottom: 5px;">
@@ -94,7 +94,6 @@
                     <input type="range" id="sliderIn" min="0" max="30" value="0" style="width: 100%; margin-bottom:0;" oninput="document.getElementById('valSliderIn').innerText=this.value; hacerZoomGrafico(this.value, document.getElementById('sliderFin').value)">
                     <input type="range" id="sliderFin" min="0" max="30" value="30" style="width: 100%; margin-bottom:0;" oninput="document.getElementById('valSliderFin').innerText=this.value; hacerZoomGrafico(document.getElementById('sliderIn').value, this.value)">
                 </div>
-                
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px;">
                     <div style="background: rgba(255,255,255,0.02); padding: 10px; border-radius: 8px; text-align: center; border: 1px solid var(--border-subtle);">
                         <div style="font-size: 0.6rem; color: var(--text-dim); font-weight: 800; text-transform: uppercase;">Gasto Tramo</div>
@@ -108,11 +107,20 @@
             </div>
         </div>
 
-        <div id="viewPareto" style="display:none; padding:15px; background:var(--bg-card); border-radius: 16px; border:1px solid var(--border-subtle);">
-            <label style="font-size:0.7rem; font-weight:800; color:var(--text-dim); display:block; text-align:center; margin-bottom:10px;">TOP CATEGORÍAS (V30)</label>
+        <div id="vDI" class="v-chart" style="display:none; padding:15px; background:var(--bg-card); border-radius: 16px; border:1px solid var(--border-subtle);">
+            <div style="height:280px;"><canvas id="chartDiario"></canvas></div>
+        </div>
+
+        <div id="vPA" class="v-chart" style="display:none; padding:15px; background:var(--bg-card); border-radius: 16px; border:1px solid var(--border-subtle);">
             <div style="height:280px;"><canvas id="chartPareto"></canvas></div>
         </div>
-    </div> <div id="tab-add" class="tab-content">
+
+        <div id="vRA" class="v-chart" style="display:none; padding:15px; background:var(--bg-card); border-radius: 16px; border:1px solid var(--border-subtle);">
+            <div style="height:280px;"><canvas id="chartRadar"></canvas></div>
+        </div>
+    </div>
+
+    <div id="tab-add" class="tab-content">
         <input type="hidden" id="editId">
         <div class="huge-input-wrapper"><label>Monto</label><input type="text" id="inputMonto" class="monto-gigante" inputmode="numeric" placeholder="$ 0" oninput="formatearEntradaNumerica(this)"></div>
         <div class="form-group"><label>Descripción</label><input type="text" id="inputNombre" placeholder="¿En qué gastaste?"></div>
@@ -171,15 +179,13 @@
 
 <script>
     function switchTabApp(tabId, element) {
-        // Garantizamos que TODAS las pestañas se oculten primero
         document.querySelectorAll('.tab-content').forEach(d => { d.style.display = 'none'; });
-        // Mostramos SOLO la que corresponde
         document.getElementById('tab-' + tabId).style.display = 'block';
         
         document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
         if(element) element.classList.add('active');
         
-        if(tabId === 'trend') { setTimeout(() => { if(chartBD) chartBD.resize(); if(chartP) chartP.resize(); }, 10); }
+        if(tabId === 'trend') { setTimeout(() => { if(chartBD) chartBD.resize(); if(chartDiario) chartDiario.resize(); if(chartP) chartP.resize(); if(chartRadar) chartRadar.resize(); }, 10); }
         if (tabId === 'add' && !document.getElementById('editId').value) {
             let now = new Date(); now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
             document.getElementById('inputFecha').value = now.toISOString().slice(0,16);
