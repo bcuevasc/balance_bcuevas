@@ -1,5 +1,5 @@
 // ==========================================================
-// 🧠 BÚNKER SCADA - MOTOR LÓGICO V8.0 (ESTABLE & PARCHEADO)
+// 🧠 BÚNKER SCADA - MOTOR LÓGICO V8.1 (FASE 1: CEREBRO)
 // ==========================================================
 const BYRON_EMAIL = "bvhcc94@gmail.com"; 
 const CREDIT_SETPOINT = -300000; 
@@ -32,7 +32,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const selectManual = document.getElementById('inputCategoria');
     if (selectManual) {
         selectManual.innerHTML = optionsHTML;
-        // AUTO-FUGA AL 100% SI ES DOPAMINA
         selectManual.addEventListener('change', (e) => {
             const fEl = document.getElementById('inputFuga');
             if(fEl) fEl.value = (e.target.value === "Dopamina & Antojos") ? "100" : "0";
@@ -61,11 +60,26 @@ firebase.initializeApp({
 });
 
 const db = firebase.firestore(), auth = firebase.auth();
+
 let listaMovimientos = [], datosMesGlobal = []; 
 let chartBD = null, chartP = null, chartDiario = null, chartRadar = null;
 let currentSort = { column: 'fechaISO', direction: 'desc' }; 
 let modoEdicionActivo = false, sueldosHistoricos = {}; 
 const SUELDO_BASE_DEFAULT = 3602505;
+
+// 🟢 SISTEMA DE TOAST (NOTIFICACIÓN FLOTANTE) 🟢
+window.mostrarToast = function(mensaje) {
+    let toast = document.getElementById('toast-notif');
+    if(!toast) {
+        toast = document.createElement('div');
+        toast.id = 'toast-notif';
+        toast.style.cssText = 'position:fixed; top:-100px; left:50%; transform:translateX(-50%); background:var(--color-saldo, #3fb950); color:#000; padding:12px 24px; border-radius:30px; font-weight:900; font-size:0.85rem; z-index:10000; transition:top 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow:0 10px 25px rgba(63,185,80,0.4); text-transform:uppercase; letter-spacing:0.5px; display:flex; align-items:center; gap:8px;';
+        document.body.appendChild(toast);
+    }
+    toast.innerHTML = '✅ ' + mensaje;
+    toast.style.top = 'max(20px, env(safe-area-inset-top))';
+    setTimeout(() => { toast.style.top = '-100px'; }, 3500);
+};
 
 function loginWithGoogle() { auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
 function logout() { auth.signOut().then(() => window.location.reload()); }
@@ -117,9 +131,8 @@ function actualizarDashboard() {
     const b = buscador ? buscador.value.toLowerCase() : '';
     const mesVal = parseInt(document.getElementById('navMesConceptual').value);
     const anioVal = parseInt(document.getElementById('navAnio').value);
-    let { T0, TFinal } = calcularFechasCiclo(mesVal, anioVal);
+    let { T0, TFinal, fechaFinVisual } = calcularFechasCiclo(mesVal, anioVal);
     
-    // FILTROS DE FECHA (Sin fallos de Zona Horaria)
     const fDesde = document.getElementById('filtroDesde') ? document.getElementById('filtroDesde').value : '';
     const fHasta = document.getElementById('filtroHasta') ? document.getElementById('filtroHasta').value : '';
     if(fDesde) { let [y,m,d] = fDesde.split('-'); T0 = new Date(y, m-1, d); }
@@ -144,7 +157,6 @@ function actualizarDashboard() {
             if (x.tipo === 'Gasto Fijo') tF += x.monto; else tO += x.monto;
             gCat[x.catV] = (gCat[x.catV] || 0) + x.monto;
             
-            // CÁLCULO DE % FUGA
             let pctFuga = x.innecesarioPct !== undefined ? x.innecesarioPct : (catEvitables.includes(x.catV) ? 100 : 0);
             tEvitable += (x.monto * (pctFuga / 100));
         }
@@ -168,7 +180,6 @@ function actualizarDashboard() {
     const badgeDias = document.getElementById('badgeDias');
     if(badgeDias) badgeDias.innerText = `${Math.max(diasCiclo - diasT, 0)}`;
     
-    // PROYECCIÓN SIN GASTOS FIJOS
     let proyC = saldoAcc - ((tO / Math.max(diasT, 1)) * Math.max(diasCiclo - diasT, 0));
     setTxt('txtProyeccionCierre', Math.round(proyC));
 
@@ -313,7 +324,7 @@ function editarMovimiento(id) {
     if(document.getElementById('inputCategoria')) document.getElementById('inputCategoria').value = mov.categoria || 'Sin Categoría';
     
     if(document.getElementById('inputFuga')) document.getElementById('inputFuga').value = mov.innecesarioPct !== undefined ? mov.innecesarioPct : "0";
-    
+
     let tipoC = mov.tipo || 'Gasto';
     if (mov.catV === 'Transferencia Recibida' || mov.catV === 'Ingreso Adicional') tipoC = 'Ingreso';
     if (mov.catV === 'Transferencia Propia / Ahorro') tipoC = 'Ahorro';
@@ -350,6 +361,10 @@ function agregarMovimiento() {
     op.then(() => {
         document.getElementById('editId').value = ''; document.getElementById('inputNombre').value = ''; document.getElementById('inputMonto').value = '';
         btn.innerHTML = "GUARDAR EN BÚNKER"; btn.style.backgroundColor = "var(--color-guardar)"; btn.disabled = false; modoEdicionActivo = false;
+        
+        // 🟢 LLAMADA A LA NOTIFICACIÓN TOAST 🟢
+        if (typeof mostrarToast === "function") mostrarToast("REGISTRO GUARDADO EN EL BÚNKER");
+        
         if (typeof switchTab === "function") switchTab('list');
     }).catch(err => { alert("❌ Error: " + err.message); btn.innerHTML = "ERROR"; btn.disabled = false; });
 }
@@ -406,6 +421,10 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0) {
 
     bdDataMaster = { labels: [...labelsX], labelsFechas: [...labelsFechas], actual: [...actual], ideal: [...ideal], daily: [...daily], dailyGastosVar: [...dailyGastosVar], colorsX: [...colorLabelsX], colorsG: [...colorGridX] };
 
+    // 🟢 EJE Y DINÁMICO PARA BURN-DOWN 🟢
+    let maxReal = Math.max(...actual.filter(v => v !== null));
+    let yMax = maxReal > sueldo ? Math.ceil(maxReal * 1.05) : sueldo;
+
     chartBD = new Chart(document.getElementById('chartBurnDown'), {
         type: 'line', 
         data: { labels: labelsX, datasets: [
@@ -416,7 +435,7 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0) {
             maintainAspectRatio:false, plugins:{legend:{display:false}}, 
             scales:{ 
                 x:{ticks:{color: colorLabelsX, maxRotation: 45, minRotation: 45, font: (c) => ({ weight: colorLabelsX[c.index] === '#ff9800' ? '900' : 'bold', size: 9 }) }, grid:{color: colorGridX, drawBorder:false, lineWidth: (c) => colorGridX[c.index] === '#ff9800' ? 2 : 1 } }, 
-                y:{ max: sueldo, ticks:{color:cT, callback:v=>'$'+Math.round(v/1000)+'k'}, grid:{color: c => c.tick.value === 0 ? cF : cG} } 
+                y:{ max: yMax, ticks:{color:cT, callback:v=>'$'+Math.round(v/1000)+'k'}, grid:{color: c => c.tick.value === 0 ? cF : cG} } 
             },
             layout: { padding: { bottom: 0, top: 0, left:0, right:0 } }
         }
@@ -434,7 +453,6 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0) {
         options: { maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{ x:{ticks:{color:cT, font:{size:9}}}, y:{ type: 'linear', position: 'left', ticks:{color:cT, callback:v=>'$'+Math.round(v/1000)+'k'} }, y1:{ type: 'linear', position: 'right', min: 0, max: 100, grid: { drawOnChartArea: false }, ticks:{color:'#ff9800', callback:v=>Math.round(v)+'%', font:{weight:'bold'}} } } }
     });
 
-    // PULSO DIARIO CON FECHAS 
     const ctxDiario = document.getElementById('chartDiario');
     if(ctxDiario) {
         let lastDayWithData = diasCiclo;
@@ -477,17 +495,23 @@ function calcularFechasCiclo(mesConceptual, anio) {
     return { T0, TFinal, fechaFinVisual: new Date(TFinal.getTime() - 86400000) };
 }
 
-function cambiarCicloManual() { document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('preset-active')); aplicarCicloAlSistema(); }
-function setCicloPreset(tipo) {
-    document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('preset-active'));
-    const m = new Date().getMonth(); let tM = m; let tA = new Date().getFullYear();
-    if (new Date().getDate() >= 30) { tM = (m + 1) % 12; if (tM === 0) tA++; }
-    if (tipo === 'anterior') { const btn = document.getElementById('btnPresetAnterior'); if(btn) btn.classList.add('preset-active'); tM = tM - 1; if (tM < 0) { tM = 11; tA--; } } 
-    else if (tipo === 'actual') { const btn = document.getElementById('btnPresetActual'); if(btn) btn.classList.add('preset-active'); }
-    const navMes = document.getElementById('navMesConceptual'); const navAnio = document.getElementById('navAnio');
-    if(navMes) navMes.value = tM; if(navAnio) navAnio.value = tA;
+// 🟢 NAVEGACIÓN RÁPIDA DE MESES 🟢
+window.navegarMes = function(direccion) {
+    const navMes = document.getElementById('navMesConceptual');
+    const navAnio = document.getElementById('navAnio');
+    if(!navMes || !navAnio) return;
+    
+    let m = parseInt(navMes.value);
+    let a = parseInt(navAnio.value);
+
+    m += direccion;
+    if(m > 11) { m = 0; a++; }
+    else if(m < 0) { m = 11; a--; }
+
+    navMes.value = m;
+    navAnio.value = a;
     aplicarCicloAlSistema();
-}
+};
 
 function aplicarCicloAlSistema() {
     const navMes = document.getElementById('navMesConceptual');
