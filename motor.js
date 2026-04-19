@@ -1,5 +1,5 @@
 // ==========================================================
-// 🧠 BÚNKER SCADA - MOTOR LÓGICO V7.5.1 (HOTFIX FINAL ERGONOMÍA)
+// 🧠 BÚNKER SCADA - MOTOR LÓGICO V7.5.1
 // ==========================================================
 const BYRON_EMAIL = "bvhcc94@gmail.com"; 
 const CREDIT_SETPOINT = -300000; 
@@ -366,7 +366,7 @@ function updateMassActions() { const bar = document.getElementById('massActionsB
 function massDelete() { const ids = Array.from(document.querySelectorAll('.row-check:not(#checkAll):checked')).map(cb => cb.value); if(ids.length === 0 || !confirm(`⚠️ ¿Eliminar ${ids.length} registro(s)?`)) return; const btn = document.querySelector('button[onclick="massDelete()"]'); const orig = btn.innerHTML; btn.innerHTML = '⏳'; Promise.all(ids.map(id => db.collection("movimientos").doc(id).delete())).then(() => { document.getElementById('massActionsBar').style.display = 'none'; document.getElementById('checkAll').checked = false; btn.innerHTML = orig; }); }
 function massCategorize() { const ids = Array.from(document.querySelectorAll('.row-check:not(#checkAll):checked')).map(cb => cb.value); const cat = document.getElementById('massCategorySelect').value; if(ids.length === 0 || !cat || !confirm(`¿Categorizar como "${cat}"?`)) return; const btn = document.querySelector('button[onclick="massCategorize()"]'); const orig = btn.innerHTML; btn.innerHTML = '⏳'; Promise.all(ids.map(id => db.collection("movimientos").doc(id).update({categoria: cat}))).then(() => { document.getElementById('massActionsBar').style.display = 'none'; document.getElementById('checkAll').checked = false; document.getElementById('massCategorySelect').value = ''; btn.innerHTML = orig; }); }
 
-// 🟢 FUNCIÓN DE DIBUJADO DE 4 GRÁFICOS (V7.5) 🟢
+// 🟢 FUNCIÓN DE DIBUJADO DE 4 GRÁFICOS (V7.5.1) 🟢
 function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0) {
     if(chartBD) chartBD.destroy(); if(chartP) chartP.destroy(); 
     if(chartDiario) chartDiario.destroy(); if(chartRadar) chartRadar.destroy();
@@ -392,7 +392,7 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0) {
     });
 
     let actual = [sueldo], ideal = [sueldo], labelsX = ["INI"], colorLabelsX = [cT], colorGridX = [cG]; 
-    let labelsReales = ["INI"]; // 🟢 FECHAS REALES PARA EL EJE X DEL GRÁFICO DIARIO 🟢
+    let labelsReales = ["INI"]; 
     
     let acc = sueldo, limit = Math.floor((Date.now() - msT0) / 86400000) + 1;
     const nombresMes = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"];
@@ -403,7 +403,7 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0) {
         actual.push(i > limit ? null : acc);
         let f = new Date(msT0 + (i-1)*86400000); 
         let dia = String(f.getDate()).padStart(2, '0');
-        labelsReales.push(`${dia} ${nombresMes[f.getMonth()]}`); // "16 ABR"
+        labelsReales.push(`${dia} ${nombresMes[f.getMonth()]}`); 
         
         if (f.getDate() === 1) { labelsX.push(`${dia} ${nombresMes[f.getMonth()]}`); colorLabelsX.push('#ff9800'); colorGridX.push('#ff9800'); } 
         else { labelsX.push(dia); colorLabelsX.push(cT); colorGridX.push(cG); }
@@ -448,9 +448,9 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0) {
     if(ctxDiario) {
         let lastDayWithData = diasCiclo;
         while(lastDayWithData > 0 && dailyGastosVar[lastDayWithData] === 0) lastDayWithData--;
-        let startDayForBars = Math.max(1, lastDayWithData - 6); // Forzamos 7 días de visión
+        let startDayForBars = Math.max(1, lastDayWithData - 6); 
         
-        let barLabels = labelsReales.slice(startDayForBars, lastDayWithData + 1); // Usamos las etiquetas reales (Ej: 16 ABR)
+        let barLabels = labelsReales.slice(startDayForBars, lastDayWithData + 1); 
         let barData = dailyGastosVar.slice(startDayForBars, lastDayWithData + 1);
 
         chartDiario = new Chart(ctxDiario, {
