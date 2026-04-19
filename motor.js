@@ -1,5 +1,5 @@
 // ==========================================================
-// 🧠 BÚNKER SCADA - MOTOR LÓGICO V7.0 (GRILLA 2x2 & RADAR)
+// 🧠 BÚNKER SCADA - MOTOR LÓGICO V7.0 (BROCHE DE ORO)
 // ==========================================================
 const BYRON_EMAIL = "bvhcc94@gmail.com"; 
 const CREDIT_SETPOINT = -300000; 
@@ -69,7 +69,7 @@ const auth = firebase.auth();
 
 let listaMovimientos = [];
 let datosMesGlobal = []; 
-let chartBD = null, chartP = null, chartDiario = null, chartRadar = null; // 🟢 NUEVAS VARIABLES GLOBALES
+let chartBD = null, chartP = null, chartDiario = null, chartRadar = null;
 let currentSort = { column: 'fechaISO', direction: 'desc' }; 
 let modoEdicionActivo = false;
 let sueldosHistoricos = {}; 
@@ -93,7 +93,6 @@ auth.onAuthStateChanged(user => {
             listaMovimientos = [];
             snap.forEach(doc => {
                 let d = doc.data(); d.firestoreId = doc.id;
-                // Análisis estricto de fechas para evitar fantasmas
                 let fObj = new Date();
                 if (d.fecha && d.fecha.toDate) fObj = d.fecha.toDate();
                 else if (d.fecha) { let parsed = new Date(d.fecha); if (!isNaN(parsed.getTime())) fObj = parsed; }
@@ -246,7 +245,6 @@ function renderizarListas(sueldoBase, filtroBuscador) {
         const dateStr = d.toLocaleDateString('es-CL');
         const timeStr = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
         
-        // TIMING-BOX HEADERS (Solo se inyectan si el orden es por fecha descendente)
         if (currentSort.column === 'fechaISO' && currentSort.direction === 'desc' && dateStr !== currentDayGroup) {
             let labelText = dateStr;
             if (dateStr === todayStr) labelText = "HOY";
@@ -368,7 +366,7 @@ function updateMassActions() { const bar = document.getElementById('massActionsB
 function massDelete() { const ids = Array.from(document.querySelectorAll('.row-check:not(#checkAll):checked')).map(cb => cb.value); if(ids.length === 0 || !confirm(`⚠️ ¿Eliminar ${ids.length} registro(s)?`)) return; const btn = document.querySelector('button[onclick="massDelete()"]'); const orig = btn.innerHTML; btn.innerHTML = '⏳'; Promise.all(ids.map(id => db.collection("movimientos").doc(id).delete())).then(() => { document.getElementById('massActionsBar').style.display = 'none'; document.getElementById('checkAll').checked = false; btn.innerHTML = orig; }); }
 function massCategorize() { const ids = Array.from(document.querySelectorAll('.row-check:not(#checkAll):checked')).map(cb => cb.value); const cat = document.getElementById('massCategorySelect').value; if(ids.length === 0 || !cat || !confirm(`¿Categorizar como "${cat}"?`)) return; const btn = document.querySelector('button[onclick="massCategorize()"]'); const orig = btn.innerHTML; btn.innerHTML = '⏳'; Promise.all(ids.map(id => db.collection("movimientos").doc(id).update({categoria: cat}))).then(() => { document.getElementById('massActionsBar').style.display = 'none'; document.getElementById('checkAll').checked = false; document.getElementById('massCategorySelect').value = ''; btn.innerHTML = orig; }); }
 
-// 🟢 FUNCIÓN DE DIBUJADO DE 4 GRÁFICOS (FASE 3 + MÓDULO 2) 🟢
+// 🟢 FUNCIÓN DE DIBUJADO DE 4 GRÁFICOS (FASE 3 + OUTLIERS CORREGIDO) 🟢
 function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0) {
     if(chartBD) chartBD.destroy(); if(chartP) chartP.destroy(); 
     if(chartDiario) chartDiario.destroy(); if(chartRadar) chartRadar.destroy();
@@ -378,7 +376,7 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0) {
     const cF = getComputedStyle(document.body).getPropertyValue('--color-fuga').trim() || "#ff5252";
     
     let daily = Array(diasCiclo + 1).fill(0);
-    let dailyGastosVar = Array(diasCiclo + 1).fill(0); // Array purificado (Sin Fijos)
+    let dailyGastosVar = Array(diasCiclo + 1).fill(0); 
     let msT0 = T0.getTime();
 
     chronData.forEach(m => {
@@ -388,7 +386,6 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0) {
             if(m.esIn) daily[diff] += m.monto; 
             else if(!m.esNeutro) { 
                 daily[diff] -= m.monto; 
-                // Filtro Arquitectónico: Solo mapeamos al diario si NO es gasto fijo
                 if(m.tipo !== 'Gasto Fijo') dailyGastosVar[diff] += m.monto; 
             } 
         }
@@ -421,11 +418,13 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0) {
             scales:{ 
                 x:{ticks:{color: colorLabelsX, maxRotation: 45, minRotation: 45, font: (c) => ({ weight: colorLabelsX[c.index] === '#ff9800' ? '900' : 'bold', size: 10 }) }, grid:{color: colorGridX, drawBorder:false, lineWidth: (c) => colorGridX[c.index] === '#ff9800' ? 2 : 1 } }, 
                 y:{ max: sueldo, ticks:{color:cT, callback:v=>'$'+Math.round(v/1000)+'k'}, grid:{color: c => c.tick.value === 0 ? cF : cG} } 
-            } 
+            },
+            // 🟢 ERGONOMÍA: Quitamos el padding inferior del gráfico para que ocupe todo el espacio 🟢
+            layout: { padding: { bottom: 0 } }
         }
     });
 
-    const aliasMap = { "Gastos Fijos (Búnker)": "Fijos", "Mantenimiento Hardware (Salud)": "Salud", "Alimentación & Supermercado": "Super", "Transferencia Propia / Ahorro": "Ahorro", "Ocio & Experiencias": "Ocio", "Transporte & Logística": "Transp", "Dopamina & Antojos": "Dopa", "Transferencia Recibida": "Ingreso" };
+    const aliasMap = { "Gastos Fijos (Búnker)": "Fijos", "Mantenimiento Hardware (Salud)": "Salud", "Alimentación & Supermercado": "Super", "Transferencia Propia / Ahorro": "Ahorro", "Ocio & Experiencias": "Ocio", "Transporte & Logística": "Transp", "Dopamina & Antojos": "Dopa", "Transferencia Recibida": "Ingreso", "Gasto Tarjeta de Crédito": "Tarjeta" };
 
     // 2. PARETO
     const sorted = Object.entries(cats).sort((a,b)=>b[1]-a[1]).slice(0,8); const totalTop8 = sorted.reduce((sum, val) => sum + val[1], 0) || 1;
@@ -440,17 +439,24 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0) {
         options: { maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{ x:{ticks:{color:cT, font:{size:9}}}, y:{ type: 'linear', position: 'left', ticks:{color:cT, callback:v=>'$'+Math.round(v/1000)+'k'} }, y1:{ type: 'linear', position: 'right', min: 0, max: 100, grid: { drawOnChartArea: false }, ticks:{color:'#ff9800', callback:v=>Math.round(v)+'%', font:{weight:'bold'}} } } }
     });
 
-    // 3. PULSO DIARIO VARIABLE (SOLO PC)
+    // 3. PULSO DIARIO VARIABLE (Con corrección de Outliers - Muestra solo últimos 7 días con actividad)
     const ctxDiario = document.getElementById('chartDiario');
     if(ctxDiario) {
+        let lastDayWithData = diasCiclo;
+        while(lastDayWithData > 0 && dailyGastosVar[lastDayWithData] === 0) lastDayWithData--;
+        let startDayForBars = Math.max(1, lastDayWithData - 6); // 7 días hacia atrás
+        
+        let barLabels = labelsX.slice(startDayForBars, lastDayWithData + 1);
+        let barData = dailyGastosVar.slice(startDayForBars, lastDayWithData + 1);
+
         chartDiario = new Chart(ctxDiario, {
             type: 'bar',
-            data: { labels: labelsX.slice(1), datasets: [{ label: 'Gasto Físico', data: dailyGastosVar.slice(1), backgroundColor: '#da3633', borderRadius: 4 }] },
-            options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: colorLabelsX.slice(1), font:{size:9} }, grid: { display:false } }, y: { ticks: { color: cT, callback: v => '$' + Math.round(v / 1000) + 'k' }, grid: { color: cG } } } }
+            data: { labels: barLabels, datasets: [{ label: 'Gasto Físico', data: barData, backgroundColor: '#da3633', borderRadius: 4 }] },
+            options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: colorLabelsX.slice(startDayForBars, lastDayWithData + 1), font:{size:9} }, grid: { display:false } }, y: { ticks: { color: cT, callback: v => '$' + Math.round(v / 1000) + 'k' }, grid: { color: cG } } } }
         });
     }
 
-    // 4. RADAR DE COMPORTAMIENTO (SOLO PC)
+    // 4. RADAR DE COMPORTAMIENTO
     const ctxRadar = document.getElementById('chartRadar');
     if(ctxRadar) {
         let radarCats = {...cats};
@@ -523,7 +529,6 @@ function dropRow(e, targetId) {
 }
 document.addEventListener('dragend', (e) => { if(e.target.tagName === 'TR') e.target.style.opacity = '1'; });
 
-// 🟢 CÁLCULO DE ZOOM Y ESTADÍSTICAS EN VIVO 🟢
 window.hacerZoomGrafico = function(diaIn, diaFin) {
     if(!chartBD || !bdDataMaster) return;
     let inicio = parseInt(diaIn); let fin = parseInt(diaFin);
@@ -533,7 +538,6 @@ window.hacerZoomGrafico = function(diaIn, diaFin) {
     let slicedIdeal = bdDataMaster.ideal.slice(inicio, fin + 1);
     let slicedLabels = bdDataMaster.labels.slice(inicio, fin + 1);
 
-    // Ajuste de Eje Y
     let validActuals = slicedActual.filter(v => v !== null);
     if(validActuals.length > 0) {
         let maxReal = Math.max(...validActuals);
@@ -549,15 +553,6 @@ window.hacerZoomGrafico = function(diaIn, diaFin) {
 
     chartBD.data.labels = slicedLabels; chartBD.data.datasets[0].data = slicedActual; chartBD.data.datasets[1].data = slicedIdeal; chartBD.update();
 
-    // Sincronizar el Zoom con el Gráfico Diario de Barras
-    if(chartDiario) {
-        let slicedDiario = bdDataMaster.dailyGastosVar.slice(inicio + 1, fin + 1);
-        chartDiario.data.labels = slicedLabels.slice(1);
-        chartDiario.data.datasets[0].data = slicedDiario;
-        chartDiario.update();
-    }
-
-    // Calcular KPIs
     let slicedDaily = bdDataMaster.daily.slice(inicio + 1, fin + 1); 
     let gastoTotalTramo = 0;
     slicedDaily.forEach(v => { if(v < 0) gastoTotalTramo += Math.abs(v); }); 
@@ -573,12 +568,8 @@ window.triggerSync = function() {
     const btn = document.querySelector('button[onclick="triggerSync()"]') || document.querySelector('.btn-sys');
     const origText = btn ? btn.innerText : '';
     if(btn) btn.innerText = "⏳ SYNC...";
-    
     fetch("https://script.google.com/macros/s/AKfycbwKlub0qrv8_d24ZuyKKNryqOw1E68xv1_JvPOoEUc6W8TICllFfodNcwkigQE_7AuoNg/exec", {mode:'no-cors'})
-    .then(() => {
-        alert("✅ Comando enviado. Refrescando consola...");
-        window.location.reload(); 
-    })
+    .then(() => { alert("✅ Comando enviado. Refrescando consola..."); window.location.reload(); })
     .catch(e => { alert("Error de red: " + e); if(btn) btn.innerText = origText; });
 };
 
