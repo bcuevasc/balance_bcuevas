@@ -71,7 +71,7 @@ h2 { color: var(--color-saldo); margin: 0; font-size: 1.2rem; font-weight: 900; 
 .impact-neg { color: var(--color-fuga); }
 .impact-neu { color: #ff9800; }
 
-#charts-grid-container { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; flex-shrink: 0; }
+#charts-grid-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; flex-shrink: 0; }
 .chart-box { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; height: 25vh; min-height: 180px; display: flex; flex-direction: column; }
 .chart-box h5 { margin: 0 0 5px 0; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; text-align: center; font-weight: 800; }
 .canvas-container { position: relative; flex-grow: 1; min-height: 0; }
@@ -204,6 +204,10 @@ input[type="date"]::-webkit-calendar-picker-indicator, input[type="datetime-loca
                 <div class="chart-box">
                     <h5>Pareto de Gasto V30</h5>
                     <div class="canvas-container"><canvas id="chartPareto"></canvas></div>
+                </div>
+                <div class="chart-box">
+                    <h5>Gasto Diario Físico</h5>
+                    <div class="canvas-container"><canvas id="chartDiario"></canvas></div>
                 </div>
             </div>
         </div>
