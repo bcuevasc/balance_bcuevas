@@ -3,10 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Bunker Digital SCADA v7.6.3</title>
+    <title>Bunker Digital SCADA v8.0</title>
     
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
@@ -74,6 +73,7 @@ h2 { color: var(--color-ingresos); margin: 0; font-size: 1.2rem; font-weight: 90
 .chart-box h5 { margin: 0 0 5px 0; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; text-align: center; font-weight: 800; z-index: 10;}
 .canvas-container { position: relative; flex-grow: 1; min-height: 0; width: 100%; height: 100%; }
 
+/* Controles Flotantes Burn-Down (CERO FONDOS NEGROS) */
 .bd-overlay-kpis { position: absolute; top: 10px; width: calc(100% - 24px); display: flex; justify-content: space-between; z-index: 20; pointer-events: none;}
 .bd-badge { padding: 2px 5px; font-size: 0.65rem; font-weight: bold; color: var(--text-main); text-shadow: 0px 2px 4px rgba(0,0,0,0.9); }
 
@@ -98,7 +98,7 @@ input[type="date"]::-webkit-calendar-picker-indicator, input[type="datetime-loca
 <div id="login-screen">
     <div class="login-box">
         <h2 style="color:var(--color-ingresos); margin-bottom:10px;">BUNKER SCADA</h2>
-        <p style="color:var(--text-muted); font-size:0.8rem;">SISTEMA PRIVADO DE GESTIÓN TÁCTICA V7.6.3</p>
+        <p style="color:var(--text-muted); font-size:0.8rem;">SISTEMA PRIVADO DE GESTIÓN TÁCTICA V8.0</p>
         <button class="btn-google" onclick="loginWithGoogle()">ENTRAR CON GOOGLE</button>
     </div>
 </div>
@@ -179,7 +179,8 @@ input[type="date"]::-webkit-calendar-picker-indicator, input[type="datetime-loca
             </div>
             
             <div id="charts-grid-container">
-                <div class="chart-box" style="padding-bottom: 20px;">
+                
+                <div class="chart-box">
                     <div class="bd-overlay-kpis">
                         <div class="bd-badge">TRAMO: <span id="txtGastoTramo" style="color:var(--color-fuga)">$0</span></div>
                         <h5 style="margin:0; position:absolute; width:100%; text-align:center;">BURN-DOWN TÁCTICO</h5>
