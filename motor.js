@@ -1,11 +1,10 @@
 // ==========================================================
-// 🧠 BÚNKER SCADA - MOTOR LÓGICO V6.0 (ESTABLE & TESTEADO)
+// 🧠 BÚNKER SCADA - MOTOR LÓGICO V7.0 (GRILLA 2x2 & RADAR)
 // ==========================================================
 const BYRON_EMAIL = "bvhcc94@gmail.com"; 
 const CREDIT_SETPOINT = -300000; 
 const catEvitables = ["Dopamina & Antojos"]; 
 
-// 🟢 FUENTE ÚNICA DE VERDAD: CATEGORÍAS 🟢
 const catMaestras = [
     { id: "Gastos Fijos (Búnker)", em: "🏠", label: "Gastos Fijos" },
     { id: "Suscripciones", em: "📱", label: "Suscripciones" },
@@ -70,7 +69,7 @@ const auth = firebase.auth();
 
 let listaMovimientos = [];
 let datosMesGlobal = []; 
-let chartBD = null, chartP = null, chartDiario = null, chartRadar = null;
+let chartBD = null, chartP = null, chartDiario = null, chartRadar = null; // 🟢 NUEVAS VARIABLES GLOBALES
 let currentSort = { column: 'fechaISO', direction: 'desc' }; 
 let modoEdicionActivo = false;
 let sueldosHistoricos = {}; 
@@ -86,9 +85,6 @@ auth.onAuthStateChanged(user => {
         if(loginScreen) loginScreen.style.display = 'none';
         if(reportZone) reportZone.classList.add('active-app');
         
-        const userDisplay = document.getElementById('user-display');
-        if(userDisplay) userDisplay.innerText = user.displayName;
-        
         db.collection("parametros").doc("sueldos").onSnapshot(snap => {
             if(snap.exists) sueldosHistoricos = snap.data();
         });
@@ -97,7 +93,12 @@ auth.onAuthStateChanged(user => {
             listaMovimientos = [];
             snap.forEach(doc => {
                 let d = doc.data(); d.firestoreId = doc.id;
-                d.fechaISO = d.fecha?.toDate ? d.fecha.toDate().toISOString() : (d.fecha || new Date().toISOString());
+                // Análisis estricto de fechas para evitar fantasmas
+                let fObj = new Date();
+                if (d.fecha && d.fecha.toDate) fObj = d.fecha.toDate();
+                else if (d.fecha) { let parsed = new Date(d.fecha); if (!isNaN(parsed.getTime())) fObj = parsed; }
+                
+                d.fechaISO = fObj.toISOString();
                 d.monto = Number(d.monto) || 0;
                 listaMovimientos.push(d);
             });
@@ -367,8 +368,8 @@ function updateMassActions() { const bar = document.getElementById('massActionsB
 function massDelete() { const ids = Array.from(document.querySelectorAll('.row-check:not(#checkAll):checked')).map(cb => cb.value); if(ids.length === 0 || !confirm(`⚠️ ¿Eliminar ${ids.length} registro(s)?`)) return; const btn = document.querySelector('button[onclick="massDelete()"]'); const orig = btn.innerHTML; btn.innerHTML = '⏳'; Promise.all(ids.map(id => db.collection("movimientos").doc(id).delete())).then(() => { document.getElementById('massActionsBar').style.display = 'none'; document.getElementById('checkAll').checked = false; btn.innerHTML = orig; }); }
 function massCategorize() { const ids = Array.from(document.querySelectorAll('.row-check:not(#checkAll):checked')).map(cb => cb.value); const cat = document.getElementById('massCategorySelect').value; if(ids.length === 0 || !cat || !confirm(`¿Categorizar como "${cat}"?`)) return; const btn = document.querySelector('button[onclick="massCategorize()"]'); const orig = btn.innerHTML; btn.innerHTML = '⏳'; Promise.all(ids.map(id => db.collection("movimientos").doc(id).update({categoria: cat}))).then(() => { document.getElementById('massActionsBar').style.display = 'none'; document.getElementById('checkAll').checked = false; document.getElementById('massCategorySelect').value = ''; btn.innerHTML = orig; }); }
 
+// 🟢 FUNCIÓN DE DIBUJADO DE 4 GRÁFICOS (FASE 3 + MÓDULO 2) 🟢
 function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0) {
-    // 1. Destruir gráficos anteriores para evitar overlaps
     if(chartBD) chartBD.destroy(); if(chartP) chartP.destroy(); 
     if(chartDiario) chartDiario.destroy(); if(chartRadar) chartRadar.destroy();
     
@@ -380,7 +381,6 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0) {
     let dailyGastosVar = Array(diasCiclo + 1).fill(0); // Array purificado (Sin Fijos)
     let msT0 = T0.getTime();
 
-    // 2. Procesamiento de la Matriz de Tiempo
     chronData.forEach(m => {
         let d = new Date(m.fechaISO);
         let diff = Math.floor((d.getTime() - msT0) / 86400000) + 1;
@@ -409,7 +409,7 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0) {
 
     bdDataMaster = { labels: [...labelsX], actual: [...actual], ideal: [...ideal], daily: [...daily], dailyGastosVar: [...dailyGastosVar], colorsX: [...colorLabelsX], colorsG: [...colorGridX] };
 
-    // 3. RENDER: BURN-DOWN
+    // 1. BURN-DOWN
     chartBD = new Chart(document.getElementById('chartBurnDown'), {
         type: 'line', 
         data: { labels: labelsX, datasets: [
@@ -427,7 +427,7 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0) {
 
     const aliasMap = { "Gastos Fijos (Búnker)": "Fijos", "Mantenimiento Hardware (Salud)": "Salud", "Alimentación & Supermercado": "Super", "Transferencia Propia / Ahorro": "Ahorro", "Ocio & Experiencias": "Ocio", "Transporte & Logística": "Transp", "Dopamina & Antojos": "Dopa", "Transferencia Recibida": "Ingreso" };
 
-    // 4. RENDER: PARETO
+    // 2. PARETO
     const sorted = Object.entries(cats).sort((a,b)=>b[1]-a[1]).slice(0,8); const totalTop8 = sorted.reduce((sum, val) => sum + val[1], 0) || 1;
     let acumulado = 0; const dataAcumulada = sorted.map(c => { acumulado += c[1]; return (acumulado / totalTop8) * 100; });
 
@@ -440,7 +440,7 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0) {
         options: { maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{ x:{ticks:{color:cT, font:{size:9}}}, y:{ type: 'linear', position: 'left', ticks:{color:cT, callback:v=>'$'+Math.round(v/1000)+'k'} }, y1:{ type: 'linear', position: 'right', min: 0, max: 100, grid: { drawOnChartArea: false }, ticks:{color:'#ff9800', callback:v=>Math.round(v)+'%', font:{weight:'bold'}} } } }
     });
 
-    // 5. RENDER: PULSO DIARIO VARIABLE (SOLO PC)
+    // 3. PULSO DIARIO VARIABLE (SOLO PC)
     const ctxDiario = document.getElementById('chartDiario');
     if(ctxDiario) {
         chartDiario = new Chart(ctxDiario, {
@@ -450,20 +450,14 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0) {
         });
     }
 
-    // 6. RENDER: RADAR DE COMPORTAMIENTO (SOLO PC)
+    // 4. RADAR DE COMPORTAMIENTO (SOLO PC)
     const ctxRadar = document.getElementById('chartRadar');
     if(ctxRadar) {
-        // Filtramos las variables que deformarían el radar
         let radarCats = {...cats};
-        delete radarCats["Gastos Fijos (Búnker)"];
-        delete radarCats["Transferencia Propia / Ahorro"];
-        delete radarCats["Transferencia Recibida"];
-        delete radarCats["Ingreso Adicional"];
-        delete radarCats["Sin Categoría"];
-        delete radarCats["Ruido de Sistema"];
+        delete radarCats["Gastos Fijos (Búnker)"]; delete radarCats["Transferencia Propia / Ahorro"]; delete radarCats["Transferencia Recibida"]; delete radarCats["Ingreso Adicional"]; delete radarCats["Sin Categoría"]; delete radarCats["Ruido de Sistema"];
 
-        let rSorted = Object.entries(radarCats).sort((a,b)=>b[1]-a[1]).slice(0,5); // Top 5
-        if(rSorted.length < 3) rSorted.push(["Sin Datos", 0], ["Sin Datos 2", 0]); // Mínimo 3 vértices
+        let rSorted = Object.entries(radarCats).sort((a,b)=>b[1]-a[1]).slice(0,5); 
+        if(rSorted.length < 3) rSorted.push(["Sin Datos", 0], ["Sin Datos 2", 0]); 
         
         let rLabels = rSorted.map(c => aliasMap[c[0]] || c[0].split(' ')[0]);
         let rData = rSorted.map(c => c[1]);
@@ -475,6 +469,7 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0) {
         });
     }
 }
+
 function calcularFechasCiclo(mesConceptual, anio) {
     let mesInicio = mesConceptual - 1; let anioInicio = anio; if (mesInicio < 0) { mesInicio = 11; anioInicio--; }
     let T0 = new Date(anioInicio, mesInicio, 30); if (T0.getMonth() !== mesInicio) T0 = new Date(anioInicio, mesInicio + 1, 0); 
@@ -528,6 +523,7 @@ function dropRow(e, targetId) {
 }
 document.addEventListener('dragend', (e) => { if(e.target.tagName === 'TR') e.target.style.opacity = '1'; });
 
+// 🟢 CÁLCULO DE ZOOM Y ESTADÍSTICAS EN VIVO 🟢
 window.hacerZoomGrafico = function(diaIn, diaFin) {
     if(!chartBD || !bdDataMaster) return;
     let inicio = parseInt(diaIn); let fin = parseInt(diaFin);
@@ -537,6 +533,7 @@ window.hacerZoomGrafico = function(diaIn, diaFin) {
     let slicedIdeal = bdDataMaster.ideal.slice(inicio, fin + 1);
     let slicedLabels = bdDataMaster.labels.slice(inicio, fin + 1);
 
+    // Ajuste de Eje Y
     let validActuals = slicedActual.filter(v => v !== null);
     if(validActuals.length > 0) {
         let maxReal = Math.max(...validActuals);
@@ -552,7 +549,7 @@ window.hacerZoomGrafico = function(diaIn, diaFin) {
 
     chartBD.data.labels = slicedLabels; chartBD.data.datasets[0].data = slicedActual; chartBD.data.datasets[1].data = slicedIdeal; chartBD.update();
 
-    // Zoom al Gráfico Diario
+    // Sincronizar el Zoom con el Gráfico Diario de Barras
     if(chartDiario) {
         let slicedDiario = bdDataMaster.dailyGastosVar.slice(inicio + 1, fin + 1);
         chartDiario.data.labels = slicedLabels.slice(1);
@@ -560,6 +557,7 @@ window.hacerZoomGrafico = function(diaIn, diaFin) {
         chartDiario.update();
     }
 
+    // Calcular KPIs
     let slicedDaily = bdDataMaster.daily.slice(inicio + 1, fin + 1); 
     let gastoTotalTramo = 0;
     slicedDaily.forEach(v => { if(v < 0) gastoTotalTramo += Math.abs(v); }); 
@@ -572,9 +570,16 @@ window.hacerZoomGrafico = function(diaIn, diaFin) {
 
 // 🟢 RUTINAS GLOBALES DE NUBE (TELEGRAM & SYNC) 🟢
 window.triggerSync = function() {
+    const btn = document.querySelector('button[onclick="triggerSync()"]') || document.querySelector('.btn-sys');
+    const origText = btn ? btn.innerText : '';
+    if(btn) btn.innerText = "⏳ SYNC...";
+    
     fetch("https://script.google.com/macros/s/AKfycbwKlub0qrv8_d24ZuyKKNryqOw1E68xv1_JvPOoEUc6W8TICllFfodNcwkigQE_7AuoNg/exec", {mode:'no-cors'})
-    .then(()=>alert("✅ Base de datos Sincronizada."))
-    .catch(e => alert("Error de red: " + e));
+    .then(() => {
+        alert("✅ Comando enviado. Refrescando consola...");
+        window.location.reload(); 
+    })
+    .catch(e => { alert("Error de red: " + e); if(btn) btn.innerText = origText; });
 };
 
 window.enviarReporteTelegram = function() {
@@ -582,13 +587,10 @@ window.enviarReporteTelegram = function() {
     const badge = document.getElementById('navRangoBadge');
     const saldo = txtSaldo ? txtSaldo.innerText : '0';
     const periodo = badge ? badge.innerText : 'Periodo Actual';
-    
     const msg = `🏭 *BÚNKER SCADA*\n💰 Saldo: $${saldo}\n🗓️ Periodo: ${periodo}`;
     
     fetch(`https://api.telegram.org/bot8614679709:AAEJGy9yAlKnhjVmJ0VUZpT-YmZQ6J5IOps/sendMessage`, { 
-        method: 'POST', 
-        headers: { 'Content-Type': 'application/json' }, 
-        body: JSON.stringify({ chat_id: "1484213465", text: msg, parse_mode: 'Markdown' }) 
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ chat_id: "1484213465", text: msg, parse_mode: 'Markdown' }) 
     })
     .then(r => r.ok ? alert("✅ Telemetría Transmitida a Telegram.") : alert("❌ Error API Telegram"))
     .catch(e => alert("Error de red: " + e));
