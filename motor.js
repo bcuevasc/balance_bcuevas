@@ -1,11 +1,11 @@
 // ==========================================================
-// 🧠 BÚNKER SCADA - MOTOR LÓGICO V31.9.5 (FASE 1: NÚCLEO ESTABLE)
+// 🧠 BÚNKER SCADA - MOTOR LÓGICO V31.9.6 (FASE 1 & 2 COMPLETAS)
 // ==========================================================
 const BYRON_EMAIL = "bvhcc94@gmail.com"; 
 const CREDIT_SETPOINT = -300000; 
 const catEvitables = ["Dopamina & Antojos"]; 
 
-// 🟢 1. FUENTE ÚNICA DE VERDAD: CATEGORÍAS 🟢
+// 🟢 FUENTE ÚNICA DE VERDAD: CATEGORÍAS
 const catMaestras = [
     { id: "Gastos Fijos (Búnker)", em: "🏠", label: "Gastos Fijos" },
     { id: "Suscripciones", em: "📱", label: "Suscripciones" },
@@ -27,16 +27,34 @@ const catMaestras = [
 const catEmojis = {};
 catMaestras.forEach(c => catEmojis[c.id] = c.em);
 
-// 🟢 INYECTOR AUTOMÁTICO DE CATEGORÍAS (Al cargar la página) 🟢
 document.addEventListener("DOMContentLoaded", () => {
     const optionsHTML = catMaestras.map(c => `<option value="${c.id}">${c.em} ${c.label}</option>`).join('');
-    
     const selectManual = document.getElementById('inputCategoria');
     if (selectManual) selectManual.innerHTML = optionsHTML;
-    
     const selectMass = document.getElementById('massCategorySelect');
     if (selectMass) selectMass.innerHTML = `<option value="">-- Recategorizar a --</option>` + optionsHTML;
 });
+
+const logosComerciales = {
+    "uber": "uber.com", "zapping": "zapping.com", "netflix": "netflix.com",
+    "spotify": "spotify.com", "lider": "lider.cl", "jumbo": "jumbo.cl",
+    "pedidosya": "pedidosya.com", "pedidos ya": "pedidosya.com", "pya": "pedidosya.com",
+    "rappi": "rappi.cl", "copec": "ww2.copec.cl", "shell": "shell.cl", "mcdonald": "mcdonalds.com", 
+    "starbucks": "starbucks.cl", "cruz verde": "cruzverde.cl", "sodimac": "sodimac.cl", 
+    "mercadolibre": "mercadolibre.cl", "apple": "apple.com", "kupos": "kupos.cl"
+};
+
+function obtenerIconoVisual(nombre, emojiFallback) {
+    if(!nombre) return `<span style="font-size:1.4rem;">${emojiFallback}</span>`;
+    let n = nombre.toLowerCase();
+    for (let marca in logosComerciales) {
+        if (n.includes(marca)) {
+            let url = `https://logo.clearbit.com/${logosComerciales[marca]}?size=100`;
+            return `<img src="${url}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%; background: white;" onerror="this.outerHTML='<span style=\\'font-size:1.4rem;\\'>${emojiFallback}</span>'">`;
+        }
+    }
+    return `<span style="font-size:1.4rem;">${emojiFallback}</span>`;
+}
 
 let bdDataMaster = null; 
 
@@ -183,9 +201,11 @@ function actualizarDashboard() {
     if(document.getElementById('chartBurnDown')) dibujarGraficos(sueldo, [...dataMes].sort((x,y) => x.fechaISO < y.fechaISO ? -1 : 1), gCat, diasCiclo, T0);
 }    
 
+// 🟢 2. FASE 2: RENDERIZADO VISUAL CON AGRUPACIÓN TEMPORAL (TIME-BOXING) 🟢
 function renderizarListas(sueldoBase, filtroBuscador) {
     let datos = [...datosMesGlobal];
     if (filtroBuscador) datos = datos.filter(x => x.nombre?.toLowerCase().includes(filtroBuscador) || x.catV.toLowerCase().includes(filtroBuscador));
+
     datos.sort((a, b) => {
         let valA = a[currentSort.column], valB = b[currentSort.column];
         if (currentSort.column === 'nombre' || currentSort.column === 'catV') { valA = valA?.toLowerCase() || ''; valB = valB?.toLowerCase() || ''; }
@@ -203,50 +223,89 @@ function renderizarListas(sueldoBase, filtroBuscador) {
 
     const contenedorPC = document.getElementById('listaDetalle'); 
     const contenedorMovil = document.getElementById('listaMovilDetalle');
-    let htmlPC = ''; let htmlMovil = '';
+    
+    if (!contenedorMovil && !contenedorPC) return;
 
-    datos.forEach(x => {
+    if(datos.length === 0) {
+        if(contenedorMovil) contenedorMovil.innerHTML = `<div style="text-align:center; padding: 40px 20px; color: var(--text-dim);"><i>📡</i><br>Sin telemetría en este ciclo.</div>`;
+        if(contenedorPC) contenedorPC.innerHTML = `<tr><td colspan="11" style="text-align:center;">Sin telemetría en este ciclo.</td></tr>`;
+        return;
+    }
+
+    let htmlMovil = ''; let htmlPC = '';
+    let currentDayGroup = ""; 
+    
+    const now = new Date();
+    const todayStr = now.toLocaleDateString('es-CL');
+    const yesterday = new Date(now);
+    yesterday.setDate(now.getDate() - 1);
+    const yesterdayStr = yesterday.toLocaleDateString('es-CL');
+
+    datos.forEach((x, idx) => {
+        const d = new Date(x.fechaISO);
+        const dateStr = d.toLocaleDateString('es-CL');
+        const timeStr = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+        
+        // TIMING-BOX HEADERS (Solo se inyectan si el orden es por fecha descendente)
+        if (currentSort.column === 'fechaISO' && currentSort.direction === 'desc' && dateStr !== currentDayGroup) {
+            let labelText = dateStr;
+            if (dateStr === todayStr) labelText = "HOY";
+            else if (dateStr === yesterdayStr) labelText = "AYER";
+            else {
+                const meses = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"];
+                labelText = `${d.getDate()} ${meses[d.getMonth()]}`;
+            }
+            if (contenedorMovil) {
+                htmlMovil += `<div class="date-header" style="font-size: 0.65rem; font-weight: 900; color: var(--text-dim); text-transform: uppercase; margin: 15px 0 5px 5px; letter-spacing: 1px;">${labelText}</div>`;
+            }
+            currentDayGroup = dateStr;
+        }
+
         const em = catEmojis[x.catV] || "❓";
-        let d = new Date(x.fechaISO);
-        let dS = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')} <span class="col-hora">${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}</span>`;
-        let dSMovil = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+        const colorMonto = x.esIn ? "var(--color-ingresos)" : x.esNeutro ? "#ff9800" : "var(--text-main)";
+        const iconoVisual = obtenerIconoVisual(x.nombre, em);
+        const nombreSeguro = x.nombre || "Dato no identificado";
+        const montoSeguro = (typeof x.monto === 'number' && !isNaN(x.monto)) ? x.monto : 0;
+        const colorSaldo = x.saldoCalculadoVista < 0 ? 'var(--color-fuga)' : 'var(--text-muted)';
         let iconImpacto = x.esIn ? `<span class="impact-icon impact-pos">(+)</span>` : x.esNeutro ? `<span class="impact-icon impact-neu">(=)</span>` : `<span class="impact-icon impact-neg">(-)</span>`;
-        let colorMonto = x.esIn ? "var(--color-ingresos)" : x.esNeutro ? "#ff9800" : "var(--text-main)";
         let statusBadge = x.catV === 'Sin Categoría' ? `<span class="status-badge status-warn">REVISAR</span>` : `<span class="status-badge status-ok">OK</span>`;
         let editIdVal = document.getElementById('editId') ? document.getElementById('editId').value : '';
         let bgEdicion = (editIdVal === x.firestoreId) ? 'background-color: rgba(210, 153, 34, 0.15); border-left: 3px solid var(--color-edit);' : '';
-        const nombreSeguro = x.nombre || "Dato no identificado";
-        const montoSeguro = (typeof x.monto === 'number' && !isNaN(x.monto)) ? x.monto : 0;
-        const saldoSeguro = (typeof x.saldoCalculadoVista === 'number' && !isNaN(x.saldoCalculadoVista)) ? x.saldoCalculadoVista : 0;
-        const colorSaldo = saldoSeguro < 0 ? 'var(--color-fuga)' : 'var(--text-muted)';
 
+        if (contenedorMovil) {
+            const clickAction = typeof openBottomSheet === 'function' ? `openBottomSheet('${x.firestoreId}', '${nombreSeguro.replace(/'/g, "\\'")}', ${montoSeguro})` : `editarMovimiento('${x.firestoreId}')`;
+            htmlMovil += `
+            <div class="mobile-card" onclick="${clickAction}">
+                <div style="width: 42px; height: 42px; margin-right: 15px; background: rgba(255,255,255,0.03); border-radius: 50%; display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0; box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);">
+                    ${iconoVisual}
+                </div>
+                <div style="flex: 1; min-width: 0;">
+                    <div style="font-weight:bold; font-size:0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text-main);">${nombreSeguro}</div>
+                    <div style="font-size:0.7rem; color:var(--text-dim); margin-top:2px;">${timeStr} • ${x.catV}</div>
+                </div>
+                <div style="font-weight:900; color:${colorMonto}; flex-shrink: 0; font-size:1.05rem;">${x.esIn?'+':(x.esNeutro?'=':'-')}$${montoSeguro.toLocaleString('es-CL')}</div>
+            </div>`;
+        }
+        
         if (contenedorPC) {
             htmlPC += `<tr style="${bgEdicion}" draggable="true" ondragstart="dragStart(event, '${x.firestoreId}')" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dropRow(event, '${x.firestoreId}')">
                 <td class="col-check hide-mobile"><input type="checkbox" class="row-check" value="${x.firestoreId}" onchange="updateMassActions()"></td>
                 <td class="col-drag hide-mobile" style="cursor: grab; text-align: center; color: var(--text-muted); font-size: 1.2rem;">☰</td>
                 <td class="hide-mobile" style="text-align:center; font-size:0.75rem; font-weight:800; color:var(--text-muted);">${x.indiceVista}</td>
-                <td style="font-size:0.75rem; color:var(--text-muted);">${dS}</td>
+                <td style="font-size:0.75rem; color:var(--text-muted);">${dateStr} <span class="col-hora">${timeStr}</span></td>
                 <td class="col-desc" style="font-weight:700;" title="${nombreSeguro}">${nombreSeguro}</td>
                 <td class="hide-mobile" style="font-size:0.75rem;"><span class="cat-badge">${em} ${x.catV}</span></td>
                 <td class="col-monto" style="color:${colorMonto};">${iconImpacto}$${montoSeguro.toLocaleString('es-CL')}</td>
-                <td class="col-monto hide-mobile" style="color:${colorSaldo};">$${saldoSeguro.toLocaleString('es-CL')}</td>
+                <td class="col-monto hide-mobile" style="color:${colorSaldo};">$${x.saldoCalculadoVista.toLocaleString('es-CL')}</td>
                 <td class="hide-mobile" style="text-align:center; font-size:0.7rem; color:var(--text-muted);">${catEvitables.includes(x.catV) ? '100%' : '0%'}</td>
                 <td class="hide-mobile" style="text-align:center;">${statusBadge}</td>
                 <td style="text-align:center; padding: 2px;"><button class="btn-sys" style="padding:4px; border-color:var(--color-edit); color:var(--color-edit);" onclick="editarMovimiento('${x.firestoreId}')">✏️<span class="btn-edit-text"> EDIT</span></button></td>
             </tr>`;
         }
-        if (contenedorMovil) {
-            const clickAction = typeof openBottomSheet === 'function' ? `openBottomSheet('${x.firestoreId}', '${nombreSeguro.replace(/'/g, "\\'")}', ${montoSeguro})` : `editarMovimiento('${x.firestoreId}')`;
-            htmlMovil += `<div class="mobile-card" onclick="${clickAction}" style="background: var(--bg-card) !important; border-radius: 12px; padding: 15px; display: flex; align-items: center; border: 1px solid var(--border-subtle); margin-bottom: 10px;">
-                <div style="font-size: 1.5rem; margin-right: 15px; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 50%;">${em}</div>
-                <div style="flex: 1;"><div style="font-weight: bold; font-size: 0.95rem; margin-bottom: 3px;">${nombreSeguro}</div><div style="font-size: 0.7rem; color: var(--text-dim);">${dSMovil} • ${x.catV}</div></div>
-                <div style="font-family: monospace; font-weight: 900; font-size: 1.1rem; color:${colorMonto}">${x.esIn?'+':(x.esNeutro?'=':'-')}$${montoSeguro.toLocaleString('es-CL')}</div>
-            </div>`;
-        }
     });
 
-    if (contenedorPC) contenedorPC.innerHTML = htmlPC; 
     if (contenedorMovil) contenedorMovil.innerHTML = htmlMovil;
+    if (contenedorPC) contenedorPC.innerHTML = htmlPC;
 }
 
 function sortTable(column) {
@@ -347,7 +406,7 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0) {
             scales:{ 
                 x:{ticks:{color: colorLabelsX, maxRotation: 45, minRotation: 45, font: (c) => ({ weight: colorLabelsX[c.index] === '#ff9800' ? '900' : 'bold', size: 10 }) }, grid:{color: colorGridX, drawBorder:false, lineWidth: (c) => colorGridX[c.index] === '#ff9800' ? 2 : 1 } }, 
                 y:{
-                    max: sueldo, // 🟢 2. EJE Y FIJADO AL SUELDO 🟢
+                    max: sueldo, // 🟢 FASE 1: EJE Y FIJADO AL SUELDO 🟢
                     ticks:{color:cT, callback:v=>'$'+(v/1000)+'k'}, grid:{color: c => c.tick.value === 0 ? cF : cG}
                 } 
             } 
@@ -424,14 +483,43 @@ window.hacerZoomGrafico = function(diaIn, diaFin) {
     if(!chartBD || !bdDataMaster) return;
     let inicio = parseInt(diaIn); let fin = parseInt(diaFin);
     if(isNaN(inicio) || isNaN(fin) || inicio >= fin) return;
-    chartBD.data.labels = bdDataMaster.labels.slice(inicio, fin + 1);
-    chartBD.data.datasets[0].data = bdDataMaster.actual.slice(inicio, fin + 1);
-    chartBD.data.datasets[1].data = bdDataMaster.ideal.slice(inicio, fin + 1);
     
-    // Mantener el techo fijo incluso al hacer Zoom
-    const inputSueldo = document.getElementById('inputSueldo');
-    const sueldo = inputSueldo ? (parseInt(inputSueldo.value.replace(/\./g,'')) || 0) : SUELDO_BASE_DEFAULT;
-    chartBD.options.scales.y.max = sueldo;
+    let slicedActual = bdDataMaster.actual.slice(inicio, fin + 1);
+    let slicedIdeal = bdDataMaster.ideal.slice(inicio, fin + 1);
+    let slicedLabels = bdDataMaster.labels.slice(inicio, fin + 1);
 
+    let validActuals = slicedActual.filter(v => v !== null);
+    if(validActuals.length > 0) {
+        let maxReal = Math.max(...validActuals);
+        chartBD.options.scales.y.max = maxReal > 0 ? maxReal * 1.1 : 0;
+    }
+
+    chartBD.data.labels = slicedLabels;
+    chartBD.data.datasets[0].data = slicedActual;
+    chartBD.data.datasets[1].data = slicedIdeal;
     chartBD.update();
+};
+
+// 🟢 RUTINAS GLOBALES DE NUBE (TELEGRAM & SYNC) 🟢
+window.triggerSync = function() {
+    fetch("https://script.google.com/macros/s/AKfycbwKlub0qrv8_d24ZuyKKNryqOw1E68xv1_JvPOoEUc6W8TICllFfodNcwkigQE_7AuoNg/exec", {mode:'no-cors'})
+    .then(()=>alert("✅ Base de datos Sincronizada."))
+    .catch(e => alert("Error de red: " + e));
+};
+
+window.enviarReporteTelegram = function() {
+    const txtSaldo = document.getElementById('txtSaldo');
+    const badge = document.getElementById('navRangoBadge');
+    const saldo = txtSaldo ? txtSaldo.innerText : '0';
+    const periodo = badge ? badge.innerText : 'Periodo Actual';
+    
+    const msg = `🏭 *BÚNKER SCADA*\n💰 Saldo: $${saldo}\n🗓️ Periodo: ${periodo}`;
+    
+    fetch(`https://api.telegram.org/bot8614679709:AAEJGy9yAlKnhjVmJ0VUZpT-YmZQ6J5IOps/sendMessage`, { 
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json' }, 
+        body: JSON.stringify({ chat_id: "1484213465", text: msg, parse_mode: 'Markdown' }) 
+    })
+    .then(r => r.ok ? alert("✅ Telemetría Transmitida a Telegram.") : alert("❌ Error API Telegram"))
+    .catch(e => alert("Error de red: " + e));
 };
