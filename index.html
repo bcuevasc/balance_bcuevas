@@ -12,7 +12,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
     
     <style>
-:root { --bg-body: #0b0e14; --bg-panel: #161b22; --bg-subpanel: #21262d; --text-main: #f0f6fc; --text-muted: #8b949e; --border-color: #30363d; --input-bg: #0d1117; --item-hover: #1c2128; --color-guardar: #238636; --color-ingresos: #1f6feb; --color-gastos: #da3633;  --color-saldo: #3fb950; --color-edit: #d29922; --color-fuga: #ff5252; --color-proyectado: #3f51b5; --color-telegram: #0088cc; }
+:root { --bg-body: #0b0e14; --bg-panel: #161b22; --bg-subpanel: #21262d; --text-main: #f0f6fc; --text-muted: #8b949e; --border-color: #30363d; --input-bg: #0d1117; --item-hover: #1c2128; --color-guardar: #1f6feb; --color-ingresos: #1f6feb; --color-gastos: #da3633;  --color-saldo: #3fb950; --color-edit: #d29922; --color-fuga: #ff5252; --color-proyectado: #3f51b5; --color-telegram: #0088cc; }
 body.light-theme { --bg-body: #f0f2f5; --bg-panel: #ffffff; --bg-subpanel: #f8f9fa; --text-main: #24292e; --text-muted: #57606a; --border-color: #d0d7de; --input-bg: #ffffff; --item-hover: #e1e4e8; }
 * { box-sizing: border-box; transition: background-color 0.3s, border-color 0.3s; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
 body { background-color: var(--bg-body); margin: 0; padding: 0; color: var(--text-main); overflow: hidden; height: 100vh; display: flex; flex-direction: column; }
@@ -22,7 +22,7 @@ body { background-color: var(--bg-body); margin: 0; padding: 0; color: var(--tex
 .app-container { display: none; width: 100%; height: 100vh; padding: 8px 12px; flex-direction: column; gap: 8px; margin: 0 auto; max-width: 1920px; }
 .app-container.active-app { display: flex; }
 .header-titles { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 4px; margin-bottom: 0; }
-h2 { color: var(--color-saldo); margin: 0; font-size: 1.2rem; font-weight: 900; text-transform: uppercase; }
+h2 { color: var(--color-ingresos); margin: 0; font-size: 1.2rem; font-weight: 900; text-transform: uppercase; }
 .cronos { font-family: 'Courier New', Courier, monospace; font-size: 0.85rem; font-weight: 800; color: var(--text-muted); background: var(--bg-panel); padding: 2px 8px; border-radius: 4px; border: 1px solid var(--border-color); }
 .system-btns { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; justify-content: flex-end; }
 .btn-sys { background: var(--bg-subpanel); color: var(--text-main); border: 1px solid var(--border-color); padding: 6px 10px; border-radius: 6px; cursor: pointer; font-weight: 800; font-size: 0.7rem; text-transform: uppercase; }
@@ -74,15 +74,15 @@ h2 { color: var(--color-saldo); margin: 0; font-size: 1.2rem; font-weight: 900; 
 .impact-neu { color: #ff9800; }
 
 /* 🟢 GRILLA INFERIOR 40/20/20/20 Y BURN-DOWN OVERLAY 🟢 */
-#charts-grid-container { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 15px; flex-shrink: 0; }
+#charts-grid-container { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 12px; flex-shrink: 0; }
 .chart-box { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; height: 240px; display: flex; flex-direction: column; position: relative; }
 .chart-box h5 { margin: 0 0 5px 0; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; text-align: center; font-weight: 800; z-index: 10;}
 .canvas-container { position: relative; flex-grow: 1; min-height: 0; width: 100%; height: 100%; }
 
-/* Clases para superponer controles en el Burn-Down */
+/* Controles Flotantes Burn-Down (CERO FONDOS NEGROS) */
 .bd-overlay-controls { position: absolute; bottom: 5px; left: 10px; right: 10px; display: flex; gap: 10px; z-index: 20; }
 .bd-overlay-kpis { position: absolute; top: 10px; width: calc(100% - 24px); display: flex; justify-content: space-between; z-index: 20; pointer-events: none;}
-.bd-badge { background: rgba(11, 14, 20, 0.7); padding: 4px 8px; border-radius: 6px; font-size: 0.65rem; font-weight: bold; border: 1px solid var(--border-color); color: var(--text-main); backdrop-filter: blur(4px); }
+.bd-badge { padding: 2px 5px; font-size: 0.65rem; font-weight: bold; color: var(--text-main); text-shadow: 0px 2px 4px rgba(0,0,0,0.9); }
 
 .right-col { display: flex; flex-direction: column; gap: 10px; height: 100%; }
 .sidebar-panel { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; }
@@ -104,7 +104,7 @@ input[type="date"]::-webkit-calendar-picker-indicator, input[type="datetime-loca
 
 <div id="login-screen">
     <div class="login-box">
-        <h2 style="color:#fff; margin-bottom:10px;">BUNKER SCADA</h2>
+        <h2 style="color:var(--color-ingresos); margin-bottom:10px;">BUNKER SCADA</h2>
         <p style="color:var(--text-muted); font-size:0.8rem;">SISTEMA PRIVADO DE GESTIÓN TÁCTICA V7.0</p>
         <button class="btn-google" onclick="loginWithGoogle()">ENTRAR CON GOOGLE</button>
     </div>
@@ -113,7 +113,7 @@ input[type="date"]::-webkit-calendar-picker-indicator, input[type="datetime-loca
 <div class="app-container" id="reportZone">
     <div class="header-titles" style="border-bottom: none; padding-bottom: 0;">
         <div style="display:flex; align-items:center;">
-            <h2>BUNKER DIGITAL SCADA</h2>
+            <h2 style="color:var(--color-ingresos);">BUNKER DIGITAL SCADA</h2>
             <div id="user-display" style="margin-left: 15px; font-size: 0.75rem; color: var(--color-saldo); font-weight:800; text-transform:uppercase;"></div>
         </div>
         <div id="cronos" class="cronos">--:--:--</div>
@@ -126,12 +126,14 @@ input[type="date"]::-webkit-calendar-picker-indicator, input[type="datetime-loca
             <div id="navRangoBadge" class="nav-badge">--/-- al --/--</div>
         </div>
         
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-size:0.65rem; color:var(--text-muted); font-weight:bold; text-transform:uppercase;">Filtro:</span>
+            <input type="date" id="filtroDesde" class="nav-select" onchange="actualizarDashboard()">
+            <input type="date" id="filtroHasta" class="nav-select" onchange="actualizarDashboard()">
+            <button class="preset-btn" onclick="document.getElementById('filtroDesde').value=''; document.getElementById('filtroHasta').value=''; actualizarDashboard();">⟳ Reset</button>
+        </div>
+        
         <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap; justify-content: flex-end;">
-            <div class="time-nav-presets">
-                <button class="preset-btn" onclick="setCicloPreset('anterior')" id="btnPresetAnterior">⏮️ ANTERIOR</button>
-                <button class="preset-btn preset-active" onclick="setCicloPreset('actual')" id="btnPresetActual">▶️ ACTUAL</button>
-            </div>
-            <div style="width: 1px; height: 25px; background: var(--border-color); display: block;" class="hide-mobile"></div>
             <div class="system-btns" style="border-bottom: none; padding-bottom: 0;">
                 <button class="btn-sys" onclick="toggleTheme()">☀️/🌙</button>
                 <button class="btn-sys" onclick="triggerSync()">🔄 SYNC</button>
@@ -184,16 +186,13 @@ input[type="date"]::-webkit-calendar-picker-indicator, input[type="datetime-loca
             </div>
             
             <div id="charts-grid-container">
-                
                 <div class="chart-box" style="padding-bottom: 25px;">
                     <div class="bd-overlay-kpis">
                         <div class="bd-badge">TRAMO: <span id="txtGastoTramo" style="color:var(--color-fuga)">$0</span></div>
-                        <h5 style="margin:0; position:absolute; width:100%; text-align:center;">BURN-DOWN</h5>
+                        <h5 style="margin:0; position:absolute; width:100%; text-align:center; text-shadow: 0px 2px 4px rgba(0,0,0,0.9);">BURN-DOWN</h5>
                         <div class="bd-badge">PROM: <span id="txtPromedioZoom" style="color:#ff9800">$0</span></div>
                     </div>
-                    
-                    <div class="canvas-container" style="margin-top: 15px;"><canvas id="chartBurnDown"></canvas></div>
-                    
+                    <div class="canvas-container"><canvas id="chartBurnDown"></canvas></div>
                     <div class="bd-overlay-controls">
                         <input type="range" id="sliderIn" min="0" max="30" value="0" style="flex:1; margin:0;" oninput="hacerZoomGrafico(this.value, document.getElementById('sliderFin').value)">
                         <input type="range" id="sliderFin" min="0" max="30" value="30" style="flex:1; margin:0;" oninput="hacerZoomGrafico(document.getElementById('sliderIn').value, this.value)">
@@ -202,13 +201,17 @@ input[type="date"]::-webkit-calendar-picker-indicator, input[type="datetime-loca
 
                 <div class="chart-box"><h5>Pulso Variable (7 Días)</h5><div class="canvas-container"><canvas id="chartDiario"></canvas></div></div>
                 <div class="chart-box"><h5>Top Fugas V30</h5><div class="canvas-container"><canvas id="chartPareto"></canvas></div></div>
-                <div class="chart-box"><h5>Perfil de Consumo</h5><div class="canvas-container"><canvas id="chartRadar"></canvas></div></div>
+                
+                <div class="chart-box" style="border-color:var(--color-ingresos); justify-content:center; align-items:center; background:rgba(31, 111, 235, 0.05);">
+                    <h5 style="color:var(--color-ingresos); font-size:0.9rem;">MÓDULO TARJETAS</h5>
+                    <span style="font-size:0.6rem; color:var(--text-muted); text-align:center;">Próxima Fase:<br>Control de Cuotas</span>
+                </div>
             </div>
         </div>
 
         <div class="right-col">
             <div class="sidebar-panel">
-                <h4 style="color:var(--color-saldo); margin:0; font-size:0.85rem; text-transform:uppercase; margin-bottom:10px;">REGISTRO MANUAL</h4>
+                <h4 style="color:var(--color-ingresos); margin:0; font-size:0.85rem; text-transform:uppercase; margin-bottom:10px;">REGISTRO MANUAL</h4>
                 <input type="hidden" id="editId">
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: -5px;">
                     <div class="form-group"><label>Fecha</label><input type="datetime-local" id="inputFecha"></div>
@@ -222,8 +225,15 @@ input[type="date"]::-webkit-calendar-picker-indicator, input[type="datetime-loca
                         </select>
                     </div>
                 </div>
-                <div class="form-group"><label>Categoría V31.4</label>
-                    <select id="inputCategoria"></select>
+                <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 10px;">
+                    <div class="form-group"><label>Categoría V31.4</label><select id="inputCategoria"></select></div>
+                    <div class="form-group"><label>% Fuga</label>
+                        <select id="inputFuga">
+                            <option value="100">100%</option><option value="90">90%</option><option value="80">80%</option><option value="70">70%</option><option value="60">60%</option>
+                            <option value="50">50%</option><option value="40">40%</option><option value="30">30%</option><option value="20">20%</option><option value="10">10%</option>
+                            <option value="0" selected>0%</option>
+                        </select>
+                    </div>
                 </div>
                 <div style="display: grid; grid-template-columns: 1fr 110px; gap: 10px;">
                     <div class="form-group"><label>Descripción</label><input type="text" id="inputNombre"></div>
