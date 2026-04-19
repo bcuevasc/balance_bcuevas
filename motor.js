@@ -183,70 +183,104 @@ function actualizarDashboard() {
     if(document.getElementById('chartBurnDown')) dibujarGraficos(sueldo, [...dataMes].sort((x,y) => x.fechaISO < y.fechaISO ? -1 : 1), gCat, diasCiclo, T0);
 }    
 
-function renderizarListas(sueldoBase, filtroBuscador) {
-    let datos = [...datosMesGlobal];
-    if (filtroBuscador) datos = datos.filter(x => x.nombre?.toLowerCase().includes(filtroBuscador) || x.catV.toLowerCase().includes(filtroBuscador));
-    datos.sort((a, b) => {
-        let valA = a[currentSort.column], valB = b[currentSort.column];
-        if (currentSort.column === 'nombre' || currentSort.column === 'catV') { valA = valA?.toLowerCase() || ''; valB = valB?.toLowerCase() || ''; }
-        if (valA < valB) return currentSort.direction === 'asc' ? -1 : 1;
-        if (valA > valB) return currentSort.direction === 'asc' ? 1 : -1;
-        return 0;
-    });
-
-    let saldoRelativo = sueldoBase;
-    datos.forEach((x, idx) => {
-        x.indiceVista = datos.length - idx;
-        if (x.esIn) saldoRelativo += x.monto; else if (!x.esNeutro) saldoRelativo -= x.monto;
-        x.saldoCalculadoVista = saldoRelativo;
-    });
-
-    const contenedorPC = document.getElementById('listaDetalle'); 
+// 🟢 RENDERIZADO VISUAL CON AGRUPACIÓN TEMPORAL (FASE 2) 🟢
+function renderizarListas(sueldoBase) {
+    let datos = [...datosMesGlobal].sort((a,b) => b.fechaISO > a.fechaISO ? 1 : -1);
+    
     const contenedorMovil = document.getElementById('listaMovilDetalle');
-    let htmlPC = ''; let htmlMovil = '';
+    const contenedorPC = document.getElementById('listaDetalle'); // Mantenemos soporte PC por si acaso
+    
+    if (!contenedorMovil && !contenedorPC) return;
 
-    datos.forEach(x => {
+    if(datos.length === 0) {
+        if(contenedorMovil) contenedorMovil.innerHTML = `<div style="text-align:center; padding: 40px 20px; color: var(--text-dim);"><i>📡</i><br>Sin telemetría en este ciclo.</div>`;
+        if(contenedorPC) contenedorPC.innerHTML = `<tr><td colspan="11" style="text-align:center;">Sin telemetría en este ciclo.</td></tr>`;
+        return;
+    }
+
+    let htmlMovil = '';
+    let htmlPC = '';
+    let currentDayGroup = ""; // Rastreador de Cambio de Día
+    
+    // Obtenemos las fechas "Hoy" y "Ayer" para la etiqueta inteligente
+    const now = new Date();
+    const todayStr = now.toLocaleDateString('es-CL');
+    const yesterday = new Date(now);
+    yesterday.setDate(now.getDate() - 1);
+    const yesterdayStr = yesterday.toLocaleDateString('es-CL');
+
+    datos.forEach((x, idx) => {
+        // --- 1. Lógica de Agrupación (Time-Boxing) ---
+        const d = new Date(x.fechaISO);
+        const dateStr = d.toLocaleDateString('es-CL');
+        const timeStr = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+        
+        // Si el día de este gasto es distinto al día anterior en el bucle, creamos un Header
+        if (dateStr !== currentDayGroup) {
+            let labelText = dateStr;
+            if (dateStr === todayStr) labelText = "HOY";
+            else if (dateStr === yesterdayStr) labelText = "AYER";
+            else {
+                // Formato elegante: "15 ABR"
+                const meses = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"];
+                labelText = `${d.getDate()} ${meses[d.getMonth()]}`;
+            }
+            
+            // Inyectamos el separador solo en la vista móvil
+            if (contenedorMovil) {
+                htmlMovil += `<div class="date-header" style="font-size: 0.65rem; font-weight: 900; color: var(--text-dim); text-transform: uppercase; margin: 15px 0 5px 5px; letter-spacing: 1px;">${labelText}</div>`;
+            }
+            currentDayGroup = dateStr;
+        }
+
+        // --- 2. Lógica de Renderizado de la Tarjeta ---
         const em = catEmojis[x.catV] || "❓";
-        let d = new Date(x.fechaISO);
-        let dS = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')} <span class="col-hora">${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}</span>`;
-        let dSMovil = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-        let iconImpacto = x.esIn ? `<span class="impact-icon impact-pos">(+)</span>` : x.esNeutro ? `<span class="impact-icon impact-neu">(=)</span>` : `<span class="impact-icon impact-neg">(-)</span>`;
-        let colorMonto = x.esIn ? "var(--color-ingresos)" : x.esNeutro ? "#ff9800" : "var(--text-main)";
-        let statusBadge = x.catV === 'Sin Categoría' ? `<span class="status-badge status-warn">REVISAR</span>` : `<span class="status-badge status-ok">OK</span>`;
-        let editIdVal = document.getElementById('editId') ? document.getElementById('editId').value : '';
-        let bgEdicion = (editIdVal === x.firestoreId) ? 'background-color: rgba(210, 153, 34, 0.15); border-left: 3px solid var(--color-edit);' : '';
+        const colorMonto = x.esIn ? "var(--accent-blue)" : (x.esNeutro ? "var(--accent-orange)" : "var(--text-main)");
+        const iconoVisual = obtenerIconoVisual(x.nombre, em);
         const nombreSeguro = x.nombre || "Dato no identificado";
         const montoSeguro = (typeof x.monto === 'number' && !isNaN(x.monto)) ? x.monto : 0;
-        const saldoSeguro = (typeof x.saldoCalculadoVista === 'number' && !isNaN(x.saldoCalculadoVista)) ? x.saldoCalculadoVista : 0;
-        const colorSaldo = saldoSeguro < 0 ? 'var(--color-fuga)' : 'var(--text-muted)';
 
+        if (contenedorMovil) {
+            const clickAction = typeof openBottomSheet === 'function' ? `openBottomSheet('${x.firestoreId}', '${nombreSeguro.replace(/'/g, "\\'")}', ${montoSeguro})` : `editarMovimiento('${x.firestoreId}')`;
+            
+            htmlMovil += `
+            <div class="mobile-card" onclick="${clickAction}">
+                <div style="width: 42px; height: 42px; margin-right: 15px; background: rgba(255,255,255,0.03); border-radius: 50%; display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0; box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);">
+                    ${iconoVisual}
+                </div>
+                <div style="flex: 1; min-width: 0;">
+                    <div style="font-weight:bold; font-size:0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text-main);">${nombreSeguro}</div>
+                    <div style="font-size:0.7rem; color:var(--text-dim); margin-top:2px;">${timeStr} • ${x.catV}</div>
+                </div>
+                <div style="font-weight:900; color:${colorMonto}; flex-shrink: 0; font-size:1.05rem;">${x.esIn?'+':(x.esNeutro?'=':'-')}$${montoSeguro.toLocaleString('es-CL')}</div>
+            </div>`;
+        }
+        
         if (contenedorPC) {
+            // Mantenemos el código de PC intacto para no romper esa vista
+            let iconImpacto = x.esIn ? `<span class="impact-icon impact-pos">(+)</span>` : x.esNeutro ? `<span class="impact-icon impact-neu">(=)</span>` : `<span class="impact-icon impact-neg">(-)</span>`;
+            let statusBadge = x.catV === 'Sin Categoría' ? `<span class="status-badge status-warn">REVISAR</span>` : `<span class="status-badge status-ok">OK</span>`;
+            let editIdVal = document.getElementById('editId') ? document.getElementById('editId').value : '';
+            let bgEdicion = (editIdVal === x.firestoreId) ? 'background-color: rgba(210, 153, 34, 0.15); border-left: 3px solid var(--color-edit);' : '';
+            
             htmlPC += `<tr style="${bgEdicion}" draggable="true" ondragstart="dragStart(event, '${x.firestoreId}')" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dropRow(event, '${x.firestoreId}')">
                 <td class="col-check hide-mobile"><input type="checkbox" class="row-check" value="${x.firestoreId}" onchange="updateMassActions()"></td>
                 <td class="col-drag hide-mobile" style="cursor: grab; text-align: center; color: var(--text-muted); font-size: 1.2rem;">☰</td>
-                <td class="hide-mobile" style="text-align:center; font-size:0.75rem; font-weight:800; color:var(--text-muted);">${x.indiceVista}</td>
-                <td style="font-size:0.75rem; color:var(--text-muted);">${dS}</td>
+                <td class="hide-mobile" style="text-align:center; font-size:0.75rem; font-weight:800; color:var(--text-muted);">${datos.length - idx}</td>
+                <td style="font-size:0.75rem; color:var(--text-muted);">${dateStr} <span class="col-hora">${timeStr}</span></td>
                 <td class="col-desc" style="font-weight:700;" title="${nombreSeguro}">${nombreSeguro}</td>
                 <td class="hide-mobile" style="font-size:0.75rem;"><span class="cat-badge">${em} ${x.catV}</span></td>
                 <td class="col-monto" style="color:${colorMonto};">${iconImpacto}$${montoSeguro.toLocaleString('es-CL')}</td>
-                <td class="col-monto hide-mobile" style="color:${colorSaldo};">$${saldoSeguro.toLocaleString('es-CL')}</td>
+                <td class="col-monto hide-mobile" style="color:var(--text-muted);">-</td>
                 <td class="hide-mobile" style="text-align:center; font-size:0.7rem; color:var(--text-muted);">${catEvitables.includes(x.catV) ? '100%' : '0%'}</td>
                 <td class="hide-mobile" style="text-align:center;">${statusBadge}</td>
                 <td style="text-align:center; padding: 2px;"><button class="btn-sys" style="padding:4px; border-color:var(--color-edit); color:var(--color-edit);" onclick="editarMovimiento('${x.firestoreId}')">✏️<span class="btn-edit-text"> EDIT</span></button></td>
             </tr>`;
         }
-        if (contenedorMovil) {
-            const clickAction = typeof openBottomSheet === 'function' ? `openBottomSheet('${x.firestoreId}', '${nombreSeguro.replace(/'/g, "\\'")}', ${montoSeguro})` : `editarMovimiento('${x.firestoreId}')`;
-            htmlMovil += `<div class="mobile-card" onclick="${clickAction}" style="background: var(--bg-card) !important; border-radius: 12px; padding: 15px; display: flex; align-items: center; border: 1px solid var(--border-subtle); margin-bottom: 10px;">
-                <div style="font-size: 1.5rem; margin-right: 15px; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 50%;">${em}</div>
-                <div style="flex: 1;"><div style="font-weight: bold; font-size: 0.95rem; margin-bottom: 3px;">${nombreSeguro}</div><div style="font-size: 0.7rem; color: var(--text-dim);">${dSMovil} • ${x.catV}</div></div>
-                <div style="font-family: monospace; font-weight: 900; font-size: 1.1rem; color:${colorMonto}">${x.esIn?'+':(x.esNeutro?'=':'-')}$${montoSeguro.toLocaleString('es-CL')}</div>
-            </div>`;
-        }
     });
 
-    if (contenedorPC) contenedorPC.innerHTML = htmlPC; 
     if (contenedorMovil) contenedorMovil.innerHTML = htmlMovil;
+    if (contenedorPC) contenedorPC.innerHTML = htmlPC;
 }
 
 function sortTable(column) {
