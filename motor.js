@@ -480,6 +480,7 @@ function dropRow(e, targetId) {
 document.addEventListener('dragend', (e) => { if(e.target.tagName === 'TR') e.target.style.opacity = '1'; });
 
 // 🟢 FUNCIÓN DE CORTES DE ZOOM DINÁMICO Y ESTADÍSTICA V6 🟢
+// 🟢 FUNCIÓN DE CORTES DE ZOOM DINÁMICO Y ESTADÍSTICA (FASE 3) 🟢
 window.hacerZoomGrafico = function(diaIn, diaFin) {
     if(!chartBD || !bdDataMaster) return;
     let inicio = parseInt(diaIn); let fin = parseInt(diaFin);
@@ -489,12 +490,12 @@ window.hacerZoomGrafico = function(diaIn, diaFin) {
     let slicedIdeal = bdDataMaster.ideal.slice(inicio, fin + 1);
     let slicedLabels = bdDataMaster.labels.slice(inicio, fin + 1);
     
-    // 1. REAJUSTE DE EJE Y (Ignorando la línea ideal)
+    // 1. REAJUSTE DE EJE Y (Con techo estricto al Sueldo)
     let validActuals = slicedActual.filter(v => v !== null);
     if(validActuals.length > 0) {
         let maxReal = Math.max(...validActuals);
-        // Respetamos el techo del Sueldo, pero si el máximo real baja mucho, enfocamos.
-        const sueldo = parseInt(document.getElementById('inputSueldo').value.replace(/\./g,'')) || 0;
+        const inputSueldo = document.getElementById('inputSueldo');
+        const sueldo = inputSueldo ? (parseInt(inputSueldo.value.replace(/\./g,'')) || 0) : SUELDO_BASE_DEFAULT;
         chartBD.options.scales.y.max = maxReal > (sueldo * 0.8) ? sueldo : (maxReal > 0 ? maxReal * 1.1 : 0);
     }
 
@@ -503,31 +504,24 @@ window.hacerZoomGrafico = function(diaIn, diaFin) {
     chartBD.data.datasets[1].data = slicedIdeal;
     chartBD.update();
 
-    // 2. CÁLCULO ESTADÍSTICO (Promedio y Día de Ruina)
-    let slicedDaily = bdDataMaster.daily.slice(inicio + 1, fin + 1); // +1 porque el índice 0 es "INI"
-    let gastoTotal = 0;
-    slicedDaily.forEach(v => { if(v < 0) gastoTotal += Math.abs(v); }); // Sumamos solo los gastos del tramo
+    // 2. CÁLCULO ESTADÍSTICO (Gasto Total del Tramo y Promedio Diario)
+    let slicedDaily = bdDataMaster.daily.slice(inicio + 1, fin + 1); 
+    let gastoTotalTramo = 0;
+    
+    // Sumamos todos los gastos (valores negativos en el array daily)
+    slicedDaily.forEach(v => { 
+        if(v < 0) gastoTotalTramo += Math.abs(v); 
+    }); 
     
     let dias = (fin - inicio) || 1;
-    let promDiario = Math.round(gastoTotal / dias);
+    let promDiario = Math.round(gastoTotalTramo / dias);
     
     // Inyección en DOM
+    let domGasto = document.getElementById('txtGastoTramo');
+    if(domGasto) domGasto.innerText = '$' + gastoTotalTramo.toLocaleString('es-CL');
+    
     let domProm = document.getElementById('txtPromedioZoom');
     if(domProm) domProm.innerText = '$' + promDiario.toLocaleString('es-CL');
-    
-    let domRuina = document.getElementById('txtRuinaZoom');
-    if(domRuina) {
-        let saldoActualText = document.getElementById('txtSaldo').innerText;
-        let saldoVal = parseInt(saldoActualText.replace(/\D/g,'')) || 0;
-        
-        if (promDiario > 0 && saldoVal > 0) {
-            domRuina.innerText = Math.floor(saldoVal / promDiario);
-        } else if (saldoVal <= 0) {
-            domRuina.innerText = "0";
-        } else {
-            domRuina.innerText = "∞";
-        }
-    }
 };
 
 // 🟢 RUTINAS GLOBALES DE NUBE (TELEGRAM & SYNC) 🟢
