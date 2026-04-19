@@ -70,7 +70,7 @@ const auth = firebase.auth();
 
 let listaMovimientos = [];
 let datosMesGlobal = []; 
-let chartBD = null, chartP = null, chartDiario = null;
+let chartBD = null, chartP = null, chartDiario = null, chartRadar = null;
 let currentSort = { column: 'fechaISO', direction: 'desc' }; 
 let modoEdicionActivo = false;
 let sueldosHistoricos = {}; 
@@ -368,15 +368,19 @@ function massDelete() { const ids = Array.from(document.querySelectorAll('.row-c
 function massCategorize() { const ids = Array.from(document.querySelectorAll('.row-check:not(#checkAll):checked')).map(cb => cb.value); const cat = document.getElementById('massCategorySelect').value; if(ids.length === 0 || !cat || !confirm(`¿Categorizar como "${cat}"?`)) return; const btn = document.querySelector('button[onclick="massCategorize()"]'); const orig = btn.innerHTML; btn.innerHTML = '⏳'; Promise.all(ids.map(id => db.collection("movimientos").doc(id).update({categoria: cat}))).then(() => { document.getElementById('massActionsBar').style.display = 'none'; document.getElementById('checkAll').checked = false; document.getElementById('massCategorySelect').value = ''; btn.innerHTML = orig; }); }
 
 function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0) {
-    if(chartBD) chartBD.destroy(); if(chartP) chartP.destroy(); if(chartDiario) chartDiario.destroy();
+    // 1. Destruir gráficos anteriores para evitar overlaps
+    if(chartBD) chartBD.destroy(); if(chartP) chartP.destroy(); 
+    if(chartDiario) chartDiario.destroy(); if(chartRadar) chartRadar.destroy();
+    
     const cT = getComputedStyle(document.body).getPropertyValue('--text-main').trim() || "#f0f6fc"; 
     const cG = getComputedStyle(document.body).getPropertyValue('--border-color').trim() || "#30363d"; 
     const cF = getComputedStyle(document.body).getPropertyValue('--color-fuga').trim() || "#ff5252";
     
     let daily = Array(diasCiclo + 1).fill(0);
-    let dailyGastos = Array(diasCiclo + 1).fill(0); // 🟢 Nuevo array solo para los gastos físicos
+    let dailyGastosVar = Array(diasCiclo + 1).fill(0); // Array purificado (Sin Fijos)
     let msT0 = T0.getTime();
 
+    // 2. Procesamiento de la Matriz de Tiempo
     chronData.forEach(m => {
         let d = new Date(m.fechaISO);
         let diff = Math.floor((d.getTime() - msT0) / 86400000) + 1;
@@ -384,7 +388,8 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0) {
             if(m.esIn) daily[diff] += m.monto; 
             else if(!m.esNeutro) { 
                 daily[diff] -= m.monto; 
-                dailyGastos[diff] += m.monto; // Guardamos el gasto puro para las barras
+                // Filtro Arquitectónico: Solo mapeamos al diario si NO es gasto fijo
+                if(m.tipo !== 'Gasto Fijo') dailyGastosVar[diff] += m.monto; 
             } 
         }
     });
@@ -402,9 +407,9 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0) {
         else { labelsX.push(dia); colorLabelsX.push(cT); colorGridX.push(cG); }
     }
 
-    // 🟢 Añadimos dailyGastos a la Master 🟢
-    bdDataMaster = { labels: [...labelsX], actual: [...actual], ideal: [...ideal], daily: [...daily], dailyGastos: [...dailyGastos], colorsX: [...colorLabelsX], colorsG: [...colorGridX] };
+    bdDataMaster = { labels: [...labelsX], actual: [...actual], ideal: [...ideal], daily: [...daily], dailyGastosVar: [...dailyGastosVar], colorsX: [...colorLabelsX], colorsG: [...colorGridX] };
 
+    // 3. RENDER: BURN-DOWN
     chartBD = new Chart(document.getElementById('chartBurnDown'), {
         type: 'line', 
         data: { labels: labelsX, datasets: [
@@ -415,40 +420,58 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0) {
             maintainAspectRatio:false, plugins:{legend:{display:false}}, 
             scales:{ 
                 x:{ticks:{color: colorLabelsX, maxRotation: 45, minRotation: 45, font: (c) => ({ weight: colorLabelsX[c.index] === '#ff9800' ? '900' : 'bold', size: 10 }) }, grid:{color: colorGridX, drawBorder:false, lineWidth: (c) => colorGridX[c.index] === '#ff9800' ? 2 : 1 } }, 
-                y:{
-                    max: sueldo,
-                    ticks:{color:cT, callback:v=>'$'+Math.round(v/1000)+'k'}, grid:{color: c => c.tick.value === 0 ? cF : cG}
-                } 
+                y:{ max: sueldo, ticks:{color:cT, callback:v=>'$'+Math.round(v/1000)+'k'}, grid:{color: c => c.tick.value === 0 ? cF : cG} } 
             } 
         }
     });
 
+    const aliasMap = { "Gastos Fijos (Búnker)": "Fijos", "Mantenimiento Hardware (Salud)": "Salud", "Alimentación & Supermercado": "Super", "Transferencia Propia / Ahorro": "Ahorro", "Ocio & Experiencias": "Ocio", "Transporte & Logística": "Transp", "Dopamina & Antojos": "Dopa", "Transferencia Recibida": "Ingreso" };
+
+    // 4. RENDER: PARETO
     const sorted = Object.entries(cats).sort((a,b)=>b[1]-a[1]).slice(0,8); const totalTop8 = sorted.reduce((sum, val) => sum + val[1], 0) || 1;
     let acumulado = 0; const dataAcumulada = sorted.map(c => { acumulado += c[1]; return (acumulado / totalTop8) * 100; });
 
     chartP = new Chart(document.getElementById('chartPareto'), {
         type: 'bar', 
-        data: { labels: sorted.map(c => c[0].split(' ')[0]), datasets: [
+        data: { labels: sorted.map(c => aliasMap[c[0]] || c[0].split(' ')[0]), datasets: [
             { type: 'line', label: '% Acumulado', data: dataAcumulada, borderColor: '#ff9800', borderWidth: 2, borderDash: [5, 5], pointBackgroundColor: '#ff9800', pointRadius: 3, fill: false, yAxisID: 'y1' },
             { type: 'bar', label: 'Gasto', data: sorted.map(c => c[1]), backgroundColor: sorted.map(c => c[0] === 'Dopamina & Antojos' ? '#ff5252' : '#1f6feb'), borderRadius: 4, yAxisID: 'y' }
         ]},
         options: { maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{ x:{ticks:{color:cT, font:{size:9}}}, y:{ type: 'linear', position: 'left', ticks:{color:cT, callback:v=>'$'+Math.round(v/1000)+'k'} }, y1:{ type: 'linear', position: 'right', min: 0, max: 100, grid: { drawOnChartArea: false }, ticks:{color:'#ff9800', callback:v=>Math.round(v)+'%', font:{weight:'bold'}} } } }
     });
 
-    // 🟢 MÓDULO 2: RENDERIZAR GRÁFICO DIARIO (Si el canvas existe) 🟢
+    // 5. RENDER: PULSO DIARIO VARIABLE (SOLO PC)
     const ctxDiario = document.getElementById('chartDiario');
     if(ctxDiario) {
-        // Quitamos el "INI" (índice 0) para que cuadre con los días reales
         chartDiario = new Chart(ctxDiario, {
             type: 'bar',
-            data: { labels: labelsX.slice(1), datasets: [{ label: 'Gasto Físico', data: dailyGastos.slice(1), backgroundColor: '#da3633', borderRadius: 4 }] },
-            options: { 
-                maintainAspectRatio: false, plugins: { legend: { display: false } }, 
-                scales: { 
-                    x: { ticks: { color: colorLabelsX.slice(1), font:{size:9} }, grid: { display:false } }, 
-                    y: { ticks: { color: cT, callback: v => '$' + Math.round(v / 1000) + 'k' }, grid: { color: cG } } 
-                } 
-            }
+            data: { labels: labelsX.slice(1), datasets: [{ label: 'Gasto Físico', data: dailyGastosVar.slice(1), backgroundColor: '#da3633', borderRadius: 4 }] },
+            options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: colorLabelsX.slice(1), font:{size:9} }, grid: { display:false } }, y: { ticks: { color: cT, callback: v => '$' + Math.round(v / 1000) + 'k' }, grid: { color: cG } } } }
+        });
+    }
+
+    // 6. RENDER: RADAR DE COMPORTAMIENTO (SOLO PC)
+    const ctxRadar = document.getElementById('chartRadar');
+    if(ctxRadar) {
+        // Filtramos las variables que deformarían el radar
+        let radarCats = {...cats};
+        delete radarCats["Gastos Fijos (Búnker)"];
+        delete radarCats["Transferencia Propia / Ahorro"];
+        delete radarCats["Transferencia Recibida"];
+        delete radarCats["Ingreso Adicional"];
+        delete radarCats["Sin Categoría"];
+        delete radarCats["Ruido de Sistema"];
+
+        let rSorted = Object.entries(radarCats).sort((a,b)=>b[1]-a[1]).slice(0,5); // Top 5
+        if(rSorted.length < 3) rSorted.push(["Sin Datos", 0], ["Sin Datos 2", 0]); // Mínimo 3 vértices
+        
+        let rLabels = rSorted.map(c => aliasMap[c[0]] || c[0].split(' ')[0]);
+        let rData = rSorted.map(c => c[1]);
+
+        chartRadar = new Chart(ctxRadar, {
+            type: 'radar',
+            data: { labels: rLabels, datasets: [{ label: 'Perfil de Gasto', data: rData, backgroundColor: 'rgba(31, 111, 235, 0.2)', borderColor: '#1f6feb', pointBackgroundColor: '#ff9800', borderWidth: 2 }] },
+            options: { maintainAspectRatio: false, scales: { r: { ticks: { display: false }, grid: { color: cG }, angleLines: { color: cG }, pointLabels: { color: cT, font: {size: 9, weight: 'bold'} } } }, plugins: { legend: { display: false } } }
         });
     }
 }
@@ -519,7 +542,6 @@ window.hacerZoomGrafico = function(diaIn, diaFin) {
         let maxReal = Math.max(...validActuals);
         const inputSueldo = document.getElementById('inputSueldo');
         const sueldo = inputSueldo ? (parseInt(inputSueldo.value.replace(/\./g,'')) || 0) : SUELDO_BASE_DEFAULT;
-        
         if (maxReal <= 0) {
             chartBD.options.scales.y.max = sueldo > 0 ? sueldo : 100000; 
         } else {
@@ -528,15 +550,12 @@ window.hacerZoomGrafico = function(diaIn, diaFin) {
         }
     }
 
-    chartBD.data.labels = slicedLabels;
-    chartBD.data.datasets[0].data = slicedActual;
-    chartBD.data.datasets[1].data = slicedIdeal;
-    chartBD.update();
+    chartBD.data.labels = slicedLabels; chartBD.data.datasets[0].data = slicedActual; chartBD.data.datasets[1].data = slicedIdeal; chartBD.update();
 
-    // 🟢 MÓDULO 2: APLICAR ZOOM AL GRÁFICO DIARIO 🟢
+    // Zoom al Gráfico Diario
     if(chartDiario) {
-        let slicedDiario = bdDataMaster.dailyGastos.slice(inicio + 1, fin + 1);
-        chartDiario.data.labels = slicedLabels.slice(1); // Desfase por el "INI"
+        let slicedDiario = bdDataMaster.dailyGastosVar.slice(inicio + 1, fin + 1);
+        chartDiario.data.labels = slicedLabels.slice(1);
         chartDiario.data.datasets[0].data = slicedDiario;
         chartDiario.update();
     }
@@ -547,10 +566,8 @@ window.hacerZoomGrafico = function(diaIn, diaFin) {
     let dias = (fin - inicio) || 1;
     let promDiario = Math.round(gastoTotalTramo / dias);
     
-    let domGasto = document.getElementById('txtGastoTramo');
-    if(domGasto) domGasto.innerText = '$' + gastoTotalTramo.toLocaleString('es-CL');
-    let domProm = document.getElementById('txtPromedioZoom');
-    if(domProm) domProm.innerText = '$' + promDiario.toLocaleString('es-CL');
+    let domGasto = document.getElementById('txtGastoTramo'); if(domGasto) domGasto.innerText = '$' + gastoTotalTramo.toLocaleString('es-CL');
+    let domProm = document.getElementById('txtPromedioZoom'); if(domProm) domProm.innerText = '$' + promDiario.toLocaleString('es-CL');
 };
 
 // 🟢 RUTINAS GLOBALES DE NUBE (TELEGRAM & SYNC) 🟢
