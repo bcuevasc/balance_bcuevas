@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Bunker Digital SCADA v8.2</title>
+    <title>Bunker Digital SCADA v8.3</title>
     
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -43,9 +43,10 @@ h2 { color: var(--color-ingresos); margin: 0; font-size: 1.2rem; font-weight: 90
 .kpi-proyectado { border: none; background: var(--color-proyectado); color: #fff; }
 .kpi-proyectado h4, .kpi-proyectado .value { color: #fff !important; font-weight: 900; }
 
+/* 🟢 FIX CSS: TABLA CONTROLADA 🟢 */
 .master-layout { display: grid; grid-template-columns: 1fr 340px; gap: 12px; margin-top: 5px; flex-grow: 1; min-height: 0; }
-.left-col { display: flex; flex-direction: column; gap: 10px; min-height: 0; height: 100%; overflow: hidden; }
-.grid-main-wrapper { background: var(--bg-panel); border-radius: 8px; border: 1px solid var(--border-color); padding: 10px; display: flex; flex-direction: column; flex: 1; min-height: 0; }
+.left-col { display: flex; flex-direction: column; gap: 10px; flex: 1; min-height: 0; overflow: hidden; }
+.grid-main-wrapper { background: var(--bg-panel); border-radius: 8px; border: 1px solid var(--border-color); padding: 10px; display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: hidden; transition: border-color 0.2s, box-shadow 0.2s; }
 .telemetry-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; gap: 10px; }
 .grid-container { flex: 1; min-height: 0; overflow-x: auto; overflow-y: auto; background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 6px; scrollbar-width: none; -ms-overflow-style: none;  }
 .grid-container::-webkit-scrollbar { display: none; }
@@ -68,7 +69,6 @@ h2 { color: var(--color-ingresos); margin: 0; font-size: 1.2rem; font-weight: 90
 .impact-neg { color: var(--color-fuga); }
 .impact-neu { color: #ff9800; }
 
-/* 🟢 GRILLA INFERIOR 40/20/20/20 🟢 */
 #charts-grid-container { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 15px; flex-shrink: 0; }
 .chart-box { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; height: 240px; display: flex; flex-direction: column; position: relative; }
 .chart-box h5 { margin: 0 0 5px 0; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; text-align: center; font-weight: 800; z-index: 10;}
@@ -78,7 +78,7 @@ h2 { color: var(--color-ingresos); margin: 0; font-size: 1.2rem; font-weight: 90
 .bd-badge { padding: 2px 5px; font-size: 0.65rem; font-weight: bold; color: var(--text-main); text-shadow: 0px 2px 4px rgba(0,0,0,0.9); }
 
 .right-col { display: flex; flex-direction: column; gap: 10px; height: 100%; }
-.sidebar-panel { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; }
+.sidebar-panel { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; transition: border-color 0.2s, box-shadow 0.2s;}
 .form-group { margin-bottom: 8px; width: 100%; position: relative; }
 .form-group label { display: block; font-size: 0.6rem; font-weight: 800; color: var(--text-muted); margin-bottom: 2px; text-transform: uppercase; }
 .custom-select, .form-group input, .form-group select { width: 100%; border: 1px solid var(--border-color); border-radius: 4px; background-color: var(--input-bg); color: var(--text-main); outline: none; padding: 6px 8px; font-size: 0.8rem; height: 32px; }
@@ -93,7 +93,6 @@ input[type="date"]::-webkit-calendar-picker-indicator, input[type="datetime-loca
 .bar-fill { height: 100%; width: 0%; transition: all 0.5s ease; }
 .floating-mass-actions { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #1c2128; border: 1px solid var(--color-edit); border-radius: 50px; padding: 8px 20px; display: flex; align-items: center; justify-content: space-between; gap: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); z-index: 9999; }
 
-/* Navegación Táctica Saldo */
 .btn-nav-mes { background: transparent; border: none; color: rgba(0,0,0,0.4); font-size: 1.2rem; cursor: pointer; padding: 0 8px; outline: none; transition: color 0.2s, transform 0.1s; }
 .btn-nav-mes:hover { color: rgba(0,0,0,0.8); transform: scale(1.1); }
     </style>
@@ -103,7 +102,7 @@ input[type="date"]::-webkit-calendar-picker-indicator, input[type="datetime-loca
 <div id="login-screen">
     <div class="login-box">
         <h2 style="color:var(--color-ingresos); margin-bottom:10px;">BUNKER SCADA</h2>
-        <p style="color:var(--text-muted); font-size:0.8rem;">SISTEMA PRIVADO DE GESTIÓN TÁCTICA V8.2</p>
+        <p style="color:var(--text-muted); font-size:0.8rem;">SISTEMA PRIVADO DE GESTIÓN TÁCTICA V8.3</p>
         <button class="btn-google" onclick="loginWithGoogle()">ENTRAR CON GOOGLE</button>
     </div>
 </div>
@@ -171,7 +170,7 @@ input[type="date"]::-webkit-calendar-picker-indicator, input[type="datetime-loca
     
     <div class="master-layout">
         <div class="left-col">
-            <div class="grid-main-wrapper">
+            <div class="grid-main-wrapper" id="panelMain" ondragover="dragOverPanel(event, 'main')" ondragleave="dragLeavePanel(event, 'main')" ondrop="dropOnPanel(event, 'main')">
                 <div class="telemetry-header">
                     <input type="text" id="inputBuscador" placeholder="🔍 Filtrar tabla (Excluye TC)..." oninput="actualizarDashboard()" style="width:250px; background:var(--input-bg); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px; padding:6px 12px; outline:none; font-size:0.8rem;">
                 </div>
@@ -269,7 +268,7 @@ input[type="date"]::-webkit-calendar-picker-indicator, input[type="datetime-loca
                 </div>
             </div>
 
-            <div class="sidebar-panel" style="flex:1; display:flex; flex-direction:column; border-color:rgba(218, 54, 51, 0.3); background:rgba(218, 54, 51, 0.02); min-height: 200px; overflow:hidden;">
+            <div class="sidebar-panel tc-panel" id="panelTC" style="flex:1; display:flex; flex-direction:column; border-color:rgba(218, 54, 51, 0.3); background:rgba(218, 54, 51, 0.02); min-height: 200px; overflow:hidden;" ondragover="dragOverPanel(event, 'tc')" ondragleave="dragLeavePanel(event, 'tc')" ondrop="dropOnPanel(event, 'tc')">
                 <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-color); padding-bottom:8px; margin-bottom:8px;">
                     <h4 style="color:var(--color-fuga); margin:0; font-size:0.85rem; text-transform:uppercase;">DEUDA TC ACUMULADA</h4>
                     <div style="font-size:1.1rem; font-weight:900; color:var(--color-fuga);">$<span id="txtTotalTC">0</span></div>
