@@ -5,13 +5,39 @@ const BYRON_EMAIL = "bvhcc94@gmail.com";
 const CREDIT_SETPOINT = -300000; 
 const catEvitables = ["Dopamina & Antojos"]; 
 
-const catEmojis = {
-    "Transferencia": "🔄", "Gastos Fijos (Búnker)": "🏠", "Suscripciones": "📱", "Alimentación & Supermercado": "🛒",
-    "Dopamina & Antojos": "🍔", "Ocio & Experiencias": "🎸", "Transporte & Logística": "🚗", 
-    "Mantenimiento Hardware (Salud)": "💊", "Transferencia Propia / Ahorro": "🏦", "Hogar & Búnker": "🛠️",
-    "Red de Apoyo (Familia)": "🫂", "Gasto Tarjeta de Crédito": "💳", "Ingreso Adicional": "💰", 
-    "Transferencia Recibida": "📲", "Ruido de Sistema": "⚙️", "Sin Categoría": "❓"
-};
+// 🟢 FUENTE ÚNICA DE VERDAD: CATEGORÍAS 🟢
+const catMaestras = [
+    { id: "Gastos Fijos (Búnker)", em: "🏠", label: "Gastos Fijos (Búnker)" },
+    { id: "Suscripciones", em: "📱", label: "Suscripciones" },
+    { id: "Alimentación & Supermercado", em: "🛒", label: "Alimentación Base" },
+    { id: "Dopamina & Antojos", em: "🍔", label: "Dopamina & Antojos" },
+    { id: "Ocio & Experiencias", em: "🎸", label: "Ocio & Experiencias" },
+    { id: "Transporte & Logística", em: "🚗", label: "Transporte & Log." },
+    { id: "Mantenimiento Hardware (Salud)", em: "💊", label: "Salud" },
+    { id: "Hogar & Búnker", em: "🛠️", label: "Hogar & Búnker" },
+    { id: "Red de Apoyo (Familia)", em: "🫂", label: "Red de Apoyo" },
+    { id: "Gasto Tarjeta de Crédito", em: "💳", label: "Gasto TC" },
+    { id: "Transferencia Propia / Ahorro", em: "🏦", label: "Transf. Propia (Ahorro)" },
+    { id: "Transferencia Recibida", em: "📲", label: "Transf. Recibida" },
+    { id: "Ingreso Adicional", em: "💰", label: "Ingreso Extra" },
+    { id: "Ruido de Sistema", em: "⚙️", label: "Ruido de Sistema" },
+    { id: "Sin Categoría", em: "❓", label: "Sin Categoría" }
+];
+
+// Reconstructor de Emojis por retrocompatibilidad
+const catEmojis = {};
+catMaestras.forEach(c => catEmojis[c.id] = c.em);
+
+// Inyector Automático en el DOM (Se ejecuta al cargar)
+document.addEventListener("DOMContentLoaded", () => {
+    const optionsHTML = catMaestras.map(c => `<option value="${c.id}">${c.em} ${c.label}</option>`).join('');
+    
+    const selectManual = document.getElementById('inputCategoria');
+    if (selectManual) selectManual.innerHTML = optionsHTML;
+    
+    const selectMass = document.getElementById('massCategorySelect');
+    if (selectMass) selectMass.innerHTML = `<option value="">-- Recategorizar a --</option>` + optionsHTML;
+});
 
 // 🟢 MÓDULO SMART LOGOS 🟢
 const logosComerciales = {
@@ -432,21 +458,17 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0) {
     // 🟢 ALMACENAMOS LA FOTO ORIGINAL PARA EL ZOOM 🟢
     bdDataMaster = { labels: [...labelsX], actual: [...actual], ideal: [...ideal], colorsX: [...colorLabelsX], colorsG: [...colorGridX] };
 
-    chartBD = new Chart(document.getElementById('chartBurnDown'), {
-        type: 'line', 
-        data: { labels: labelsX, datasets: [
-            { label: 'Consumo Real', data: actual, borderColor: '#1f6feb', borderWidth: 3, fill: {target:'origin', above:'rgba(31,111,235,0.05)', below:'rgba(218,54,51,0.2)'}, segment: {borderColor: c => c.p0.parsed.y < 0 ? cF : '#1f6feb'} },
-            { label: 'Gasto Ideal', data: ideal, borderColor: 'rgba(63,185,80,0.3)', borderDash:[5,5], pointRadius:0 }
-        ]},
-        options: { 
-            maintainAspectRatio:false, 
-            plugins:{legend:{display:false}}, 
+    options: { 
+            maintainAspectRatio:false, plugins:{legend:{display:false}}, 
             scales:{ 
                 x:{ticks:{color: colorLabelsX, maxRotation: 45, minRotation: 45, font: (c) => ({ weight: colorLabelsX[c.index] === '#ff9800' ? '900' : 'bold', size: 10 }) }, grid:{color: colorGridX, drawBorder:false, lineWidth: (c) => colorGridX[c.index] === '#ff9800' ? 2 : 1 } }, 
-                y:{ticks:{color:cT, callback:v=>'$'+(v/1000)+'k'}, grid:{color: c => c.tick.value === 0 ? cF : cG}} 
+                y:{
+                    max: sueldo, // 🟢 AQUÍ FIJAMOS EL TECHO AL SUELDO BASE 🟢
+                    ticks:{color:cT, callback:v=>'$'+(v/1000)+'k'}, 
+                    grid:{color: c => c.tick.value === 0 ? cF : cG}
+                } 
             } 
         }
-    });
 
     const sorted = Object.entries(cats).sort((a,b)=>b[1]-a[1]).slice(0,8); const totalTop8 = sorted.reduce((sum, val) => sum + val[1], 0) || 1;
     let acumulado = 0; const dataAcumulada = sorted.map(c => { acumulado += c[1]; return (acumulado / totalTop8) * 100; });
