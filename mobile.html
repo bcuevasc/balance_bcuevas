@@ -124,7 +124,7 @@
         </div>
         
         <div class="form-group">
-            <label>Categoría</label>
+            <label>Categoría V31.4</label>
             <select id="inputCategoria"></select>
         </div>
         
@@ -173,6 +173,13 @@
         document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
         if(element) element.classList.add('active');
         if(tab === 'trend') { setTimeout(() => { if(chartBD) chartBD.resize(); if(chartP) chartP.resize(); }, 10); }
+        
+        // Carga la fecha actual si abres el form
+        if (tab === 'add' && !document.getElementById('editId').value) {
+            let now = new Date(); now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+            document.getElementById('inputFecha').value = now.toISOString().slice(0,16);
+        }
+        
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
     window.switchTab = function(t) { switchTabApp(t === 'list' ? 'dash' : 'add', document.querySelectorAll('.nav-item')[0]); };
