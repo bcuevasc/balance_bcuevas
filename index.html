@@ -71,8 +71,8 @@ h2 { color: var(--color-saldo); margin: 0; font-size: 1.2rem; font-weight: 900; 
 .impact-neg { color: var(--color-fuga); }
 .impact-neu { color: #ff9800; }
 
-#charts-grid-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; flex-shrink: 0; }
-.chart-box { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; height: 25vh; min-height: 180px; display: flex; flex-direction: column; }
+#charts-grid-container { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; flex-shrink: 0; margin-bottom: 20px; }
+.chart-box { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; height: 260px; display: flex; flex-direction: column; }
 .chart-box h5 { margin: 0 0 5px 0; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; text-align: center; font-weight: 800; }
 .canvas-container { position: relative; flex-grow: 1; min-height: 0; }
 
@@ -174,12 +174,10 @@ input[type="date"]::-webkit-calendar-picker-indicator, input[type="datetime-loca
                     </table>
                 </div>
             </div>
-            
             <div id="charts-grid-container">
-                <div class="chart-box" style="height: auto; min-height: 250px;">
+                <div class="chart-box" style="height: 280px;">
                     <h5>Velocidad Consumo (Burn-Down)</h5>
-                    <div class="canvas-container" style="height: 180px;"><canvas id="chartBurnDown"></canvas></div>
-                    
+                    <div class="canvas-container" style="height: 160px;"><canvas id="chartBurnDown"></canvas></div>
                     <div style="padding-top: 10px; margin-top: 5px; border-top: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 5px;">
                         <div style="display:flex; justify-content: space-between; font-size:0.6rem; color:var(--text-muted); font-weight:bold;">
                             <span>INICIO: <span id="valSliderIn">0</span></span><span>FIN: <span id="valSliderFin">30</span></span>
@@ -188,7 +186,6 @@ input[type="date"]::-webkit-calendar-picker-indicator, input[type="datetime-loca
                             <input type="range" id="sliderIn" min="0" max="30" value="0" style="flex:1;" oninput="document.getElementById('valSliderIn').innerText=this.value; hacerZoomGrafico(this.value, document.getElementById('sliderFin').value)">
                             <input type="range" id="sliderFin" min="0" max="30" value="30" style="flex:1;" oninput="document.getElementById('valSliderFin').innerText=this.value; hacerZoomGrafico(document.getElementById('sliderIn').value, this.value)">
                         </div>
-                        
                         <div style="display: flex; gap: 10px; margin-top: 5px;">
                             <div style="flex:1; background: var(--bg-subpanel); padding: 5px; border-radius: 4px; text-align: center;">
                                 <div style="font-size: 0.55rem; color: var(--text-muted); font-weight: 800; text-transform: uppercase;">Gasto Tramo</div>
@@ -201,13 +198,20 @@ input[type="date"]::-webkit-calendar-picker-indicator, input[type="datetime-loca
                         </div>
                     </div>
                 </div>
-                <div class="chart-box">
-                    <h5>Pareto de Gasto V30</h5>
+
+                <div class="chart-box" style="height: 280px;">
+                    <h5>Pulso Variable (Excluye Fijos)</h5>
+                    <div class="canvas-container"><canvas id="chartDiario"></canvas></div>
+                </div>
+
+                <div class="chart-box" style="height: 250px;">
+                    <h5>Pareto de Gasto Top</h5>
                     <div class="canvas-container"><canvas id="chartPareto"></canvas></div>
                 </div>
-                <div class="chart-box">
-                    <h5>Gasto Diario Físico</h5>
-                    <div class="canvas-container"><canvas id="chartDiario"></canvas></div>
+
+                <div class="chart-box" style="height: 250px;">
+                    <h5>Perfil de Consumo Variable</h5>
+                    <div class="canvas-container"><canvas id="chartRadar"></canvas></div>
                 </div>
             </div>
         </div>
