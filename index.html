@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Bunker Digital SCADA v7.0</title>
+    <title>Bunker Digital SCADA v7.6</title>
     
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -26,7 +26,7 @@ h2 { color: var(--color-ingresos); margin: 0; font-size: 1.2rem; font-weight: 90
 .cronos { font-family: 'Courier New', Courier, monospace; font-size: 0.85rem; font-weight: 800; color: var(--text-muted); background: var(--bg-panel); padding: 2px 8px; border-radius: 4px; border: 1px solid var(--border-color); }
 .system-btns { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; justify-content: flex-end; }
 .btn-sys { background: var(--bg-subpanel); color: var(--text-main); border: 1px solid var(--border-color); padding: 6px 10px; border-radius: 6px; cursor: pointer; font-weight: 800; font-size: 0.7rem; text-transform: uppercase; }
-.btn-sys:hover { border-color: var(--color-saldo); }
+.btn-sys:hover { border-color: var(--color-ingresos); color: var(--color-ingresos); }
 .time-navigator-panel { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 8px; padding: 8px 15px; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.2); border-top: 3px solid var(--color-ingresos); }
 .time-nav-controls { display: flex; align-items: center; gap: 12px; }
 .nav-select { background: var(--input-bg); color: var(--text-main); border: 1px solid var(--border-color); padding: 6px 12px; border-radius: 6px; font-weight: 800; text-transform: uppercase; font-size: 0.8rem; outline: none; cursor: pointer; }
@@ -74,12 +74,12 @@ h2 { color: var(--color-ingresos); margin: 0; font-size: 1.2rem; font-weight: 90
 .impact-neu { color: #ff9800; }
 
 /* 🟢 GRILLA INFERIOR 40/20/20/20 Y BURN-DOWN OVERLAY 🟢 */
-#charts-grid-container { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 12px; flex-shrink: 0; }
+#charts-grid-container { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 15px; flex-shrink: 0; }
 .chart-box { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; height: 240px; display: flex; flex-direction: column; position: relative; }
 .chart-box h5 { margin: 0 0 5px 0; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; text-align: center; font-weight: 800; z-index: 10;}
 .canvas-container { position: relative; flex-grow: 1; min-height: 0; width: 100%; height: 100%; }
 
-/* Controles Flotantes Burn-Down (CERO FONDOS NEGROS) */
+/* Clases para superponer controles en el Burn-Down (CERO FONDOS NEGROS) */
 .bd-overlay-controls { position: absolute; bottom: 5px; left: 10px; right: 10px; display: flex; gap: 10px; z-index: 20; }
 .bd-overlay-kpis { position: absolute; top: 10px; width: calc(100% - 24px); display: flex; justify-content: space-between; z-index: 20; pointer-events: none;}
 .bd-badge { padding: 2px 5px; font-size: 0.65rem; font-weight: bold; color: var(--text-main); text-shadow: 0px 2px 4px rgba(0,0,0,0.9); }
@@ -105,7 +105,7 @@ input[type="date"]::-webkit-calendar-picker-indicator, input[type="datetime-loca
 <div id="login-screen">
     <div class="login-box">
         <h2 style="color:var(--color-ingresos); margin-bottom:10px;">BUNKER SCADA</h2>
-        <p style="color:var(--text-muted); font-size:0.8rem;">SISTEMA PRIVADO DE GESTIÓN TÁCTICA V7.0</p>
+        <p style="color:var(--text-muted); font-size:0.8rem;">SISTEMA PRIVADO DE GESTIÓN TÁCTICA V7.6</p>
         <button class="btn-google" onclick="loginWithGoogle()">ENTRAR CON GOOGLE</button>
     </div>
 </div>
@@ -186,13 +186,16 @@ input[type="date"]::-webkit-calendar-picker-indicator, input[type="datetime-loca
             </div>
             
             <div id="charts-grid-container">
-                <div class="chart-box" style="padding-bottom: 25px;">
+                
+                <div class="chart-box" style="padding-bottom: 20px;">
                     <div class="bd-overlay-kpis">
                         <div class="bd-badge">TRAMO: <span id="txtGastoTramo" style="color:var(--color-fuga)">$0</span></div>
                         <h5 style="margin:0; position:absolute; width:100%; text-align:center; text-shadow: 0px 2px 4px rgba(0,0,0,0.9);">BURN-DOWN</h5>
                         <div class="bd-badge">PROM: <span id="txtPromedioZoom" style="color:#ff9800">$0</span></div>
                     </div>
+                    
                     <div class="canvas-container"><canvas id="chartBurnDown"></canvas></div>
+                    
                     <div class="bd-overlay-controls">
                         <input type="range" id="sliderIn" min="0" max="30" value="0" style="flex:1; margin:0;" oninput="hacerZoomGrafico(this.value, document.getElementById('sliderFin').value)">
                         <input type="range" id="sliderFin" min="0" max="30" value="30" style="flex:1; margin:0;" oninput="hacerZoomGrafico(document.getElementById('sliderIn').value, this.value)">
@@ -202,16 +205,16 @@ input[type="date"]::-webkit-calendar-picker-indicator, input[type="datetime-loca
                 <div class="chart-box"><h5>Pulso Variable (7 Días)</h5><div class="canvas-container"><canvas id="chartDiario"></canvas></div></div>
                 <div class="chart-box"><h5>Top Fugas V30</h5><div class="canvas-container"><canvas id="chartPareto"></canvas></div></div>
                 
-                <div class="chart-box" style="border-color:var(--color-ingresos); justify-content:center; align-items:center; background:rgba(31, 111, 235, 0.05);">
-                    <h5 style="color:var(--color-ingresos); font-size:0.9rem;">MÓDULO TARJETAS</h5>
-                    <span style="font-size:0.6rem; color:var(--text-muted); text-align:center;">Próxima Fase:<br>Control de Cuotas</span>
+                <div class="chart-box">
+                    <h5>Perfil de Consumo</h5>
+                    <div class="canvas-container"><canvas id="chartRadar"></canvas></div>
                 </div>
             </div>
         </div>
 
         <div class="right-col">
             <div class="sidebar-panel">
-                <h4 style="color:var(--color-ingresos); margin:0; font-size:0.85rem; text-transform:uppercase; margin-bottom:10px;">REGISTRO MANUAL</h4>
+                <h4 style="color:var(--accent-blue); margin:0; font-size:0.85rem; text-transform:uppercase; margin-bottom:10px;">REGISTRO MANUAL</h4>
                 <input type="hidden" id="editId">
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: -5px;">
                     <div class="form-group"><label>Fecha</label><input type="datetime-local" id="inputFecha"></div>
@@ -249,6 +252,13 @@ input[type="date"]::-webkit-calendar-picker-indicator, input[type="datetime-loca
                 <div style="margin-top:12px; padding-top:10px; border-top:1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center;">
                     <span style="font-size:0.65rem; color:var(--text-muted); font-weight:800; text-transform:uppercase;">% Sueldo a Fugas:</span>
                     <span id="txtPorcentajeFugas" style="font-size:0.9rem; font-weight:900; color:var(--color-fuga);">0%</span>
+                </div>
+            </div>
+
+            <div class="sidebar-panel" style="border-color:var(--accent-blue); display:flex; justify-content:center; align-items:center; background:rgba(31, 111, 235, 0.05); min-height: 200px; text-align:center; flex: 1;">
+                <div>
+                    <h4 style="color:var(--accent-blue); margin:0; font-size:1rem; text-transform:uppercase;">MÓDULO TARJETAS</h4>
+                    <div style="font-size:0.75rem; color:var(--text-muted); margin-top:8px;">Próxima Fase:<br>Control de Cuotas Mensuales</div>
                 </div>
             </div>
         </div>
