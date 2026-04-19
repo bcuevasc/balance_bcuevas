@@ -71,8 +71,27 @@
     <div id="tab-trend">
         <h3 style="margin-top:0; font-weight:900;">TELEMETRÍA</h3>
         <div id="navRangoBadge" style="font-size:0.75rem; color:var(--text-dim); margin-bottom:15px; font-weight:bold; text-transform:uppercase;"></div>
-        <div class="mobile-card" style="display:block; padding:15px;"><label style="font-size:0.7rem; font-weight:800; color:var(--text-dim);">Burn-Down Dinámico</label><div style="height:220px;"><canvas id="chartBurnDown"></canvas></div></div>
-        <div class="mobile-card" style="display:block; padding:15px; margin-top:15px;"><label style="font-size:0.7rem; font-weight:800; color:var(--text-dim);">Pareto de Gastos</label><div style="height:220px;"><canvas id="chartPareto"></canvas></div></div>
+        
+        <div class="mobile-card" style="display:block; padding:15px;">
+            <label style="font-size:0.7rem; font-weight:800; color:var(--text-dim);">Burn-Down Dinámico</label>
+            <div style="height:220px;"><canvas id="chartBurnDown"></canvas></div>
+            
+            <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border-subtle);">
+                <div style="display:flex; justify-content: space-between; font-size:0.6rem; color:var(--text-muted); font-weight:bold; margin-bottom: 5px;">
+                    <span>INICIO: <span id="valSliderIn">0</span></span>
+                    <span>FIN: <span id="valSliderFin">30</span></span>
+                </div>
+                <div style="display:flex; gap: 5px;">
+                    <input type="range" id="sliderIn" min="0" max="30" value="0" style="flex:1;" oninput="document.getElementById('valSliderIn').innerText=this.value; hacerZoomGrafico(this.value, document.getElementById('sliderFin').value)">
+                    <input type="range" id="sliderFin" min="0" max="30" value="30" style="flex:1;" oninput="document.getElementById('valSliderFin').innerText=this.value; hacerZoomGrafico(document.getElementById('sliderIn').value, this.value)">
+                </div>
+            </div>
+        </div>
+
+        <div class="mobile-card" style="display:block; padding:15px; margin-top:15px;">
+            <label style="font-size:0.7rem; font-weight:800; color:var(--text-dim);">Pareto de Gastos</label>
+            <div style="height:220px;"><canvas id="chartPareto"></canvas></div>
+        </div>
     </div>
 
     <div id="tab-add">
