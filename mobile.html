@@ -83,8 +83,12 @@
         <h3 style="margin-top:0; font-weight:900;">TELEMETRÍA</h3>
         <div id="navRangoBadge" style="font-size:0.75rem; color:var(--text-dim); margin-bottom:15px; font-weight:bold; text-transform:uppercase;"></div>
         
-        <div class="mobile-card" style="display:block; padding:15px; background:var(--bg-card) !important; border:1px solid var(--border-subtle) !important;">
-            <label style="font-size:0.7rem; font-weight:800; color:var(--text-dim);">Burn-Down Dinámico</label>
+        <div style="display:flex; background: rgba(255,255,255,0.05); border-radius: 10px; padding: 4px; margin-bottom: 15px; border: 1px solid var(--border-subtle);">
+            <button id="btnToggleBD" onclick="document.getElementById('viewBurnDown').style.display='block'; document.getElementById('viewPareto').style.display='none'; this.style.background='var(--accent-blue)'; this.style.color='#fff'; document.getElementById('btnToggleP').style.background='transparent'; document.getElementById('btnToggleP').style.color='var(--text-dim)';" style="flex:1; padding: 10px; border-radius: 8px; border:none; background: var(--accent-blue); color: #fff; font-weight: 900; font-size: 0.75rem; transition: 0.2s;">📉 BURN-DOWN</button>
+            <button id="btnToggleP" onclick="document.getElementById('viewPareto').style.display='block'; document.getElementById('viewBurnDown').style.display='none'; this.style.background='#ff9800'; this.style.color='#fff'; document.getElementById('btnToggleBD').style.background='transparent'; document.getElementById('btnToggleBD').style.color='var(--text-dim)';" style="flex:1; padding: 10px; border-radius: 8px; border:none; background: transparent; color: var(--text-dim); font-weight: 900; font-size: 0.75rem; transition: 0.2s;">📊 PARETO</button>
+        </div>
+        
+        <div id="viewBurnDown" class="mobile-card" style="display:block; padding:15px; background:var(--bg-card) !important; border:1px solid var(--border-subtle) !important;">
             <div style="height:220px;"><canvas id="chartBurnDown"></canvas></div>
             
             <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border-subtle);">
@@ -96,8 +100,25 @@
                     <input type="range" id="sliderIn" min="0" max="30" value="0" style="flex:1;" oninput="document.getElementById('valSliderIn').innerText=this.value; hacerZoomGrafico(this.value, document.getElementById('sliderFin').value)">
                     <input type="range" id="sliderFin" min="0" max="30" value="30" style="flex:1;" oninput="document.getElementById('valSliderFin').innerText=this.value; hacerZoomGrafico(document.getElementById('sliderIn').value, this.value)">
                 </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px;">
+                    <div style="background: rgba(255,255,255,0.02); padding: 10px; border-radius: 8px; text-align: center; border: 1px solid var(--border-subtle);">
+                        <div style="font-size: 0.6rem; color: var(--text-dim); font-weight: 800; text-transform: uppercase;">Promedio Diario</div>
+                        <div style="font-size: 1.1rem; font-weight: 900; color: var(--accent-orange);" id="txtPromedioZoom">$0</div>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.02); padding: 10px; border-radius: 8px; text-align: center; border: 1px solid var(--border-subtle);">
+                        <div style="font-size: 0.6rem; color: var(--text-dim); font-weight: 800; text-transform: uppercase;">Día de Ruina</div>
+                        <div style="font-size: 1.1rem; font-weight: 900; color: var(--accent-red);"><span id="txtRuinaZoom">∞</span> <span style="font-size:0.7rem;">DÍAS</span></div>
+                    </div>
+                </div>
             </div>
         </div>
+
+        <div id="viewPareto" class="mobile-card" style="display:none; padding:15px; background:var(--bg-card) !important; border:1px solid var(--border-subtle) !important;">
+            <label style="font-size:0.7rem; font-weight:800; color:var(--text-dim); display:block; text-align:center; margin-bottom:10px;">TOP CATEGORÍAS (V30)</label>
+            <div style="height:280px;"><canvas id="chartPareto"></canvas></div>
+        </div>
+    </div>
 
         <div class="mobile-card" style="display:block; padding:15px; margin-top:15px; background:var(--bg-card) !important; border:1px solid var(--border-subtle) !important;">
             <label style="font-size:0.7rem; font-weight:800; color:var(--text-dim);">Pareto de Gastos</label>
