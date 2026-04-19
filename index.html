@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Bunker Digital SCADA v8.1</title>
+    <title>Bunker Digital SCADA v8.2</title>
     
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -68,7 +68,7 @@ h2 { color: var(--color-ingresos); margin: 0; font-size: 1.2rem; font-weight: 90
 .impact-neg { color: var(--color-fuga); }
 .impact-neu { color: #ff9800; }
 
-/* 🟢 GRILLA INFERIOR 40/20/20/20 (NUEVA DISTRIBUCIÓN) 🟢 */
+/* 🟢 GRILLA INFERIOR 40/20/20/20 🟢 */
 #charts-grid-container { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 15px; flex-shrink: 0; }
 .chart-box { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; height: 240px; display: flex; flex-direction: column; position: relative; }
 .chart-box h5 { margin: 0 0 5px 0; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; text-align: center; font-weight: 800; z-index: 10;}
@@ -103,7 +103,7 @@ input[type="date"]::-webkit-calendar-picker-indicator, input[type="datetime-loca
 <div id="login-screen">
     <div class="login-box">
         <h2 style="color:var(--color-ingresos); margin-bottom:10px;">BUNKER SCADA</h2>
-        <p style="color:var(--text-muted); font-size:0.8rem;">SISTEMA PRIVADO DE GESTIÓN TÁCTICA V8.1</p>
+        <p style="color:var(--text-muted); font-size:0.8rem;">SISTEMA PRIVADO DE GESTIÓN TÁCTICA V8.2</p>
         <button class="btn-google" onclick="loginWithGoogle()">ENTRAR CON GOOGLE</button>
     </div>
 </div>
@@ -146,11 +146,11 @@ input[type="date"]::-webkit-calendar-picker-indicator, input[type="datetime-loca
     <div class="kpi-row">
         <div class="kpi-card" style="border-top-color: var(--color-ingresos);">
             <h4>Sueldo Mes</h4>
-            <div class="value">$<input type="text" id="inputSueldo" value="3.602.505" oninput="formatearEntradaNumerica(this); actualizarDashboard();" style="background:transparent; border:none; color:inherit; font-weight:900; width:120px; font-size:1.3rem; outline:none;"></div>
+            <div class="value">$<input type="text" id="inputSueldo" value="3.602.505" oninput="formatearEntradaNumerica(this); actualizarDashboard();" style="background:transparent; border:none; color:var(--color-ingresos); font-weight:900; width:120px; font-size:1.3rem; outline:none;"></div>
         </div>
         <div class="kpi-card" style="border-top-color: var(--color-ingresos);"><h4>Ingresos Extra</h4><div class="value">$<span id="txtTotalIngresos">0</span></div></div>
         <div class="kpi-card" style="border-top-color: var(--color-fuga);"><h4>Gastos Fijos</h4><div class="value">$<span id="txtTotalFijos">0</span></div><div class="kpi-progress-container"><div id="barFijos" class="kpi-progress-fill" style="background:var(--color-fuga);"></div></div></div>
-        <div class="kpi-card" style="border-top-color: #ff9800;"><h4>Gastos Variables</h4><div class="value">$<span id="txtTotalOtros">0</span></div><div class="kpi-progress-container"><div id="barOtros" class="kpi-progress-fill" style="background:#ff9800;"></div></div></div>
+        <div class="kpi-card" style="border-top-color: #ff9800);"><h4>Gastos Variables</h4><div class="value">$<span id="txtTotalOtros">0</span></div><div class="kpi-progress-container"><div id="barOtros" class="kpi-progress-fill" style="background:#ff9800;"></div></div></div>
         <div class="kpi-card" style="border-top-color: #8b949e;"><h4>CxC (Préstamos)</h4><div class="value">$<span id="txtCxC">0</span></div></div>
         
         <div class="kpi-card kpi-saldo" id="cardBalanceReal">
@@ -173,7 +173,7 @@ input[type="date"]::-webkit-calendar-picker-indicator, input[type="datetime-loca
         <div class="left-col">
             <div class="grid-main-wrapper">
                 <div class="telemetry-header">
-                    <input type="text" id="inputBuscador" placeholder="🔍 Filtrar tabla..." oninput="actualizarDashboard()" style="width:250px; background:var(--input-bg); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px; padding:6px 12px; outline:none; font-size:0.8rem;">
+                    <input type="text" id="inputBuscador" placeholder="🔍 Filtrar tabla (Excluye TC)..." oninput="actualizarDashboard()" style="width:250px; background:var(--input-bg); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px; padding:6px 12px; outline:none; font-size:0.8rem;">
                 </div>
                 <div class="grid-container">
                     <table class="data-grid">
@@ -239,7 +239,20 @@ input[type="date"]::-webkit-calendar-picker-indicator, input[type="datetime-loca
                         </select>
                     </div>
                 </div>
-                <div style="display: grid; grid-template-columns: 1fr 110px; gap: 10px;">
+                
+                <div id="boxCuotas" style="display:none; margin-top:8px;">
+                    <label style="font-size: 0.6rem; font-weight: 800; color: var(--text-muted); margin-bottom: 2px; text-transform: uppercase;">Cuotas (Sin Interés)</label>
+                    <select id="inputCuotas" class="custom-select" style="border-color:var(--color-ingresos);">
+                        <option value="1">1 Cuota</option>
+                        <option value="2">2 Cuotas</option>
+                        <option value="3">3 Cuotas</option>
+                        <option value="6">6 Cuotas</option>
+                        <option value="12">12 Cuotas</option>
+                        <option value="24">24 Cuotas</option>
+                    </select>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 110px; gap: 10px; margin-top:10px;">
                     <div class="form-group"><label>Descripción</label><input type="text" id="inputNombre"></div>
                     <div class="form-group"><label>Monto</label><input type="text" id="inputMonto" oninput="formatearEntradaNumerica(this)"></div>
                 </div>
@@ -256,10 +269,16 @@ input[type="date"]::-webkit-calendar-picker-indicator, input[type="datetime-loca
                 </div>
             </div>
 
-            <div class="sidebar-panel" style="flex:1; display:flex; justify-content:center; align-items:center; border-color:var(--color-ingresos); background:rgba(31,111,235,0.05); text-align:center; min-height: 150px;">
-                <div>
-                    <h4 style="color:var(--color-ingresos); margin:0; font-size:1rem; text-transform:uppercase;">MÓDULO TARJETAS</h4>
-                    <div style="font-size:0.75rem; color:var(--text-muted); margin-top:8px;">Próxima Fase:<br>Control de Cuotas Mensuales</div>
+            <div class="sidebar-panel" style="flex:1; display:flex; flex-direction:column; border-color:rgba(218, 54, 51, 0.3); background:rgba(218, 54, 51, 0.02); min-height: 200px; overflow:hidden;">
+                <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-color); padding-bottom:8px; margin-bottom:8px;">
+                    <h4 style="color:var(--color-fuga); margin:0; font-size:0.85rem; text-transform:uppercase;">DEUDA TC ACUMULADA</h4>
+                    <div style="font-size:1.1rem; font-weight:900; color:var(--color-fuga);">$<span id="txtTotalTC">0</span></div>
+                </div>
+                <div style="flex:1; overflow-y:auto; scrollbar-width:none; -ms-overflow-style:none;">
+                    <style> .sidebar-panel div::-webkit-scrollbar { display: none; } </style>
+                    <table style="width:100%; border-collapse:collapse; text-align:left;">
+                        <tbody id="listaDetalleTC"></tbody>
+                    </table>
                 </div>
             </div>
         </div>
