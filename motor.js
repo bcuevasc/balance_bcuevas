@@ -535,16 +535,33 @@ function dropRow(e, targetId) {
 document.addEventListener('dragend', (e) => { if(e.target.tagName === 'TR') e.target.style.opacity = '1'; });
 
 // 🟢 FUNCIÓN DE CORTES DE ZOOM DINÁMICO 🟢
+// 🟢 ZOOM DINÁMICO CON AUTO-ESCALADO DE EJE Y 🟢
 window.hacerZoomGrafico = function(diaIn, diaFin) {
     if(!chartBD || !bdDataMaster) return;
     let inicio = parseInt(diaIn);
     let fin = parseInt(diaFin);
     
+    // Validaciones de seguridad
     if(isNaN(inicio) || isNaN(fin) || inicio >= fin) return;
 
-    chartBD.data.labels = bdDataMaster.labels.slice(inicio, fin + 1);
-    chartBD.data.datasets[0].data = bdDataMaster.actual.slice(inicio, fin + 1);
-    chartBD.data.datasets[1].data = bdDataMaster.ideal.slice(inicio, fin + 1);
+    // 1. Cortar las matrices de datos
+    let slicedActual = bdDataMaster.actual.slice(inicio, fin + 1);
+    let slicedIdeal = bdDataMaster.ideal.slice(inicio, fin + 1);
+    let slicedLabels = bdDataMaster.labels.slice(inicio, fin + 1);
+
+    // 2. Encontrar el valor MÁXIMO visible solo de la línea REAL (Azul)
+    let validActuals = slicedActual.filter(v => v !== null);
+    if(validActuals.length > 0) {
+        let maxReal = Math.max(...validActuals);
+        // Forzar nuevo techo: Si es positivo, damos 10% de margen visual arriba. Si es negativo, el techo es 0.
+        chartBD.options.scales.y.max = maxReal > 0 ? maxReal * 1.1 : 0;
+    }
+
+    // 3. Inyectar datos cortados
+    chartBD.data.labels = slicedLabels;
+    chartBD.data.datasets[0].data = slicedActual;
+    chartBD.data.datasets[1].data = slicedIdeal;
     
+    // 4. Ejecutar redibujado
     chartBD.update();
 };
