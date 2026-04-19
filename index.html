@@ -211,9 +211,7 @@ input[type="date"]::-webkit-calendar-picker-indicator, input[type="datetime-loca
                     </div>
                 </div>
                 <div class="form-group"><label>Categoría V31.4</label>
-                    <select id="inputCategoria">
-                        <option value="Gastos Fijos (Búnker)">🏠 Gastos Fijos</option><option value="Suscripciones">📱 Suscripciones</option><option value="Alimentación & Supermercado">🛒 Supermercado</option><option value="Dopamina & Antojos">🍔 Dopamina</option><option value="Ocio & Experiencias">🎸 Ocio & Experiencias</option><option value="Transporte & Logística">🚗 Transporte</option><option value="Mantenimiento Hardware (Salud)">💊 Salud</option><option value="Transferencia Propia / Ahorro">🏦 Transferencia Propia</option><option value="Transferencia Recibida">📲 Transf. Recibida</option><option value="Hogar & Búnker">🛠️ Búnker</option><option value="Red de Apoyo (Familia)">🫂 Red Apoyo</option><option value="Gasto Tarjeta de Crédito">💳 Tarjeta Crédito</option><option value="Ingreso Adicional">💰 Ingreso Extra</option><option value="Sin Categoría">❓ Otro</option>
-                    </select>
+                    <select id="inputCategoria"></select>
                 </div>
                 <div style="display: grid; grid-template-columns: 1fr 110px; gap: 10px;">
                     <div class="form-group"><label>Descripción</label><input type="text" id="inputNombre"></div>
@@ -237,12 +235,7 @@ input[type="date"]::-webkit-calendar-picker-indicator, input[type="datetime-loca
     <div id="massActionsBar" class="floating-mass-actions" style="display: none;">
         <span id="massCount">0 seleccionado(s)</span>
         <div class="mass-actions-controls">
-            <select id="massCategorySelect" class="custom-select" style="width:180px;">
-                <option value="">-- Recategorizar a --</option>
-                <option value="Gastos Fijos (Búnker)">🏠 Gastos Fijos</option>
-                <option value="Alimentación & Supermercado">🛒 Alimentación Base</option>
-                <option value="Dopamina & Antojos">🍔 Dopamina</option>
-            </select>
+            <select id="massCategorySelect" class="custom-select" style="width:180px;"></select>
             <button class="btn-sys" onclick="massCategorize()">APLICAR</button>
             <button class="btn-sys" onclick="massDelete()" style="color:var(--color-fuga);">🗑️</button>
         </div>
