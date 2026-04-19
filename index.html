@@ -2,114 +2,200 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bunker Digital SCADA v7.0</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Bunker Móvil HUD</title>
+    <link rel="apple-touch-icon" href="bunker-icon.png">
+    <meta name="theme-color" content="#0b0e14">
+
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
+    
     <style>
-        :root { --bg-body: #0b0e14; --bg-panel: #161b22; --bg-subpanel: #21262d; --text-main: #f0f6fc; --text-muted: #8b949e; --border-color: #30363d; --accent-blue: #1f6feb; --accent-green: #3fb950; --accent-red: #da3633; --accent-orange: #d29922; }
-        * { box-sizing: border-box; font-family: -apple-system, sans-serif; transition: 0.2s; }
-        body { background: var(--bg-body); color: var(--text-main); margin: 0; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
+        :root { --bg-base: #0b0e14; --bg-card: #161b22; --bg-elevated: #21262d; --text-main: #f0f6fc; --text-dim: #8b949e; --accent-blue: #1f6feb; --accent-green: #3fb950; --accent-red: #ff5252; --accent-orange: #d29922; --border-subtle: rgba(255,255,255,0.08); color-scheme: dark; }
+        * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background-color: var(--bg-base); color: var(--text-main); margin: 0; padding-bottom: calc(90px + env(safe-area-inset-bottom)); overscroll-behavior-y: none; }
+
+        #login-screen { position: fixed; inset: 0; background: var(--bg-base); display: flex; align-items: center; justify-content: center; z-index: 10000; flex-direction: column; }
+        .top-bar { padding: max(20px, env(safe-area-inset-top)) 20px 10px 20px; display: flex; justify-content: space-between; align-items: center; }
+        .master-hud { text-align: center; padding: 20px 20px 30px 20px; }
+        .hud-value { font-size: 3.5rem; font-weight: 900; letter-spacing: -1.5px; }
         
-        #login-screen { position: fixed; inset: 0; background: #0b0e14; display: flex; align-items: center; justify-content: center; z-index: 10000; }
-        .app-container { display: none; padding: 10px; flex-direction: column; gap: 10px; height: 100vh; width: 100%; }
-        .active-app { display: flex; }
+        .slave-kpis { display: flex; gap: 15px; padding: 0 20px; margin-bottom: 25px; }
+        .slave-pill { flex: 1; background: var(--bg-card); border: 1px solid var(--border-subtle); padding: 15px; border-radius: 20px; display: flex; flex-direction: column; align-items: center; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
 
-        .master-layout { display: grid; grid-template-columns: 1fr 320px; gap: 12px; flex: 1; min-height: 0; }
-        .left-col { display: flex; flex-direction: column; min-height: 0; }
-        .right-col { display: flex; flex-direction: column; gap: 10px; }
+        #listaMovilDetalle { padding: 0 10px; display: flex; flex-direction: column; gap: 4px; margin-top: -10px; }
+        .mobile-card { 
+            background: transparent !important; border: none !important; border-radius: 16px !important; 
+            padding: 12px 10px !important; display: flex; align-items: center; transition: background-color 0.15s, transform 0.1s; 
+            cursor: pointer; box-shadow: none !important;
+        }
+        .mobile-card:active { transform: scale(0.98); background: rgba(255,255,255,0.03) !important; }
+        .date-header { padding-left: 5px; font-size: 0.65rem; font-weight: 900; color: var(--text-dim); text-transform: uppercase; margin: 15px 0 5px 5px; letter-spacing: 1px; }
 
-        .grid-main-wrapper { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 8px; flex: 1; display: flex; flex-direction: column; min-height: 0; padding: 10px; }
-        .grid-container { flex: 1; overflow: auto; background: #0d1117; border-radius: 6px; }
-        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
-        th { position: sticky; top: 0; background: var(--bg-panel); color: var(--accent-blue); padding: 10px; text-align: left; border-bottom: 2px solid var(--border-color); }
-        td { padding: 8px 10px; border-bottom: 1px solid var(--border-color); }
+        .tab-content { display: none; padding: 20px; animation: fadeIn 0.2s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .huge-input-wrapper { background: var(--bg-card); border-radius: 24px; padding: 30px 20px; margin-bottom: 20px; text-align: center; border: 1px solid rgba(31, 111, 235, 0.3); box-shadow: inset 0 0 20px rgba(31, 111, 235, 0.05); }
+        .monto-gigante { background: transparent; border: none; color: var(--text-main); font-size: 3rem; font-weight: 900; text-align: center; width: 100%; outline: none; }
 
-        #charts-grid-container { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 12px; height: 250px; margin-top: 10px; }
-        .chart-box { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; position: relative;}
-        .chart-box h5 { margin: 0 0 8px 0; text-align: center; color: var(--text-muted); font-size: 0.7rem; text-transform: uppercase; z-index: 10;}
-        .canvas-container { flex: 1; position: relative; min-height: 0; }
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; font-size: 0.75rem; font-weight: 800; color: var(--text-dim); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+        input[type="text"]:not(.monto-gigante), select, input[type="datetime-local"] { width: 100%; padding: 16px; background: var(--bg-elevated); color: white; border: 1px solid var(--border-subtle); border-radius: 16px; font-size: 1.05rem; outline: none; transition: border-color 0.2s; }
+        
+        .btn-guardar { width: 100%; padding: 20px; background: var(--accent-green); color: #000; border: none; font-weight: 900; border-radius: 18px; font-size: 1.1rem; text-transform: uppercase; transition: transform 0.1s; }
 
-        /* 🟢 ERGONOMÍA: CONTROLES INCORPORADOS COMO OVERLAYS (No ocupan espacio) 🟢 */
-        .zoom-controls-overlay { position: absolute; bottom: 10px; left: 10px; right: 10px; display: flex; gap: 10px; background: rgba(11, 14, 20, 0.8); padding: 8px; border-radius: 8px; border: 1px solid var(--border-color); backdrop-filter: blur(5px); z-index: 20;}
-        .kpi-overlay { position: absolute; top: 10px; left: 10px; background: rgba(11, 14, 20, 0.8); padding: 5px 10px; border-radius: 6px; border: 1px solid var(--border-color); font-size: 0.7rem; z-index: 20;}
-        .kpi-overlay-right { position: absolute; top: 10px; right: 10px; background: rgba(11, 14, 20, 0.8); padding: 5px 10px; border-radius: 6px; border: 1px solid var(--border-color); font-size: 0.7rem; z-index: 20;}
+        .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(11, 14, 20, 0.85); backdrop-filter: blur(15px); border-top: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-around; align-items: center; padding: 10px 5px calc(15px + env(safe-area-inset-bottom)) 5px; z-index: 1000; }
+        .nav-item { color: var(--text-dim); text-align: center; font-size: 0.6rem; font-weight: 800; padding: 10px 0; flex: 1; text-transform: uppercase; transition: color 0.2s; }
+        .nav-item.active { color: var(--text-main); }
+        .nav-item i { display: block; font-size: 1.4rem; margin-bottom: 5px; font-style: normal; }
+        .nav-fab { background: linear-gradient(135deg, #1f6feb, #0b4abf); color: #fff; width: 60px; height: 60px; border-radius: 30px; display: flex; justify-content: center; align-items: center; font-size: 2rem; margin: -35px 10px 0 10px; box-shadow: 0 10px 25px rgba(31, 111, 235, 0.5); flex-shrink: 0; border: 4px solid var(--bg-base); }
 
-        .sidebar-panel { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 8px; padding: 15px; }
-        input, select { background: #0d1117; color: white; border: 1px solid var(--border-color); padding: 8px; border-radius: 6px; width: 100%; margin-bottom: 10px; }
-        .btn-sys { cursor: pointer; background: var(--bg-subpanel); color: white; border: 1px solid var(--border-color); padding: 8px 12px; border-radius: 6px; font-weight: bold; }
+        #bottom-sheet-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 9999; backdrop-filter: blur(4px); opacity: 0; transition: opacity 0.3s; }
+        #bottom-sheet { position: fixed; bottom: -100%; left: 0; width: 100%; background: var(--bg-elevated); border-radius: 30px 30px 0 0; padding: 25px 20px calc(20px + env(safe-area-inset-bottom)) 20px; z-index: 10000; transition: bottom 0.3s; box-shadow: 0 -15px 40px rgba(0,0,0,0.5); border-top: 1px solid var(--border-subtle); }
+        .sheet-btn { width: 100%; padding: 20px; border-radius: 18px; font-weight: 900; margin-bottom: 12px; border: none; font-size: 1.05rem; }
     </style>
 </head>
 <body>
-    <div id="login-screen"><button onclick="loginWithGoogle()" style="padding:20px; border-radius:12px; font-weight:bold; cursor:pointer;">ENTRAR AL BÚNKER SCADA</button></div>
 
-    <div class="app-container" id="reportZone">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-            <h2 style="color:var(--accent-green); margin:0;">BUNKER DIGITAL SCADA V7.0</h2>
-            <div style="display:flex; gap:10px;">
-                <button class="btn-sys" onclick="triggerSync()">🔄 SYNC</button>
-                <button class="btn-sys" onclick="enviarReporteTelegram()">🚀 TELEGRAM</button>
-                <button class="btn-sys" onclick="logout()">🚪 SALIR</button>
+<div id="login-screen">🛡️<h2 style="color:white; margin: 20px 0; font-weight:900;">BÚNKER SCADA</h2><button onclick="loginWithGoogle()" style="padding:15px 30px; border-radius:30px; font-weight:bold;">AUTENTICAR</button></div>
+
+<div class="app-container" id="reportZone">
+    <div class="top-bar"><div class="brand">SCADA MÓVIL V7.5</div><div id="user-display" class="user-tag" style="color:var(--accent-blue); background:rgba(31, 111, 235, 0.1);">BYRON</div></div>
+
+    <div id="tab-dash" class="tab-content" style="display:block;">
+        <div class="master-hud"><div class="hud-value">$<span id="txtSaldo">0</span></div></div>
+        <div class="slave-kpis">
+            <div class="slave-pill"><div class="label">Fijos</div><div class="val" style="color:var(--accent-red)">$<span id="txtTotalFijos">0</span></div></div>
+            <div class="slave-pill"><div class="label">Variables</div><div class="val" style="color:var(--accent-orange)">$<span id="txtTotalOtros">0</span></div></div>
+        </div>
+        <div id="listaMovilDetalle"></div>
+    </div>
+
+    <div id="tab-trend" class="tab-content">
+        <h3 style="margin-top:0; font-weight:900;">TELEMETRÍA</h3>
+        <div id="navRangoBadge" style="font-size:0.75rem; color:var(--text-dim); margin-bottom:15px; font-weight:bold; text-transform:uppercase;"></div>
+        
+        <select style="margin-bottom: 15px; font-weight:bold; color:var(--accent-blue);" onchange="document.querySelectorAll('.v-chart').forEach(v=>v.style.display='none'); document.getElementById(this.value).style.display='block';">
+            <option value="vBD">📉 VELOCIDAD (BURN-DOWN)</option>
+            <option value="vDI">📊 PULSO VARIABLE (7 DÍAS)</option>
+            <option value="vPA">📈 PARETO (TOP FUGAS)</option>
+            <option value="vRA">💠 PERFIL DE GASTO (RADAR)</option>
+        </select>
+        
+        <div id="vBD" class="v-chart" style="display:block; padding:15px; background:var(--bg-card); border-radius: 16px; border:1px solid var(--border-subtle);">
+            <div style="height:220px;"><canvas id="chartBurnDown"></canvas></div>
+            <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border-subtle);">
+                <div style="display:flex; justify-content: space-between; font-size:0.6rem; color:var(--text-muted); font-weight:bold; margin-bottom: 5px;">
+                    <span>INICIO: <span id="valSliderIn">0</span></span><span>FIN: <span id="valSliderFin">30</span></span>
+                </div>
+                <div style="display:flex; gap: 5px;">
+                    <input type="range" id="sliderIn" min="0" max="30" value="0" style="width: 100%; margin-bottom:0;" oninput="document.getElementById('valSliderIn').innerText=this.value; hacerZoomGrafico(this.value, document.getElementById('sliderFin').value)">
+                    <input type="range" id="sliderFin" min="0" max="30" value="30" style="width: 100%; margin-bottom:0;" oninput="document.getElementById('valSliderFin').innerText=this.value; hacerZoomGrafico(document.getElementById('sliderIn').value, this.value)">
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px;">
+                    <div style="background: rgba(255,255,255,0.02); padding: 10px; border-radius: 8px; text-align: center; border: 1px solid var(--border-subtle);">
+                        <div style="font-size: 0.6rem; color: var(--text-dim); font-weight: 800; text-transform: uppercase;">Gasto Tramo</div>
+                        <div style="font-size: 1.1rem; font-weight: 900; color: var(--accent-red);" id="txtGastoTramo">$0</div>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.02); padding: 10px; border-radius: 8px; text-align: center; border: 1px solid var(--border-subtle);">
+                        <div style="font-size: 0.6rem; color: var(--text-dim); font-weight: 800; text-transform: uppercase;">Promedio Diario</div>
+                        <div style="font-size: 1.1rem; font-weight: 900; color: var(--accent-orange);" id="txtPromedioZoom">$0</div>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <div class="master-layout">
-            <div class="left-col">
-                <div class="grid-main-wrapper">
-                    <div style="margin-bottom:10px; display:flex; gap:10px; align-items:center;">
-                        <input type="text" id="inputBuscador" placeholder="🔍 Filtrar registros..." oninput="actualizarDashboard()" style="margin:0; width:300px;">
-                        <select id="navMesConceptual" onchange="aplicarCicloAlSistema()" style="margin:0; width:150px;"><option value="3">Abril</option><option value="4">Mayo</option></select>
-                        <div id="navRangoBadge" style="font-family:monospace; color:var(--accent-blue); font-weight:bold;"></div>
-                    </div>
-                    <div class="grid-container">
-                        <table>
-                            <thead><tr><th>FECHA</th><th>DESCRIPCIÓN</th><th>CATEGORÍA</th><th>MONTO</th></tr></thead>
-                            <tbody id="listaDetalle"></tbody>
-                        </table>
-                    </div>
-                </div>
+        <div id="vDI" class="v-chart" style="display:none; padding:15px; background:var(--bg-card); border-radius: 16px; border:1px solid var(--border-subtle);">
+            <div style="height:280px;"><canvas id="chartDiario"></canvas></div>
+        </div>
 
-                <div id="charts-grid-container">
-                    <div class="chart-box">
-                        <h5>Burn-Down & Zoom</h5>
-                        <div class="kpi-overlay">Tramo: <b id="txtGastoTramo" style="color:var(--accent-red);">$0</b></div>
-                        <div class="kpi-overlay-right">Promedio: <b id="txtPromedioZoom" style="color:var(--accent-orange);">$0</b></div>
-                        
-                        <div class="canvas-container" style="margin-bottom: 35px;"><canvas id="chartBurnDown"></canvas></div>
-                        
-                        <div class="zoom-controls-overlay">
-                            <input type="range" id="sliderIn" min="0" max="30" value="0" style="margin:0;" oninput="hacerZoomGrafico(this.value, document.getElementById('sliderFin').value)">
-                            <input type="range" id="sliderFin" min="0" max="30" value="30" style="margin:0;" oninput="hacerZoomGrafico(document.getElementById('sliderIn').value, this.value)">
-                        </div>
-                    </div>
-                    <div class="chart-box"><h5>Pulso Semanal (Var.)</h5><div class="canvas-container"><canvas id="chartDiario"></canvas></div></div>
-                    <div class="chart-box"><h5>Top Fugas</h5><div class="canvas-container"><canvas id="chartPareto"></canvas></div></div>
-                    <div class="chart-box"><h5>Perfil Radar</h5><div class="canvas-container"><canvas id="chartRadar"></canvas></div></div>
-                </div>
-            </div>
+        <div id="vPA" class="v-chart" style="display:none; padding:15px; background:var(--bg-card); border-radius: 16px; border:1px solid var(--border-subtle);">
+            <div style="height:280px;"><canvas id="chartPareto"></canvas></div>
+        </div>
 
-            <div class="right-col">
-                <div class="sidebar-panel">
-                    <h4 style="color:var(--accent-blue); margin-top:0;">BALANCE REAL</h4>
-                    <div style="font-size:2rem; font-weight:900;" id="txtSaldo">$0</div>
-                    <div style="color:var(--text-muted); font-size:0.7rem; margin-top:5px;">PROYECTADO: <span id="txtProyectado"></span></div>
-                </div>
-                <div class="sidebar-panel">
-                    <h4 style="margin-top:0;">REGISTRO MANUAL</h4>
-                    <input type="hidden" id="editId">
-                    <input type="text" id="inputNombre" placeholder="Descripción">
-                    <input type="text" id="inputMonto" placeholder="Monto" oninput="formatearEntradaNumerica(this)">
-                    <select id="inputTipo"><option value="Gasto">Gasto Variable</option><option value="Gasto Fijo">Gasto Fijo</option><option value="Ingreso">Ingreso</option></select>
-                    <select id="inputCategoria"></select>
-                    <input type="datetime-local" id="inputFecha">
-                    <button class="btn-sys" onclick="agregarMovimiento()" style="width:100%; background:var(--accent-green); color:black; border:none;">GUARDAR REGISTRO</button>
-                </div>
-            </div>
+        <div id="vRA" class="v-chart" style="display:none; padding:15px; background:var(--bg-card); border-radius: 16px; border:1px solid var(--border-subtle);">
+            <div style="height:280px;"><canvas id="chartRadar"></canvas></div>
         </div>
     </div>
-    <script src="motor.js"></script>
-    <select id="navAnio" style="display:none;"><option value="2026">2026</option></select>
+
+    <div id="tab-add" class="tab-content">
+        <input type="hidden" id="editId">
+        <div class="huge-input-wrapper"><label>Monto</label><input type="text" id="inputMonto" class="monto-gigante" inputmode="numeric" placeholder="$ 0" oninput="formatearEntradaNumerica(this)"></div>
+        <div class="form-group"><label>Descripción</label><input type="text" id="inputNombre" placeholder="¿En qué gastaste?"></div>
+        <div class="form-group"><label>Flujo</label>
+            <select id="inputTipo">
+                <option value="Gasto">Gasto Variable</option>
+                <option value="Gasto Fijo">Gasto Fijo</option>
+                <option value="Ingreso">Ingreso Extra</option>
+                <option value="Por Cobrar">Préstamo (CxC)</option>
+                <option value="Ahorro">Ahorro / Mov. Neutro</option>
+            </select>
+        </div>
+        <div class="form-group"><label>Fecha</label><input type="datetime-local" id="inputFecha"></div>
+        <div class="form-group"><label>Categoría</label><select id="inputCategoria"></select></div>
+        <button id="btnGuardar" class="btn-guardar" onclick="agregarMovimiento()">REGISTRAR</button>
+    </div>
+
+    <div id="tab-cloud" class="tab-content">
+        <h3 style="font-weight:900;">ENLACE SATELITAL</h3>
+        <button class="sheet-btn" style="background:var(--bg-elevated); color:white; border:1px solid var(--border-subtle);" onclick="triggerSync()">🔄 Sincronizar Google Sheets</button>
+        <button class="sheet-btn" style="background:rgba(0, 136, 204, 0.1); color:#0088cc; border:1px solid rgba(0, 136, 204, 0.3);" onclick="enviarReporteTelegram()">🚀 Transmitir a Telegram</button>
+    </div>
+
+    <div id="tab-settings" class="tab-content">
+        <h3 style="font-weight:900;">SISTEMA</h3>
+        <div style="display:block; background:var(--bg-card); border-radius: 16px; padding:15px; border:1px solid var(--border-subtle);">
+            <label style="font-size:0.75rem; font-weight:800; color:var(--text-dim); margin-bottom:10px; display:block;">Sueldo Base Operativo</label>
+            <input type="text" id="inputSueldo" style="font-size: 1.5rem; font-weight: 900; color: var(--accent-green); background:transparent; border:none; width:100%; outline:none; border-bottom:1px solid var(--border-subtle); border-radius:0; padding-bottom:5px; margin-bottom:0;" onchange="guardarSueldoEnNube()">
+        </div>
+        <div style="display:block; margin-top:15px; background:var(--bg-card); border-radius: 16px; padding:15px; border:1px solid var(--border-subtle);">
+            <label style="font-size:0.75rem; font-weight:800; color:var(--text-dim); margin-bottom:10px; display:block;">Navegador de Tiempo</label>
+            <div style="display:flex; gap:10px;"><select id="navMesConceptual" onchange="aplicarCicloAlSistema()"><option value="0">Enero</option><option value="1">Febrero</option><option value="2">Marzo</option><option value="3" selected>Abril</option><option value="4">Mayo</option><option value="5">Junio</option><option value="6">Julio</option><option value="7">Agosto</option><option value="8">Septiembre</option><option value="9">Octubre</option><option value="10">Noviembre</option><option value="11">Diciembre</option></select><select id="navAnio" onchange="aplicarCicloAlSistema()"><option value="2025">2025</option><option value="2026" selected>2026</option></select></div>
+        </div>
+        <button class="sheet-btn" style="background:rgba(255, 82, 82, 0.1); color:var(--accent-red); margin-top:20px;" onclick="logout()">CERRAR SESIÓN</button>
+    </div>
+
+    <div class="bottom-nav">
+        <div class="nav-item active" onclick="switchTabApp('dash', this)"><i>📡</i>Radar</div>
+        <div class="nav-item" onclick="switchTabApp('trend', this)"><i>📈</i>Tren</div>
+        <div class="nav-fab" onclick="switchTabApp('add', null)">+</div>
+        <div class="nav-item" onclick="switchTabApp('cloud', this)"><i>☁️</i>Nube</div>
+        <div class="nav-item" onclick="switchTabApp('settings', this)"><i>⚙️</i>Set</div>
+    </div>
+</div>
+
+<div id="bottom-sheet-overlay" onclick="closeBottomSheet()"></div>
+<div id="bottom-sheet">
+    <div style="width: 40px; height: 5px; background: var(--text-dim); border-radius: 5px; margin: 0 auto 20px auto; opacity: 0.3;"></div>
+    <div id="sheet-title" style="font-weight:900; text-align:center; font-size:1.2rem;">Gasto</div>
+    <div id="sheet-subtitle" style="text-align:center; color:var(--text-dim); margin-bottom:25px; font-size:0.9rem;">$0</div>
+    <input type="hidden" id="sheet-id-target">
+    <button class="sheet-btn" style="background:rgba(31, 111, 235, 0.1); color:var(--accent-blue);" onclick="const id=document.getElementById('sheet-id-target').value; closeBottomSheet(); editarMovimiento(id);">✏️ Modificar Parámetros</button>
+    <button class="sheet-btn" style="background:rgba(255, 82, 82, 0.1); color:var(--accent-red);" onclick="const id=document.getElementById('sheet-id-target').value; if(confirm('¿Eliminar del Búnker?')) { db.collection('movimientos').doc(id).delete().then(()=>closeBottomSheet()); }">🗑️ Eliminar Registro</button>
+    <button class="sheet-btn" style="background:var(--bg-base); color:var(--text-main);" onclick="closeBottomSheet()">Cancelar Operación</button>
+</div>
+
+<script>
+    function switchTabApp(tabId, element) {
+        document.querySelectorAll('.tab-content').forEach(d => { d.style.display = 'none'; });
+        document.getElementById('tab-' + tabId).style.display = 'block';
+        
+        document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+        if(element) element.classList.add('active');
+        
+        if(tabId === 'trend') { setTimeout(() => { if(chartBD) chartBD.resize(); if(chartP) chartP.resize(); if(chartDiario) chartDiario.resize(); if(chartRadar) chartRadar.resize();}, 10); }
+        if (tabId === 'add' && !document.getElementById('editId').value) {
+            let now = new Date(); now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+            document.getElementById('inputFecha').value = now.toISOString().slice(0,16);
+        }
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    window.switchTab = function(t) { switchTabApp(t === 'list' ? 'dash' : 'add', document.querySelectorAll('.nav-item')[0]); };
+    function openBottomSheet(id, n, m) { document.getElementById('sheet-title').innerText = n; document.getElementById('sheet-subtitle').innerText = "$" + m.toLocaleString('es-CL'); document.getElementById('sheet-id-target').value = id; const overlay = document.getElementById('bottom-sheet-overlay'); const sheet = document.getElementById('bottom-sheet'); overlay.style.display = 'block'; setTimeout(() => { overlay.style.opacity = '1'; sheet.style.bottom = '0'; }, 10); }
+    function closeBottomSheet() { const overlay = document.getElementById('bottom-sheet-overlay'); document.getElementById('bottom-sheet').style.bottom = '-100%'; overlay.style.opacity = '0'; setTimeout(()=> overlay.style.display = 'none', 300); }
+</script>
+<script src="motor.js"></script>
 </body>
 </html>
