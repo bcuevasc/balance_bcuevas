@@ -96,11 +96,38 @@
 
     <div id="tab-add">
         <input type="hidden" id="editId">
-        <div class="huge-input-wrapper"><label>Monto</label><input type="text" id="inputMonto" class="monto-gigante" inputmode="numeric" placeholder="$ 0" oninput="formatearEntradaNumerica(this)"></div>
-        <div class="form-group"><label>Descripción</label><input type="text" id="inputNombre" placeholder="¿En qué gastaste?"></div>
-        <div class="form-group"><label>Flujo</label><select id="inputTipo"><option value="Gasto">Gasto Variable</option><option value="Gasto Fijo">Gasto Fijo</option><option value="Ingreso">Ingreso</option></select></div>
-        <div class="form-group"><label>Fecha</label><input type="datetime-local" id="inputFecha"></div>
-        <div class="form-group"><label>Categoría</label><select id="inputCategoria"><option value="Dopamina & Antojos">🍔 Dopamina</option><option value="Alimentación & Supermercado">🛒 Super</option><option value="Gastos Fijos (Búnker)">🏠 Búnker</option><option value="Sin Categoría">❓ Otro</option></select></div>
+        
+        <div class="huge-input-wrapper">
+            <label>Monto</label>
+            <input type="text" id="inputMonto" class="monto-gigante" inputmode="numeric" placeholder="$ 0" oninput="formatearEntradaNumerica(this)">
+        </div>
+        
+        <div class="form-group">
+            <label>Descripción</label>
+            <input type="text" id="inputNombre" placeholder="¿En qué gastaste?">
+        </div>
+        
+        <div class="form-group">
+            <label>Flujo</label>
+            <select id="inputTipo">
+                <option value="Gasto">Gasto Variable</option>
+                <option value="Gasto Fijo">Gasto Fijo</option>
+                <option value="Ingreso">Ingreso Extra</option>
+                <option value="Por Cobrar">Préstamo (CxC)</option>
+                <option value="Ahorro">Ahorro / Mov. Neutro</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label>Fecha</label>
+            <input type="datetime-local" id="inputFecha">
+        </div>
+        
+        <div class="form-group">
+            <label>Categoría</label>
+            <select id="inputCategoria"></select>
+        </div>
+        
         <button id="btnGuardar" class="btn-guardar" onclick="agregarMovimiento()">REGISTRAR</button>
     </div>
 
