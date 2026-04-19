@@ -1,5 +1,5 @@
 // ==========================================================
-// 🧠 BÚNKER SCADA - MOTOR LÓGICO V7.0 (EDICIÓN MAESTRO)
+// 🧠 BÚNKER SCADA - MOTOR LÓGICO V7.0 (GRILLA 2x2 & RADAR)
 // ==========================================================
 const BYRON_EMAIL = "bvhcc94@gmail.com"; 
 const CREDIT_SETPOINT = -300000; 
@@ -29,35 +29,50 @@ catMaestras.forEach(c => catEmojis[c.id] = c.em);
 document.addEventListener("DOMContentLoaded", () => {
     const optionsHTML = catMaestras.map(c => `<option value="${c.id}">${c.em} ${c.label}</option>`).join('');
     const selectManual = document.getElementById('inputCategoria');
-    if (selectManual) {
-        selectManual.innerHTML = optionsHTML;
-        // 🟢 AUTO-FUGA AL SELECCIONAR DOPAMINA 🟢
-        selectManual.addEventListener('change', (e) => {
-            const f = document.getElementById('inputFuga');
-            if(f) f.value = (e.target.value === "Dopamina & Antojos") ? "100" : "0";
-        });
-    }
+    if (selectManual) selectManual.innerHTML = optionsHTML;
     const selectMass = document.getElementById('massCategorySelect');
     if (selectMass) selectMass.innerHTML = `<option value="">-- Recategorizar a --</option>` + optionsHTML;
 });
 
-const logosComerciales = { "uber": "uber.com", "pedidosya": "pedidosya.com", "mcdonald": "mcdonalds.com", "starbucks": "starbucks.cl" };
+const logosComerciales = {
+    "uber": "uber.com", "zapping": "zapping.com", "netflix": "netflix.com",
+    "spotify": "spotify.com", "lider": "lider.cl", "jumbo": "jumbo.cl",
+    "pedidosya": "pedidosya.com", "pedidos ya": "pedidosya.com", "pya": "pedidosya.com",
+    "rappi": "rappi.cl", "copec": "ww2.copec.cl", "shell": "shell.cl", "mcdonald": "mcdonalds.com", 
+    "starbucks": "starbucks.cl", "cruz verde": "cruzverde.cl", "sodimac": "sodimac.cl", 
+    "mercadolibre": "mercadolibre.cl", "apple": "apple.com", "kupos": "kupos.cl"
+};
+
 function obtenerIconoVisual(nombre, emojiFallback) {
     if(!nombre) return `<span style="font-size:1.4rem;">${emojiFallback}</span>`;
     let n = nombre.toLowerCase();
     for (let marca in logosComerciales) {
-        if (n.includes(marca)) return `<img src="https://logo.clearbit.com/${logosComerciales[marca]}?size=100" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%; background: white;" onerror="this.outerHTML='<span style=\\'font-size:1.4rem;\\'>${emojiFallback}</span>'">`;
+        if (n.includes(marca)) {
+            let url = `https://logo.clearbit.com/${logosComerciales[marca]}?size=100`;
+            return `<img src="${url}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%; background: white;" onerror="this.outerHTML='<span style=\\'font-size:1.4rem;\\'>${emojiFallback}</span>'">`;
+        }
     }
     return `<span style="font-size:1.4rem;">${emojiFallback}</span>`;
 }
 
 let bdDataMaster = null; 
-firebase.initializeApp({ apiKey: "AIzaSyBiYETN_JipXWhMq9gKz-2Pap-Ce4ZJNAI", authDomain: "finanzas-bcuevas.firebaseapp.com", projectId: "finanzas-bcuevas" });
-const db = firebase.firestore(), auth = firebase.auth();
 
-let listaMovimientos = [], datosMesGlobal = []; 
-let chartBD = null, chartP = null, chartDiario = null, chartRadar = null;
-let currentSort = { column: 'fechaISO', direction: 'desc' }, modoEdicionActivo = false, sueldosHistoricos = {}; 
+firebase.initializeApp({
+    apiKey: "AIzaSyBiYETN_JipXWhMq9gKz-2Pap-Ce4ZJNAI",
+    authDomain: "finanzas-bcuevas.firebaseapp.com",
+    projectId: "finanzas-bcuevas",
+    storageBucket: "finanzas-bcuevas.firebasestorage.app"
+});
+
+const db = firebase.firestore();
+const auth = firebase.auth();
+
+let listaMovimientos = [];
+let datosMesGlobal = []; 
+let chartBD = null, chartP = null, chartDiario = null, chartRadar = null; // 🟢 NUEVAS VARIABLES GLOBALES
+let currentSort = { column: 'fechaISO', direction: 'desc' }; 
+let modoEdicionActivo = false;
+let sueldosHistoricos = {}; 
 const SUELDO_BASE_DEFAULT = 3602505;
 
 function loginWithGoogle() { auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
@@ -65,14 +80,27 @@ function logout() { auth.signOut().then(() => window.location.reload()); }
 
 auth.onAuthStateChanged(user => {
     if (user && user.email.toLowerCase() === BYRON_EMAIL.toLowerCase()) {
-        document.getElementById('login-screen').style.display = 'none';
-        document.getElementById('reportZone').classList.add('active-app');
-        db.collection("parametros").doc("sueldos").onSnapshot(snap => { if(snap.exists) sueldosHistoricos = snap.data(); });
+        const loginScreen = document.getElementById('login-screen');
+        const reportZone = document.getElementById('reportZone');
+        if(loginScreen) loginScreen.style.display = 'none';
+        if(reportZone) reportZone.classList.add('active-app');
+        
+        const userDisplay = document.getElementById('user-display');
+        if(userDisplay) userDisplay.innerText = user.displayName;
+        
+        db.collection("parametros").doc("sueldos").onSnapshot(snap => {
+            if(snap.exists) sueldosHistoricos = snap.data();
+        });
+
         db.collection("movimientos").onSnapshot(snap => {
             listaMovimientos = [];
             snap.forEach(doc => {
                 let d = doc.data(); d.firestoreId = doc.id;
-                let fObj = d.fecha?.toDate ? d.fecha.toDate() : new Date(d.fecha || Date.now());
+                // Análisis estricto de fechas para evitar fantasmas
+                let fObj = new Date();
+                if (d.fecha && d.fecha.toDate) fObj = d.fecha.toDate();
+                else if (d.fecha) { let parsed = new Date(d.fecha); if (!isNaN(parsed.getTime())) fObj = parsed; }
+                
                 d.fechaISO = fObj.toISOString();
                 d.monto = Number(d.monto) || 0;
                 listaMovimientos.push(d);
@@ -83,86 +111,89 @@ auth.onAuthStateChanged(user => {
 });
 
 function cargarSueldoVisual() {
-    const elMes = document.getElementById('navMesConceptual'), elAnio = document.getElementById('navAnio'), elSueldo = document.getElementById('inputSueldo');
+    const elMes = document.getElementById('navMesConceptual');
+    const elAnio = document.getElementById('navAnio');
+    const elSueldo = document.getElementById('inputSueldo');
     if(!elMes || !elAnio || !elSueldo) return;
     const llave = `${elAnio.value}_${elMes.value}`;
-    if (document.activeElement !== elSueldo) elSueldo.value = (sueldosHistoricos[llave] || SUELDO_BASE_DEFAULT).toLocaleString('es-CL');
+    const sueldoActivo = sueldosHistoricos[llave] || SUELDO_BASE_DEFAULT;
+    if (document.activeElement !== elSueldo) elSueldo.value = sueldoActivo.toLocaleString('es-CL');
 }
 
 function guardarSueldoEnNube() {
-    const elMes = document.getElementById('navMesConceptual'), elAnio = document.getElementById('navAnio'), elSueldo = document.getElementById('inputSueldo');
+    const elMes = document.getElementById('navMesConceptual');
+    const elAnio = document.getElementById('navAnio');
+    const elSueldo = document.getElementById('inputSueldo');
     if(!elMes || !elAnio || !elSueldo) return;
+    const llave = `${elAnio.value}_${elMes.value}`;
     const valor = parseInt(elSueldo.value.replace(/\./g,'')) || 0;
-    elSueldo.style.color = "var(--color-saldo)"; setTimeout(() => elSueldo.style.color = "inherit", 800);
-    db.collection("parametros").doc("sueldos").set({ [`${elAnio.value}_${elMes.value}`]: valor }, { merge: true });
+    elSueldo.style.color = "var(--color-saldo)"; 
+    setTimeout(() => elSueldo.style.color = "inherit", 800);
+    db.collection("parametros").doc("sueldos").set({ [llave]: valor }, { merge: true });
     actualizarDashboard();
 }
 
 function actualizarDashboard() {
-    const s = document.getElementById('inputSueldo');
-    const sueldo = s ? (parseInt(s.value.replace(/\./g,'')) || 0) : SUELDO_BASE_DEFAULT;
+    const inputSueldo = document.getElementById('inputSueldo');
+    const sueldo = inputSueldo ? (parseInt(inputSueldo.value.replace(/\./g,'')) || 0) : SUELDO_BASE_DEFAULT;
+    const buscador = document.getElementById('inputBuscador');
+    const b = buscador ? buscador.value.toLowerCase() : '';
+    const navMes = document.getElementById('navMesConceptual');
+    const navAnio = document.getElementById('navAnio');
+    const mesVal = navMes ? parseInt(navMes.value) : new Date().getMonth();
+    const anioVal = navAnio ? parseInt(navAnio.value) : new Date().getFullYear();
+    const { T0, TFinal, fechaFinVisual } = calcularFechasCiclo(mesVal, anioVal);
     
-    const mesVal = parseInt(document.getElementById('navMesConceptual').value);
-    const anioVal = parseInt(document.getElementById('navAnio').value);
-    let { T0, TFinal } = calcularFechasCiclo(mesVal, anioVal);
-    
-    // 🟢 FILTRO TEMPORAL SOBRESCRITO 🟢
-    const fDesde = document.getElementById('filtroDesde') ? document.getElementById('filtroDesde').value : '';
-    const fHasta = document.getElementById('filtroHasta') ? document.getElementById('filtroHasta').value : '';
-    if(fDesde) T0 = new Date(fDesde + "T00:00:00-04:00");
-    if(fHasta) TFinal = new Date(fHasta + "T23:59:59-04:00");
-
-    let dataMes = listaMovimientos.filter(x => { let d = new Date(x.fechaISO); return d >= T0 && d <= TFinal; });
+    let dataMes = listaMovimientos.filter(x => { let d = new Date(x.fechaISO); return d >= T0 && d < TFinal; });
     dataMes.forEach(x => {
         x.catV = x.categoria || 'Sin Categoría';
         if (x.monto <= 1000 && x.catV === 'Sin Categoría') x.catV = "Ruido de Sistema";
         x.esIn = x.tipo === 'Ingreso' || x.catV === 'Transferencia Recibida' || x.catV === 'Ingreso Adicional';
         x.esNeutro = x.tipo === 'Por Cobrar' || x.tipo === 'Ahorro' || x.catV === 'Transferencia Propia / Ahorro';
-        if(x.innecesarioPct === undefined) x.innecesarioPct = catEvitables.includes(x.catV) ? 100 : 0;
     });
 
     datosMesGlobal = [...dataMes];
     let saldoAcc = sueldo, tI = 0, tF = 0, tO = 0, tC = 0, tEvitable = 0, gCat = {};
     
-    const diasCiclo = Math.max(1, Math.round((TFinal - T0) / 86400000));
-    let daily = Array(diasCiclo + 1).fill(0);
-    
     [...dataMes].sort((x,y) => x.fechaISO < y.fechaISO ? -1 : 1).forEach(x => {
-        let dTime = new Date(x.fechaISO).getTime();
-        let idxDia = Math.floor((dTime - T0.getTime()) / 86400000) + 1;
-        if(idxDia < 1) idxDia = 1; if(idxDia > diasCiclo) idxDia = diasCiclo;
-
-        if (x.esIn) { tI += x.monto; saldoAcc += x.monto; daily[idxDia] += x.monto; }
-        else if (x.tipo === 'Por Cobrar') { tC += x.monto; }
+        if (x.esIn) { tI += x.monto; saldoAcc += x.monto; }
+        else if (x.tipo === 'Por Cobrar') tC += x.monto;
         else if (!x.esNeutro) {
-            saldoAcc -= x.monto; daily[idxDia] -= x.monto;
+            saldoAcc -= x.monto;
             if (x.tipo === 'Gasto Fijo') tF += x.monto; else tO += x.monto;
             gCat[x.catV] = (gCat[x.catV] || 0) + x.monto;
-            tEvitable += (x.monto * (x.innecesarioPct / 100)); // 🟢 CÁLCULO % FUGA 🟢
         }
+        if (catEvitables.includes(x.catV)) tEvitable += x.monto;
     });
 
     const setTxt = (id, val) => { const el = document.getElementById(id); if(el) el.innerText = val.toLocaleString('es-CL'); };
     setTxt('txtTotalFijos', tF); setTxt('txtTotalOtros', tO); setTxt('txtTotalIngresos', tI);
     setTxt('txtCxC', tC); setTxt('txtSaldo', saldoAcc);
     
+    const saldoProyVal = saldoAcc + tC;
     const txtSaldoProy = document.getElementById('txtProyectado');
-    if(txtSaldoProy) txtSaldoProy.innerText = (saldoAcc + tC).toLocaleString('es-CL');
+    if(txtSaldoProy) {
+        if (saldoProyVal < CREDIT_SETPOINT) txtSaldoProy.innerHTML = '<span style="color:var(--color-fuga)">⚠️ ' + saldoProyVal.toLocaleString('es-CL') + '</span>';
+        else txtSaldoProy.innerText = saldoProyVal.toLocaleString('es-CL');
+    }
 
+    const diasCiclo = Math.round((TFinal - T0) / 86400000);
     const hoy = new Date();
-    let diasT = (hoy >= T0 && hoy <= TFinal) ? Math.max(Math.floor((hoy - T0) / 86400000) + 1, 1) : (hoy > TFinal ? diasCiclo : 0);
-    const badgeDias = document.getElementById('badgeDias'); if(badgeDias) badgeDias.innerText = `${Math.max(diasCiclo - diasT, 0)} DÍAS`;
+    let diasT = (hoy >= T0 && hoy < TFinal) ? Math.max(Math.floor((hoy - T0) / 86400000) + 1, 1) : (hoy >= TFinal ? diasCiclo : 0);
     
-    // 🟢 PROYECCIÓN SIN FIJOS 🟢
+    const badgeDias = document.getElementById('badgeDias');
+    if(badgeDias) badgeDias.innerText = `${Math.max(diasCiclo - diasT, 0)} DÍAS`;
+    
     let proyC = saldoAcc - ((tO / Math.max(diasT, 1)) * Math.max(diasCiclo - diasT, 0));
     setTxt('txtProyeccionCierre', Math.round(proyC));
 
     const setW = (id, val) => { const el = document.getElementById(id); if(el) el.style.width = Math.min(val, 100) + "%"; };
     setW('barFijos', (tF / (sueldo || 1)) * 100); setW('barOtros', (tO / (sueldo || 1)) * 100);
-    setTxt('txtTotalEvitable', Math.round(tEvitable));
+    setTxt('txtTotalEvitable', tEvitable);
     const pctFugas = sueldo > 0 ? ((tEvitable / sueldo) * 100).toFixed(1) : 0;
     
-    const txtPctFugas = document.getElementById('txtPorcentajeFugas'), barraEvitable = document.getElementById('barEvitable');
+    const txtPctFugas = document.getElementById('txtPorcentajeFugas');
+    const barraEvitable = document.getElementById('barEvitable');
     if(txtPctFugas && barraEvitable) {
         txtPctFugas.innerText = pctFugas + '%'; barraEvitable.style.width = Math.min(pctFugas, 100) + "%";
         if (pctFugas < 5) { txtPctFugas.style.color = "var(--color-saldo)"; barraEvitable.style.backgroundColor = "var(--color-saldo)"; } 
@@ -193,7 +224,9 @@ function renderizarListas(sueldoBase, filtroBuscador) {
         x.saldoCalculadoVista = saldoRelativo;
     });
 
-    const contenedorPC = document.getElementById('listaDetalle'), contenedorMovil = document.getElementById('listaMovilDetalle');
+    const contenedorPC = document.getElementById('listaDetalle'); 
+    const contenedorMovil = document.getElementById('listaMovilDetalle');
+    
     if (!contenedorMovil && !contenedorPC) return;
 
     if(datos.length === 0) {
@@ -202,32 +235,40 @@ function renderizarListas(sueldoBase, filtroBuscador) {
         return;
     }
 
-    let htmlMovil = '', htmlPC = '', currentDayGroup = ""; 
+    let htmlMovil = ''; let htmlPC = '';
+    let currentDayGroup = ""; 
     
-    // 🟢 LÓGICA DE HOY/AYER BLINDADA 🟢
-    let now = new Date(); now.setHours(0,0,0,0);
-    let yesterday = new Date(now); yesterday.setDate(yesterday.getDate() - 1);
+    const now = new Date();
+    const todayStr = now.toLocaleDateString('es-CL');
+    const yesterday = new Date(now);
+    yesterday.setDate(now.getDate() - 1);
+    const yesterdayStr = yesterday.toLocaleDateString('es-CL');
 
     datos.forEach((x, idx) => {
         const d = new Date(x.fechaISO);
-        let dClean = new Date(d); dClean.setHours(0,0,0,0);
+        const dateStr = d.toLocaleDateString('es-CL');
+        const timeStr = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
         
-        const dateStr = d.toLocaleDateString('es-CL'), timeStr = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-        
+        // TIMING-BOX HEADERS (Solo se inyectan si el orden es por fecha descendente)
         if (currentSort.column === 'fechaISO' && currentSort.direction === 'desc' && dateStr !== currentDayGroup) {
             let labelText = dateStr;
-            if (dClean.getTime() === now.getTime()) labelText = "HOY";
-            else if (dClean.getTime() === yesterday.getTime()) labelText = "AYER";
+            if (dateStr === todayStr) labelText = "HOY";
+            else if (dateStr === yesterdayStr) labelText = "AYER";
             else {
                 const meses = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"];
                 labelText = `${d.getDate()} ${meses[d.getMonth()]}`;
             }
-            if (contenedorMovil) htmlMovil += `<div class="date-header">${labelText}</div>`;
+            if (contenedorMovil) {
+                htmlMovil += `<div class="date-header">${labelText}</div>`;
+            }
             currentDayGroup = dateStr;
         }
 
-        const em = catEmojis[x.catV] || "❓", colorMonto = x.esIn ? "var(--color-ingresos)" : x.esNeutro ? "#ff9800" : "var(--text-main)", iconoVisual = obtenerIconoVisual(x.nombre, em);
-        const nombreSeguro = x.nombre || "Dato no identificado", montoSeguro = (typeof x.monto === 'number' && !isNaN(x.monto)) ? x.monto : 0;
+        const em = catEmojis[x.catV] || "❓";
+        const colorMonto = x.esIn ? "var(--color-ingresos)" : x.esNeutro ? "#ff9800" : "var(--text-main)";
+        const iconoVisual = obtenerIconoVisual(x.nombre, em);
+        const nombreSeguro = x.nombre || "Dato no identificado";
+        const montoSeguro = (typeof x.monto === 'number' && !isNaN(x.monto)) ? x.monto : 0;
         const colorSaldo = x.saldoCalculadoVista < 0 ? 'var(--color-fuga)' : 'var(--text-muted)';
         let iconImpacto = x.esIn ? `<span class="impact-icon impact-pos">(+)</span>` : x.esNeutro ? `<span class="impact-icon impact-neu">(=)</span>` : `<span class="impact-icon impact-neg">(-)</span>`;
         let statusBadge = x.catV === 'Sin Categoría' ? `<span class="status-badge status-warn">REVISAR</span>` : `<span class="status-badge status-ok">OK</span>`;
@@ -259,7 +300,7 @@ function renderizarListas(sueldoBase, filtroBuscador) {
                 <td class="hide-mobile" style="font-size:0.75rem;"><span class="cat-badge">${em} ${x.catV}</span></td>
                 <td class="col-monto" style="color:${colorMonto};">${iconImpacto}$${montoSeguro.toLocaleString('es-CL')}</td>
                 <td class="col-monto hide-mobile" style="color:${colorSaldo};">$${x.saldoCalculadoVista.toLocaleString('es-CL')}</td>
-                <td class="hide-mobile" style="text-align:center; font-size:0.7rem; color:var(--text-muted);">${x.innecesarioPct}%</td>
+                <td class="hide-mobile" style="text-align:center; font-size:0.7rem; color:var(--text-muted);">${catEvitables.includes(x.catV) ? '100%' : '0%'}</td>
                 <td class="hide-mobile" style="text-align:center;">${statusBadge}</td>
                 <td style="text-align:center; padding: 2px;"><button class="btn-sys" style="padding:4px; border-color:var(--color-edit); color:var(--color-edit);" onclick="editarMovimiento('${x.firestoreId}')">✏️<span class="btn-edit-text"> EDIT</span></button></td>
             </tr>`;
@@ -286,9 +327,6 @@ function editarMovimiento(id) {
     if(document.getElementById('inputNombre')) document.getElementById('inputNombre').value = mov.nombre;
     if(document.getElementById('inputMonto')) document.getElementById('inputMonto').value = mov.monto.toLocaleString('es-CL');
     if(document.getElementById('inputCategoria')) document.getElementById('inputCategoria').value = mov.categoria || 'Sin Categoría';
-    
-    if(document.getElementById('inputFuga')) document.getElementById('inputFuga').value = mov.innecesarioPct !== undefined ? mov.innecesarioPct : "0";
-    
     let tipoC = mov.tipo || 'Gasto';
     if (mov.catV === 'Transferencia Recibida' || mov.catV === 'Ingreso Adicional') tipoC = 'Ingreso';
     if (mov.catV === 'Transferencia Propia / Ahorro') tipoC = 'Ahorro';
@@ -313,15 +351,10 @@ function agregarMovimiento() {
     const t = document.getElementById('inputTipo').value;
     const fInput = document.getElementById('inputFecha').value;
     const editId = document.getElementById('editId').value;
-    
-    // 🟢 LECTURA DEL % DE FUGA 🟢
-    const iFugaEl = document.getElementById('inputFuga');
-    const pctFuga = iFugaEl ? parseInt(iFugaEl.value) : (catEvitables.includes(c) ? 100 : 0);
-
     if (!m || !n || !fInput) return alert("⚠️ Faltan datos críticos.");
     const btn = document.getElementById('btnGuardar');
     btn.innerHTML = "⏳ GUARDANDO..."; btn.disabled = true;
-    const dataPayload = { nombre: n, monto: m, categoria: c, tipo: t, fecha: new Date(fInput), status: 'Manual', innecesarioPct: pctFuga };
+    const dataPayload = { nombre: n, monto: m, categoria: c, tipo: t, fecha: new Date(fInput), status: 'Manual' };
     let op = (modoEdicionActivo && editId) ? db.collection("movimientos").doc(editId).update(dataPayload) : db.collection("movimientos").add(dataPayload);
     op.then(() => {
         document.getElementById('editId').value = ''; document.getElementById('inputNombre').value = ''; document.getElementById('inputMonto').value = '';
@@ -338,6 +371,7 @@ function updateMassActions() { const bar = document.getElementById('massActionsB
 function massDelete() { const ids = Array.from(document.querySelectorAll('.row-check:not(#checkAll):checked')).map(cb => cb.value); if(ids.length === 0 || !confirm(`⚠️ ¿Eliminar ${ids.length} registro(s)?`)) return; const btn = document.querySelector('button[onclick="massDelete()"]'); const orig = btn.innerHTML; btn.innerHTML = '⏳'; Promise.all(ids.map(id => db.collection("movimientos").doc(id).delete())).then(() => { document.getElementById('massActionsBar').style.display = 'none'; document.getElementById('checkAll').checked = false; btn.innerHTML = orig; }); }
 function massCategorize() { const ids = Array.from(document.querySelectorAll('.row-check:not(#checkAll):checked')).map(cb => cb.value); const cat = document.getElementById('massCategorySelect').value; if(ids.length === 0 || !cat || !confirm(`¿Categorizar como "${cat}"?`)) return; const btn = document.querySelector('button[onclick="massCategorize()"]'); const orig = btn.innerHTML; btn.innerHTML = '⏳'; Promise.all(ids.map(id => db.collection("movimientos").doc(id).update({categoria: cat}))).then(() => { document.getElementById('massActionsBar').style.display = 'none'; document.getElementById('checkAll').checked = false; document.getElementById('massCategorySelect').value = ''; btn.innerHTML = orig; }); }
 
+// 🟢 FUNCIÓN DE DIBUJADO DE 4 GRÁFICOS (FASE 3 + MÓDULO 2) 🟢
 function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0) {
     if(chartBD) chartBD.destroy(); if(chartP) chartP.destroy(); 
     if(chartDiario) chartDiario.destroy(); if(chartRadar) chartRadar.destroy();
@@ -347,7 +381,7 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0) {
     const cF = getComputedStyle(document.body).getPropertyValue('--color-fuga').trim() || "#ff5252";
     
     let daily = Array(diasCiclo + 1).fill(0);
-    let dailyGastosVar = Array(diasCiclo + 1).fill(0); 
+    let dailyGastosVar = Array(diasCiclo + 1).fill(0); // Array purificado (Sin Fijos)
     let msT0 = T0.getTime();
 
     chronData.forEach(m => {
@@ -357,14 +391,13 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0) {
             if(m.esIn) daily[diff] += m.monto; 
             else if(!m.esNeutro) { 
                 daily[diff] -= m.monto; 
+                // Filtro Arquitectónico: Solo mapeamos al diario si NO es gasto fijo
                 if(m.tipo !== 'Gasto Fijo') dailyGastosVar[diff] += m.monto; 
             } 
         }
     });
 
     let actual = [sueldo], ideal = [sueldo], labelsX = ["INI"], colorLabelsX = [cT], colorGridX = [cG]; 
-    let labelsFechas = ["INI"]; 
-    
     let acc = sueldo, limit = Math.floor((Date.now() - msT0) / 86400000) + 1;
     const nombresMes = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"];
 
@@ -372,23 +405,14 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0) {
         ideal.push(sueldo - (sueldo/diasCiclo)*i); 
         acc += daily[i]; 
         actual.push(i > limit ? null : acc);
-        let f = new Date(msT0 + (i-1)*86400000); 
-        let dia = String(f.getDate()).padStart(2, '0');
-        let mesStr = nombresMes[f.getMonth()];
-        
-        labelsFechas.push(`${dia} ${mesStr}`); 
-        
-        if (f.getDate() === 1) { labelsX.push(`${dia} ${mesStr}`); colorLabelsX.push('#ff9800'); colorGridX.push('#ff9800'); } 
+        let f = new Date(msT0 + (i-1)*86400000); let dia = String(f.getDate()).padStart(2, '0');
+        if (f.getDate() === 1) { labelsX.push(`${dia} ${nombresMes[f.getMonth()]}`); colorLabelsX.push('#ff9800'); colorGridX.push('#ff9800'); } 
         else { labelsX.push(dia); colorLabelsX.push(cT); colorGridX.push(cG); }
     }
 
-    bdDataMaster = { labels: [...labelsX], labelsFechas: [...labelsFechas], actual: [...actual], ideal: [...ideal], daily: [...daily], dailyGastosVar: [...dailyGastosVar], colorsX: [...colorLabelsX], colorsG: [...colorGridX], diasCiclo };
+    bdDataMaster = { labels: [...labelsX], actual: [...actual], ideal: [...ideal], daily: [...daily], dailyGastosVar: [...dailyGastosVar], colorsX: [...colorLabelsX], colorsG: [...colorGridX] };
 
-    // Set slider max values dynamically based on filters
-    const sIn = document.getElementById('sliderIn'), sFin = document.getElementById('sliderFin');
-    if(sIn) { sIn.max = diasCiclo; sIn.value = 0; }
-    if(sFin) { sFin.max = diasCiclo; sFin.value = diasCiclo; }
-
+    // 1. BURN-DOWN
     chartBD = new Chart(document.getElementById('chartBurnDown'), {
         type: 'line', 
         data: { labels: labelsX, datasets: [
@@ -400,13 +424,13 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0) {
             scales:{ 
                 x:{ticks:{color: colorLabelsX, maxRotation: 45, minRotation: 45, font: (c) => ({ weight: colorLabelsX[c.index] === '#ff9800' ? '900' : 'bold', size: 10 }) }, grid:{color: colorGridX, drawBorder:false, lineWidth: (c) => colorGridX[c.index] === '#ff9800' ? 2 : 1 } }, 
                 y:{ max: sueldo, ticks:{color:cT, callback:v=>'$'+Math.round(v/1000)+'k'}, grid:{color: c => c.tick.value === 0 ? cF : cG} } 
-            },
-            layout: { padding: { bottom: 0, top: 0 } }
+            } 
         }
     });
 
-    const aliasMap = { "Gastos Fijos (Búnker)": "Fijos", "Mantenimiento Hardware (Salud)": "Salud", "Alimentación & Supermercado": "Super", "Transferencia Propia / Ahorro": "Ahorro", "Ocio & Experiencias": "Ocio", "Transporte & Logística": "Transp", "Dopamina & Antojos": "Dopa", "Transferencia Recibida": "Ingreso", "Gasto Tarjeta de Crédito": "Tarjeta" };
+    const aliasMap = { "Gastos Fijos (Búnker)": "Fijos", "Mantenimiento Hardware (Salud)": "Salud", "Alimentación & Supermercado": "Super", "Transferencia Propia / Ahorro": "Ahorro", "Ocio & Experiencias": "Ocio", "Transporte & Logística": "Transp", "Dopamina & Antojos": "Dopa", "Transferencia Recibida": "Ingreso" };
 
+    // 2. PARETO
     const sorted = Object.entries(cats).sort((a,b)=>b[1]-a[1]).slice(0,8); const totalTop8 = sorted.reduce((sum, val) => sum + val[1], 0) || 1;
     let acumulado = 0; const dataAcumulada = sorted.map(c => { acumulado += c[1]; return (acumulado / totalTop8) * 100; });
 
@@ -419,29 +443,30 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0) {
         options: { maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{ x:{ticks:{color:cT, font:{size:9}}}, y:{ type: 'linear', position: 'left', ticks:{color:cT, callback:v=>'$'+Math.round(v/1000)+'k'} }, y1:{ type: 'linear', position: 'right', min: 0, max: 100, grid: { drawOnChartArea: false }, ticks:{color:'#ff9800', callback:v=>Math.round(v)+'%', font:{weight:'bold'}} } } }
     });
 
+    // 3. PULSO DIARIO VARIABLE (SOLO PC)
     const ctxDiario = document.getElementById('chartDiario');
     if(ctxDiario) {
-        let lastDayWithData = diasCiclo;
-        while(lastDayWithData > 0 && dailyGastosVar[lastDayWithData] === 0) lastDayWithData--;
-        let startDayForBars = Math.max(1, lastDayWithData - 6); 
-        
-        let barLabels = labelsFechas.slice(startDayForBars, lastDayWithData + 1); 
-        let barData = dailyGastosVar.slice(startDayForBars, lastDayWithData + 1);
-
         chartDiario = new Chart(ctxDiario, {
             type: 'bar',
-            data: { labels: barLabels, datasets: [{ label: 'Gasto Físico', data: barData, backgroundColor: '#da3633', borderRadius: 4 }] },
-            options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: cT, font:{size:9} }, grid: { display:false } }, y: { ticks: { color: cT, callback: v => '$' + Math.round(v / 1000) + 'k' }, grid: { color: cG } } } }
+            data: { labels: labelsX.slice(1), datasets: [{ label: 'Gasto Físico', data: dailyGastosVar.slice(1), backgroundColor: '#da3633', borderRadius: 4 }] },
+            options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: colorLabelsX.slice(1), font:{size:9} }, grid: { display:false } }, y: { ticks: { color: cT, callback: v => '$' + Math.round(v / 1000) + 'k' }, grid: { color: cG } } } }
         });
     }
 
+    // 4. RADAR DE COMPORTAMIENTO (SOLO PC)
     const ctxRadar = document.getElementById('chartRadar');
     if(ctxRadar) {
+        // Filtramos las variables que deformarían el radar
         let radarCats = {...cats};
-        delete radarCats["Gastos Fijos (Búnker)"]; delete radarCats["Transferencia Propia / Ahorro"]; delete radarCats["Transferencia Recibida"]; delete radarCats["Ingreso Adicional"]; delete radarCats["Sin Categoría"]; delete radarCats["Ruido de Sistema"];
+        delete radarCats["Gastos Fijos (Búnker)"];
+        delete radarCats["Transferencia Propia / Ahorro"];
+        delete radarCats["Transferencia Recibida"];
+        delete radarCats["Ingreso Adicional"];
+        delete radarCats["Sin Categoría"];
+        delete radarCats["Ruido de Sistema"];
 
-        let rSorted = Object.entries(radarCats).sort((a,b)=>b[1]-a[1]).slice(0,5); 
-        if(rSorted.length < 3) rSorted.push(["Sin Datos", 0], ["Sin Datos 2", 0]); 
+        let rSorted = Object.entries(radarCats).sort((a,b)=>b[1]-a[1]).slice(0,5); // Top 5
+        if(rSorted.length < 3) rSorted.push(["Sin Datos", 0], ["Sin Datos 2", 0]); // Mínimo 3 vértices
         
         let rLabels = rSorted.map(c => aliasMap[c[0]] || c[0].split(' ')[0]);
         let rData = rSorted.map(c => c[1]);
@@ -454,11 +479,63 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0) {
     }
 }
 
+function calcularFechasCiclo(mesConceptual, anio) {
+    let mesInicio = mesConceptual - 1; let anioInicio = anio; if (mesInicio < 0) { mesInicio = 11; anioInicio--; }
+    let T0 = new Date(anioInicio, mesInicio, 30); if (T0.getMonth() !== mesInicio) T0 = new Date(anioInicio, mesInicio + 1, 0); 
+    let TFinal = new Date(anio, mesConceptual, 30); if (TFinal.getMonth() !== mesConceptual) TFinal = new Date(anio, mesConceptual + 1, 0);
+    return { T0, TFinal, fechaFinVisual: new Date(TFinal.getTime() - 86400000) };
+}
+
+function cambiarCicloManual() { document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('preset-active')); aplicarCicloAlSistema(); }
+function setCicloPreset(tipo) {
+    document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('preset-active'));
+    const m = new Date().getMonth(); let tM = m; let tA = new Date().getFullYear();
+    if (new Date().getDate() >= 30) { tM = (m + 1) % 12; if (tM === 0) tA++; }
+    if (tipo === 'anterior') { const btn = document.getElementById('btnPresetAnterior'); if(btn) btn.classList.add('preset-active'); tM = tM - 1; if (tM < 0) { tM = 11; tA--; } } 
+    else if (tipo === 'actual') { const btn = document.getElementById('btnPresetActual'); if(btn) btn.classList.add('preset-active'); }
+    const navMes = document.getElementById('navMesConceptual'); const navAnio = document.getElementById('navAnio');
+    if(navMes) navMes.value = tM; if(navAnio) navAnio.value = tA;
+    aplicarCicloAlSistema();
+}
+
+function aplicarCicloAlSistema() {
+    const navMes = document.getElementById('navMesConceptual');
+    const navAnio = document.getElementById('navAnio');
+    if(!navMes || !navAnio) return;
+    const { T0, fechaFinVisual } = calcularFechasCiclo(parseInt(navMes.value), parseInt(navAnio.value));
+    const badge = document.getElementById('navRangoBadge');
+    if(badge) badge.innerText = `PERIODO: ${T0.toLocaleDateString('es-CL', {day:'2-digit', month:'short'}).toUpperCase()} - ${fechaFinVisual.toLocaleDateString('es-CL', {day:'2-digit', month:'short'}).toUpperCase()}`;
+    cargarSueldoVisual(); actualizarDashboard();
+}
+
+let draggedRowId = null;
+function dragStart(e, id) { draggedRowId = id; e.dataTransfer.effectAllowed = 'move'; setTimeout(() => e.target.style.opacity = '0.4', 0); }
+function dragOver(e) { e.preventDefault(); e.target.closest('tr').style.borderTop = '3px solid var(--color-ingresos)'; }
+function dragLeave(e) { e.target.closest('tr').style.borderTop = ''; }
+function dropRow(e, targetId) {
+    e.preventDefault(); e.target.closest('tr').style.borderTop = '';
+    if (!draggedRowId || draggedRowId === targetId) return;
+    if (currentSort.column !== 'fechaISO') return alert("⚠️ ALARMA: Para recalibrar el tiempo, la tabla debe estar ordenada por Fecha.");
+    let vistaActual = [...datosMesGlobal].sort((a, b) => { if (a.fechaISO < b.fechaISO) return currentSort.direction === 'asc' ? -1 : 1; if (a.fechaISO > b.fechaISO) return currentSort.direction === 'asc' ? 1 : -1; return 0; });
+    let draggedIdx = vistaActual.findIndex(x => x.firestoreId === draggedRowId);
+    let targetIdx = vistaActual.findIndex(x => x.firestoreId === targetId);
+    let t1_idx = targetIdx > draggedIdx ? targetIdx : targetIdx - 1;
+    let t2_idx = targetIdx > draggedIdx ? targetIdx + 1 : targetIdx;
+    let t1_ms = t1_idx >= 0 ? new Date(vistaActual[t1_idx].fechaISO).getTime() : null;
+    let t2_ms = t2_idx < vistaActual.length ? new Date(vistaActual[t2_idx].fechaISO).getTime() : null;
+    let newTimeMs; let dir = currentSort.direction;
+    if (t1_ms && t2_ms) newTimeMs = t1_ms + (t2_ms - t1_ms) / 2;
+    else if (!t1_ms) newTimeMs = t2_ms + (dir === 'desc' ? 60000 : -60000); 
+    else if (!t2_ms) newTimeMs = t1_ms + (dir === 'desc' ? -60000 : 60000);
+    if(confirm("⚙️ ¿Inyectar nuevo Timestamp para forzar cuadratura?")) { db.collection("movimientos").doc(draggedRowId).update({ fecha: new Date(newTimeMs) }); }
+    draggedRowId = null;
+}
+document.addEventListener('dragend', (e) => { if(e.target.tagName === 'TR') e.target.style.opacity = '1'; });
+
 window.hacerZoomGrafico = function(diaIn, diaFin) {
     if(!chartBD || !bdDataMaster) return;
     let inicio = parseInt(diaIn); let fin = parseInt(diaFin);
     if(isNaN(inicio) || isNaN(fin) || inicio >= fin) return;
-    if(inicio > fin) { let temp = inicio; inicio = fin; fin = temp; }
     
     let slicedActual = bdDataMaster.actual.slice(inicio, fin + 1);
     let slicedIdeal = bdDataMaster.ideal.slice(inicio, fin + 1);
@@ -489,13 +566,11 @@ window.hacerZoomGrafico = function(diaIn, diaFin) {
     let domProm = document.getElementById('txtPromedioZoom'); if(domProm) domProm.innerText = '$' + promDiario.toLocaleString('es-CL');
 };
 
+// 🟢 RUTINAS GLOBALES DE NUBE (TELEGRAM & SYNC) 🟢
 window.triggerSync = function() {
-    const btn = document.querySelector('button[onclick="triggerSync()"]') || document.querySelector('.btn-sys');
-    const origText = btn ? btn.innerText : '';
-    if(btn) btn.innerText = "⏳ SYNC...";
     fetch("https://script.google.com/macros/s/AKfycbwKlub0qrv8_d24ZuyKKNryqOw1E68xv1_JvPOoEUc6W8TICllFfodNcwkigQE_7AuoNg/exec", {mode:'no-cors'})
-    .then(() => { alert("✅ Comando enviado. Refrescando consola..."); window.location.reload(); })
-    .catch(e => { alert("Error de red: " + e); if(btn) btn.innerText = origText; });
+    .then(()=>alert("✅ Base de datos Sincronizada."))
+    .catch(e => alert("Error de red: " + e));
 };
 
 window.enviarReporteTelegram = function() {
@@ -503,10 +578,13 @@ window.enviarReporteTelegram = function() {
     const badge = document.getElementById('navRangoBadge');
     const saldo = txtSaldo ? txtSaldo.innerText : '0';
     const periodo = badge ? badge.innerText : 'Periodo Actual';
+    
     const msg = `🏭 *BÚNKER SCADA*\n💰 Saldo: $${saldo}\n🗓️ Periodo: ${periodo}`;
     
     fetch(`https://api.telegram.org/bot8614679709:AAEJGy9yAlKnhjVmJ0VUZpT-YmZQ6J5IOps/sendMessage`, { 
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ chat_id: "1484213465", text: msg, parse_mode: 'Markdown' }) 
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json' }, 
+        body: JSON.stringify({ chat_id: "1484213465", text: msg, parse_mode: 'Markdown' }) 
     })
     .then(r => r.ok ? alert("✅ Telemetría Transmitida a Telegram.") : alert("❌ Error API Telegram"))
     .catch(e => alert("Error de red: " + e));
