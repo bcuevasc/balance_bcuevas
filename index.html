@@ -48,6 +48,7 @@ h2 { color: var(--color-saldo); margin: 0; font-size: 1.2rem; font-weight: 900; 
 .kpi-proyectado h4, .kpi-proyectado .value { color: #fff !important; font-weight: 900; }
 .master-layout { display: grid; grid-template-columns: 1fr 340px; gap: 12px; margin-top: 5px; flex-grow: 1; min-height: 0; }
 .left-col { display: flex; flex-direction: column; gap: 10px; min-height: 0; height: 100%; overflow: hidden; }
+/* Le damos flex: 1 a la wrapper para que empuje los gráficos hacia abajo */
 .grid-main-wrapper { background: var(--bg-panel); border-radius: 8px; border: 1px solid var(--border-color); padding: 10px; display: flex; flex-direction: column; flex: 1; min-height: 0; }
 .telemetry-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; gap: 10px; }
 .grid-container { flex: 1; min-height: 0; overflow-x: auto; overflow-y: auto; background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 6px; scrollbar-width: none; -ms-overflow-style: none;  }
@@ -71,9 +72,19 @@ h2 { color: var(--color-saldo); margin: 0; font-size: 1.2rem; font-weight: 900; 
 .impact-neg { color: var(--color-fuga); }
 .impact-neu { color: #ff9800; }
 
-/* 🟢 NUEVA GRILLA 2x2 PARA GRÁFICOS PC 🟢 */
-#charts-grid-container { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; flex-shrink: 0; margin-bottom: 20px; }
-.chart-box { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; height: 260px; display: flex; flex-direction: column; }
+/* 🟢 FASE 3.1: PANEL INFERIOR DE 4 TURBINAS (40/20/20/20) 🟢 */
+#charts-grid-container { 
+    display: grid; 
+    grid-template-columns: 2fr 1fr 1fr 1fr; /* Proporción matemática: 40% - 20% - 20% - 20% */
+    gap: 15px; 
+    flex-shrink: 0; 
+    margin-top: 10px; /* Separación de la tabla */
+}
+.chart-box { 
+    background: var(--bg-panel); border: 1px solid var(--border-color); 
+    border-radius: 8px; padding: 12px; height: 260px; 
+    display: flex; flex-direction: column; 
+}
 .chart-box h5 { margin: 0 0 5px 0; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; text-align: center; font-weight: 800; }
 .canvas-container { position: relative; flex-grow: 1; min-height: 0; }
 
@@ -150,6 +161,7 @@ input[type="date"]::-webkit-calendar-picker-indicator, input[type="datetime-loca
     
     <div class="master-layout">
         <div class="left-col">
+            
             <div class="grid-main-wrapper">
                 <div class="telemetry-header">
                     <input type="text" id="inputBuscador" placeholder="🔍 Filtrar tabla..." oninput="actualizarDashboard()" style="width:250px; background:var(--input-bg); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px; padding:6px 12px; outline:none; font-size:0.8rem;">
@@ -177,9 +189,10 @@ input[type="date"]::-webkit-calendar-picker-indicator, input[type="datetime-loca
             </div>
             
             <div id="charts-grid-container">
-                <div class="chart-box" style="height: 280px;">
+                <div class="chart-box">
                     <h5>Velocidad Consumo (Burn-Down)</h5>
-                    <div class="canvas-container" style="height: 160px;"><canvas id="chartBurnDown"></canvas></div>
+                    <div class="canvas-container"><canvas id="chartBurnDown"></canvas></div>
+                    
                     <div style="padding-top: 10px; margin-top: 5px; border-top: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 5px;">
                         <div style="display:flex; justify-content: space-between; font-size:0.6rem; color:var(--text-muted); font-weight:bold;">
                             <span>INICIO: <span id="valSliderIn">0</span></span><span>FIN: <span id="valSliderFin">30</span></span>
@@ -191,33 +204,72 @@ input[type="date"]::-webkit-calendar-picker-indicator, input[type="datetime-loca
                         <div style="display: flex; gap: 10px; margin-top: 5px;">
                             <div style="flex:1; background: var(--bg-subpanel); padding: 5px; border-radius: 4px; text-align: center;">
                                 <div style="font-size: 0.55rem; color: var(--text-muted); font-weight: 800; text-transform: uppercase;">Gasto Tramo</div>
-                                <div style="font-size: 0.9rem; font-weight: 900; color: var(--accent-red);" id="txtGastoTramo">$0</div>
+                                <div style="font-size: 0.8rem; font-weight: 900; color: var(--accent-red);" id="txtGastoTramo">$0</div>
                             </div>
                             <div style="flex:1; background: var(--bg-subpanel); padding: 5px; border-radius: 4px; text-align: center;">
                                 <div style="font-size: 0.55rem; color: var(--text-muted); font-weight: 800; text-transform: uppercase;">Promedio Diario</div>
-                                <div style="font-size: 0.9rem; font-weight: 900; color: var(--accent-orange);" id="txtPromedioZoom">$0</div>
+                                <div style="font-size: 0.8rem; font-weight: 900; color: var(--accent-orange);" id="txtPromedioZoom">$0</div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="chart-box" style="height: 280px;">
-                    <h5>Pulso Variable (Excluye Fijos)</h5>
+                <div class="chart-box">
+                    <h5>Pulso Variable</h5>
                     <div class="canvas-container"><canvas id="chartDiario"></canvas></div>
                 </div>
 
-                <div class="chart-box" style="height: 250px;">
-                    <h5>Pareto de Gasto Top</h5>
+                <div class="chart-box">
+                    <h5>Top Fugas</h5>
                     <div class="canvas-container"><canvas id="chartPareto"></canvas></div>
                 </div>
 
-                <div class="chart-box" style="height: 250px;">
-                    <h5>Perfil de Consumo Variable</h5>
+                <div class="chart-box">
+                    <h5>Perfil de Consumo</h5>
                     <div class="canvas-container"><canvas id="chartRadar"></canvas></div>
                 </div>
             </div>
+
         </div>
 
+        <div class="right-col">
+            <div class="sidebar-panel">
+                <h4 style="color:var(--color-saldo); margin:0; font-size:0.85rem; text-transform:uppercase; margin-bottom:10px;">REGISTRO MANUAL</h4>
+                <input type="hidden" id="editId">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: -5px;">
+                    <div class="form-group"><label>Fecha</label><input type="datetime-local" id="inputFecha"></div>
+                    <div class="form-group"><label>Flujo</label>
+                        <select id="inputTipo">
+                            <option value="Gasto">Gasto Variable</option>
+                            <option value="Gasto Fijo">Gasto Fijo</option>
+                            <option value="Ingreso">Ingreso Extra</option>
+                            <option value="Por Cobrar">Préstamo (CxC)</option>
+                            <option value="Ahorro">Ahorro / Mov. Neutro</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group"><label>Categoría V31.4</label>
+                    <select id="inputCategoria"></select>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 110px; gap: 10px;">
+                    <div class="form-group"><label>Descripción</label><input type="text" id="inputNombre"></div>
+                    <div class="form-group"><label>Monto</label><input type="text" id="inputMonto" oninput="formatearEntradaNumerica(this)"></div>
+                </div>
+                <button id="btnGuardar" class="btn-guardar" onclick="agregarMovimiento()">GUARDAR EN BÚNKER</button>
+            </div>
+            
+            <div class="sidebar-panel">
+                <h4 style="margin:0 0 10px 0; font-size:0.85rem; color:var(--text-muted); text-transform:uppercase;">Eficiencia de Gasto</h4>
+                <div class="eficiencia-kpi"><div class="monto">$<span id="txtTotalEvitable">0</span></div><div class="label">Fugas Detectadas</div></div>
+                <div class="bar-container"><div id="barEvitable" class="bar-fill"></div></div>
+                <div style="margin-top:12px; padding-top:10px; border-top:1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center;">
+                    <span style="font-size:0.65rem; color:var(--text-muted); font-weight:800; text-transform:uppercase;">% Sueldo a Fugas:</span>
+                    <span id="txtPorcentajeFugas" style="font-size:0.9rem; font-weight:900; color:var(--color-fuga);">0%</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
         <div class="right-col">
             <div class="sidebar-panel">
                 <h4 style="color:var(--color-saldo); margin:0; font-size:0.85rem; text-transform:uppercase; margin-bottom:10px;">REGISTRO MANUAL</h4>
