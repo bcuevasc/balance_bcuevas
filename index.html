@@ -2,256 +2,72 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Bunker Digital SCADA v31.9.5</title>
-    
+    <title>Bunker Digital SCADA v31.9.6</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
-    
     <style>
-:root { --bg-body: #0b0e14; --bg-panel: #161b22; --bg-subpanel: #21262d; --text-main: #f0f6fc; --text-muted: #8b949e; --border-color: #30363d; --input-bg: #0d1117; --item-hover: #1c2128; --color-guardar: #238636; --color-ingresos: #1f6feb; --color-gastos: #da3633;  --color-saldo: #3fb950; --color-edit: #d29922; --color-fuga: #ff5252; --color-proyectado: #3f51b5; --color-telegram: #0088cc; }
-body.light-theme { --bg-body: #f0f2f5; --bg-panel: #ffffff; --bg-subpanel: #f8f9fa; --text-main: #24292e; --text-muted: #57606a; --border-color: #d0d7de; --input-bg: #ffffff; --item-hover: #e1e4e8; }
-* { box-sizing: border-box; transition: background-color 0.3s, border-color 0.3s; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
-body { background-color: var(--bg-body); margin: 0; padding: 0; color: var(--text-main); overflow: hidden; height: 100vh; display: flex; flex-direction: column; }
-#login-screen { position: fixed; inset: 0; background: #0b0e14; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10000; text-align: center; }
-.login-box { padding: 40px; background: #161b22; border: 1px solid #30363d; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
-.btn-google { background: #fff; color: #000; border: none; padding: 12px 24px; border-radius: 6px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 10px; margin-top: 20px; font-size: 1rem; }
-.app-container { display: none; width: 100%; height: 100vh; padding: 8px 12px; flex-direction: column; gap: 8px; margin: 0 auto; max-width: 1920px; }
-.app-container.active-app { display: flex; }
-.header-titles { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 4px; margin-bottom: 0; }
-h2 { color: var(--color-saldo); margin: 0; font-size: 1.2rem; font-weight: 900; text-transform: uppercase; }
-.cronos { font-family: 'Courier New', Courier, monospace; font-size: 0.85rem; font-weight: 800; color: var(--text-muted); background: var(--bg-panel); padding: 2px 8px; border-radius: 4px; border: 1px solid var(--border-color); }
-.system-btns { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; justify-content: flex-end; }
-.btn-sys { background: var(--bg-subpanel); color: var(--text-main); border: 1px solid var(--border-color); padding: 6px 10px; border-radius: 6px; cursor: pointer; font-weight: 800; font-size: 0.7rem; text-transform: uppercase; }
-.btn-sys:hover { border-color: var(--color-saldo); }
-.time-navigator-panel { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 8px; padding: 8px 15px; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.2); border-top: 3px solid var(--color-ingresos); }
-.time-nav-controls { display: flex; align-items: center; gap: 12px; }
-.nav-select { background: var(--input-bg); color: var(--text-main); border: 1px solid var(--border-color); padding: 6px 12px; border-radius: 6px; font-weight: 800; text-transform: uppercase; font-size: 0.8rem; outline: none; cursor: pointer; }
-.nav-select:focus { border-color: var(--color-ingresos); }
-.nav-badge { font-family: 'Courier New', Courier, monospace; background: rgba(31, 111, 235, 0.1); color: var(--color-ingresos); border: 1px solid rgba(31, 111, 235, 0.3); padding: 4px 10px; border-radius: 4px; font-size: 0.75rem; font-weight: 900; letter-spacing: 0.5px; text-transform: uppercase; }
-.time-nav-presets { display: flex; gap: 10px; }
-.preset-btn { background: var(--bg-subpanel); color: var(--text-muted); border: 1px solid var(--border-color); padding: 6px 12px; border-radius: 6px; font-weight: 800; font-size: 0.7rem; cursor: pointer; text-transform: uppercase; transition: all 0.2s; }
-.preset-btn:hover { border-color: var(--color-ingresos); color: var(--text-main); }
-.preset-active { background: rgba(31, 111, 235, 0.15); border-color: var(--color-ingresos); color: var(--color-ingresos); }
-.kpi-row { display: grid; grid-template-columns: repeat(8, 1fr); gap: 8px; }
-.kpi-card { padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-panel); border-top: 4px solid var(--border-color); }
-.kpi-card h4 { margin: 0 0 2px 0; font-size: 0.6rem; text-transform: uppercase; color: var(--text-muted); font-weight: 800; }
-.kpi-card .value { margin: 0; font-size: 1.15rem; font-weight: 900; color: var(--text-main); display: flex; align-items: center; }
-.kpi-progress-container { width: 100%; height: 4px; background: rgba(255,255,255,0.05); border-radius: 2px; margin-top: 4px; overflow: hidden; }
-.kpi-progress-fill { height: 100%; width: 0%; transition: width 0.6s ease; }
-.kpi-saldo { border: none; background: var(--color-saldo); color: #000; box-shadow: 0 4px 15px rgba(63,185,80,0.2); }
-.kpi-saldo h4, .kpi-saldo .value { color: #000 !important; font-weight: 900; }
-.kpi-proyectado { border: none; background: var(--color-proyectado); color: #fff; }
-.kpi-proyectado h4, .kpi-proyectado .value { color: #fff !important; font-weight: 900; }
-.master-layout { display: grid; grid-template-columns: 1fr 340px; gap: 12px; margin-top: 5px; flex-grow: 1; min-height: 0; }
-.left-col { display: flex; flex-direction: column; gap: 10px; min-height: 0; height: 100%; overflow: hidden; }
-.grid-main-wrapper { background: var(--bg-panel); border-radius: 8px; border: 1px solid var(--border-color); padding: 10px; display: flex; flex-direction: column; flex: 1; min-height: 0; }
-.telemetry-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; gap: 10px; }
-.grid-container { flex: 1; min-height: 0; overflow-x: auto; overflow-y: auto; background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 6px; scrollbar-width: none; -ms-overflow-style: none;  }
-.grid-container::-webkit-scrollbar { display: none; }
-.data-grid { width: 100%; border-collapse: collapse; text-align: left; }
-.data-grid th { position: sticky; top: 0; background: var(--bg-panel); padding: 6px 8px; font-size: 0.65rem; color: var(--color-ingresos); text-transform: uppercase; z-index: 10; border-bottom: 2px solid var(--border-color); white-space: nowrap; cursor: pointer; user-select: none; letter-spacing: 0.5px;}
-.data-grid td { padding: 4px 8px; font-size: 0.75rem; border-bottom: 1px solid var(--border-color); white-space: nowrap; vertical-align: middle; }
-.data-grid th:last-child, .data-grid td:last-child { padding-right: 24px !important; }
-.data-grid tbody tr:nth-child(even) { background-color: var(--bg-subpanel); }
-.data-grid tbody tr:hover { background-color: var(--item-hover); }
-.col-monto { text-align: right; font-family: 'Courier New', Courier, monospace; font-weight: 700; font-size: 0.8rem; letter-spacing: -0.5px; }
-.col-hora { font-size: 0.6rem; color: var(--text-muted); font-weight: 700; display: block; margin-top: 1px; }
-.cat-badge { font-size: 0.6rem; padding: 2px 6px; border-radius: 4px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); display: inline-block; margin-top: 2px; color: var(--text-muted); font-weight: 800; }
-.col-check { width: 40px; text-align: center; cursor: default;}
-.row-check { cursor: pointer; transform: scale(1.1); accent-color: var(--color-edit); margin: 0; }
-.status-badge { padding: 2px 6px; border-radius: 4px; font-size: 0.6rem; font-weight: 800; border: 1px solid; }
-.status-ok { color: var(--color-saldo); border-color: rgba(63,185,80,0.3); background: rgba(63,185,80,0.1); }
-.status-warn { color: var(--color-edit); border-color: rgba(210,153,34,0.3); background: rgba(210,153,34,0.1); }
-.impact-icon { font-weight: 900; margin-right: 5px; }
-.impact-pos { color: var(--color-ingresos); }
-.impact-neg { color: var(--color-fuga); }
-.impact-neu { color: #ff9800; }
-
-#charts-grid-container { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; flex-shrink: 0; }
-.chart-box { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; height: 25vh; min-height: 180px; display: flex; flex-direction: column; }
-.chart-box h5 { margin: 0 0 5px 0; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; text-align: center; font-weight: 800; }
-.canvas-container { position: relative; flex-grow: 1; min-height: 0; }
-
-.right-col { display: flex; flex-direction: column; gap: 10px; height: 100%; }
-.sidebar-panel { background: var(--bg-panel); border-radius: 8px; border: 1px solid var(--border-color); padding: 12px; display: flex; flex-direction: column; }
-.form-group { margin-bottom: 8px; width: 100%; position: relative; }
-.form-group label { display: block; font-size: 0.6rem; font-weight: 800; color: var(--text-muted); margin-bottom: 2px; text-transform: uppercase; }
-.custom-select, .form-group input, .form-group select { width: 100%; border: 1px solid var(--border-color); border-radius: 4px; background-color: var(--input-bg); color: var(--text-main); outline: none; padding: 6px 8px; font-size: 0.8rem; height: 32px; }
-input[type="date"]::-webkit-calendar-picker-indicator, input[type="datetime-local"]::-webkit-calendar-picker-indicator { filter: invert(1); cursor: pointer; }
-.btn-guardar { width: 100%; background-color: var(--color-guardar); color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 800; text-transform: uppercase; padding: 8px; font-size: 0.8rem; margin-top: 5px; }
-
-.eficiencia-kpi { text-align: center; margin-bottom: 6px; flex-shrink: 0; }
-.eficiencia-kpi .monto { font-size: 1.6rem; font-weight: 900; color: var(--text-main); line-height: 1.1; }
-.eficiencia-kpi .label { font-size: 0.6rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; }
-.bar-container { width: 100%; background: var(--bg-body); border-radius: 4px; height: 10px; overflow: hidden; border: 1px solid rgba(0,0,0,0.2); }
-.bar-fill { height: 100%; width: 0%; transition: all 0.5s ease; }
-.floating-mass-actions { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #1c2128; border: 1px solid var(--color-edit); border-radius: 50px; padding: 8px 20px; display: flex; align-items: center; justify-content: space-between; gap: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); z-index: 9999; }
+        :root { --bg-body: #0b0e14; --bg-panel: #161b22; --text-main: #f0f6fc; --text-muted: #8b949e; --border-color: #30363d; --accent-blue: #1f6feb; --accent-green: #3fb950; --accent-red: #da3633; }
+        body { background: var(--bg-body); color: var(--text-main); font-family: sans-serif; margin: 0; overflow: hidden; height: 100vh; display: flex; flex-direction: column; }
+        .app-container { display: none; padding: 10px; flex-direction: column; gap: 10px; height: 100vh; }
+        .active-app { display: flex; }
+        .kpi-row { display: grid; grid-template-columns: repeat(8, 1fr); gap: 10px; }
+        .kpi-card { background: var(--bg-panel); padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); }
+        .master-layout { display: grid; grid-template-columns: 1fr 340px; gap: 15px; flex: 1; min-height: 0; }
+        .chart-box { background: var(--bg-panel); border: 1px solid var(--border-color); padding: 15px; border-radius: 8px; }
+        input, select { background: #0d1117; color: white; border: 1px solid var(--border-color); padding: 5px; border-radius: 4px; }
+        .btn-sys { cursor: pointer; background: #21262d; color: white; border: 1px solid var(--border-color); padding: 5px 10px; border-radius: 6px; }
     </style>
 </head>
 <body>
-
-<div id="login-screen">
-    <div class="login-box">
-        <h2 style="color:#fff; margin-bottom:10px;">BUNKER SCADA</h2>
-        <p style="color:var(--text-muted); font-size:0.8rem;">SISTEMA PRIVADO DE GESTIÓN TÁCTICA V31.9.6</p>
-        <button class="btn-google" onclick="loginWithGoogle()">ENTRAR CON GOOGLE</button>
-    </div>
+<div id="login-screen" style="height:100vh; display:flex; align-items:center; justify-content:center;">
+    <button onclick="loginWithGoogle()" style="padding:20px;">ENTRAR AL BÚNKER</button>
 </div>
-
 <div class="app-container" id="reportZone">
-    <div class="header-titles" style="border-bottom: none; padding-bottom: 0;">
-        <div style="display:flex; align-items:center;">
-            <h2>BUNKER DIGITAL SCADA</h2>
-            <div id="user-display" style="margin-left: 15px; font-size: 0.75rem; color: var(--color-saldo); font-weight:800; text-transform:uppercase;"></div>
-        </div>
-        <div id="cronos" class="cronos">--:--:--</div>
-    </div>
-
-    <div class="time-navigator-panel" style="margin-top: 5px;">
-        <div class="time-nav-controls">
-            <select id="navAnio" class="nav-select" onchange="cambiarCicloManual()"><option value="2025">2025</option><option value="2026" selected>2026</option></select>
-            <select id="navMesConceptual" class="nav-select" onchange="cambiarCicloManual()" style="color: var(--color-ingresos);"><option value="0">Enero</option><option value="1">Febrero</option><option value="2">Marzo</option><option value="3" selected>Abril</option><option value="4">Mayo</option><option value="5">Junio</option><option value="6">Julio</option><option value="7">Agosto</option><option value="8">Septiembre</option><option value="9">Octubre</option><option value="10">Noviembre</option><option value="11">Diciembre</option></select>
-            <div id="navRangoBadge" class="nav-badge">--/-- al --/--</div>
-        </div>
-        
-        <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap; justify-content: flex-end;">
-            <div class="time-nav-presets">
-                <button class="preset-btn" onclick="setCicloPreset('anterior')" id="btnPresetAnterior">⏮️ ANTERIOR</button>
-                <button class="preset-btn preset-active" onclick="setCicloPreset('actual')" id="btnPresetActual">▶️ ACTUAL</button>
-            </div>
-            <div style="width: 1px; height: 25px; background: var(--border-color); display: block;" class="hide-mobile"></div>
-            <div class="system-btns" style="border-bottom: none; padding-bottom: 0;">
-                <button class="btn-sys" onclick="toggleTheme()">☀️/🌙</button>
-                <button class="btn-sys" onclick="triggerSync()">🔄 SYNC</button>
-                <button class="btn-sys btn-telegram" style="color:var(--color-telegram);" onclick="enviarReporteTelegram()">🚀 TELEGRAM</button>
-                <button class="btn-sys" onclick="logout()" style="color:var(--color-fuga);">🚪 SALIR</button>
-            </div>
+    <div style="display:flex; justify-content:space-between;">
+        <h2>BUNKER SCADA V31.9.6</h2>
+        <div>
+            <button class="btn-sys" onclick="triggerSync()">🔄 SYNC</button>
+            <button class="btn-sys" onclick="enviarReporteTelegram()">🚀 TELEGRAM</button>
+            <button class="btn-sys" onclick="logout()">SALIR</button>
         </div>
     </div>
-
     <div class="kpi-row">
-        <div class="kpi-card" style="border-top-color: var(--color-ingresos);">
-            <h4>Sueldo Mes</h4>
-            <div class="value">$<input type="text" id="inputSueldo" value="3.602.505" oninput="formatearEntradaNumerica(this); actualizarDashboard();" style="background:transparent; border:none; color:inherit; font-weight:900; width:120px; font-size:1.3rem; outline:none;"></div>
-        </div>
-        <div class="kpi-card" style="border-top-color: var(--color-ingresos);"><h4>Ingresos Extra</h4><div class="value">$<span id="txtTotalIngresos">0</span></div></div>
-        <div class="kpi-card" style="border-top-color: var(--color-fuga);"><h4>Gastos Fijos</h4><div class="value">$<span id="txtTotalFijos">0</span></div><div class="kpi-progress-container"><div id="barFijos" class="kpi-progress-fill" style="background:var(--color-fuga);"></div></div></div>
-        <div class="kpi-card" style="border-top-color: #ff9800;"><h4>Gastos Variables</h4><div class="value">$<span id="txtTotalOtros">0</span></div><div class="kpi-progress-container"><div id="barOtros" class="kpi-progress-fill" style="background:#ff9800;"></div></div></div>
-        <div class="kpi-card" style="border-top-color: #8b949e;"><h4>CxC (Préstamos)</h4><div class="value">$<span id="txtCxC">0</span></div></div>
-        <div class="kpi-card kpi-saldo" id="cardBalanceReal"><div style="display:flex; justify-content:space-between; align-items:flex-start;"><h4>Balance Real</h4><div id="badgeDias" style="font-size: 0.6rem; background: rgba(0,0,0,0.15); padding: 2px 6px; border-radius: 4px; font-weight: 800;">-- DÍAS</div></div><div class="value">$<span id="txtSaldo">0</span></div></div>
-        <div class="kpi-card kpi-proyectado" id="cardProyectado"><h4>Saldo Proyectado</h4><div class="value">$<span id="txtProyectado">0</span></div></div>
-        <div class="kpi-card" style="border-top-color: #a371f7;"><h4>Proyección Cierre</h4><div class="value">$<span id="txtProyeccionCierre">0</span></div></div>
+        <div class="kpi-card">Sueldo<br><input type="text" id="inputSueldo" oninput="formatearEntradaNumerica(this); actualizarDashboard();" style="width:100px;"></div>
+        <div class="kpi-card">Fijos<br>$<span id="txtTotalFijos">0</span></div>
+        <div class="kpi-card">Variables<br>$<span id="txtTotalOtros">0</span></div>
+        <div class="kpi-card">Balance<br>$<span id="txtSaldo">0</span></div>
+        <div class="kpi-card">Periodo<br><select id="navMesConceptual" onchange="aplicarCicloAlSistema()"><option value="3">Abril</option><option value="4">Mayo</option></select></div>
+        <div class="kpi-card" style="display:none;"><select id="navAnio"><option value="2026">2026</option></select><span id="navRangoBadge"></span></div>
     </div>
-    
     <div class="master-layout">
-        <div class="left-col">
-            <div class="grid-main-wrapper">
-                <div class="telemetry-header">
-                    <input type="text" id="inputBuscador" placeholder="🔍 Filtrar tabla..." oninput="actualizarDashboard()" style="width:250px; background:var(--input-bg); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px; padding:6px 12px; outline:none; font-size:0.8rem;">
-                </div>
-                <div class="grid-container">
-                    <table class="data-grid">
-                        <thead>
-                            <tr>
-                                <th class="col-check hide-mobile"><input type="checkbox" id="checkAll" onchange="toggleAllChecks()"></th>
-                                <th class="col-drag hide-mobile" style="width: 30px; text-align: center;">☰</th>
-                                <th class="hide-mobile" style="width: 40px; text-align: center;">N°</th>
-                                <th onclick="sortTable('fechaISO')">Fecha</th>
-                                <th onclick="sortTable('nombre')">Descripción</th>
-                                <th class="hide-mobile" onclick="sortTable('catV')">Categoría</th>
-                                <th onclick="sortTable('monto')" style="text-align: right;">Monto</th>
-                                <th class="hide-mobile" style="text-align: right;">Saldo Hist.</th>
-                                <th class="hide-mobile" style="text-align: center;">% Fuga</th>
-                                <th class="hide-mobile" style="text-align: center;">Status</th>
-                                <th style="text-align: center; width: 40px;">⚙️</th>
-                            </tr>
-                        </thead>
-                        <tbody id="listaDetalle"></tbody>
-                    </table>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+            <div class="chart-box">
+                <h5>Burn-Down Zoom</h5>
+                <div style="height:250px;"><canvas id="chartBurnDown"></canvas></div>
+                <div style="margin-top:10px; display:flex; gap:10px; align-items:center;">
+                    IN: <input type="range" id="sliderIn" min="0" max="30" value="0" oninput="hacerZoomGrafico(this.value, document.getElementById('sliderFin').value)">
+                    OUT: <input type="range" id="sliderFin" min="0" max="30" value="30" oninput="hacerZoomGrafico(document.getElementById('sliderIn').value, this.value)">
+                    <div style="background:#21262d; padding:5px;">Tramo: <span id="txtGastoTramo" style="color:var(--accent-red)">$0</span></div>
+                    <div style="background:#21262d; padding:5px;">Promedio: <span id="txtPromedioZoom" style="color:var(--accent-green)">$0</span></div>
                 </div>
             </div>
-            
-            <div id="charts-grid-container">
-                <div class="chart-box" style="height: auto; min-height: 250px;">
-                    <h5>Velocidad Consumo (Burn-Down)</h5>
-                    <div class="canvas-container" style="height: 180px;"><canvas id="chartBurnDown"></canvas></div>
-                    
-                    <div style="padding-top: 10px; margin-top: 5px; border-top: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 5px;">
-                        <div style="display:flex; justify-content: space-between; font-size:0.6rem; color:var(--text-muted); font-weight:bold;">
-                            <span>INICIO: <span id="valSliderIn">0</span></span><span>FIN: <span id="valSliderFin">30</span></span>
-                        </div>
-                        <div style="display:flex; gap: 5px;">
-                            <input type="range" id="sliderIn" min="0" max="30" value="0" style="flex:1;" oninput="document.getElementById('valSliderIn').innerText=this.value; hacerZoomGrafico(this.value, document.getElementById('sliderFin').value)">
-                            <input type="range" id="sliderFin" min="0" max="30" value="30" style="flex:1;" oninput="document.getElementById('valSliderFin').innerText=this.value; hacerZoomGrafico(document.getElementById('sliderIn').value, this.value)">
-                        </div>
-                        
-                        <div style="display: flex; gap: 10px; margin-top: 5px;">
-                            <div style="flex:1; background: var(--bg-subpanel); padding: 5px; border-radius: 4px; text-align: center;">
-                                <div style="font-size: 0.55rem; color: var(--text-muted); font-weight: 800; text-transform: uppercase;">Promedio Gasto</div>
-                                <div style="font-size: 0.9rem; font-weight: 900; color: #ff9800;" id="txtPromedioZoom">$0</div>
-                            </div>
-                            <div style="flex:1; background: var(--bg-subpanel); padding: 5px; border-radius: 4px; text-align: center;">
-                                <div style="font-size: 0.55rem; color: var(--text-muted); font-weight: 800; text-transform: uppercase;">Día de Ruina</div>
-                                <div style="font-size: 0.9rem; font-weight: 900; color: var(--color-fuga);"><span id="txtRuinaZoom">∞</span> <span style="font-size:0.6rem;">DÍAS</span></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>                </div>
-                <div class="chart-box">
-                    <h5>Pareto de Gasto V30</h5>
-                    <div class="canvas-container"><canvas id="chartPareto"></canvas></div>
-                </div>
+            <div style="background:var(--bg-panel); flex:1; overflow-y:auto; border:1px solid var(--border-color);">
+                <table style="width:100%; border-collapse:collapse; font-size:0.8rem;">
+                    <thead><tr style="text-align:left; color:var(--accent-blue);"><th>FECHA</th><th>NOMBRE</th><th>CATEGORÍA</th><th>MONTO</th></tr></thead>
+                    <tbody id="listaDetalle"></tbody>
+                </table>
             </div>
         </div>
-
-        <div class="right-col">
-            <div class="sidebar-panel">
-                <h4 style="color:var(--color-saldo); margin:0; font-size:0.85rem; text-transform:uppercase; margin-bottom:10px;">REGISTRO MANUAL</h4>
-                <input type="hidden" id="editId">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: -5px;">
-                    <div class="form-group"><label>Fecha</label><input type="datetime-local" id="inputFecha"></div>
-                    <div class="form-group"><label>Flujo</label>
-                        <select id="inputTipo">
-                            <option value="Gasto">Gasto Variable</option>
-                            <option value="Gasto Fijo">Gasto Fijo</option>
-                            <option value="Ingreso">Ingreso Extra</option>
-                            <option value="Por Cobrar">Préstamo (CxC)</option>
-                            <option value="Ahorro">Ahorro / Mov. Neutro</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="form-group"><label>Categoría V31.4</label>
-                    <select id="inputCategoria"></select>
-                </div>
-                <div style="display: grid; grid-template-columns: 1fr 110px; gap: 10px;">
-                    <div class="form-group"><label>Descripción</label><input type="text" id="inputNombre"></div>
-                    <div class="form-group"><label>Monto</label><input type="text" id="inputMonto" oninput="formatearEntradaNumerica(this)"></div>
-                </div>
-                <button id="btnGuardar" class="btn-guardar" onclick="agregarMovimiento()">GUARDAR EN BÚNKER</button>
-            </div>
-            
-            <div class="sidebar-panel">
-                <h4 style="margin:0 0 10px 0; font-size:0.85rem; color:var(--text-muted); text-transform:uppercase;">Eficiencia de Gasto</h4>
-                <div class="eficiencia-kpi"><div class="monto">$<span id="txtTotalEvitable">0</span></div><div class="label">Fugas Detectadas</div></div>
-                <div class="bar-container"><div id="barEvitable" class="bar-fill"></div></div>
-                <div style="margin-top:12px; padding-top:10px; border-top:1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center;">
-                    <span style="font-size:0.65rem; color:var(--text-muted); font-weight:800; text-transform:uppercase;">% Sueldo a Fugas:</span>
-                    <span id="txtPorcentajeFugas" style="font-size:0.9rem; font-weight:900; color:var(--color-fuga);">0%</span>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <div id="massActionsBar" class="floating-mass-actions" style="display: none;">
-        <span id="massCount">0 seleccionado(s)</span>
-        <div class="mass-actions-controls">
-            <select id="massCategorySelect" class="custom-select" style="width:180px;"></select>
-            <button class="btn-sys" onclick="massCategorize()">APLICAR</button>
-            <button class="btn-sys" onclick="massDelete()" style="color:var(--color-fuga);">🗑️</button>
+        <div class="chart-box">
+            <h5>Registro / Ajustes</h5>
+            <input type="text" id="inputNombre" placeholder="Descripción" style="width:100%; margin-bottom:10px;">
+            <input type="text" id="inputMonto" placeholder="Monto" oninput="formatearEntradaNumerica(this)" style="width:100%; margin-bottom:10px;">
+            <select id="inputTipo" style="width:100%; margin-bottom:10px;"><option value="Gasto">Variable</option><option value="Gasto Fijo">Fijo</option><option value="Ingreso">Ingreso</option></select>
+            <select id="inputCategoria" style="width:100%; margin-bottom:10px;"></select>
+            <input type="datetime-local" id="inputFecha" style="width:100%; margin-bottom:10px;">
+            <button onclick="agregarMovimiento()" style="width:100%; padding:10px; background:var(--accent-green); border:none; color:black; font-weight:bold;">GUARDAR</button>
         </div>
     </div>
 </div>
