@@ -64,7 +64,7 @@
 <div id="login-screen">🛡️<h2 style="color:white; margin: 20px 0; font-weight:900;">BÚNKER SCADA</h2><button onclick="loginWithGoogle()" style="padding:15px 30px; border-radius:30px; font-weight:bold;">AUTENTICAR</button></div>
 
 <div class="app-container" id="reportZone">
-    <div class="top-bar"><div class="brand">SCADA MÓVIL V7.5</div><div id="user-display" class="user-tag" style="color:var(--accent-blue); background:rgba(31, 111, 235, 0.1);">BYRON</div></div>
+    <div class="top-bar"><div class="brand">SCADA MÓVIL V7.5.1</div><div id="user-display" class="user-tag" style="color:var(--accent-blue); background:rgba(31, 111, 235, 0.1);">BYRON</div></div>
 
     <div id="tab-dash" class="tab-content" style="display:block;">
         <div class="master-hud"><div class="hud-value">$<span id="txtSaldo">0</span></div></div>
@@ -201,5 +201,6 @@
     function openBottomSheet(id, n, m) { document.getElementById('sheet-title').innerText = n; document.getElementById('sheet-subtitle').innerText = "$" + m.toLocaleString('es-CL'); document.getElementById('sheet-id-target').value = id; const overlay = document.getElementById('bottom-sheet-overlay'); const sheet = document.getElementById('bottom-sheet'); overlay.style.display = 'block'; setTimeout(() => { overlay.style.opacity = '1'; sheet.style.bottom = '0'; }, 10); }
     function closeBottomSheet() { const overlay = document.getElementById('bottom-sheet-overlay'); document.getElementById('bottom-sheet').style.bottom = '-100%'; overlay.style.opacity = '0'; setTimeout(()=> overlay.style.display = 'none', 300); }
 </script>
+<script src="motor.js"></script>
 </body>
 </html>
