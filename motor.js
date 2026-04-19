@@ -1,9 +1,10 @@
 // ==========================================================
-// 🧠 BÚNKER SCADA - MOTOR LÓGICO V8.1 (FASE 1: CEREBRO)
+// 🧠 BÚNKER SCADA - MOTOR LÓGICO V8.2 (MÓDULO TC Y LIQUIDEZ)
 // ==========================================================
 const BYRON_EMAIL = "bvhcc94@gmail.com"; 
 const CREDIT_SETPOINT = -300000; 
 const catEvitables = ["Dopamina & Antojos"]; 
+const SUELDO_BASE_DEFAULT = 3602505;
 
 const catMaestras = [
     { id: "Gastos Fijos (Búnker)", em: "🏠", label: "Gastos Fijos" },
@@ -32,9 +33,15 @@ document.addEventListener("DOMContentLoaded", () => {
     const selectManual = document.getElementById('inputCategoria');
     if (selectManual) {
         selectManual.innerHTML = optionsHTML;
+        
         selectManual.addEventListener('change', (e) => {
+            // Auto-Fuga
             const fEl = document.getElementById('inputFuga');
             if(fEl) fEl.value = (e.target.value === "Dopamina & Antojos") ? "100" : "0";
+            
+            // Auto-Cuotas (Muestra el selector solo si es TC)
+            const boxC = document.getElementById('boxCuotas');
+            if(boxC) boxC.style.display = (e.target.value === "Gasto Tarjeta de Crédito") ? "grid" : "none";
         });
     }
     const selectMass = document.getElementById('massCategorySelect');
@@ -52,28 +59,31 @@ function obtenerIconoVisual(nombre, emojiFallback) {
 }
 
 let bdDataMaster = null; 
-
-firebase.initializeApp({
-    apiKey: "AIzaSyBiYETN_JipXWhMq9gKz-2Pap-Ce4ZJNAI",
-    authDomain: "finanzas-bcuevas.firebaseapp.com",
-    projectId: "finanzas-bcuevas"
-});
-
+firebase.initializeApp({ apiKey: "AIzaSyBiYETN_JipXWhMq9gKz-2Pap-Ce4ZJNAI", authDomain: "finanzas-bcuevas.firebaseapp.com", projectId: "finanzas-bcuevas" });
 const db = firebase.firestore(), auth = firebase.auth();
 
 let listaMovimientos = [], datosMesGlobal = []; 
 let chartBD = null, chartP = null, chartDiario = null, chartRadar = null;
 let currentSort = { column: 'fechaISO', direction: 'desc' }; 
 let modoEdicionActivo = false, sueldosHistoricos = {}; 
-const SUELDO_BASE_DEFAULT = 3602505;
 
-// 🟢 SISTEMA DE TOAST (NOTIFICACIÓN FLOTANTE) 🟢
+// 🟢 FUNCIÓN INTELIGENTE DE HERENCIA DE SUELDO 🟢
+function obtenerSueldoMes(anio, mes) {
+    let llave = `${anio}_${mes}`;
+    if (sueldosHistoricos[llave]) return sueldosHistoricos[llave];
+    
+    // Si no hay sueldo este mes, busca el del mes anterior
+    let prevMes = mes - 1; let prevAnio = anio;
+    if(prevMes < 0) { prevMes = 11; prevAnio--; }
+    let llavePrev = `${prevAnio}_${prevMes}`;
+    return sueldosHistoricos[llavePrev] || SUELDO_BASE_DEFAULT;
+}
+
 window.mostrarToast = function(mensaje) {
     let toast = document.getElementById('toast-notif');
     if(!toast) {
-        toast = document.createElement('div');
-        toast.id = 'toast-notif';
-        toast.style.cssText = 'position:fixed; top:-100px; left:50%; transform:translateX(-50%); background:var(--color-saldo, #3fb950); color:#000; padding:12px 24px; border-radius:30px; font-weight:900; font-size:0.85rem; z-index:10000; transition:top 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow:0 10px 25px rgba(63,185,80,0.4); text-transform:uppercase; letter-spacing:0.5px; display:flex; align-items:center; gap:8px;';
+        toast = document.createElement('div'); toast.id = 'toast-notif';
+        toast.style.cssText = 'position:fixed; top:-100px; left:50%; transform:translateX(-50%); background:var(--color-ingresos, #1f6feb); color:#fff; padding:12px 24px; border-radius:30px; font-weight:900; font-size:0.85rem; z-index:10000; transition:top 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow:0 10px 25px rgba(31,111,235,0.4); text-transform:uppercase; letter-spacing:0.5px;';
         document.body.appendChild(toast);
     }
     toast.innerHTML = '✅ ' + mensaje;
@@ -111,8 +121,8 @@ auth.onAuthStateChanged(user => {
 function cargarSueldoVisual() {
     const elMes = document.getElementById('navMesConceptual'), elAnio = document.getElementById('navAnio'), elSueldo = document.getElementById('inputSueldo');
     if(!elMes || !elAnio || !elSueldo) return;
-    const llave = `${elAnio.value}_${elMes.value}`;
-    if (document.activeElement !== elSueldo) elSueldo.value = (sueldosHistoricos[llave] || SUELDO_BASE_DEFAULT).toLocaleString('es-CL');
+    const sueldoActivo = obtenerSueldoMes(parseInt(elAnio.value), parseInt(elMes.value));
+    if (document.activeElement !== elSueldo) elSueldo.value = sueldoActivo.toLocaleString('es-CL');
 }
 
 function guardarSueldoEnNube() {
@@ -125,13 +135,15 @@ function guardarSueldoEnNube() {
 }
 
 function actualizarDashboard() {
+    const elMes = document.getElementById('navMesConceptual'), elAnio = document.getElementById('navAnio');
+    const mesVal = parseInt(elMes.value), anioVal = parseInt(elAnio.value);
+    
     const inputSueldo = document.getElementById('inputSueldo');
-    const sueldo = inputSueldo ? (parseInt(inputSueldo.value.replace(/\./g,'')) || 0) : SUELDO_BASE_DEFAULT;
+    const sueldo = inputSueldo && document.activeElement === inputSueldo ? parseInt(inputSueldo.value.replace(/\./g,'')) : obtenerSueldoMes(anioVal, mesVal);
+    
     const buscador = document.getElementById('inputBuscador');
     const b = buscador ? buscador.value.toLowerCase() : '';
-    const mesVal = parseInt(document.getElementById('navMesConceptual').value);
-    const anioVal = parseInt(document.getElementById('navAnio').value);
-    let { T0, TFinal, fechaFinVisual } = calcularFechasCiclo(mesVal, anioVal);
+    let { T0, TFinal } = calcularFechasCiclo(mesVal, anioVal);
     
     const fDesde = document.getElementById('filtroDesde') ? document.getElementById('filtroDesde').value : '';
     const fHasta = document.getElementById('filtroHasta') ? document.getElementById('filtroHasta').value : '';
@@ -148,17 +160,25 @@ function actualizarDashboard() {
 
     datosMesGlobal = [...dataMes];
     let saldoAcc = sueldo, tI = 0, tF = 0, tO = 0, tC = 0, tEvitable = 0, gCat = {};
+    let datosTC = [], totalTC = 0; // 🟢 NUEVAS VARIABLES TC 🟢
     
     [...dataMes].sort((x,y) => x.fechaISO < y.fechaISO ? -1 : 1).forEach(x => {
-        if (x.esIn) { tI += x.monto; saldoAcc += x.monto; }
-        else if (x.tipo === 'Por Cobrar') tC += x.monto;
-        else if (!x.esNeutro) {
-            saldoAcc -= x.monto;
-            if (x.tipo === 'Gasto Fijo') tF += x.monto; else tO += x.monto;
-            gCat[x.catV] = (gCat[x.catV] || 0) + x.monto;
-            
-            let pctFuga = x.innecesarioPct !== undefined ? x.innecesarioPct : (catEvitables.includes(x.catV) ? 100 : 0);
-            tEvitable += (x.monto * (pctFuga / 100));
+        // 🟢 INTERCEPCIÓN DE TARJETA DE CRÉDITO 🟢
+        if (x.catV === 'Gasto Tarjeta de Crédito') {
+            datosTC.push(x);
+            totalTC += x.monto;
+        } 
+        else { // Flujo Efectivo Normal
+            if (x.esIn) { tI += x.monto; saldoAcc += x.monto; }
+            else if (x.tipo === 'Por Cobrar') tC += x.monto;
+            else if (!x.esNeutro) {
+                saldoAcc -= x.monto;
+                if (x.tipo === 'Gasto Fijo') tF += x.monto; else tO += x.monto;
+                gCat[x.catV] = (gCat[x.catV] || 0) + x.monto;
+                
+                let pctFuga = x.innecesarioPct !== undefined ? x.innecesarioPct : (catEvitables.includes(x.catV) ? 100 : 0);
+                tEvitable += (x.monto * (pctFuga / 100));
+            }
         }
     });
 
@@ -197,15 +217,69 @@ function actualizarDashboard() {
         else { txtPctFugas.style.color = "var(--color-fuga)"; barraEvitable.style.backgroundColor = "var(--color-fuga)"; }
     }
 
+    // Filtramos la data pura para gráficos (excluye TC)
+    let dataGraficos = dataMes.filter(x => x.catV !== 'Gasto Tarjeta de Crédito');
+    
     renderizarListas(sueldo, b);
-    if(document.getElementById('chartBurnDown')) dibujarGraficos(sueldo, [...dataMes].sort((x,y) => x.fechaISO < y.fechaISO ? -1 : 1), gCat, diasCiclo, T0);
+    renderizarListaTC(datosTC); // 🟢 RENDERIZADO TC 🟢
+    
+    if(document.getElementById('chartBurnDown')) dibujarGraficos(sueldo, [...dataGraficos].sort((x,y) => x.fechaISO < y.fechaISO ? -1 : 1), gCat, diasCiclo, T0);
     
     setTxt('txtGastoTramo', tO + tF);
     setTxt('txtPromedioZoom', Math.round((tO + tF) / diasCiclo));
 }    
 
+// 🟢 FUNCIÓN RENDERIZADO MÓDULO TARJETAS 🟢
+function renderizarListaTC(datos) {
+    const contenedorPC = document.getElementById('listaDetalleTC');
+    const contenedorMovil = document.getElementById('listaMovilTC');
+    let htmlPC = '', htmlMovil = '';
+    
+    datos.sort((a,b)=> b.fechaISO > a.fechaISO ? 1 : -1).forEach(x => {
+        const d = new Date(x.fechaISO);
+        const dateStr = d.toLocaleDateString('es-CL', {day:'2-digit', month:'short'}).toUpperCase();
+        const cuotas = x.cuotas || 1;
+        const valorCuota = Math.round(x.monto / cuotas);
+        const cuotaStr = cuotas > 1 ? `${cuotas}x $${valorCuota.toLocaleString('es-CL')}` : '1 Cuota';
+        
+        const clickAction = `editarMovimiento('${x.firestoreId}')`;
+        
+        if(contenedorPC) {
+            htmlPC += `<tr style="border-bottom:1px solid var(--border-color); cursor:pointer;" onclick="${clickAction}">
+                <td style="font-size:0.65rem; color:var(--text-muted); padding:6px 4px;">${dateStr}</td>
+                <td style="font-size:0.75rem; font-weight:700; padding:6px 4px;">${x.nombre}</td>
+                <td style="font-size:0.65rem; color:var(--accent-blue); padding:6px 4px; text-align:center;">${cuotaStr}</td>
+                <td style="font-size:0.8rem; font-weight:bold; color:var(--color-fuga); text-align:right; padding:6px 4px;">$${x.monto.toLocaleString('es-CL')}</td>
+            </tr>`;
+        }
+        if(contenedorMovil) {
+            htmlMovil += `
+            <div class="mobile-card" style="background:var(--bg-card) !important; border:1px solid rgba(31,111,235,0.2) !important; margin-bottom:8px;" onclick="${typeof openBottomSheet === 'function' ? `openBottomSheet('${x.firestoreId}', '${x.nombre.replace(/'/g, "\\'")}', ${x.monto})` : clickAction}">
+                <div style="font-size:1.5rem; margin-right:15px; text-shadow: 0 2px 5px rgba(0,0,0,0.5);">💳</div>
+                <div style="flex: 1; min-width: 0;">
+                    <div style="font-weight:bold; font-size:0.95rem; color: var(--text-main);">${x.nombre}</div>
+                    <div style="font-size:0.7rem; color:var(--accent-blue); margin-top:2px;">${dateStr} • ${cuotaStr}</div>
+                </div>
+                <div style="font-weight:900; color:var(--color-fuga); font-size:1.05rem;">$${x.monto.toLocaleString('es-CL')}</div>
+            </div>`;
+        }
+    });
+
+    if(contenedorPC) {
+        if(datos.length === 0) contenedorPC.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:20px; color:var(--text-muted); font-size:0.7rem;">Sin movimientos TC este periodo</td></tr>`;
+        else contenedorPC.innerHTML = htmlPC;
+    }
+    if(contenedorMovil) {
+        if(datos.length === 0) contenedorMovil.innerHTML = `<div style="text-align:center; padding: 40px 20px; color: var(--text-dim);">💳<br>Sin deuda registrada este periodo.</div>`;
+        else contenedorMovil.innerHTML = htmlMovil;
+    }
+    
+    const txtTotalTC = document.getElementById('txtTotalTC');
+    if(txtTotalTC) txtTotalTC.innerText = datos.reduce((sum, x) => sum + x.monto, 0).toLocaleString('es-CL');
+}
+
 function renderizarListas(sueldoBase, filtroBuscador) {
-    let datos = [...datosMesGlobal];
+    let datos = [...datosMesGlobal].filter(x => x.catV !== 'Gasto Tarjeta de Crédito'); // Filtramos TC de la lista principal
     if (filtroBuscador) datos = datos.filter(x => x.nombre?.toLowerCase().includes(filtroBuscador) || x.catV.toLowerCase().includes(filtroBuscador));
 
     datos.sort((a, b) => {
@@ -321,9 +395,13 @@ function editarMovimiento(id) {
     if(document.getElementById('editId')) document.getElementById('editId').value = mov.firestoreId; 
     if(document.getElementById('inputNombre')) document.getElementById('inputNombre').value = mov.nombre;
     if(document.getElementById('inputMonto')) document.getElementById('inputMonto').value = mov.monto.toLocaleString('es-CL');
-    if(document.getElementById('inputCategoria')) document.getElementById('inputCategoria').value = mov.categoria || 'Sin Categoría';
-    
+    if(document.getElementById('inputCategoria')) {
+        document.getElementById('inputCategoria').value = mov.categoria || 'Sin Categoría';
+        const boxC = document.getElementById('boxCuotas');
+        if(boxC) boxC.style.display = (mov.categoria === "Gasto Tarjeta de Crédito") ? "grid" : "none";
+    }
     if(document.getElementById('inputFuga')) document.getElementById('inputFuga').value = mov.innecesarioPct !== undefined ? mov.innecesarioPct : "0";
+    if(document.getElementById('inputCuotas')) document.getElementById('inputCuotas').value = mov.cuotas !== undefined ? mov.cuotas : "1";
 
     let tipoC = mov.tipo || 'Gasto';
     if (mov.catV === 'Transferencia Recibida' || mov.catV === 'Ingreso Adicional') tipoC = 'Ingreso';
@@ -352,19 +430,21 @@ function agregarMovimiento() {
     
     const iFugaEl = document.getElementById('inputFuga');
     const pctFuga = iFugaEl ? parseInt(iFugaEl.value) : (catEvitables.includes(c) ? 100 : 0);
+    
+    // 🟢 LECTURA DE CUOTAS 🟢
+    const cuotasEl = document.getElementById('inputCuotas');
+    const cantCuotas = (cuotasEl && c === "Gasto Tarjeta de Crédito") ? parseInt(cuotasEl.value) : 1;
 
     if (!m || !n || !fInput) return alert("⚠️ Faltan datos críticos.");
     const btn = document.getElementById('btnGuardar');
     btn.innerHTML = "⏳ GUARDANDO..."; btn.disabled = true;
-    const dataPayload = { nombre: n, monto: m, categoria: c, tipo: t, fecha: new Date(fInput), status: 'Manual', innecesarioPct: pctFuga };
+    const dataPayload = { nombre: n, monto: m, categoria: c, tipo: t, fecha: new Date(fInput), status: 'Manual', innecesarioPct: pctFuga, cuotas: cantCuotas };
     let op = (modoEdicionActivo && editId) ? db.collection("movimientos").doc(editId).update(dataPayload) : db.collection("movimientos").add(dataPayload);
     op.then(() => {
         document.getElementById('editId').value = ''; document.getElementById('inputNombre').value = ''; document.getElementById('inputMonto').value = '';
         btn.innerHTML = "GUARDAR EN BÚNKER"; btn.style.backgroundColor = "var(--color-guardar)"; btn.disabled = false; modoEdicionActivo = false;
         
-        // 🟢 LLAMADA A LA NOTIFICACIÓN TOAST 🟢
         if (typeof mostrarToast === "function") mostrarToast("REGISTRO GUARDADO EN EL BÚNKER");
-        
         if (typeof switchTab === "function") switchTab('list');
     }).catch(err => { alert("❌ Error: " + err.message); btn.innerHTML = "ERROR"; btn.disabled = false; });
 }
@@ -421,7 +501,6 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0) {
 
     bdDataMaster = { labels: [...labelsX], labelsFechas: [...labelsFechas], actual: [...actual], ideal: [...ideal], daily: [...daily], dailyGastosVar: [...dailyGastosVar], colorsX: [...colorLabelsX], colorsG: [...colorGridX] };
 
-    // 🟢 EJE Y DINÁMICO PARA BURN-DOWN 🟢
     let maxReal = Math.max(...actual.filter(v => v !== null));
     let yMax = maxReal > sueldo ? Math.ceil(maxReal * 1.05) : sueldo;
 
@@ -495,29 +574,19 @@ function calcularFechasCiclo(mesConceptual, anio) {
     return { T0, TFinal, fechaFinVisual: new Date(TFinal.getTime() - 86400000) };
 }
 
-// 🟢 NAVEGACIÓN RÁPIDA DE MESES 🟢
 window.navegarMes = function(direccion) {
-    const navMes = document.getElementById('navMesConceptual');
-    const navAnio = document.getElementById('navAnio');
+    const navMes = document.getElementById('navMesConceptual'), navAnio = document.getElementById('navAnio');
     if(!navMes || !navAnio) return;
-    
-    let m = parseInt(navMes.value);
-    let a = parseInt(navAnio.value);
-
+    let m = parseInt(navMes.value), a = parseInt(navAnio.value);
     m += direccion;
-    if(m > 11) { m = 0; a++; }
-    else if(m < 0) { m = 11; a--; }
-
-    navMes.value = m;
-    navAnio.value = a;
+    if(m > 11) { m = 0; a++; } else if(m < 0) { m = 11; a--; }
+    navMes.value = m; navAnio.value = a;
     aplicarCicloAlSistema();
 };
 
 function aplicarCicloAlSistema() {
-    const navMes = document.getElementById('navMesConceptual');
-    const navAnio = document.getElementById('navAnio');
+    const navMes = document.getElementById('navMesConceptual'), navAnio = document.getElementById('navAnio');
     if(!navMes || !navAnio) return;
-    
     const fD = document.getElementById('filtroDesde'), fH = document.getElementById('filtroHasta');
     if(fD) fD.value = ''; if(fH) fH.value = '';
     
