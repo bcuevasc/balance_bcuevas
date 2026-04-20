@@ -210,6 +210,40 @@ function actualizarDashboard() {
     }
 
     let dataGraficos = dataMes.filter(x => x.catV !== 'Gasto Tarjeta de Crédito');
+    // ==========================================================
+    // ⚙️ PARCHE V8.5: SALDO DE MANIOBRA Y VELOCÍMETRO
+    // ==========================================================
+    try {
+        // 1. Cálculo de Velocidad (Gasto Hoy vs Ayer)
+        let hoyStr = new Date().toISOString().split('T')[0];
+        let ayerObj = new Date(); ayerObj.setDate(ayerObj.getDate() - 1);
+        let ayerStr = ayerObj.toISOString().split('T')[0];
+
+        // Filtramos solo gastos puros (no ingresos, no transferencias propias)
+        let gastoHoy = datosMesGlobal.filter(x => x.fechaISO.startsWith(hoyStr) && !x.esIn && !x.esNeutro).reduce((acc, val) => acc + val.monto, 0);
+        let gastoAyer = datosMesGlobal.filter(x => x.fechaISO.startsWith(ayerStr) && !x.esIn && !x.esNeutro).reduce((acc, val) => acc + val.monto, 0);
+
+        let tendenciaStr = gastoHoy > gastoAyer ? '▲ ACELERANDO' : (gastoHoy === 0 ? '■ ESTABLE' : '▼ FRENANDO');
+        let colorTendencia = gastoHoy > gastoAyer ? '#ff5252' : '#4caf50'; // Rojo si sube, Verde si baja
+
+        // 2. Cálculo de Saldo de Maniobra (Saldo Actual - Deuda TC)
+        // Asume que 'totalTC' o tu variable de sumatoria de deuda existe en este scope.
+        let deudaAprox = typeof totalTC !== 'undefined' ? totalTC : 0; 
+        let saldoManiobra = saldoAcc - deudaAprox;
+
+        // 3. Inyección en el DOM
+        const elManiobra = document.getElementById('txtManiobra');
+        const elVelocidad = document.getElementById('txtVelocidad');
+        
+        if (elManiobra) elManiobra.innerText = '$' + saldoManiobra.toLocaleString('es-CL');
+        if (elVelocidad) {
+            elVelocidad.innerText = `$${gastoHoy.toLocaleString('es-CL')} (${tendenciaStr})`;
+            elVelocidad.style.color = colorTendencia;
+        }
+    } catch (err) {
+        console.warn("Sensor V8.5 en espera de datos: ", err);
+    }
+    // ==========================================================
     renderizarListas(sueldo, b);
     renderizarListaTC(datosTC); 
     if(document.getElementById('chartBurnDown')) dibujarGraficos(sueldo, [...dataGraficos].sort((x,y) => x.fechaISO < y.fechaISO ? -1 : 1), gCat, diasCiclo, T0);
