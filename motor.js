@@ -1,5 +1,5 @@
 // ==========================================================
-// 🧠 BÚNKER SCADA - MOTOR LÓGICO V8.4 (DRAG & DROP + CSV PRO)
+// 🧠 BÚNKER SCADA - MOTOR LÓGICO V8.5 (EDICIÓN DEFINITIVA)
 // ==========================================================
 const BYRON_EMAIL = "bvhcc94@gmail.com"; 
 const CREDIT_SETPOINT = -300000; 
@@ -33,11 +33,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const selectManual = document.getElementById('inputCategoria');
     if (selectManual) {
         selectManual.innerHTML = optionsHTML;
-        
         selectManual.addEventListener('change', (e) => {
             const fEl = document.getElementById('inputFuga');
             if(fEl) fEl.value = (e.target.value === "Dopamina & Antojos") ? "100" : "0";
-            
             const boxC = document.getElementById('boxCuotas');
             if(boxC) boxC.style.display = (e.target.value === "Gasto Tarjeta de Crédito") ? "grid" : "none";
         });
@@ -212,10 +210,8 @@ function actualizarDashboard() {
     }
 
     let dataGraficos = dataMes.filter(x => x.catV !== 'Gasto Tarjeta de Crédito');
-    
     renderizarListas(sueldo, b);
     renderizarListaTC(datosTC); 
-    
     if(document.getElementById('chartBurnDown')) dibujarGraficos(sueldo, [...dataGraficos].sort((x,y) => x.fechaISO < y.fechaISO ? -1 : 1), gCat, diasCiclo, T0);
     
     setTxt('txtGastoTramo', tO + tF);
@@ -233,7 +229,6 @@ function renderizarListaTC(datos) {
         const cuotas = x.cuotas || 1;
         const valorCuota = Math.round(x.monto / cuotas);
         const cuotaStr = cuotas > 1 ? `${cuotas}x $${valorCuota.toLocaleString('es-CL')}` : '1 Cuota';
-        
         const clickAction = `editarMovimiento('${x.firestoreId}')`;
         
         if(contenedorPC) {
@@ -291,7 +286,6 @@ function renderizarListas(sueldoBase, filtroBuscador) {
 
     const contenedorPC = document.getElementById('listaDetalle'); 
     const contenedorMovil = document.getElementById('listaMovilDetalle');
-    
     if (!contenedorMovil && !contenedorPC) return;
 
     if(datos.length === 0) {
@@ -302,7 +296,6 @@ function renderizarListas(sueldoBase, filtroBuscador) {
 
     let htmlMovil = ''; let htmlPC = '';
     let currentDayGroup = ""; 
-    
     let now = new Date(); now.setHours(0,0,0,0);
     let yesterday = new Date(now); yesterday.setDate(yesterday.getDate() - 1);
 
@@ -422,7 +415,6 @@ function agregarMovimiento() {
     
     const iFugaEl = document.getElementById('inputFuga');
     const pctFuga = iFugaEl ? parseInt(iFugaEl.value) : (catEvitables.includes(c) ? 100 : 0);
-    
     const cuotasEl = document.getElementById('inputCuotas');
     const cantCuotas = (cuotasEl && c === "Gasto Tarjeta de Crédito") ? parseInt(cuotasEl.value) : 1;
 
@@ -434,7 +426,6 @@ function agregarMovimiento() {
     op.then(() => {
         document.getElementById('editId').value = ''; document.getElementById('inputNombre').value = ''; document.getElementById('inputMonto').value = '';
         btn.innerHTML = "GUARDAR EN BÚNKER"; btn.style.backgroundColor = "var(--color-guardar)"; btn.disabled = false; modoEdicionActivo = false;
-        
         if (typeof mostrarToast === "function") mostrarToast("REGISTRO GUARDADO EN EL BÚNKER");
         if (typeof switchTab === "function") switchTab('list');
     }).catch(err => { alert("❌ Error: " + err.message); btn.innerHTML = "ERROR"; btn.disabled = false; });
@@ -448,13 +439,15 @@ function updateMassActions() { const bar = document.getElementById('massActionsB
 function massDelete() { const ids = Array.from(document.querySelectorAll('.row-check:not(#checkAll):checked')).map(cb => cb.value); if(ids.length === 0 || !confirm(`⚠️ ¿Eliminar ${ids.length} registro(s)?`)) return; const btn = document.querySelector('button[onclick="massDelete()"]'); const orig = btn.innerHTML; btn.innerHTML = '⏳'; Promise.all(ids.map(id => db.collection("movimientos").doc(id).delete())).then(() => { document.getElementById('massActionsBar').style.display = 'none'; document.getElementById('checkAll').checked = false; btn.innerHTML = orig; }); }
 function massCategorize() { const ids = Array.from(document.querySelectorAll('.row-check:not(#checkAll):checked')).map(cb => cb.value); const cat = document.getElementById('massCategorySelect').value; if(ids.length === 0 || !cat || !confirm(`¿Categorizar como "${cat}"?`)) return; const btn = document.querySelector('button[onclick="massCategorize()"]'); const orig = btn.innerHTML; btn.innerHTML = '⏳'; Promise.all(ids.map(id => db.collection("movimientos").doc(id).update({categoria: cat}))).then(() => { document.getElementById('massActionsBar').style.display = 'none'; document.getElementById('checkAll').checked = false; document.getElementById('massCategorySelect').value = ''; btn.innerHTML = orig; }); }
 
+// =====================================================================
+// LÓGICA DE GRÁFICOS (CON SCADA TWEAKS: LÍNEA NARANJA, CERO ROJO, ALPHA)
+// =====================================================================
 function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0) {
     if(chartBD) chartBD.destroy(); if(chartP) chartP.destroy(); 
     if(chartDiario) chartDiario.destroy(); if(chartRadar) chartRadar.destroy();
     
     const cT = getComputedStyle(document.body).getPropertyValue('--text-main').trim() || "#f0f6fc"; 
     const cG = getComputedStyle(document.body).getPropertyValue('--border-color').trim() || "#30363d"; 
-    const cF = getComputedStyle(document.body).getPropertyValue('--color-fuga').trim() || "#ff5252";
     
     let daily = Array(diasCiclo + 1).fill(0);
     let dailyGastosVar = Array(diasCiclo + 1).fill(0); 
@@ -472,7 +465,7 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0) {
         }
     });
 
-    let actual = [sueldo], ideal = [sueldo], labelsX = ["INI"], colorLabelsX = [cT], colorGridX = [cG]; 
+    let actual = [sueldo], ideal = [sueldo], labelsX = ["INI"];
     let labelsFechas = ["INI"]; 
     
     let acc = sueldo, limit = Math.floor((Date.now() - msT0) / 86400000) + 1;
@@ -485,32 +478,20 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0) {
         let f = new Date(msT0 + (i-1)*86400000); let dia = String(f.getDate()).padStart(2, '0');
         let mesStr = nombresMes[f.getMonth()];
         labelsFechas.push(`${dia} ${mesStr}`); 
-        
-        if (f.getDate() === 1) { labelsX.push(`${dia} ${mesStr}`); colorLabelsX.push('#ff9800'); colorGridX.push('#ff9800'); } 
-        else { labelsX.push(dia); colorLabelsX.push(cT); colorGridX.push(cG); }
+        labelsX.push(f.getDate() === 1 ? `${dia} ${mesStr}` : dia); 
     }
 
-    bdDataMaster = { labels: [...labelsX], labelsFechas: [...labelsFechas], actual: [...actual], ideal: [...ideal], daily: [...daily], dailyGastosVar: [...dailyGastosVar], colorsX: [...colorLabelsX], colorsG: [...colorGridX] };
-
-    // PLUGIN PARA MARCAR EL INICIO DE MES
     const marcadorInicioMes = {
         id: 'marcadorInicioMes',
         afterDraw: (chart) => {
             const ctx = chart.ctx;
             const xAxis = chart.scales.x;
             const yAxis = chart.scales.y;
-            // Busca la etiqueta que tenga '01'
             const indexInicio = chart.data.labels.findIndex(label => label.toString().includes('01'));
             if (indexInicio !== -1) {
                 const xPixel = xAxis.getPixelForTick(indexInicio);
-                ctx.save();
-                ctx.beginPath();
-                ctx.moveTo(xPixel, yAxis.top);
-                ctx.lineTo(xPixel, yAxis.bottom);
-                ctx.lineWidth = 2;
-                ctx.strokeStyle = '#ff9800'; // Naranja
-                ctx.stroke();
-                ctx.restore();
+                ctx.save(); ctx.beginPath(); ctx.moveTo(xPixel, yAxis.top); ctx.lineTo(xPixel, yAxis.bottom);
+                ctx.lineWidth = 2; ctx.strokeStyle = '#ff9800'; ctx.stroke(); ctx.restore();
             }
         }
     };
@@ -519,13 +500,7 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0) {
         type: 'line', 
         data: { labels: labelsX, datasets: [
             { 
-                label: 'Consumo Real', 
-                data: actual, 
-                borderColor: '#1f6feb', 
-                borderWidth: 3, 
-                fill: false, 
-                pointRadius: 2,
-                // 🔴 MAGIA SCADA: Si cae bajo cero, se pone transparente y punteado
+                label: 'Consumo Real', data: actual, borderColor: '#1f6feb', borderWidth: 3, fill: false, pointRadius: 2,
                 segment: {
                     borderColor: ctx => ctx.p1.parsed.y < 0 ? 'rgba(31, 111, 235, 0.3)' : '#1f6feb',
                     borderDash: ctx => ctx.p1.parsed.y < 0 ? [5, 5] : undefined
@@ -538,39 +513,21 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0) {
             scales: {
                 x: {
                     ticks: {
-                        color: function(context) {
-                            if (context.tick && context.tick.label && context.tick.label.toString().includes('01')) { return '#ff9800'; }
-                            return '#8b949e'; 
-                        },
-                        font: function(context) {
-                            if (context.tick && context.tick.label && context.tick.label.toString().includes('01')) { return { weight: 'bold', size: 11 }; }
-                            return { weight: 'normal', size: 10 };
-                        }
+                        color: function(context) { return (context.tick && context.tick.label && context.tick.label.toString().includes('01')) ? '#ff9800' : '#8b949e'; },
+                        font: function(context) { return (context.tick && context.tick.label && context.tick.label.toString().includes('01')) ? { weight: 'bold', size: 11 } : { weight: 'normal', size: 10 }; }
                     }
                 },
                 y: { 
                     grid: {
-                        color: function(context) {
-                            // Si la línea horizontal es exactamente el CERO, se pinta roja
-                            if (context.tick && context.tick.value === 0) {
-                                return '#ff5252'; 
-                            }
-                            return cG; // El gris de siempre para el resto
-                        },
-                        lineWidth: function(context) {
-                            // Hacemos la línea del cero un poco más gruesa (2px)
-                            return context.tick && context.tick.value === 0 ? 2 : 1;
-                        }
+                        color: function(context) { return (context.tick && context.tick.value === 0) ? '#ff5252' : cG; },
+                        lineWidth: function(context) { return (context.tick && context.tick.value === 0) ? 2 : 1; }
                     },
-                    ticks: {
-                        color: cT,
-                        callback: function(value) { return '$' + Math.round(value/1000) + 'k'; }
-                    }
+                    ticks: { color: cT, callback: function(value) { return '$' + Math.round(value/1000) + 'k'; } }
                 }
             },
             layout: { padding: { bottom: 0, top: 0, left:0, right:0 } }
         },
-        plugins: [marcadorInicioMes] // <-- PLUGIN ACTIVADO CORRECTAMENTE AQUÍ
+        plugins: [marcadorInicioMes]
     });
 
     const sorted = Object.entries(cats).sort((a,b)=>b[1]-a[1]).slice(0,8); const totalTop8 = sorted.reduce((sum, val) => sum + val[1], 0) || 1;
@@ -590,7 +547,6 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0) {
         let lastDayWithData = diasCiclo;
         while(lastDayWithData > 0 && dailyGastosVar[lastDayWithData] === 0) lastDayWithData--;
         let startDayForBars = Math.max(1, lastDayWithData - 6); 
-        
         let barLabels = labelsFechas.slice(startDayForBars, lastDayWithData + 1); 
         let barData = dailyGastosVar.slice(startDayForBars, lastDayWithData + 1);
 
@@ -608,7 +564,6 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0) {
 
         let rSorted = Object.entries(radarCats).sort((a,b)=>b[1]-a[1]).slice(0,5); 
         if(rSorted.length < 3) rSorted.push(["Sin Datos", 0], ["Sin Datos 2", 0]); 
-        
         let rLabels = rSorted.map(c => aliasMap[c[0]] || c[0].split(' ')[0]);
         let rData = rSorted.map(c => c[1]);
 
@@ -642,88 +597,38 @@ function aplicarCicloAlSistema() {
     if(!navMes || !navAnio) return;
     const fD = document.getElementById('filtroDesde'), fH = document.getElementById('filtroHasta');
     if(fD) fD.value = ''; if(fH) fH.value = '';
-    
     const { T0, fechaFinVisual } = calcularFechasCiclo(parseInt(navMes.value), parseInt(navAnio.value));
     const badge = document.getElementById('navRangoBadge');
     if(badge) badge.innerText = `PERIODO: ${T0.toLocaleDateString('es-CL', {day:'2-digit', month:'short'}).toUpperCase()} - ${fechaFinVisual.toLocaleDateString('es-CL', {day:'2-digit', month:'short'}).toUpperCase()}`;
     cargarSueldoVisual(); actualizarDashboard();
 }
 
-// 🟢 LÓGICA DE DRAG AND DROP (TABLA Y PANELES) 🟢
+// 🟢 LÓGICA DE DRAG AND DROP 🟢
 let draggedRowId = null;
 
-window.dragStart = function(e, id) { 
-    draggedRowId = id; 
-    e.dataTransfer.effectAllowed = 'move'; 
-    setTimeout(() => e.target.style.opacity = '0.4', 0); 
-}
-
-window.dragOverPanel = function(e, tipo) {
-    e.preventDefault();
-    const panel = e.currentTarget;
-    panel.style.transition = "border-color 0.2s, box-shadow 0.2s";
-    if (tipo === 'tc') {
-        panel.style.borderColor = "var(--color-fuga)";
-        panel.style.boxShadow = "0 0 15px rgba(218, 54, 51, 0.2)";
-    } else {
-        panel.style.borderColor = "var(--color-ingresos)";
-        panel.style.boxShadow = "0 0 15px rgba(31, 111, 235, 0.2)";
-    }
-}
-
-window.dragLeavePanel = function(e, tipo) {
-    const panel = e.currentTarget;
-    if (tipo === 'tc') {
-        panel.style.borderColor = "rgba(218, 54, 51, 0.3)";
-    } else {
-        panel.style.borderColor = "var(--border-color)";
-    }
-    panel.style.boxShadow = "none";
-}
-
+window.dragStart = function(e, id) { draggedRowId = id; e.dataTransfer.effectAllowed = 'move'; setTimeout(() => e.target.style.opacity = '0.4', 0); }
+window.dragOverPanel = function(e, tipo) { e.preventDefault(); const panel = e.currentTarget; panel.style.transition = "border-color 0.2s, box-shadow 0.2s"; if (tipo === 'tc') { panel.style.borderColor = "var(--color-fuga)"; panel.style.boxShadow = "0 0 15px rgba(218, 54, 51, 0.2)"; } else { panel.style.borderColor = "var(--color-ingresos)"; panel.style.boxShadow = "0 0 15px rgba(31, 111, 235, 0.2)"; } }
+window.dragLeavePanel = function(e, tipo) { const panel = e.currentTarget; if (tipo === 'tc') { panel.style.borderColor = "rgba(218, 54, 51, 0.3)"; } else { panel.style.borderColor = "var(--border-color)"; } panel.style.boxShadow = "none"; }
 window.dropOnPanel = function(e, tipo) {
-    e.preventDefault();
-    dragLeavePanel(e, tipo); 
-    if (!draggedRowId) return;
-
-    const mov = listaMovimientos.find(m => m.firestoreId === draggedRowId);
-    if (!mov) return;
-
+    e.preventDefault(); dragLeavePanel(e, tipo); if (!draggedRowId) return;
+    const mov = listaMovimientos.find(m => m.firestoreId === draggedRowId); if (!mov) return;
     if (tipo === 'tc' && mov.catV !== 'Gasto Tarjeta de Crédito') {
         if(confirm("💳 ¿Transferir este gasto a la Deuda de Tarjeta de Crédito?")) {
-            db.collection("movimientos").doc(draggedRowId).update({
-                categoria: "Gasto Tarjeta de Crédito",
-                tipo: "Gasto"
-            });
+            db.collection("movimientos").doc(draggedRowId).update({ categoria: "Gasto Tarjeta de Crédito", tipo: "Gasto" });
             if(typeof mostrarToast === 'function') mostrarToast("TRANSFERIDO A TARJETA DE CRÉDITO");
         }
     } else if (tipo === 'main' && mov.catV === 'Gasto Tarjeta de Crédito') {
         if(confirm("🔄 ¿Devolver a Flujo de Efectivo (Como Ruido de Sistema)?")) {
-            db.collection("movimientos").doc(draggedRowId).update({
-                categoria: "Ruido de Sistema",
-                tipo: "Gasto",
-                cuotas: 1
-            });
+            db.collection("movimientos").doc(draggedRowId).update({ categoria: "Ruido de Sistema", tipo: "Gasto", cuotas: 1 });
             if(typeof mostrarToast === 'function') mostrarToast("DEVUELTO A FLUJO DE EFECTIVO");
         }
     }
     draggedRowId = null;
 }
-
-window.dragOver = function(e) { 
-    e.preventDefault(); 
-    e.currentTarget.style.borderTop = '3px solid var(--color-ingresos)'; 
-}
-
-window.dragLeave = function(e) { 
-    e.currentTarget.style.borderTop = ''; 
-}
-
+window.dragOver = function(e) { e.preventDefault(); e.currentTarget.style.borderTop = '3px solid var(--color-ingresos)'; }
+window.dragLeave = function(e) { e.currentTarget.style.borderTop = ''; }
 window.dropRow = function(e, targetId) {
-    e.preventDefault(); 
-    e.stopPropagation(); 
-    e.currentTarget.style.borderTop = '';
-    
+    e.preventDefault(); e.stopPropagation(); e.currentTarget.style.borderTop = '';
     if (!draggedRowId || draggedRowId === targetId) return;
     if (currentSort.column !== 'fechaISO') return alert("⚠️ ALARMA: Para recalibrar el tiempo, la tabla debe estar ordenada por Fecha.");
     
@@ -740,9 +645,7 @@ window.dropRow = function(e, targetId) {
     else if (!t1_ms) newTimeMs = t2_ms + (dir === 'desc' ? 60000 : -60000); 
     else if (!t2_ms) newTimeMs = t1_ms + (dir === 'desc' ? -60000 : 60000);
     
-    if(confirm("⚙️ ¿Inyectar nuevo Timestamp para forzar cuadratura?")) { 
-        db.collection("movimientos").doc(draggedRowId).update({ fecha: new Date(newTimeMs) }); 
-    }
+    if(confirm("⚙️ ¿Inyectar nuevo Timestamp para forzar cuadratura?")) { db.collection("movimientos").doc(draggedRowId).update({ fecha: new Date(newTimeMs) }); }
     draggedRowId = null;
 }
 document.addEventListener('dragend', (e) => { if(e.target.tagName === 'TR') e.target.style.opacity = '1'; });
@@ -758,20 +661,17 @@ window.enviarReporteTelegram = function() {
     const badge = document.getElementById('navRangoBadge');
     const saldo = txtSaldo ? txtSaldo.innerText : '0';
     const periodo = badge ? badge.innerText : 'Periodo Actual';
-    
     const msg = `🏭 *BÚNKER SCADA*\n💰 Saldo: $${saldo}\n🗓️ Periodo: ${periodo}`;
     
     fetch(`https://api.telegram.org/bot8614679709:AAEJGy9yAlKnhjVmJ0VUZpT-YmZQ6J5IOps/sendMessage`, { 
-        method: 'POST', 
-        headers: { 'Content-Type': 'application/json' }, 
-        body: JSON.stringify({ chat_id: "1484213465", text: msg, parse_mode: 'Markdown' }) 
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ chat_id: "1484213465", text: msg, parse_mode: 'Markdown' }) 
     })
     .then(r => r.ok ? alert("✅ Telemetría Transmitida a Telegram.") : alert("❌ Error API Telegram"))
     .catch(e => alert("Error de red: " + e));
-}; // <-- AQUÍ CERRABA MAL TU CÓDIGO ANTERIOR
+};
 
 // ==========================================
-// MÓDULO DE EXPORTACIÓN CSV (SCADA V8.4)
+// MÓDULO DE EXPORTACIÓN CSV PRO (SCADA V8.5)
 // ==========================================
 window.exportarTablaBunker = function(idTabla, nombreArchivo) {
     console.log("📡 Iniciando exportación CSV para:", idTabla);
@@ -779,18 +679,13 @@ window.exportarTablaBunker = function(idTabla, nombreArchivo) {
     if (!tabla) return alert("Error: No se encontró la tabla " + idTabla);
 
     let csv = '';
-    
-    // Capturamos encabezados (th) y celdas (td), pero ignoramos las columnas de UI
     const filas = tabla.querySelectorAll("tr");
     
     filas.forEach(fila => {
         let celdas = Array.from(fila.querySelectorAll("th, td"));
-        
-        // FILTRO PRO: Excluye columnas de Checkbox, Arrastre y el botón Editar
         celdas = celdas.filter(c => !c.classList.contains('col-check') && !c.classList.contains('col-drag') && !c.querySelector('button'));
 
         const datosFila = celdas.map(celda => {
-            // Limpia el texto para que no rompa el Excel (quita saltos de línea internos)
             let texto = celda.innerText.replace(/(\r\n|\n|\r)/gm, " - ").replace(/"/g, '""').trim();
             return `"${texto}"`;
         });
@@ -806,7 +701,5 @@ window.exportarTablaBunker = function(idTabla, nombreArchivo) {
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-    } catch (e) {
-        console.error("Falla en navegador:", e);
-    }
+    } catch (e) { console.error("Falla en navegador:", e); }
 };
