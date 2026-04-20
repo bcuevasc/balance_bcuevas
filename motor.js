@@ -495,7 +495,40 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0) {
 
     let maxReal = Math.max(...actual.filter(v => v !== null));
     let yMax = maxReal > sueldo ? Math.ceil(maxReal * 1.05) : sueldo;
+    // 1. Definimos el plugin que dibuja la línea naranja
+const marcadorInicioMes = {
+    id: 'marcadorInicioMes',
+    afterDraw: (chart) => {
+        const ctx = chart.ctx;
+        const xAxis = chart.scales.x;
+        const yAxis = chart.scales.y;
 
+        // Buscamos en qué posición (índice) está la etiqueta que contiene "01"
+        const indexInicio = chart.data.labels.findIndex(label => label.includes('01'));
+
+        if (indexInicio !== -1) {
+            // Obtenemos la coordenada X exacta de ese día
+            const xPixel = xAxis.getPixelForTick(indexInicio);
+
+            ctx.save();
+            ctx.beginPath();
+            ctx.moveTo(xPixel, yAxis.top);
+            ctx.lineTo(xPixel, yAxis.bottom);
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = '#ff9800'; // El naranja de tu imagen
+            ctx.stroke();
+            ctx.restore();
+        }
+    }
+};
+
+// 2. Al crear tu gráfico, inyectas el plugin así:
+window.miGraficoBurnDown = new Chart(ctxBurnDown, {
+    type: 'line',
+    data: tuData,
+    options: tusOptions,
+    plugins: [marcadorInicioMes] // <--- ¡AQUÍ ACTIVAS LA LÍNEA!
+});
     chartBD = new Chart(document.getElementById('chartBurnDown'), {
         type: 'line', 
         data: { labels: labelsX, datasets: [
@@ -504,10 +537,28 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0) {
         ]},
         options: { 
             maintainAspectRatio:false, plugins:{legend:{display:false}}, 
-            scales:{ 
-                x:{ticks:{color: colorLabelsX, maxRotation: 45, minRotation: 45, font: (c) => ({ weight: colorLabelsX[c.index] === '#ff9800' ? '900' : 'bold', size: 9 }) }, grid:{color: colorGridX, drawBorder:false, lineWidth: (c) => colorGridX[c.index] === '#ff9800' ? 2 : 1 } }, 
-                y:{ max: yMax, ticks:{color:cT, callback:v=>'$'+Math.round(v/1000)+'k'}, grid:{color: c => c.tick.value === 0 ? cF : cG} } 
-            },
+            scales: {
+        x: {
+            ticks: {
+                // Función que evalúa cada etiqueta del eje X
+                color: function(context) {
+                    // Si la etiqueta contiene "01", la pinta naranja SCADA
+                    if (context.tick && context.tick.label && context.tick.label.includes('01')) {
+                        return '#ff9800'; 
+                    }
+                    return '#8b949e'; // Color gris por defecto para el resto
+                },
+                font: function(context) {
+                    // Ponemos el "01" en negrita para que destaque más
+                    if (context.tick && context.tick.label && context.tick.label.includes('01')) {
+                        return { weight: 'bold', size: 11 };
+                    }
+                    return { weight: 'normal', size: 10 };
+                }
+            }
+        },
+        y: { /* tu config de Y actual */ }
+    },
             layout: { padding: { bottom: 0, top: 0, left:0, right:0 } }
         }
     });
