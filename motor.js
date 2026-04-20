@@ -1,5 +1,5 @@
 // ==========================================================
-// 🧠 BÚNKER SCADA - MOTOR LÓGICO V8.3 (DRAG & DROP ENTRE PANELES)
+// 🧠 BÚNKER SCADA - MOTOR LÓGICO V8.4 (DRAG & DROP + CSV PRO)
 // ==========================================================
 const BYRON_EMAIL = "bvhcc94@gmail.com"; 
 const CREDIT_SETPOINT = -300000; 
@@ -220,7 +220,7 @@ function actualizarDashboard() {
     
     setTxt('txtGastoTramo', tO + tF);
     setTxt('txtPromedioZoom', Math.round((tO + tF) / diasCiclo));
-}    
+}   
 
 function renderizarListaTC(datos) {
     const contenedorPC = document.getElementById('listaDetalleTC');
@@ -237,7 +237,6 @@ function renderizarListaTC(datos) {
         const clickAction = `editarMovimiento('${x.firestoreId}')`;
         
         if(contenedorPC) {
-            // Fíjate que añadimos draggable="true" aquí también
             htmlPC += `<tr style="border-bottom:1px solid var(--border-color); cursor:pointer;" draggable="true" ondragstart="dragStart(event, '${x.firestoreId}')" onclick="${clickAction}">
                 <td style="font-size:0.65rem; color:var(--text-muted); padding:6px 4px;">${dateStr}</td>
                 <td style="font-size:0.75rem; font-weight:700; padding:6px 4px;">${x.nombre}</td>
@@ -493,42 +492,29 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0) {
 
     bdDataMaster = { labels: [...labelsX], labelsFechas: [...labelsFechas], actual: [...actual], ideal: [...ideal], daily: [...daily], dailyGastosVar: [...dailyGastosVar], colorsX: [...colorLabelsX], colorsG: [...colorGridX] };
 
-    let maxReal = Math.max(...actual.filter(v => v !== null));
-    let yMax = maxReal > sueldo ? Math.ceil(maxReal * 1.05) : sueldo;
-    // 1. Definimos el plugin que dibuja la línea naranja
-const marcadorInicioMes = {
-    id: 'marcadorInicioMes',
-    afterDraw: (chart) => {
-        const ctx = chart.ctx;
-        const xAxis = chart.scales.x;
-        const yAxis = chart.scales.y;
-
-        // Buscamos en qué posición (índice) está la etiqueta que contiene "01"
-        const indexInicio = chart.data.labels.findIndex(label => label.includes('01'));
-
-        if (indexInicio !== -1) {
-            // Obtenemos la coordenada X exacta de ese día
-            const xPixel = xAxis.getPixelForTick(indexInicio);
-
-            ctx.save();
-            ctx.beginPath();
-            ctx.moveTo(xPixel, yAxis.top);
-            ctx.lineTo(xPixel, yAxis.bottom);
-            ctx.lineWidth = 2;
-            ctx.strokeStyle = '#ff9800'; // El naranja de tu imagen
-            ctx.stroke();
-            ctx.restore();
+    // PLUGIN PARA MARCAR EL INICIO DE MES
+    const marcadorInicioMes = {
+        id: 'marcadorInicioMes',
+        afterDraw: (chart) => {
+            const ctx = chart.ctx;
+            const xAxis = chart.scales.x;
+            const yAxis = chart.scales.y;
+            // Busca la etiqueta que tenga '01'
+            const indexInicio = chart.data.labels.findIndex(label => label.toString().includes('01'));
+            if (indexInicio !== -1) {
+                const xPixel = xAxis.getPixelForTick(indexInicio);
+                ctx.save();
+                ctx.beginPath();
+                ctx.moveTo(xPixel, yAxis.top);
+                ctx.lineTo(xPixel, yAxis.bottom);
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = '#ff9800'; // Naranja
+                ctx.stroke();
+                ctx.restore();
+            }
         }
-    }
-};
+    };
 
-// 2. Al crear tu gráfico, inyectas el plugin así:
-window.miGraficoBurnDown = new Chart(ctxBurnDown, {
-    type: 'line',
-    data: tuData,
-    options: tusOptions,
-    plugins: [marcadorInicioMes] // <--- ¡AQUÍ ACTIVAS LA LÍNEA!
-});
     chartBD = new Chart(document.getElementById('chartBurnDown'), {
         type: 'line', 
         data: { labels: labelsX, datasets: [
@@ -538,29 +524,23 @@ window.miGraficoBurnDown = new Chart(ctxBurnDown, {
         options: { 
             maintainAspectRatio:false, plugins:{legend:{display:false}}, 
             scales: {
-        x: {
-            ticks: {
-                // Función que evalúa cada etiqueta del eje X
-                color: function(context) {
-                    // Si la etiqueta contiene "01", la pinta naranja SCADA
-                    if (context.tick && context.tick.label && context.tick.label.includes('01')) {
-                        return '#ff9800'; 
+                x: {
+                    ticks: {
+                        color: function(context) {
+                            if (context.tick && context.tick.label && context.tick.label.toString().includes('01')) { return '#ff9800'; }
+                            return '#8b949e'; 
+                        },
+                        font: function(context) {
+                            if (context.tick && context.tick.label && context.tick.label.toString().includes('01')) { return { weight: 'bold', size: 11 }; }
+                            return { weight: 'normal', size: 10 };
+                        }
                     }
-                    return '#8b949e'; // Color gris por defecto para el resto
                 },
-                font: function(context) {
-                    // Ponemos el "01" en negrita para que destaque más
-                    if (context.tick && context.tick.label && context.tick.label.includes('01')) {
-                        return { weight: 'bold', size: 11 };
-                    }
-                    return { weight: 'normal', size: 10 };
-                }
-            }
-        },
-        y: { /* tu config de Y actual */ }
-    },
+                y: { /* Mantiene tu Y por defecto */ }
+            },
             layout: { padding: { bottom: 0, top: 0, left:0, right:0 } }
-        }
+        },
+        plugins: [marcadorInicioMes] // <-- PLUGIN ACTIVADO CORRECTAMENTE AQUÍ
     });
 
     const sorted = Object.entries(cats).sort((a,b)=>b[1]-a[1]).slice(0,8); const totalTop8 = sorted.reduce((sum, val) => sum + val[1], 0) || 1;
@@ -673,7 +653,7 @@ window.dragLeavePanel = function(e, tipo) {
 
 window.dropOnPanel = function(e, tipo) {
     e.preventDefault();
-    dragLeavePanel(e, tipo); // Resetea los colores
+    dragLeavePanel(e, tipo); 
     if (!draggedRowId) return;
 
     const mov = listaMovimientos.find(m => m.firestoreId === draggedRowId);
@@ -711,7 +691,7 @@ window.dragLeave = function(e) {
 
 window.dropRow = function(e, targetId) {
     e.preventDefault(); 
-    e.stopPropagation(); // 🟢 CRÍTICO: Evita que el panel reciba el drop si lo sueltas en una fila
+    e.stopPropagation(); 
     e.currentTarget.style.borderTop = '';
     
     if (!draggedRowId || draggedRowId === targetId) return;
@@ -758,54 +738,45 @@ window.enviarReporteTelegram = function() {
     })
     .then(r => r.ok ? alert("✅ Telemetría Transmitida a Telegram.") : alert("❌ Error API Telegram"))
     .catch(e => alert("Error de red: " + e));
+}; // <-- AQUÍ CERRABA MAL TU CÓDIGO ANTERIOR
 
-    // ==========================================
+// ==========================================
 // MÓDULO DE EXPORTACIÓN CSV (SCADA V8.4)
 // ==========================================
-function exportarTablaBunker(idTabla, nombreArchivo) {
-    console.log("📡 [SISTEMA] Iniciando intento de exportación para la tabla:", idTabla);
-    
+window.exportarTablaBunker = function(idTabla, nombreArchivo) {
+    console.log("📡 Iniciando exportación CSV para:", idTabla);
     const tabla = document.getElementById(idTabla);
-    
-    if (!tabla) {
-        console.error("❌ [ERROR CRÍTICO] No se encontró ninguna tabla en el HTML con el ID:", idTabla);
-        alert("Falla de Sistema: El botón no encuentra la tabla (" + idTabla + ").");
-        return;
-    }
+    if (!tabla) return alert("Error: No se encontró la tabla " + idTabla);
 
     let csv = '';
+    
+    // Capturamos encabezados (th) y celdas (td), pero ignoramos las columnas de UI
     const filas = tabla.querySelectorAll("tr");
-    console.log("📊 [TELEMETRÍA] Filas detectadas para exportar:", filas.length);
-
-    if (filas.length === 0 || (filas.length === 1 && filas[0].querySelectorAll("td").length === 0)) {
-         console.warn("⚠️ [ADVERTENCIA] La tabla está vacía.");
-         alert("La tabla no tiene datos cargados aún. No se puede exportar un archivo vacío.");
-         return;
-    }
-
+    
     filas.forEach(fila => {
-        const celdas = fila.querySelectorAll("th, td");
-        const datosFila = Array.from(celdas).map(celda => {
-            let texto = celda.innerText.replace(/"/g, '""').trim();
+        let celdas = Array.from(fila.querySelectorAll("th, td"));
+        
+        // FILTRO PRO: Excluye columnas de Checkbox, Arrastre y el botón Editar
+        celdas = celdas.filter(c => !c.classList.contains('col-check') && !c.classList.contains('col-drag') && !c.querySelector('button'));
+
+        const datosFila = celdas.map(celda => {
+            // Limpia el texto para que no rompa el Excel (quita saltos de línea internos)
+            let texto = celda.innerText.replace(/(\r\n|\n|\r)/gm, " - ").replace(/"/g, '""').trim();
             return `"${texto}"`;
         });
-        csv += datosFila.join(";") + "\n";
+        
+        if (datosFila.length > 0) csv += datosFila.join(";") + "\n";
     });
 
-    console.log("⚙️ [SISTEMA] Generando paquete CSV...");
-    
     try {
         const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
-        link.setAttribute("href", url);
-        link.setAttribute("download", `${nombreArchivo}_${new Date().toISOString().slice(0,10)}.csv`);
+        link.href = URL.createObjectURL(blob);
+        link.download = `${nombreArchivo}_${new Date().toISOString().slice(0,10)}.csv`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        console.log("✅ [ÉXITO] Descarga disparada correctamente.");
-    } catch (error) {
-        console.error("❌ [ERROR CRÍTICO] Falla al generar archivo:", error);
+    } catch (e) {
+        console.error("Falla en navegador:", e);
     }
-}
 };
