@@ -224,21 +224,23 @@ input[type="date"]::-webkit-calendar-picker-indicator, input[type="datetime-loca
         </div>
 
         <div class="right-col">
-            <div class="sidebar-panel">
-                <h4 style="color:var(--color-ingresos); margin:0; font-size:0.85rem; text-transform:uppercase; margin-bottom:10px;">REGISTRO MANUAL</h4>
-                <input type="hidden" id="editId">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: -5px;">
-                    <div class="form-group"><label>Fecha</label><input type="datetime-local" id="inputFecha"></div>
-                    <div class="form-group"><label>Flujo</label>
-                        <select id="inputTipo">
-                            <option value="Gasto">Gasto Variable</option>
-                            <option value="Gasto Fijo">Gasto Fijo</option>
-                            <option value="Ingreso">Ingreso Extra</option>
-                            <option value="Por Cobrar">Préstamo (CxC)</option>
-                            <option value="Ahorro">Ahorro / Mov. Neutro</option>
-                        </select>
+            <div class="sidebar-panel tc-panel" id="panelTC" style="flex:1; display:flex; flex-direction:column; border-color:rgba(218, 54, 51, 0.3); background:rgba(218, 54, 51, 0.02); min-height: 0; overflow:hidden;" ondragover="dragOverPanel(event, 'tc')" ondragleave="dragLeavePanel(event, 'tc')" ondrop="dropOnPanel(event, 'tc')">
+                <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-color); padding-bottom:8px; margin-bottom:8px; flex-shrink:0;">
+                    <h4 style="color:var(--color-fuga); margin:0; font-size:0.85rem; text-transform:uppercase;">DEUDA TC ACUMULADA</h4>
+                    
+                    <div style="display:flex; align-items:center; gap: 10px;">
+                        <button class="btn-sys" onclick="exportarTablaBunker('tablaCuotas', 'Bunker_Proyeccion_TC')" style="font-size: 0.65rem; padding: 4px 6px; border-color: rgba(218, 54, 51, 0.3); color: var(--color-fuga); background: transparent;">
+                            📥 CSV
+                        </button>
+                        <div style="font-size:1.1rem; font-weight:900; color:var(--color-fuga);">$<span id="txtTotalTC">0</span></div>
                     </div>
                 </div>
+                <div style="flex:1; overflow-y:auto; scrollbar-width:thin; scrollbar-color:var(--border-color) transparent;">
+                    <table id="tablaCuotas" style="width:100%; border-collapse:collapse; text-align:left;">
+                        <tbody id="listaDetalleTC"></tbody>
+                    </table>
+                </div>
+            </div>
                 <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 10px;">
                     <div class="form-group"><label>Categoría V31.4</label><select id="inputCategoria"></select></div>
                     <div class="form-group"><label>% Fuga</label>
