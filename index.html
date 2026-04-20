@@ -195,9 +195,13 @@ input[type="date"]::-webkit-calendar-picker-indicator, input[type="datetime-loca
             <div class="grid-main-wrapper" id="panelMain" ondragover="dragOverPanel(event, 'main')" ondragleave="dragLeavePanel(event, 'main')" ondrop="dropOnPanel(event, 'main')">
                 <div class="telemetry-header">
                     <input type="text" id="inputBuscador" placeholder="🔍 Filtrar tabla (Excluye TC)..." oninput="actualizarDashboard()" style="width:250px; background:var(--input-bg); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px; padding:6px 12px; outline:none; font-size:0.8rem;">
+                    
+                    <button class="btn-sys" onclick="exportarTablaBunker('tablaGastos', 'Bunker_Libro_Diario')" style="color: var(--text-muted); display:flex; align-items:center; gap:5px; height: 30px;">
+                        📥 CSV
+                    </button>
                 </div>
                 <div class="grid-container">
-                    <table class="data-grid">
+                    <table id="tablaGastos" class="data-grid">
                         <thead>
                             <tr>
                                 <th class="col-check hide-mobile"><input type="checkbox" id="checkAll" onchange="toggleAllChecks()"></th>
