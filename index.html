@@ -48,21 +48,21 @@ h2 { color: var(--color-ingresos); margin: 0; font-size: 1.2rem; font-weight: 90
 
 .master-layout { display: grid; grid-template-columns: 1fr 340px; gap: 12px; margin-top: 5px; flex: 1; min-height: 0; overflow: hidden; }
 
-/* 🟢 NUEVO ORDEN: GRÁFICOS ARRIBA, TABLA ABAJO 🟢 */
-.left-col { display: flex; flex-direction: column; gap: 10px; flex: 1; min-height: 0; overflow: hidden; }
+/* 🟢 MASTER LAYOUT BLINDADO (TABLA ABAJO, GRÁFICOS ARRIBA) 🟢 */
+.master-layout { display: grid; grid-template-columns: 1fr 340px; gap: 12px; margin-top: 5px; flex: 1 1 0px; min-height: 0; overflow: hidden; height: 100%; }
 
-/* Panel de Gráficos (Ahora primero) */
-#charts-grid-container { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 15px; flex-shrink: 0; height: 240px; min-height: 240px; }
-.chart-box { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; position: relative; }
-.chart-box h5 { margin: 0 0 5px 0; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; text-align: center; font-weight: 800; z-index: 10;}
+.left-col { display: flex; flex-direction: column; gap: 10px; flex: 1 1 0px; min-height: 0; overflow: hidden; height: 100%; }
+
+/* Panel de Gráficos (Prohibido encogerse, siempre 240px) */
+#charts-grid-container { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 15px; flex: 0 0 240px; height: 240px; min-height: 240px; }
+.chart-box { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; position: relative; overflow: hidden; }
+.chart-box h5 { margin: 0 0 5px 0; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; text-align: center; font-weight: 800; z-index: 10; flex-shrink: 0; }
 .canvas-container { position: relative; flex-grow: 1; min-height: 0; width: 100%; height: 100%; }
 
-/* Contenedor de la Tabla (Ahora abajo) */
-.grid-main-wrapper { background: var(--bg-panel); border-radius: 8px; border: 1px solid var(--border-color); padding: 10px; display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: hidden; transition: border-color 0.2s, box-shadow 0.2s; }
+/* Contenedor de la Tabla (Toma todo el espacio sobrante) */
+.grid-main-wrapper { background: var(--bg-panel); border-radius: 8px; border: 1px solid var(--border-color); padding: 10px; display: flex; flex-direction: column; flex: 1 1 0px; min-height: 0; overflow: hidden; transition: border-color 0.2s, box-shadow 0.2s; height: 100%; }
 .telemetry-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; gap: 10px; flex-shrink: 0; }
-.grid-container { flex: 1; min-height: 0; overflow-x: auto; overflow-y: auto; background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 6px; scrollbar-width: thin; scrollbar-color: var(--border-color) var(--bg-body); }
-
-.data-grid { width: 100%; border-collapse: collapse; text-align: left; }
+.grid-container { flex: 1 1 0px; min-height: 0; overflow-x: auto; overflow-y: auto; background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 6px; scrollbar-width: thin; scrollbar-color: var(--border-color) var(--bg-body); height: 100%; }.data-grid { width: 100%; border-collapse: collapse; text-align: left; }
 .data-grid th { position: sticky; top: 0; background: var(--bg-panel); padding: 6px 8px; font-size: 0.65rem; color: var(--color-ingresos); text-transform: uppercase; z-index: 10; border-bottom: 2px solid var(--border-color); white-space: nowrap; cursor: pointer; user-select: none; letter-spacing: 0.5px;}
 .data-grid td { padding: 4px 8px; font-size: 0.75rem; border-bottom: 1px solid var(--border-color); white-space: nowrap; vertical-align: middle; }
 .data-grid th:last-child, .data-grid td:last-child { padding-right: 24px !important; }
