@@ -518,7 +518,19 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0) {
     chartBD = new Chart(document.getElementById('chartBurnDown'), {
         type: 'line', 
         data: { labels: labelsX, datasets: [
-            { label: 'Consumo Real', data: actual, borderColor: '#1f6feb', borderWidth: 3, fill: false, pointRadius: 2 },
+            { 
+                label: 'Consumo Real', 
+                data: actual, 
+                borderColor: '#1f6feb', 
+                borderWidth: 3, 
+                fill: false, 
+                pointRadius: 2,
+                // 🔴 MAGIA SCADA: Si cae bajo cero, se pone transparente y punteado
+                segment: {
+                    borderColor: ctx => ctx.p1.parsed.y < 0 ? 'rgba(31, 111, 235, 0.3)' : '#1f6feb',
+                    borderDash: ctx => ctx.p1.parsed.y < 0 ? [5, 5] : undefined
+                }
+            },
             { label: 'Gasto Ideal', data: ideal, borderColor: 'rgba(63,185,80,0.3)', borderDash:[5,5], pointRadius:0 }
         ]},
         options: { 
@@ -536,7 +548,25 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0) {
                         }
                     }
                 },
-                y: { /* Mantiene tu Y por defecto */ }
+                y: { 
+                    grid: {
+                        color: function(context) {
+                            // Si la línea horizontal es exactamente el CERO, se pinta roja
+                            if (context.tick && context.tick.value === 0) {
+                                return '#ff5252'; 
+                            }
+                            return cG; // El gris de siempre para el resto
+                        },
+                        lineWidth: function(context) {
+                            // Hacemos la línea del cero un poco más gruesa (2px)
+                            return context.tick && context.tick.value === 0 ? 2 : 1;
+                        }
+                    },
+                    ticks: {
+                        color: cT,
+                        callback: function(value) { return '$' + Math.round(value/1000) + 'k'; }
+                    }
+                }
             },
             layout: { padding: { bottom: 0, top: 0, left:0, right:0 } }
         },
