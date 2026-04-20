@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Bunker Digital SCADA v8.3</title>
+    <title>Bunker Digital SCADA v8.4 (Dashboard Focus)</title>
     
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -15,24 +15,27 @@
 :root { --bg-body: #0b0e14; --bg-panel: #161b22; --bg-subpanel: #21262d; --text-main: #f0f6fc; --text-muted: #8b949e; --border-color: #30363d; --input-bg: #0d1117; --item-hover: #1c2128; --color-guardar: #1f6feb; --color-ingresos: #1f6feb; --color-gastos: #da3633;  --color-saldo: #3fb950; --color-edit: #d29922; --color-fuga: #ff5252; --color-proyectado: #3f51b5; --color-telegram: #0088cc; }
 body.light-theme { --bg-body: #f0f2f5; --bg-panel: #ffffff; --bg-subpanel: #f8f9fa; --text-main: #24292e; --text-muted: #57606a; --border-color: #d0d7de; --input-bg: #ffffff; --item-hover: #e1e4e8; }
 * { box-sizing: border-box; transition: background-color 0.3s, border-color 0.3s; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
-body { background-color: var(--bg-body); margin: 0; padding: 0; color: var(--text-main); overflow: hidden; height: 100vh; display: flex; flex-direction: column; }
+
+body { background-color: var(--bg-body); margin: 0; padding: 0; color: var(--text-main); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+.app-container { display: none; width: 100%; height: 100vh; padding: 8px 12px; flex-direction: column; gap: 8px; margin: 0 auto; max-width: 1920px; overflow: hidden;}
+.app-container.active-app { display: flex; }
+
 #login-screen { position: fixed; inset: 0; background: #0b0e14; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10000; text-align: center; }
 .login-box { padding: 40px; background: #161b22; border: 1px solid #30363d; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
 .btn-google { background: #fff; color: #000; border: none; padding: 12px 24px; border-radius: 6px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 10px; margin-top: 20px; font-size: 1rem; }
-.app-container { display: none; width: 100%; height: 100vh; padding: 8px 12px; flex-direction: column; gap: 8px; margin: 0 auto; max-width: 1920px; }
-.app-container.active-app { display: flex; }
-.header-titles { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 4px; margin-bottom: 0; }
+
+.header-titles { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 4px; margin-bottom: 0; flex-shrink: 0;}
 h2 { color: var(--color-ingresos); margin: 0; font-size: 1.2rem; font-weight: 900; text-transform: uppercase; }
 .cronos { font-family: 'Courier New', Courier, monospace; font-size: 0.85rem; font-weight: 800; color: var(--text-muted); background: var(--bg-panel); padding: 2px 8px; border-radius: 4px; border: 1px solid var(--border-color); }
 .system-btns { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; justify-content: flex-end; }
 .btn-sys { background: var(--bg-subpanel); color: var(--text-main); border: 1px solid var(--border-color); padding: 6px 10px; border-radius: 6px; cursor: pointer; font-weight: 800; font-size: 0.7rem; text-transform: uppercase; transition: border-color 0.2s;}
 .btn-sys:hover { border-color: var(--color-saldo); }
-.time-navigator-panel { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 8px; padding: 8px 15px; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.2); border-top: 3px solid var(--color-ingresos); }
+.time-navigator-panel { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 8px; padding: 8px 15px; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.2); border-top: 3px solid var(--color-ingresos); flex-shrink: 0;}
 .time-nav-controls { display: flex; align-items: center; gap: 12px; }
 .nav-select { background: var(--input-bg); color: var(--text-main); border: 1px solid var(--border-color); padding: 6px 12px; border-radius: 6px; font-weight: 800; text-transform: uppercase; font-size: 0.8rem; outline: none; cursor: pointer; }
 .nav-select:focus { border-color: var(--color-ingresos); }
 .nav-badge { font-family: 'Courier New', Courier, monospace; background: rgba(31, 111, 235, 0.1); color: var(--color-ingresos); border: 1px solid rgba(31, 111, 235, 0.3); padding: 4px 10px; border-radius: 4px; font-size: 0.75rem; font-weight: 900; letter-spacing: 0.5px; text-transform: uppercase; }
-.kpi-row { display: grid; grid-template-columns: repeat(8, 1fr); gap: 8px; }
+.kpi-row { display: grid; grid-template-columns: repeat(8, 1fr); gap: 8px; flex-shrink: 0; }
 .kpi-card { padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-panel); border-top: 4px solid var(--border-color); }
 .kpi-card h4 { margin: 0 0 2px 0; font-size: 0.6rem; text-transform: uppercase; color: var(--text-muted); font-weight: 800; }
 .kpi-card .value { margin: 0; font-size: 1.15rem; font-weight: 900; color: var(--text-main); display: flex; align-items: center; }
@@ -43,16 +46,22 @@ h2 { color: var(--color-ingresos); margin: 0; font-size: 1.2rem; font-weight: 90
 .kpi-proyectado { border: none; background: var(--color-proyectado); color: #fff; }
 .kpi-proyectado h4, .kpi-proyectado .value { color: #fff !important; font-weight: 900; }
 
-/* 🟢 FIX CSS: TABLA CONTROLADA 🟢 */
-/* 🟢 MASTER LAYOUT BLINDADO (FIX FLEXBOX INFINITO) 🟢 */
-.master-layout { display: grid; grid-template-columns: 1fr 340px; gap: 12px; margin-top: 5px; flex: 1 1 0px; min-height: 0; overflow: hidden; height: 100%; }
-.left-col { display: grid; grid-template-rows: 1fr 240px; gap: 10px; min-height: 0; height: 100%; overflow: hidden; }
-.grid-main-wrapper { background: var(--bg-panel); border-radius: 8px; border: 1px solid var(--border-color); padding: 10px; display: flex; flex-direction: column; flex: 1 1 0px; min-height: 0; overflow: hidden; transition: border-color 0.2s, box-shadow 0.2s; height: 100%; }
-.telemetry-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; gap: 10px; flex-shrink: 0; }
+.master-layout { display: grid; grid-template-columns: 1fr 340px; gap: 12px; margin-top: 5px; flex: 1; min-height: 0; overflow: hidden; }
 
-/* LA TABLA AHORA SOLO HACE SCROLL INTERNO */
-.grid-container { flex: 1 1 0px; min-height: 0; overflow-y: auto; overflow-x: auto; background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 6px; scrollbar-width: thin; scrollbar-color: var(--border-color) var(--bg-body); height: 100%; }
-.grid-container::-webkit-scrollbar { display: none; }
+/* 🟢 NUEVO ORDEN: GRÁFICOS ARRIBA, TABLA ABAJO 🟢 */
+.left-col { display: flex; flex-direction: column; gap: 10px; flex: 1; min-height: 0; overflow: hidden; }
+
+/* Panel de Gráficos (Ahora primero) */
+#charts-grid-container { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 15px; flex-shrink: 0; height: 240px; min-height: 240px; }
+.chart-box { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; position: relative; }
+.chart-box h5 { margin: 0 0 5px 0; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; text-align: center; font-weight: 800; z-index: 10;}
+.canvas-container { position: relative; flex-grow: 1; min-height: 0; width: 100%; height: 100%; }
+
+/* Contenedor de la Tabla (Ahora abajo) */
+.grid-main-wrapper { background: var(--bg-panel); border-radius: 8px; border: 1px solid var(--border-color); padding: 10px; display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: hidden; transition: border-color 0.2s, box-shadow 0.2s; }
+.telemetry-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; gap: 10px; flex-shrink: 0; }
+.grid-container { flex: 1; min-height: 0; overflow-x: auto; overflow-y: auto; background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 6px; scrollbar-width: thin; scrollbar-color: var(--border-color) var(--bg-body); }
+
 .data-grid { width: 100%; border-collapse: collapse; text-align: left; }
 .data-grid th { position: sticky; top: 0; background: var(--bg-panel); padding: 6px 8px; font-size: 0.65rem; color: var(--color-ingresos); text-transform: uppercase; z-index: 10; border-bottom: 2px solid var(--border-color); white-space: nowrap; cursor: pointer; user-select: none; letter-spacing: 0.5px;}
 .data-grid td { padding: 4px 8px; font-size: 0.75rem; border-bottom: 1px solid var(--border-color); white-space: nowrap; vertical-align: middle; }
@@ -72,16 +81,11 @@ h2 { color: var(--color-ingresos); margin: 0; font-size: 1.2rem; font-weight: 90
 .impact-neg { color: var(--color-fuga); }
 .impact-neu { color: #ff9800; }
 
-#charts-grid-container { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 15px; height: 240px; min-height: 240px; }
-.chart-box { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; height: 240px; display: flex; flex-direction: column; position: relative; }
-.chart-box h5 { margin: 0 0 5px 0; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; text-align: center; font-weight: 800; z-index: 10;}
-.canvas-container { position: relative; flex-grow: 1; min-height: 0; width: 100%; height: 100%; }
-
 .bd-overlay-kpis { position: absolute; top: 10px; width: calc(100% - 24px); display: flex; justify-content: space-between; z-index: 20; pointer-events: none;}
 .bd-badge { padding: 2px 5px; font-size: 0.65rem; font-weight: bold; color: var(--text-main); text-shadow: 0px 2px 4px rgba(0,0,0,0.9); }
 
-.right-col { display: flex; flex-direction: column; gap: 10px; height: 100%; }
-.sidebar-panel { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; transition: border-color 0.2s, box-shadow 0.2s;}
+.right-col { display: flex; flex-direction: column; gap: 10px; height: 100%; overflow: hidden;}
+.sidebar-panel { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; transition: border-color 0.2s, box-shadow 0.2s; flex-shrink: 0;}
 .form-group { margin-bottom: 8px; width: 100%; position: relative; }
 .form-group label { display: block; font-size: 0.6rem; font-weight: 800; color: var(--text-muted); margin-bottom: 2px; text-transform: uppercase; }
 .custom-select, .form-group input, .form-group select { width: 100%; border: 1px solid var(--border-color); border-radius: 4px; background-color: var(--input-bg); color: var(--text-main); outline: none; padding: 6px 8px; font-size: 0.8rem; height: 32px; }
@@ -105,13 +109,13 @@ input[type="date"]::-webkit-calendar-picker-indicator, input[type="datetime-loca
 <div id="login-screen">
     <div class="login-box">
         <h2 style="color:var(--color-ingresos); margin-bottom:10px;">BUNKER SCADA</h2>
-        <p style="color:var(--text-muted); font-size:0.8rem;">SISTEMA PRIVADO DE GESTIÓN TÁCTICA V8.3</p>
+        <p style="color:var(--text-muted); font-size:0.8rem;">SISTEMA PRIVADO DE GESTIÓN TÁCTICA V8.4</p>
         <button class="btn-google" onclick="loginWithGoogle()">ENTRAR CON GOOGLE</button>
     </div>
 </div>
 
 <div class="app-container" id="reportZone">
-    <div class="header-titles" style="border-bottom: none; padding-bottom: 0;">
+    <div class="header-titles">
         <div style="display:flex; align-items:center;">
             <h2 style="color:var(--color-ingresos);">BUNKER DIGITAL SCADA</h2>
             <div id="user-display" style="margin-left: 15px; font-size: 0.75rem; color: var(--color-saldo); font-weight:800; text-transform:uppercase;"></div>
@@ -119,7 +123,7 @@ input[type="date"]::-webkit-calendar-picker-indicator, input[type="datetime-loca
         <div id="cronos" class="cronos">--:--:--</div>
     </div>
 
-    <div class="time-navigator-panel" style="margin-top: 5px;">
+    <div class="time-navigator-panel">
         <div class="time-nav-controls">
             <select id="navAnio" class="nav-select" onchange="actualizarDashboard()"><option value="2025">2025</option><option value="2026" selected>2026</option></select>
             <select id="navMesConceptual" class="nav-select" onchange="actualizarDashboard()" style="color: var(--color-ingresos);"><option value="0">Enero</option><option value="1">Febrero</option><option value="2">Marzo</option><option value="3" selected>Abril</option><option value="4">Mayo</option><option value="5">Junio</option><option value="6">Julio</option><option value="7">Agosto</option><option value="8">Septiembre</option><option value="9">Octubre</option><option value="10">Noviembre</option><option value="11">Diciembre</option></select>
@@ -173,6 +177,21 @@ input[type="date"]::-webkit-calendar-picker-indicator, input[type="datetime-loca
     
     <div class="master-layout">
         <div class="left-col">
+            <div id="charts-grid-container">
+                <div class="chart-box" style="padding-bottom: 20px;">
+                    <div class="bd-overlay-kpis">
+                        <div class="bd-badge">TRAMO: <span id="txtGastoTramo" style="color:var(--color-fuga)">$0</span></div>
+                        <h5 style="margin:0; position:absolute; width:100%; text-align:center;">BURN-DOWN</h5>
+                        <div class="bd-badge">PROM: <span id="txtPromedioZoom" style="color:#ff9800">$0</span></div>
+                    </div>
+                    <div class="canvas-container" style="margin-top: 15px;"><canvas id="chartBurnDown"></canvas></div>
+                </div>
+
+                <div class="chart-box"><h5>Pulso (7 Días)</h5><div class="canvas-container"><canvas id="chartDiario"></canvas></div></div>
+                <div class="chart-box"><h5>Pareto</h5><div class="canvas-container"><canvas id="chartPareto"></canvas></div></div>
+                <div class="chart-box"><h5>Consumo</h5><div class="canvas-container"><canvas id="chartRadar"></canvas></div></div>
+            </div>
+
             <div class="grid-main-wrapper" id="panelMain" ondragover="dragOverPanel(event, 'main')" ondragleave="dragLeavePanel(event, 'main')" ondrop="dropOnPanel(event, 'main')">
                 <div class="telemetry-header">
                     <input type="text" id="inputBuscador" placeholder="🔍 Filtrar tabla (Excluye TC)..." oninput="actualizarDashboard()" style="width:250px; background:var(--input-bg); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px; padding:6px 12px; outline:none; font-size:0.8rem;">
@@ -197,21 +216,6 @@ input[type="date"]::-webkit-calendar-picker-indicator, input[type="datetime-loca
                         <tbody id="listaDetalle"></tbody>
                     </table>
                 </div>
-            </div>
-            
-            <div id="charts-grid-container">
-                <div class="chart-box" style="padding-bottom: 20px;">
-                    <div class="bd-overlay-kpis">
-                        <div class="bd-badge">TRAMO: <span id="txtGastoTramo" style="color:var(--color-fuga)">$0</span></div>
-                        <h5 style="margin:0; position:absolute; width:100%; text-align:center;">BURN-DOWN TÁCTICO</h5>
-                        <div class="bd-badge">PROM: <span id="txtPromedioZoom" style="color:#ff9800">$0</span></div>
-                    </div>
-                    <div class="canvas-container" style="margin-top: 15px;"><canvas id="chartBurnDown"></canvas></div>
-                </div>
-
-                <div class="chart-box"><h5>Pulso Variable (7 Días)</h5><div class="canvas-container"><canvas id="chartDiario"></canvas></div></div>
-                <div class="chart-box"><h5>Pareto de Gasto</h5><div class="canvas-container"><canvas id="chartPareto"></canvas></div></div>
-                <div class="chart-box"><h5>Perfil de Consumo</h5><div class="canvas-container"><canvas id="chartRadar"></canvas></div></div>
             </div>
         </div>
 
@@ -271,13 +275,12 @@ input[type="date"]::-webkit-calendar-picker-indicator, input[type="datetime-loca
                 </div>
             </div>
 
-            <div class="sidebar-panel tc-panel" id="panelTC" style="flex:1; display:flex; flex-direction:column; border-color:rgba(218, 54, 51, 0.3); background:rgba(218, 54, 51, 0.02); min-height: 200px; overflow:hidden;" ondragover="dragOverPanel(event, 'tc')" ondragleave="dragLeavePanel(event, 'tc')" ondrop="dropOnPanel(event, 'tc')">
-                <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-color); padding-bottom:8px; margin-bottom:8px;">
+            <div class="sidebar-panel tc-panel" id="panelTC" style="flex:1; display:flex; flex-direction:column; border-color:rgba(218, 54, 51, 0.3); background:rgba(218, 54, 51, 0.02); min-height: 0; overflow:hidden;" ondragover="dragOverPanel(event, 'tc')" ondragleave="dragLeavePanel(event, 'tc')" ondrop="dropOnPanel(event, 'tc')">
+                <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-color); padding-bottom:8px; margin-bottom:8px; flex-shrink:0;">
                     <h4 style="color:var(--color-fuga); margin:0; font-size:0.85rem; text-transform:uppercase;">DEUDA TC ACUMULADA</h4>
                     <div style="font-size:1.1rem; font-weight:900; color:var(--color-fuga);">$<span id="txtTotalTC">0</span></div>
                 </div>
-                <div style="flex:1; overflow-y:auto; scrollbar-width:none; -ms-overflow-style:none;">
-                    <style> .sidebar-panel div::-webkit-scrollbar { display: none; } </style>
+                <div style="flex:1; overflow-y:auto; scrollbar-width:thin; scrollbar-color:var(--border-color) transparent;">
                     <table style="width:100%; border-collapse:collapse; text-align:left;">
                         <tbody id="listaDetalleTC"></tbody>
                     </table>
