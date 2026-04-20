@@ -707,4 +707,54 @@ window.enviarReporteTelegram = function() {
     })
     .then(r => r.ok ? alert("✅ Telemetría Transmitida a Telegram.") : alert("❌ Error API Telegram"))
     .catch(e => alert("Error de red: " + e));
+
+    // ==========================================
+// MÓDULO DE EXPORTACIÓN CSV (SCADA V8.4)
+// ==========================================
+function exportarTablaBunker(idTabla, nombreArchivo) {
+    console.log("📡 [SISTEMA] Iniciando intento de exportación para la tabla:", idTabla);
+    
+    const tabla = document.getElementById(idTabla);
+    
+    if (!tabla) {
+        console.error("❌ [ERROR CRÍTICO] No se encontró ninguna tabla en el HTML con el ID:", idTabla);
+        alert("Falla de Sistema: El botón no encuentra la tabla (" + idTabla + ").");
+        return;
+    }
+
+    let csv = '';
+    const filas = tabla.querySelectorAll("tr");
+    console.log("📊 [TELEMETRÍA] Filas detectadas para exportar:", filas.length);
+
+    if (filas.length === 0 || (filas.length === 1 && filas[0].querySelectorAll("td").length === 0)) {
+         console.warn("⚠️ [ADVERTENCIA] La tabla está vacía.");
+         alert("La tabla no tiene datos cargados aún. No se puede exportar un archivo vacío.");
+         return;
+    }
+
+    filas.forEach(fila => {
+        const celdas = fila.querySelectorAll("th, td");
+        const datosFila = Array.from(celdas).map(celda => {
+            let texto = celda.innerText.replace(/"/g, '""').trim();
+            return `"${texto}"`;
+        });
+        csv += datosFila.join(";") + "\n";
+    });
+
+    console.log("⚙️ [SISTEMA] Generando paquete CSV...");
+    
+    try {
+        const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.setAttribute("href", url);
+        link.setAttribute("download", `${nombreArchivo}_${new Date().toISOString().slice(0,10)}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        console.log("✅ [ÉXITO] Descarga disparada correctamente.");
+    } catch (error) {
+        console.error("❌ [ERROR CRÍTICO] Falla al generar archivo:", error);
+    }
+}
 };
