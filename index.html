@@ -44,11 +44,14 @@ h2 { color: var(--color-ingresos); margin: 0; font-size: 1.2rem; font-weight: 90
 .kpi-proyectado h4, .kpi-proyectado .value { color: #fff !important; font-weight: 900; }
 
 /* 🟢 FIX CSS: TABLA CONTROLADA 🟢 */
-.master-layout { display: grid; grid-template-columns: 1fr 340px; gap: 12px; margin-top: 5px; flex-grow: 1; min-height: 0; }
-.left-col { display: flex; flex-direction: column; gap: 10px; flex: 1; min-height: 0; overflow: hidden; }
-.grid-main-wrapper { background: var(--bg-panel); border-radius: 8px; border: 1px solid var(--border-color); padding: 10px; display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: hidden; transition: border-color 0.2s, box-shadow 0.2s; }
-.telemetry-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; gap: 10px; }
-.grid-container { flex: 1; min-height: 0; overflow-x: auto; overflow-y: auto; background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 6px; scrollbar-width: none; -ms-overflow-style: none;  }
+/* 🟢 MASTER LAYOUT BLINDADO (FIX FLEXBOX INFINITO) 🟢 */
+.master-layout { display: grid; grid-template-columns: 1fr 340px; gap: 12px; margin-top: 5px; flex: 1 1 0px; min-height: 0; overflow: hidden; height: 100%; }
+.left-col { display: flex; flex-direction: column; gap: 10px; flex: 1 1 0px; min-height: 0; overflow: hidden; height: 100%; }
+.grid-main-wrapper { background: var(--bg-panel); border-radius: 8px; border: 1px solid var(--border-color); padding: 10px; display: flex; flex-direction: column; flex: 1 1 0px; min-height: 0; overflow: hidden; transition: border-color 0.2s, box-shadow 0.2s; height: 100%; }
+.telemetry-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; gap: 10px; flex-shrink: 0; }
+
+/* LA TABLA AHORA SOLO HACE SCROLL INTERNO */
+.grid-container { flex: 1 1 0px; min-height: 0; overflow-y: auto; overflow-x: auto; background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 6px; scrollbar-width: thin; scrollbar-color: var(--border-color) var(--bg-body); height: 100%; }
 .grid-container::-webkit-scrollbar { display: none; }
 .data-grid { width: 100%; border-collapse: collapse; text-align: left; }
 .data-grid th { position: sticky; top: 0; background: var(--bg-panel); padding: 6px 8px; font-size: 0.65rem; color: var(--color-ingresos); text-transform: uppercase; z-index: 10; border-bottom: 2px solid var(--border-color); white-space: nowrap; cursor: pointer; user-select: none; letter-spacing: 0.5px;}
