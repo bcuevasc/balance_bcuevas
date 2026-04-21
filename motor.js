@@ -1,12 +1,11 @@
 // ==========================================================
-// 🧠 BÚNKER SCADA ORACLE - MOTOR LÓGICO V12.3 (TUNED)
+// 🧠 BÚNKER SCADA ORACLE - MOTOR LÓGICO V12.4 (ERGO-TUNED)
 // ==========================================================
 const BYRON_EMAIL = "bvhcc94@gmail.com"; 
 const CREDIT_SETPOINT = -300000; 
 const catEvitables = ["Dopamina & Antojos"]; 
 const SUELDO_BASE_DEFAULT = 3602505;
 
-// 🟢 MÓDULO A.C.E. (Auto-Categorización Experta) V12.3 Tuned 🟢
 const diccAuto = [
     { keys: ["prestamo", "debe", "pagar dps", "por cobrar", "cuota de"], cat: "Cuentas por Cobrar (Activos)", tipo: "Por Cobrar", fuga: "0" },
     { keys: ["uber", "didi", "cabify", "pasaje", "buses", "turbus", "metro"], cat: "Transporte & Logística", tipo: "Gasto", fuga: "0" },
@@ -71,7 +70,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const inputNombre = document.getElementById('inputNombre');
     const inputMonto = document.getElementById('inputMonto');
     
-    // 🟢 V12.3: ERGONOMÍA DOBLE-ENTER 🟢
     if(inputNombre) {
         inputNombre.addEventListener('keypress', e => {
             if(e.key === 'Enter') { e.preventDefault(); if(inputMonto && !inputMonto.value) inputMonto.focus(); else document.getElementById('btnGuardar').click(); }
@@ -128,16 +126,18 @@ function obtenerSueldoMes(anio, mes) {
     return sueldosHistoricos[llavePrev] || SUELDO_BASE_DEFAULT;
 }
 
+// 🟢 MEJORA 2: TOAST NOTIFICATIONS RE-LOCALIZADOS 🟢
 window.mostrarToast = function(mensaje) {
     let toast = document.getElementById('toast-notif');
     if(!toast) {
         toast = document.createElement('div'); toast.id = 'toast-notif';
-        toast.style.cssText = 'position:fixed; top:20px; right:20px; background:rgba(46, 160, 67, 0.1); color:#2ea043; padding:12px 24px; border-radius:8px; border: 1px solid #2ea043; font-weight:900; font-size:0.85rem; font-family:monospace; z-index:10000; transition:opacity 0.4s; box-shadow:0 0 20px rgba(46, 160, 67, 0.3); text-transform:uppercase; letter-spacing:1px; backdrop-filter:blur(5px);';
+        toast.style.cssText = 'position:fixed; bottom:110px; left:50%; transform:translateX(-50%); background:rgba(46, 160, 67, 0.95); color:#fff; padding:12px 28px; border-radius:30px; font-weight:900; font-size:0.85rem; font-family:monospace; z-index:99999; transition:all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow:0 10px 30px rgba(0,0,0,0.5); text-transform:uppercase; letter-spacing:1px; opacity:0; pointer-events:none; white-space:nowrap; border: 2px solid #2ea043;';
         document.body.appendChild(toast);
     }
     toast.innerHTML = '⚡ ' + mensaje;
     toast.style.opacity = '1';
-    setTimeout(() => { toast.style.opacity = '0'; }, 3000);
+    toast.style.bottom = '130px'; 
+    setTimeout(() => { toast.style.opacity = '0'; toast.style.bottom = '110px'; }, 3000);
 };
 
 function loginWithGoogle() { auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
@@ -145,7 +145,7 @@ function logout() { auth.signOut().then(() => window.location.reload()); }
 
 auth.onAuthStateChanged(user => {
     if (user && user.email.toLowerCase() === BYRON_EMAIL.toLowerCase()) {
-        console.log("%c[ORACLE V12.3] FULL STACK BOOT SEQUENCE INITIATED", "color: #79c0ff; font-weight: bold; font-size: 14px;");
+        console.log("%c[ORACLE V12.4] TUNED BOOT SEQUENCE INITIATED", "color: #79c0ff; font-weight: bold; font-size: 14px;");
         
         const loginScreen = document.getElementById('login-screen'), reportZone = document.getElementById('reportZone');
         if(loginScreen) loginScreen.style.display = 'none';
@@ -179,7 +179,7 @@ function cargarSueldoVisual() {
 
 let alarmLogCache = "";
 window.abrirHistorian = function() {
-    document.getElementById('historian-content').innerHTML = alarmLogCache || "<div style='color:var(--color-saldo); font-weight:bold;'>SYSTEM NOMINAL. NO BREACHES DETECTED.</div>";
+    document.getElementById('historian-content').innerHTML = alarmLogCache || "<div style='color:var(--color-saldo); font-weight:bold; text-align:center; padding:20px;'>SYSTEM NOMINAL.<br>NO BREACHES DETECTED.</div>";
     document.getElementById('modal-historian').style.display = 'flex';
 };
 
@@ -496,9 +496,10 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0, totalFijosMes, 
     const ctxDiario = document.getElementById('chartDiario');
     let limiteDiarioIdeal = Math.max((sueldo - totalFijosMes - tInfra - tFlota) / diasCiclo, 0);
     
+    // 🟢 MEJORA 5: HISTORIAN LOG REDISEÑADO CON JERARQUÍA Y HTML ESTRUCTURADO 🟢
     alarmLogCache = "";
     if (deudaAprox > sueldo * 0.15) {
-        alarmLogCache += `<div class='log-item critical'>[TC OVERLOAD] Liabilities exceed 15% safety threshold. ($${deudaAprox.toLocaleString('es-CL')})</div>`;
+        alarmLogCache += `<div class='log-item critical'><div class='log-icon'>🛑</div><div class='log-content'><strong>SOBRECARGA TC</strong><div class='log-date'>Riesgo Pasivos > 15%</div><span>$${deudaAprox.toLocaleString('es-CL')}</span></div></div>`;
     }
 
     if(ctxDiario) {
@@ -511,10 +512,10 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0, totalFijosMes, 
         
         for(let i=startDayForBars; i<=lastDayWithData; i++) {
             if (dailyFugas[i] > 0) {
-                alarmLogCache += `<div class='log-item warning'>[LEAK DETECTED] Dopamine leak on ${labelsFechas[i]}: $${dailyFugas[i].toLocaleString('es-CL')}</div>`;
+                alarmLogCache += `<div class='log-item warning'><div class='log-icon'>🍔</div><div class='log-content'><strong>FUGA DOPAMINA</strong><div class='log-date'>${labelsFechas[i]}</div><span>$${dailyFugas[i].toLocaleString('es-CL')}</span></div></div>`;
             }
             if ((dailyNecesario[i] + dailyFugas[i]) > limiteDiarioIdeal) {
-                alarmLogCache += `<div class='log-item critical'>[OVERBURN] Dynamic limit broken on ${labelsFechas[i]}. Gasto: $${(dailyNecesario[i]+dailyFugas[i]).toLocaleString('es-CL')}</div>`;
+                alarmLogCache += `<div class='log-item critical'><div class='log-icon'>🔥</div><div class='log-content'><strong>LÍMITE ROTO</strong><div class='log-date'>${labelsFechas[i]}</div><span>$${(dailyNecesario[i]+dailyFugas[i]).toLocaleString('es-CL')}</span></div></div>`;
             }
         }
 
@@ -661,7 +662,7 @@ document.addEventListener('dragend', (e) => { if(e.target.tagName === 'TR') e.ta
 
 window.triggerSync = function() {
     fetch("https://script.google.com/macros/s/AKfycbwKlub0qrv8_d24ZuyKKNryqOw1E68xv1_JvPOoEUc6W8TICllFfodNcwkigQE_7AuoNg/exec", {mode:'no-cors'})
-    .then(()=>mostrarToast("SYNC MANUAL COMPLETADO"))
+    .then(()=>mostrarToast("SYNC COMPLETADA"))
     .catch(e => alert("Error Net: " + e));
 };
 
@@ -820,7 +821,7 @@ async function ejecutarPurgaMasivaTC() {
 }
 
 // ==========================================================
-// 🚀 MÓDULO DÍA CERO V12.3 (SINTONÍA FINA)
+// 🚀 MÓDULO DÍA CERO V12.4 (SINTONÍA FINA)
 // ==========================================================
 function abrirPreVuelo() {
     const modal = document.getElementById('modal-dia-cero');
@@ -860,7 +861,6 @@ function cerrarPreVuelo() {
     if(modal) modal.style.display = 'none';
 }
 
-// 🟢 SISTEMA DE 3 ESTADOS 🟢
 window.toggleEstadoPV = function(btn, inputId) {
     const input = document.getElementById(inputId);
     if(!input) return;
@@ -935,7 +935,6 @@ function calcularDiaCero() {
         document.getElementById('pv-barra-verde').style.width = pctVerde + '%';
     }
 
-    // 🟢 V12.3 SENSOR DE CERTEZA 🟢
     let toggles = document.querySelectorAll('.btn-estado');
     let confirmados = 0;
     toggles.forEach(btn => {
@@ -950,7 +949,7 @@ function calcularDiaCero() {
 }
 
 function ejecutarArranque() {
-    if(!confirm("⚠️ INYECCIÓN CRÍTICA V12.3\n\n¿Estás seguro de inyectar toda tu Planilla Operativa en la Matriz del mes seleccionado?\n\nNota: Los gastos marcados como ✔️ PAGADO serán ignorados para evitar doble contabilización.")) return;
+    if(!confirm("⚠️ INYECCIÓN CRÍTICA V12.4\n\n¿Estás seguro de inyectar toda tu Planilla Operativa en la Matriz del mes seleccionado?\n\nNota: Los gastos marcados como ✔️ PAGADO serán ignorados para evitar doble contabilización.")) return;
     
     const elMes = document.getElementById('navMesConceptual');
     const elAnio = document.getElementById('navAnio');
