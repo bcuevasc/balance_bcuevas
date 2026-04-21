@@ -365,8 +365,21 @@ function inicializarListenerTC() {
 }
 function aplicarCicloAlSistema() { cargarSueldoVisual(); actualizarDashboard(); }
 window.toggleLanguage = function() { isEng = !isEng; mostrarToast(isEng ? 'ENGLISH MODE' : 'MODO ESPAÑOL'); };
-function loginWithGoogle() { auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
+function loginWithGoogle() { 
+    auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()).catch(err => {
+        alert("❌ ERROR DE GOOGLE: " + err.message);
+    }); 
+}
 function logout() { auth.signOut().then(() => window.location.reload()); }
+
+auth.onAuthStateChanged(user => {
+    if (user) {
+        if (user.email.toLowerCase() === BYRON_EMAIL.toLowerCase()) {
+            console.log("%c[ORACLE V12.4] TUNED BOOT SEQUENCE INITIATED", "color: #79c0ff; font-weight: bold; font-size: 14px;");
+            
+            const loginScreen = document.getElementById('login-screen'), reportZone = document.getElementById('reportZone');
+            if(loginScreen) loginScreen.style.display = 'none';
+            if(reportZone) reportZone.classList.add('active-app');
 setInterval(() => { const c = document.getElementById('cronos'); if(c) c.innerText = new Date().toLocaleString('es-CL').toUpperCase(); }, 1000);
 
 // ==========================================================
