@@ -117,14 +117,23 @@ let chartBD = null, chartP = null, chartDiario = null, chartRadar = null;
 let currentSort = { column: 'fechaISO', direction: 'desc' }; 
 let modoEdicionActivo = false, sueldosHistoricos = {}; 
 
-function obtenerSueldoMes(anio, mes) {
+window.obtenerSueldoMes = function(anio, mes) {
     let llave = `${anio}_${mes}`;
+    // 1. Si existe un sueldo EXACTO para este mes, lo usa para la matemática.
     if (sueldosHistoricos[llave]) return sueldosHistoricos[llave];
-    let prevMes = mes - 1; let prevAnio = anio;
-    if(prevMes < 0) { prevMes = 11; prevAnio--; }
-    let llavePrev = `${prevAnio}_${prevMes}`;
-    return sueldosHistoricos[llavePrev] || SUELDO_BASE_DEFAULT;
-}
+    
+    // 2. Si la caja está vacía, busca el último sueldo real hacia atrás (fantasma) 
+    // solo para que los gráficos no colapsen a $0.
+    let iterAnio = anio;
+    let iterMes = mes;
+    for(let i=0; i<12; i++) {
+        iterMes--;
+        if(iterMes < 0) { iterMes = 11; iterAnio--; }
+        let k = `${iterAnio}_${iterMes}`;
+        if(sueldosHistoricos[k]) return sueldosHistoricos[k];
+    }
+    return 3602505; // Fallback estructural
+};
 
 // 🟢 MEJORA 2: TOAST NOTIFICATIONS RE-LOCALIZADOS 🟢
 window.mostrarToast = function(mensaje) {
@@ -170,12 +179,23 @@ auth.onAuthStateChanged(user => {
     }
 });
 
-function cargarSueldoVisual() {
+window.cargarSueldoVisual = function() {
     const elMes = document.getElementById('navMesConceptual'), elAnio = document.getElementById('navAnio'), elSueldo = document.getElementById('inputSueldo');
     if(!elMes || !elAnio || !elSueldo) return;
-    const sueldoActivo = obtenerSueldoMes(parseInt(elAnio.value), parseInt(elMes.value));
-    if (document.activeElement !== elSueldo) elSueldo.value = sueldoActivo.toLocaleString('es-CL');
-}
+    
+    let llave = `${elAnio.value}_${elMes.value}`;
+    
+    if (document.activeElement !== elSueldo) {
+        if (sueldosHistoricos[llave]) {
+            // Si ya guardaste el sueldo exacto de este mes, lo muestra.
+            elSueldo.value = sueldosHistoricos[llave].toLocaleString('es-CL');
+        } else {
+            // Si NO está guardado, vacía la caja para obligar la precisión.
+            elSueldo.value = '';
+            elSueldo.placeholder = 'SUELDO PENDIENTE';
+        }
+    }
+};
 
 let alarmLogCache = "";
 window.abrirHistorian = function() {
@@ -1025,25 +1045,26 @@ window.guardarSueldoEnNube = function() {
     
     if(!elMes || !elAnio || !elSueldo) return;
     
-    let m = elMes.value;
-    let a = elAnio.value;
-    // Si lo dejas vacío, asume 0 para no romper las matemáticas
-    let s = parseInt(elSueldo.value.replace(/\./g, '')) || 0; 
+    let m = parseInt(elMes.value);
+    let a = parseInt(elAnio.value);
     
-    // Creamos la llave única para ese mes (ej: "2026_4" para mayo)
+    // Si la caja está vacía, abortamos el guardado para no meter basura a la DB
+    if (elSueldo.value.trim() === '') return; 
+
+    let s = parseInt(elSueldo.value.replace(/\./g, '')); 
+    if (isNaN(s) || s <= 0) return;
+    
     let llave = `${a}_${m}`;
-    
-    // Actualizamos la memoria local al instante
     sueldosHistoricos[llave] = s;
     
-    // Lo disparamos a Firebase
     db.collection("parametros").doc("sueldos").set({
         [llave]: s
     }, {merge: true}).then(() => {
-        mostrarToast("SUELDO BASE GUARDADO");
-        actualizarDashboard(); // Recalcula los gráficos con el nuevo valor
+        const nombresMes = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"];
+        mostrarToast(`SUELDO EXACTO [${nombresMes[m]} ${a}] GUARDADO`);
+        actualizarDashboard();
     }).catch(err => {
-        alert("❌ Error de comunicación con la Nube: " + err.message);
+        alert("❌ Error Nube: " + err.message);
     });
 };
 // ==========================================================
