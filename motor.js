@@ -720,6 +720,7 @@ window.exportarTablaBunker = function(idTabla, nombreArchivo) {
 let datosTCGlobal = [];
 
 // --- FUNCIÓN 2: ESCUCHADOR TC (CON SONDAS DE DIAGNÓSTICO) ---
+// --- FUNCIÓN 2: ESCUCHADOR TC (CON SONDAS DE DIAGNÓSTICO) ---
 function inicializarListenerTC() {
     if (!db) return console.error("Firebase no está inicializado.");
     console.log("📡 Conectando antena TC con Firebase...");
