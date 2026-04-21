@@ -150,10 +150,14 @@
             <button class="core-btn" onclick="switchSubChart('vRA', this, 3)">TC 6M</button>
         </div>
         
-        <div style="display:flex; gap:5px; margin-bottom: 15px;">
-            <input type="date" id="filtroDesde" style="flex:1; margin:0; padding:12px; font-size:0.8rem; background:var(--bg-elevated); color:white; border:1px solid var(--border-subtle); border-radius:10px;" onchange="actualizarDashboard()">
-            <input type="date" id="filtroHasta" style="flex:1; margin:0; padding:12px; font-size:0.8rem; background:var(--bg-elevated); color:white; border:1px solid var(--border-subtle); border-radius:10px;" onchange="actualizarDashboard()">
-            <button onclick="document.getElementById('filtroDesde').value=''; document.getElementById('filtroHasta').value=''; actualizarDashboard();" style="background:var(--accent-blue); color:white; border:none; border-radius:10px; padding:0 15px; font-weight:900;">⟳</button>
+        <div style="margin-bottom: 15px;">
+            <button id="btnToggleFechasMovil" class="btn-sys" style="width: 100%; padding: 12px; border-radius: 10px; border: 1px dashed var(--border-subtle); background: transparent; color: var(--text-dim); text-transform: uppercase; font-weight: 900;" onclick="document.getElementById('cajaFechasCustomMovil').style.display='flex'; this.style.display='none';">📅 DEFINIR RANGO CUSTOM</button>
+            
+            <div id="cajaFechasCustomMovil" style="display:none; gap:5px; animation: fadeSlideUp 0.3s;">
+                <input type="date" id="filtroDesde" style="flex:1; margin:0; padding:12px; font-size:0.8rem; background:var(--bg-elevated); color:white; border:1px solid var(--border-subtle); border-radius:10px;" onchange="actualizarDashboard()">
+                <input type="date" id="filtroHasta" style="flex:1; margin:0; padding:12px; font-size:0.8rem; background:var(--bg-elevated); color:white; border:1px solid var(--border-subtle); border-radius:10px;" onchange="actualizarDashboard()">
+                <button onclick="document.getElementById('filtroDesde').value=''; document.getElementById('filtroHasta').value=''; document.getElementById('cajaFechasCustomMovil').style.display='none'; document.getElementById('btnToggleFechasMovil').style.display='block'; actualizarDashboard();" style="background:rgba(255,82,82,0.1); color:var(--accent-red); border:1px solid rgba(255,82,82,0.3); border-radius:10px; padding:0 15px; font-weight:900;">✖</button>
+            </div>
         </div>
 
         <div id="vBD" class="v-chart" style="display:block; padding:15px; background:var(--bg-card); border-radius: 16px; border:1px solid var(--border-subtle); box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
@@ -262,9 +266,9 @@
     
     <input type="hidden" id="sheet-id-target">
     
-    <button onclick="const id=document.getElementById('sheet-id-target').value; closeBottomSheet(); editarMovimiento(id);" style="width:100%; padding:18px; border-radius:15px; background:rgba(31,111,235,0.1); color:var(--accent-blue); border:1px solid rgba(31,111,235,0.3); font-weight:900; font-size:1rem; margin-bottom:12px; transition:transform 0.1s; letter-spacing: 1px; box-shadow: 0 4px 15px rgba(31,111,235,0.15);">✏️ RECALIBRAR</button>
+    <button onclick="const id=document.getElementById('sheet-id-target').value; closeBottomSheet(); editarMovimiento(id);" style="width:100%; padding:18px; border-radius:15px; background:rgba(31,111,235,0.1); color:var(--accent-blue); border:1px solid rgba(31,111,235,0.2); font-weight:900; font-size:1rem; margin-bottom:12px; transition:transform 0.1s; letter-spacing: 1px; box-shadow: 0 4px 15px rgba(31,111,235,0.15);">✏️ RECALIBRAR</button>
     
-    <button onclick="const id=document.getElementById('sheet-id-target').value; if(confirm('¿ELIMINAR DEL BÚNKER?')) { db.collection('movimientos').doc(id).delete().then(()=> { closeBottomSheet(); if(typeof mostrarToast === 'function') mostrarToast('REGISTRO DESTRUIDO'); }); }" style="width:100%; padding:18px; border-radius:15px; background:rgba(255,82,82,0.1); color:var(--accent-red); border:1px solid rgba(255,82,82,0.3); font-weight:900; font-size:1rem; margin-bottom:12px; transition:transform 0.1s; letter-spacing: 1px; box-shadow: 0 4px 15px rgba(255,82,82,0.15);">🗑️ DESTRUIR</button>
+    <button onclick="const id=document.getElementById('sheet-id-target').value; if(confirm('¿ELIMINAR DEL BÚNKER?')) { db.collection('movimientos').doc(id).delete().then(()=> { closeBottomSheet(); if(typeof mostrarToast === 'function') mostrarToast('REGISTRO DESTRUIDO'); }); }" style="width:100%; padding:18px; border-radius:15px; background:rgba(255,82,82,0.1); color:var(--accent-red); border:1px solid rgba(255,82,82,0.2); font-weight:900; font-size:1rem; margin-bottom:12px; transition:transform 0.1s; letter-spacing: 1px; box-shadow: 0 4px 15px rgba(255,82,82,0.15);">🗑️ DESTRUIR</button>
     
     <button onclick="closeBottomSheet()" style="width:100%; padding:15px; border-radius:15px; background:transparent; color:var(--text-dim); border:none; font-weight:800; text-transform:uppercase;">Cancelar</button>
 </div>
@@ -320,7 +324,6 @@
                     const nombreSeguro = x.nombre || "Dato no identificado";
                     const montoSeguro = (typeof x.monto === 'number' && !isNaN(x.monto)) ? x.monto : 0;
                     
-                    // 🟢 GRADIENTE ROJO MÓVIL V10 🟢
                     let styleExtra = x.catV === 'Dopamina & Antojos' ? 'background: linear-gradient(90deg, rgba(255,255,255,0.01) 30%, rgba(255, 82, 82, 0.15) 100%) !important; border-right: 2px solid var(--accent-red) !important;' : '';
 
                     const clickAction = typeof openBottomSheet === 'function' ? `openBottomSheet('${x.firestoreId}', '${nombreSeguro.replace(/'/g, "\\'")}', ${montoSeguro})` : `editarMovimiento('${x.firestoreId}')`;
@@ -341,7 +344,6 @@
             }
         }
         
-        // 🟢 INYECCIÓN DE LA MATRIZ TC PARA MÓVIL 🟢
         if(typeof renderizarTablaTC === 'function') {
             window.renderizarTablaTC = function() {
                 const tbody = document.getElementById("listaMovilTC");
@@ -377,7 +379,6 @@
                 
                 tbody.innerHTML = htmlMovil;
 
-                // ACTIVAR SENSOR DE IMPACTO MÓVIL
                 let mesNombreStr = new Date(proximoAnio, proximoMes, 1).toLocaleString('es-CL', { month: 'long' }).toUpperCase();
                 let boxImpacto = document.getElementById('boxImpactoTC');
                 if (boxImpacto) {
@@ -391,7 +392,6 @@
         }
     });
 
-    // 🟢 ANIMACIÓN DUAL-CORE MÓVIL 🟢
     function switchDualCore(viewId, el) {
         document.querySelectorAll('.core-btn').forEach(b => { b.classList.remove('active'); b.classList.remove('blue'); b.classList.remove('red'); });
         el.classList.add('active');
