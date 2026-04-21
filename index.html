@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Bunker Digital SCADA v8.5 PRO</title>
+    <title>Bunker Digital SCADA v9.0 (Dual-Core Exp)</title>
     
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -12,112 +12,94 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
     
     <style>
-:root { --bg-body: #0b0e14; --bg-panel: #161b22; --bg-subpanel: #21262d; --text-main: #f0f6fc; --text-muted: #8b949e; --border-color: #30363d; --input-bg: #0d1117; --item-hover: #1c2128; --color-guardar: #1f6feb; --color-ingresos: #1f6feb; --color-gastos: #da3633;  --color-saldo: #3fb950; --color-edit: #d29922; --color-fuga: #ff5252; --color-proyectado: #3f51b5; --color-telegram: #0088cc; }
+:root { --bg-body: #05070a; --bg-panel: #11151c; --bg-subpanel: #1a1f29; --text-main: #e6edf3; --text-muted: #7d8590; --border-color: #2d333b; --input-bg: #010409; --item-hover: #1c2128; --color-guardar: #1f6feb; --color-ingresos: #1f6feb; --color-gastos: #da3633;  --color-saldo: #3fb950; --color-edit: #d29922; --color-fuga: #ff5252; --color-proyectado: #3f51b5; --color-telegram: #0088cc; }
 body.light-theme { --bg-body: #f0f2f5; --bg-panel: #ffffff; --bg-subpanel: #f8f9fa; --text-main: #24292e; --text-muted: #57606a; --border-color: #d0d7de; --input-bg: #ffffff; --item-hover: #e1e4e8; }
-* { box-sizing: border-box; transition: background-color 0.3s, border-color 0.3s; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+* { box-sizing: border-box; transition: background-color 0.3s, border-color 0.3s; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
 
-body { background-color: var(--bg-body); margin: 0; padding: 0; color: var(--text-main); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
-.app-container { display: none; width: 100%; height: 100vh; padding: 8px 12px; flex-direction: column; gap: 8px; margin: 0 auto; max-width: 1920px; overflow: hidden;}
+body { background-color: var(--bg-body); background-image: radial-gradient(rgba(255,255,255,0.02) 1px, transparent 1px); background-size: 20px 20px; margin: 0; padding: 0; color: var(--text-main); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+.app-container { display: none; width: 100%; height: 100vh; padding: 10px; flex-direction: column; gap: 10px; margin: 0 auto; max-width: 2560px; overflow: hidden;}
 .app-container.active-app { display: flex; }
 
-#login-screen { position: fixed; inset: 0; background: #0b0e14; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10000; text-align: center; }
-.login-box { padding: 40px; background: #161b22; border: 1px solid #30363d; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
+#login-screen { position: fixed; inset: 0; background: #05070a; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10000; text-align: center; }
+.login-box { padding: 40px; background: #11151c; border: 1px solid var(--border-color); border-radius: 12px; box-shadow: 0 0 50px rgba(31, 111, 235, 0.1); }
 .btn-google { background: #fff; color: #000; border: none; padding: 12px 24px; border-radius: 6px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 10px; margin-top: 20px; font-size: 1rem; }
 
-.header-titles { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 4px; margin-bottom: 0; flex-shrink: 0;}
-h2 { color: var(--color-ingresos); margin: 0; font-size: 1.2rem; font-weight: 900; text-transform: uppercase; }
-.cronos { font-family: 'Courier New', Courier, monospace; font-size: 0.85rem; font-weight: 800; color: var(--text-muted); background: var(--bg-panel); padding: 2px 8px; border-radius: 4px; border: 1px solid var(--border-color); }
-.system-btns { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; justify-content: flex-end; }
-.btn-sys { background: var(--bg-subpanel); color: var(--text-main); border: 1px solid var(--border-color); padding: 6px 10px; border-radius: 6px; cursor: pointer; font-weight: 800; font-size: 0.7rem; text-transform: uppercase; transition: border-color 0.2s;}
-.btn-sys:hover { border-color: var(--color-saldo); }
-.time-navigator-panel { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 8px; padding: 8px 15px; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.2); border-top: 3px solid var(--color-ingresos); flex-shrink: 0;}
-.time-nav-controls { display: flex; align-items: center; gap: 12px; }
-.nav-select { background: var(--input-bg); color: var(--text-main); border: 1px solid var(--border-color); padding: 6px 12px; border-radius: 6px; font-weight: 800; text-transform: uppercase; font-size: 0.8rem; outline: none; cursor: pointer; }
-.nav-select:focus { border-color: var(--color-ingresos); }
-.nav-badge { font-family: 'Courier New', Courier, monospace; background: rgba(31, 111, 235, 0.1); color: var(--color-ingresos); border: 1px solid rgba(31, 111, 235, 0.3); padding: 4px 10px; border-radius: 4px; font-size: 0.75rem; font-weight: 900; letter-spacing: 0.5px; text-transform: uppercase; }
-.kpi-row { display: grid; grid-template-columns: repeat(8, 1fr); gap: 8px; flex-shrink: 0; }
-.kpi-card { padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-panel); border-top: 4px solid var(--border-color); }
-.kpi-card h4 { margin: 0 0 2px 0; font-size: 0.6rem; text-transform: uppercase; color: var(--text-muted); font-weight: 800; }
-.kpi-card .value { margin: 0; font-size: 1.15rem; font-weight: 900; color: var(--text-main); display: flex; align-items: center; }
-.kpi-progress-container { width: 100%; height: 4px; background: rgba(255,255,255,0.05); border-radius: 2px; margin-top: 4px; overflow: hidden; }
+/* 🟢 HEADER Y NAVEGACIÓN 🟢 */
+.header-titles { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 5px; flex-shrink: 0;}
+h2 { color: var(--text-main); margin: 0; font-size: 1.3rem; font-weight: 900; letter-spacing: 1px; }
+.scada-badge { background: var(--color-ingresos); color: #000; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; vertical-align: top; margin-left: 5px; }
+.cronos { font-family: 'Courier New', Courier, monospace; font-size: 0.9rem; font-weight: 800; color: var(--color-saldo); background: var(--input-bg); padding: 4px 10px; border-radius: 4px; border: 1px solid var(--border-color); }
+.system-btns { display: flex; gap: 6px; align-items: center; }
+.btn-sys { background: var(--bg-subpanel); color: var(--text-main); border: 1px solid var(--border-color); padding: 6px 10px; border-radius: 4px; cursor: pointer; font-weight: 800; font-size: 0.7rem; text-transform: uppercase; }
+.btn-sys:hover { border-color: var(--color-ingresos); }
+.time-navigator-panel { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 6px; padding: 6px 15px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.3); border-left: 4px solid var(--color-ingresos); flex-shrink: 0;}
+.nav-select { background: var(--input-bg); color: var(--text-main); border: 1px solid var(--border-color); padding: 4px 10px; border-radius: 4px; font-weight: 800; text-transform: uppercase; font-size: 0.8rem; outline: none; }
+.nav-badge { font-family: monospace; background: rgba(31, 111, 235, 0.1); color: var(--color-ingresos); border: 1px solid rgba(31, 111, 235, 0.3); padding: 4px 10px; border-radius: 4px; font-size: 0.8rem; font-weight: 900; letter-spacing: 0.5px; }
+
+/* 🟢 KPI ROW (SENSORS) 🟢 */
+.kpi-row { display: grid; grid-template-columns: repeat(8, 1fr); gap: 10px; flex-shrink: 0; }
+.kpi-card { padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-panel); border-top: 3px solid var(--border-color); position: relative; overflow: hidden;}
+.kpi-card h4 { margin: 0 0 2px 0; font-size: 0.65rem; text-transform: uppercase; color: var(--text-muted); font-weight: 800; letter-spacing: 0.5px;}
+.kpi-card .value { margin: 0; font-size: 1.25rem; font-weight: 900; color: var(--text-main); font-family: monospace; }
+.kpi-progress-container { width: 100%; height: 3px; background: rgba(255,255,255,0.05); margin-top: 5px; }
 .kpi-progress-fill { height: 100%; width: 0%; transition: width 0.6s ease; }
-.kpi-saldo { border: none; background: var(--color-saldo); color: #000; box-shadow: 0 4px 15px rgba(63,185,80,0.2); }
-.kpi-saldo h4, .kpi-saldo .value { color: #000 !important; font-weight: 900; }
-.kpi-proyectado { border: none; background: var(--color-proyectado); color: #fff; }
-.kpi-proyectado h4, .kpi-proyectado .value { color: #fff !important; font-weight: 900; }
+.kpi-saldo { background: rgba(63,185,80,0.1); border-color: var(--color-saldo); }
+.kpi-saldo h4 { color: var(--color-saldo); }
+.kpi-proyectado { background: rgba(63,81,181,0.1); border-color: var(--color-proyectado); }
+.kpi-proyectado h4 { color: #8c9eff; }
 
-/* 🟢 MASTER LAYOUT BLINDADO (70/30) Y SCROLL DERECHO 🟢 */
-.master-layout { 
-    display: grid; 
-    grid-template-columns: 1fr 400px; /* Dale más espacio (400px) a la derecha */
-    gap: 12px; 
-    margin-top: 5px; 
-    flex: 1 1 0px; 
-    min-height: 0; 
-    overflow: hidden; 
-    height: 100%; 
-}
-.right-col { 
-    display: flex; 
-    flex-direction: column; 
-    gap: 10px; 
-    height: 100%; 
-    overflow-y: auto; /* Permite scroll si la pantalla es pequeña */
-    padding-right: 5px; /* Evita que el scroll pegue en el borde */
-}
-/* Evita que el panel TC se aplaste a 0px */
-.sidebar-panel.tc-panel {
-    min-height: 380px; 
-}
+/* 🟢 PANORAMA DE TELEMETRÍA (GRÁFICOS) 🟢 */
+.charts-panorama { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; flex-shrink: 0; height: 220px; }
+.chart-box { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 6px; padding: 10px; display: flex; flex-direction: column; position: relative;}
+.chart-box h5 { margin: 0 0 5px 0; font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; font-weight: 800; z-index: 10; text-align: center;}
+.canvas-container { position: relative; flex-grow: 1; min-height: 0; width: 100%; }
+.bd-overlay-kpis { position: absolute; top: 8px; width: calc(100% - 20px); display: flex; justify-content: space-between; z-index: 20; pointer-events: none;}
+.bd-badge { padding: 2px 6px; font-size: 0.65rem; font-weight: 900; color: var(--text-main); background: rgba(0,0,0,0.5); border-radius: 4px; border: 1px solid var(--border-color);}
 
-.left-col { display: flex; flex-direction: column; gap: 10px; flex: 1 1 0px; min-height: 0; overflow: hidden; height: 100%; }
+/* 🟢 CONSOLA DE COMANDOS HORIZONTAL (NUEVO REGISTRO MANUAL) 🟢 */
+.command-ribbon { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px; background: linear-gradient(90deg, var(--bg-panel) 0%, rgba(31, 111, 235, 0.05) 100%); border: 1px solid var(--border-color); border-left: 4px solid var(--color-edit); padding: 10px 15px; border-radius: 6px; flex-shrink: 0; }
+.ribbon-title { font-size: 0.7rem; font-weight: 900; color: var(--color-edit); text-transform: uppercase; letter-spacing: 1px; writing-mode: vertical-rl; transform: rotate(180deg); margin-right: 5px; text-align: center; }
+.form-group { display: flex; flex-direction: column; gap: 3px; flex: 1; min-width: 120px; }
+.form-group.sm { flex: 0.5; min-width: 80px; }
+.form-group.lg { flex: 2; min-width: 200px; }
+.form-group label { font-size: 0.6rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; }
+.form-control { background: var(--input-bg); color: var(--text-main); border: 1px solid var(--border-color); padding: 6px 8px; border-radius: 4px; font-size: 0.8rem; outline: none; width: 100%; height: 32px; font-family: monospace;}
+.form-control:focus { border-color: var(--color-edit); }
+.btn-ribbon { background: var(--color-edit); color: #000; border: none; border-radius: 4px; font-weight: 900; padding: 0 20px; height: 32px; cursor: pointer; text-transform: uppercase; font-size: 0.8rem; transition: transform 0.1s; white-space: nowrap; }
+.btn-ribbon:active { transform: scale(0.95); }
 
-/* Panel de Gráficos (Prohibido encogerse, siempre 240px) */
-#charts-grid-container { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 15px; flex: 0 0 240px; height: 240px; min-height: 240px; }
-.chart-box { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; position: relative; overflow: hidden; }
-.chart-box h5 { margin: 0 0 5px 0; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; text-align: center; font-weight: 800; z-index: 10; flex-shrink: 0; }
-.canvas-container { position: relative; flex-grow: 1; min-height: 0; width: 100%; height: 100%; }
+/* 🟢 NÚCLEO DUAL (50/50 PRESENTE VS FUTURO) 🟢 */
+.dual-core { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; flex: 1 1 0px; min-height: 0; overflow: hidden; }
 
-/* Contenedor de la Tabla (Toma todo el espacio sobrante) */
-.grid-main-wrapper { background: var(--bg-panel); border-radius: 8px; border: 1px solid var(--border-color); padding: 10px; display: flex; flex-direction: column; flex: 1 1 0px; min-height: 0; overflow: hidden; transition: border-color 0.2s, box-shadow 0.2s; height: 100%; }
-.telemetry-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; gap: 10px; flex-shrink: 0; }
-.grid-container { flex: 1 1 0px; min-height: 0; overflow-x: auto; overflow-y: auto; background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 6px; scrollbar-width: thin; scrollbar-color: var(--border-color) var(--bg-body); height: 100%; }.data-grid { width: 100%; border-collapse: collapse; text-align: left; }
-.data-grid th { position: sticky; top: 0; background: var(--bg-panel); padding: 6px 8px; font-size: 0.65rem; color: var(--color-ingresos); text-transform: uppercase; z-index: 10; border-bottom: 2px solid var(--border-color); white-space: nowrap; cursor: pointer; user-select: none; letter-spacing: 0.5px;}
-.data-grid td { padding: 4px 8px; font-size: 0.75rem; border-bottom: 1px solid var(--border-color); white-space: nowrap; vertical-align: middle; }
-.data-grid th:last-child, .data-grid td:last-child { padding-right: 24px !important; }
-.data-grid tbody tr:nth-child(even) { background-color: rgba(255,255,255,0.02); }
+/* Paneles Generales */
+.core-panel { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 8px; display: flex; flex-direction: column; overflow: hidden; position: relative; }
+.core-header { padding: 10px 15px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.2); }
+.core-title { font-size: 0.9rem; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; gap: 8px;}
+.core-body { flex: 1 1 0px; overflow-y: auto; overflow-x: hidden; padding: 0; scrollbar-width: thin; scrollbar-color: var(--border-color) var(--bg-body); }
+
+/* Tabla Estilo SCADA */
+.data-grid { width: 100%; border-collapse: collapse; text-align: left; }
+.data-grid th { position: sticky; top: 0; background: var(--bg-subpanel); padding: 8px 10px; font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; z-index: 10; border-bottom: 2px solid var(--border-color); letter-spacing: 0.5px; cursor: pointer; }
+.data-grid td { padding: 6px 10px; font-size: 0.75rem; border-bottom: 1px solid var(--border-color); vertical-align: middle; }
+.data-grid tbody tr:nth-child(odd) { background-color: rgba(255,255,255,0.01); }
 .data-grid tbody tr:hover { background-color: var(--item-hover); }
-.col-monto { text-align: right; font-family: 'Courier New', Courier, monospace; font-weight: 700; font-size: 0.8rem; letter-spacing: -0.5px; }
-.col-hora { font-size: 0.6rem; color: var(--text-muted); font-weight: 700; display: block; margin-top: 1px; }
-.col-desc { color: var(--text-main); font-weight: 600; letter-spacing: 0.3px; }
-.cat-badge { font-size: 0.6rem; padding: 2px 6px; border-radius: 4px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); display: inline-block; margin-top: 2px; color: var(--text-muted); font-weight: 800; }
-.col-check { width: 40px; text-align: center; cursor: default;}
-.row-check { cursor: pointer; transform: scale(1.1); accent-color: var(--color-edit); margin: 0; }
+.col-monto { text-align: right; font-family: monospace; font-weight: bold; font-size: 0.85rem; }
+.col-hora { font-size: 0.6rem; color: var(--text-muted); margin-left: 5px; }
+.col-desc { color: var(--text-main); font-weight: 600; }
+.cat-badge { font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: var(--text-muted); }
 .impact-icon { font-weight: 900; margin-right: 5px; }
-.impact-pos { color: var(--color-ingresos); }
-.impact-neg { color: var(--color-fuga); }
-.impact-neu { color: #ff9800; }
 
-.bd-overlay-kpis { position: absolute; top: 10px; width: calc(100% - 24px); display: flex; justify-content: space-between; z-index: 20; pointer-events: none;}
-.bd-badge { padding: 2px 5px; font-size: 0.65rem; font-weight: bold; color: var(--text-main); text-shadow: 0px 2px 4px rgba(0,0,0,0.9); }
+/* Fugas KPI integrado al header del Presente */
+.fugas-mini-kpi { display: flex; align-items: center; gap: 10px; background: var(--input-bg); border: 1px solid var(--border-color); padding: 4px 10px; border-radius: 20px; }
+.fugas-mini-kpi span { font-size: 0.7rem; font-weight: 800; color: var(--text-muted); }
+.fugas-mini-kpi strong { font-size: 0.8rem; font-weight: 900; color: var(--color-fuga); font-family: monospace; }
 
-.sidebar-panel { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; transition: border-color 0.2s, box-shadow 0.2s; flex-shrink: 0;}
-.form-group { margin-bottom: 8px; width: 100%; position: relative; }
-.form-group label { display: block; font-size: 0.6rem; font-weight: 800; color: var(--text-muted); margin-bottom: 2px; text-transform: uppercase; }
-.custom-select, .form-group input, .form-group select { width: 100%; border: 1px solid var(--border-color); border-radius: 4px; background-color: var(--input-bg); color: var(--text-main); outline: none; padding: 6px 8px; font-size: 0.8rem; height: 32px; }
-input[type="date"]::-webkit-calendar-picker-indicator, input[type="datetime-local"]::-webkit-calendar-picker-indicator { filter: invert(1); cursor: pointer; }
-.btn-guardar { width: 100%; background-color: var(--color-guardar); color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 800; text-transform: uppercase; padding: 8px; font-size: 0.8rem; margin-top: 5px; transition: transform 0.1s; }
-.btn-guardar:active { transform: scale(0.98); }
+/* Sensor de Impacto TC integrado al header del Futuro */
+.tc-impact-box { background: rgba(255, 152, 0, 0.1); border: 1px solid #ff9800; border-radius: 4px; padding: 4px 12px; display: flex; gap: 15px; align-items: center; box-shadow: 0 0 10px rgba(255,152,0,0.1); }
+.tc-impact-box span { font-size: 0.7rem; font-weight: 900; color: #ff9800; }
+.tc-impact-box strong { font-size: 1rem; font-family: monospace; font-weight: 900; color: #ff9800; }
 
-.eficiencia-kpi { text-align: center; margin-bottom: 6px; flex-shrink: 0; }
-.eficiencia-kpi .monto { font-size: 1.6rem; font-weight: 900; color: var(--text-main); line-height: 1.1; }
-.eficiencia-kpi .label { font-size: 0.6rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; }
-.bar-container { width: 100%; background: var(--bg-body); border-radius: 4px; height: 10px; overflow: hidden; border: 1px solid rgba(0,0,0,0.2); }
-.bar-fill { height: 100%; width: 0%; transition: all 0.5s ease; }
-.floating-mass-actions { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #1c2128; border: 1px solid var(--color-edit); border-radius: 50px; padding: 8px 20px; display: flex; align-items: center; justify-content: space-between; gap: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); z-index: 9999; }
-
-.btn-nav-mes { background: transparent; border: none; color: rgba(0,0,0,0.4); font-size: 1.2rem; cursor: pointer; padding: 0 8px; outline: none; transition: color 0.2s, transform 0.1s; }
-.btn-nav-mes:hover { color: rgba(0,0,0,0.8); transform: scale(1.1); }
+.floating-mass-actions { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #1c2128; border: 1px solid var(--color-edit); border-radius: 50px; padding: 8px 20px; display: flex; align-items: center; gap: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); z-index: 9999; }
     </style>
 </head>
 <body>
@@ -125,216 +107,172 @@ input[type="date"]::-webkit-calendar-picker-indicator, input[type="datetime-loca
 <div id="login-screen">
     <div class="login-box">
         <h2 style="color:var(--color-ingresos); margin-bottom:10px;">BUNKER SCADA</h2>
-        <p style="color:var(--text-muted); font-size:0.8rem;">SISTEMA PRIVADO DE GESTIÓN TÁCTICA V8.5 PRO</p>
+        <p style="color:var(--text-muted); font-size:0.8rem;">SISTEMA PRIVADO DE GESTIÓN TÁCTICA V9.0 EXP</p>
         <button class="btn-google" onclick="loginWithGoogle()">ENTRAR CON GOOGLE</button>
     </div>
 </div>
 
 <div class="app-container" id="reportZone">
+    
     <div class="header-titles">
         <div style="display:flex; align-items:center;">
-            <h2 style="color:var(--color-ingresos);">BUNKER DIGITAL SCADA</h2>
+            <h2>BUNKER SCADA <span class="scada-badge">V9.0 EXPERIMENTAL</span></h2>
             <div id="user-display" style="margin-left: 15px; font-size: 0.75rem; color: var(--color-saldo); font-weight:800; text-transform:uppercase;"></div>
         </div>
-        <div id="cronos" class="cronos">--:--:--</div>
-    </div>
-
-    <div class="time-navigator-panel">
-        <div class="time-nav-controls">
-            <select id="navAnio" class="nav-select" onchange="actualizarDashboard()"><option value="2025">2025</option><option value="2026" selected>2026</option></select>
-            <select id="navMesConceptual" class="nav-select" onchange="actualizarDashboard()" style="color: var(--color-ingresos);"><option value="0">Enero</option><option value="1">Febrero</option><option value="2">Marzo</option><option value="3" selected>Abril</option><option value="4">Mayo</option><option value="5">Junio</option><option value="6">Julio</option><option value="7">Agosto</option><option value="8">Septiembre</option><option value="9">Octubre</option><option value="10">Noviembre</option><option value="11">Diciembre</option></select>
-            <div id="navRangoBadge" class="nav-badge">--/-- al --/--</div>
-        </div>
-        
-        <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">
-            <span id="lblPeriodoViendo" style="font-size:0.55rem; color:var(--text-muted); font-weight:900; text-transform:uppercase; letter-spacing:1px;">PERIODO COMPLETO</span>
-            <div style="display: flex; align-items: center; gap: 8px;">
-                <input type="date" id="filtroDesde" class="nav-select" onchange="document.getElementById('lblPeriodoViendo').innerText='RANGO PERSONALIZADO'; actualizarDashboard();">
-                <input type="date" id="filtroHasta" class="nav-select" onchange="document.getElementById('lblPeriodoViendo').innerText='RANGO PERSONALIZADO'; actualizarDashboard();">
-                <button class="btn-sys" onclick="document.getElementById('filtroDesde').value=''; document.getElementById('filtroHasta').value=''; document.getElementById('lblPeriodoViendo').innerText='PERIODO COMPLETO'; actualizarDashboard();" style="border-color:var(--text-muted);">Reset</button>
-            </div>
-        </div>
-        
-        <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap; justify-content: flex-end;">
-            <div class="system-btns" style="border-bottom: none; padding-bottom: 0;">
-                <button class="btn-sys" onclick="toggleTheme()">☀️/🌙</button>
-                <button class="btn-sys" onclick="triggerSync()">🔄 SYNC</button>
-                <button class="btn-sys btn-telegram" style="color:var(--color-telegram);" onclick="enviarReporteTelegram()">🚀 TELEGRAM</button>
-                <button class="btn-sys" onclick="logout()" style="color:var(--color-fuga);">🚪 SALIR</button>
-            </div>
+        <div class="system-btns">
+            <div id="cronos" class="cronos">--:--:--</div>
+            <button class="btn-sys" onclick="toggleTheme()">☀️/🌙</button>
+            <button class="btn-sys" onclick="triggerSync()">🔄 SYNC</button>
+            <button class="btn-sys" onclick="logout()" style="color:var(--color-fuga); border-color:rgba(255,82,82,0.3);">🚪 SALIR</button>
         </div>
     </div>
 
-    <div class="kpi-row">
-        <div class="kpi-card" style="border-top-color: var(--color-ingresos);">
-            <h4>Sueldo Mes</h4>
-            <div class="value">$<input type="text" id="inputSueldo" value="3.602.505" oninput="formatearEntradaNumerica(this); actualizarDashboard();" style="background:transparent; border:none; color:var(--color-ingresos); font-weight:900; width:120px; font-size:1.3rem; outline:none;"></div>
-        </div>
-        <div class="kpi-card" style="border-top-color: var(--color-ingresos);"><h4>Ingresos Extra</h4><div class="value">$<span id="txtTotalIngresos">0</span></div></div>
-        <div class="kpi-card" style="border-top-color: var(--color-fuga);"><h4>Gastos Fijos</h4><div class="value">$<span id="txtTotalFijos">0</span></div><div class="kpi-progress-container"><div id="barFijos" class="kpi-progress-fill" style="background:var(--color-fuga);"></div></div></div>
-        <div class="kpi-card" style="border-top-color: #ff9800;"><h4>Gastos Variables</h4><div class="value">$<span id="txtTotalOtros">0</span></div><div class="kpi-progress-container"><div id="barOtros" class="kpi-progress-fill" style="background:#ff9800;"></div></div></div>
-        <div class="kpi-card" style="border-top-color: #8b949e;"><h4>CxC (Préstamos)</h4><div class="value">$<span id="txtCxC">0</span></div></div>
-        
-        <div class="kpi-card kpi-saldo" id="cardBalanceReal">
-            <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-                <h4>Balance Real</h4>
-                <div id="badgeDias" style="font-size: 0.6rem; background: rgba(0,0,0,0.15); padding: 2px 6px; border-radius: 4px; font-weight: 800;">-- DÍAS</div>
+    <div style="display: flex; gap: 10px; flex-shrink: 0;">
+        <div class="time-navigator-panel">
+            <div style="display: flex; gap: 8px;">
+                <select id="navAnio" class="nav-select" onchange="actualizarDashboard()"><option value="2025">2025</option><option value="2026" selected>2026</option></select>
+                <select id="navMesConceptual" class="nav-select" onchange="actualizarDashboard()" style="color: var(--color-ingresos);"><option value="0">Enero</option><option value="1">Febrero</option><option value="2">Marzo</option><option value="3" selected>Abril</option><option value="4">Mayo</option><option value="5">Junio</option><option value="6">Julio</option><option value="7">Agosto</option><option value="8">Septiembre</option><option value="9">Octubre</option><option value="10">Noviembre</option><option value="11">Diciembre</option></select>
             </div>
-            <div style="display:flex; align-items:center; width:100%; margin-top:2px;">
-                <button class="btn-nav-mes" onclick="navegarMes(-1)">◀</button>
-                <div class="value" style="flex-grow:1; text-align:center; justify-content:center;">$<span id="txtSaldo">0</span></div>
-                <button class="btn-nav-mes" onclick="navegarMes(1)">▶</button>
-            </div>
+            <div id="navRangoBadge" class="nav-badge" style="margin-left: 10px;">--/-- al --/--</div>
         </div>
 
-        <div class="kpi-card kpi-proyectado" id="cardProyectado"><h4>Saldo Proyectado</h4><div class="value">$<span id="txtProyectado">0</span></div></div>
-        <div class="kpi-card" style="border-top-color: #a371f7;"><h4>Proyección Cierre</h4><div class="value">$<span id="txtProyeccionCierre">0</span></div></div>
+        <div class="kpi-row" style="flex: 1;">
+            <div class="kpi-card" style="border-top-color: var(--color-ingresos);">
+                <h4>Sueldo Base</h4>
+                <div class="value">$<input type="text" id="inputSueldo" value="3.602.505" oninput="formatearEntradaNumerica(this); actualizarDashboard();" style="background:transparent; border:none; color:var(--text-main); font-weight:900; width:100%; font-size:1.25rem; outline:none; font-family: monospace; padding:0;"></div>
+            </div>
+            <div class="kpi-card" style="border-top-color: var(--color-ingresos);"><h4>Ingresos Extra</h4><div class="value">$<span id="txtTotalIngresos">0</span></div></div>
+            <div class="kpi-card" style="border-top-color: var(--color-fuga);"><h4>Gastos Fijos</h4><div class="value">$<span id="txtTotalFijos">0</span></div><div class="kpi-progress-container"><div id="barFijos" class="kpi-progress-fill" style="background:var(--color-fuga);"></div></div></div>
+            <div class="kpi-card" style="border-top-color: #ff9800;"><h4>Gastos Variables</h4><div class="value">$<span id="txtTotalOtros">0</span></div><div class="kpi-progress-container"><div id="barOtros" class="kpi-progress-fill" style="background:#ff9800;"></div></div></div>
+            
+            <div class="kpi-card kpi-saldo" id="cardBalanceReal">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <h4>Balance Real</h4>
+                    <div id="badgeDias" style="font-size: 0.6rem; background: rgba(0,0,0,0.3); padding: 2px 4px; border-radius: 4px; font-weight: 800; color: var(--color-saldo);">-- DÍAS</div>
+                </div>
+                <div class="value" style="margin-top:4px;">$<span id="txtSaldo">0</span></div>
+            </div>
+
+            <div class="kpi-card kpi-proyectado" id="cardProyectado"><h4>Saldo + TC (Proyectado)</h4><div class="value">$<span id="txtProyectado">0</span></div></div>
+        </div>
     </div>
-    
-    <div class="master-layout">
-        <div class="left-col">
-            <div id="charts-grid-container">
-                <div class="chart-box" style="padding-bottom: 20px;">
-                    <div class="bd-overlay-kpis">
-                        <div class="bd-badge">TRAMO: <span id="txtGastoTramo" style="color:var(--color-fuga)">$0</span></div>
-                        <h5 style="margin:0; position:absolute; width:100%; text-align:center;">BURN-DOWN</h5>
-                        <div class="bd-badge">PROM: <span id="txtPromedioZoom" style="color:#ff9800">$0</span></div>
+
+    <div class="charts-panorama">
+        <div class="chart-box">
+            <div class="bd-overlay-kpis">
+                <div class="bd-badge">G: <span id="txtGastoTramo" style="color:var(--color-fuga)">$0</span></div>
+                <div class="bd-badge">P: <span id="txtPromedioZoom" style="color:#ff9800">$0</span></div>
+            </div>
+            <h5>Burn-Down (Consumo vs Ideal)</h5>
+            <div class="canvas-container"><canvas id="chartBurnDown"></canvas></div>
+        </div>
+        <div class="chart-box"><h5>Pulso (Gasto Físico Diario)</h5><div class="canvas-container"><canvas id="chartDiario"></canvas></div></div>
+        <div class="chart-box"><h5>Análisis Pareto (Top Categorías)</h5><div class="canvas-container"><canvas id="chartPareto"></canvas></div></div>
+        <div class="chart-box" style="border-color: rgba(218, 54, 51, 0.4);"><h5>Proyección TC (6 Meses)</h5><div class="canvas-container"><canvas id="chartRadar"></canvas></div></div>
+    </div>
+
+    <div class="command-ribbon">
+        <div class="ribbon-title">CMD</div>
+        <input type="hidden" id="editId">
+        <div class="form-group sm"><label>Fecha</label><input type="datetime-local" id="inputFecha" class="form-control"></div>
+        <div class="form-group sm"><label>Tipo Flujo</label>
+            <select id="inputTipo" class="form-control">
+                <option value="Gasto">Gasto Variable</option><option value="Gasto Fijo">Gasto Fijo</option><option value="Ingreso">Ingreso Extra</option><option value="Por Cobrar">Préstamo (CxC)</option><option value="Ahorro">Ahorro / Neutro</option>
+            </select>
+        </div>
+        <div class="form-group"><label>Categoría V31.4</label><select id="inputCategoria" class="form-control"></select></div>
+        <div class="form-group sm" id="boxFuga"><label>% Fuga</label>
+            <select id="inputFuga" class="form-control">
+                <option value="100">100%</option><option value="90">90%</option><option value="80">80%</option><option value="50">50%</option><option value="0" selected>0%</option>
+            </select>
+        </div>
+        <div class="form-group sm" id="boxCuotas" style="display:none;"><label>Cuotas</label>
+            <select id="inputCuotas" class="form-control" style="border-color:var(--color-ingresos);"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="6">6</option><option value="12">12</option></select>
+        </div>
+        <div class="form-group lg"><label>Descripción del Movimiento</label><input type="text" id="inputNombre" class="form-control" placeholder="Ej. Almuerzo casino..."></div>
+        <div class="form-group sm"><label>Monto ($)</label><input type="text" id="inputMonto" class="form-control" oninput="formatearEntradaNumerica(this)" style="color:var(--color-edit); font-weight:bold;"></div>
+        <button id="btnGuardar" class="btn-ribbon" onclick="agregarMovimiento()">INYECTAR</button>
+    </div>
+
+    <div class="dual-core">
+        
+        <div class="core-panel" id="panelMain" ondragover="dragOverPanel(event, 'main')" ondragleave="dragLeavePanel(event, 'main')" ondrop="dropOnPanel(event, 'main')">
+            <div class="core-header">
+                <div class="core-title"><span style="color:var(--color-saldo);">●</span> FLUJO PRESENTE (LIBRO DIARIO)</div>
+                <div style="display: flex; gap: 15px; align-items: center;">
+                    <div class="fugas-mini-kpi" title="Eficiencia de Gasto">
+                        <span>FUGAS:</span><strong id="txtTotalEvitable">0</strong>
+                        <span style="margin-left: 5px;">(<span id="txtPorcentajeFugas" style="color:var(--color-fuga); font-weight:bold;">0%</span>)</span>
                     </div>
-                    <div class="canvas-container" style="margin-top: 15px;"><canvas id="chartBurnDown"></canvas></div>
+                    <button class="btn-sys" onclick="exportarTablaBunker('tablaGastos', 'Bunker_Libro_Diario')">📥 CSV</button>
                 </div>
-
-                <div class="chart-box"><h5>Pulso (7 Días)</h5><div class="canvas-container"><canvas id="chartDiario"></canvas></div></div>
-                <div class="chart-box"><h5>Pareto</h5><div class="canvas-container"><canvas id="chartPareto"></canvas></div></div>
-                <div class="chart-box"><h5>Deuda TC Proyectada</h5><div class="canvas-container"><canvas id="chartRadar"></canvas></div></div>
             </div>
-
-            <div class="grid-main-wrapper" id="panelMain" ondragover="dragOverPanel(event, 'main')" ondragleave="dragLeavePanel(event, 'main')" ondrop="dropOnPanel(event, 'main')">
-                <div class="telemetry-header">
-                    <input type="text" id="inputBuscador" placeholder="🔍 Filtrar tabla (Excluye TC)..." oninput="actualizarDashboard()" style="width:250px; background:var(--input-bg); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px; padding:6px 12px; outline:none; font-size:0.8rem;">
-                    <button class="btn-sys" onclick="exportarTablaBunker('tablaGastos', 'Bunker_Libro_Diario')" style="color: var(--text-muted); display:flex; align-items:center; gap:5px; height: 30px;">📥 CSV</button>
+            <div style="padding: 5px 10px; background: rgba(0,0,0,0.2); border-bottom: 1px solid var(--border-color);">
+                <input type="text" id="inputBuscador" class="form-control" placeholder="🔍 Filtrar transacciones del mes..." oninput="actualizarDashboard()" style="width: 100%; max-width: 300px; height: 26px;">
             </div>
-                <div class="grid-container">
-                    <table id="tablaGastos" class="data-grid">
-                        <thead>
-                            <tr>
-                                <th class="col-check hide-mobile"><input type="checkbox" id="checkAll" onchange="toggleAllChecks()"></th>
-                                <th class="col-drag hide-mobile" style="width: 30px; text-align: center;">☰</th>
-                                <th onclick="sortTable('fechaISO')">Fecha</th>
-                                <th onclick="sortTable('nombre')">Descripción</th>
-                                <th class="hide-mobile" onclick="sortTable('catV')">Categoría</th>
-                                <th onclick="sortTable('monto')" style="text-align: right;">Monto</th>
-                                <th class="hide-mobile" style="text-align: right;">Saldo Hist.</th>
-                                <th class="hide-mobile" style="text-align: center;">% Fuga</th>
-                                <th style="text-align: center; width: 40px;">⚙️</th>
-                            </tr>
-                        </thead>
-                        <tbody id="listaDetalle"></tbody>
-                    </table>
-                </div>
+            <div class="core-body">
+                <table id="tablaGastos" class="data-grid">
+                    <thead>
+                        <tr>
+                            <th style="width: 30px; text-align: center;"><input type="checkbox" id="checkAll" onchange="toggleAllChecks()"></th>
+                            <th onclick="sortTable('fechaISO')">Fecha</th>
+                            <th onclick="sortTable('nombre')">Descripción</th>
+                            <th onclick="sortTable('catV')">Categoría</th>
+                            <th onclick="sortTable('monto')" style="text-align: right;">Monto ($)</th>
+                            <th style="text-align: right;">Saldo Hist.</th>
+                            <th style="text-align: center; width: 40px;">CMD</th>
+                        </tr>
+                    </thead>
+                    <tbody id="listaDetalle"></tbody>
+                </table>
             </div>
         </div>
 
-        <div class="right-col">
-            <div class="sidebar-panel">
-                <h4 style="color:var(--color-ingresos); margin:0; font-size:0.85rem; text-transform:uppercase; margin-bottom:10px;">REGISTRO MANUAL</h4>
-                <input type="hidden" id="editId">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: -5px;">
-                    <div class="form-group"><label>Fecha</label><input type="datetime-local" id="inputFecha"></div>
-                    <div class="form-group"><label>Flujo</label>
-                        <select id="inputTipo">
-                            <option value="Gasto">Gasto Variable</option>
-                            <option value="Gasto Fijo">Gasto Fijo</option>
-                            <option value="Ingreso">Ingreso Extra</option>
-                            <option value="Por Cobrar">Préstamo (CxC)</option>
-                            <option value="Ahorro">Ahorro / Mov. Neutro</option>
-                        </select>
-                    </div>
+        <div class="core-panel" id="panelTC" style="border-color: rgba(218, 54, 51, 0.3);" ondragover="dragOverPanel(event, 'tc')" ondragleave="dragLeavePanel(event, 'tc')" ondrop="dropOnPanel(event, 'tc')">
+            <div class="core-header" style="background: rgba(218, 54, 51, 0.05); border-bottom-color: rgba(218, 54, 51, 0.3);">
+                <div class="core-title"><span style="color:var(--color-fuga);">●</span> MATRIZ DE DEUDA TC</div>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <div style="font-size:1.1rem; font-weight:900; color:var(--color-fuga); font-family: monospace;">$<span id="txtTotalTC">0</span></div>
+                    <button class="btn-sys" onclick="cargarCSV_TC()" style="background-color: var(--color-fuga); color: white; border: none;">💳 INGESTAR CSV</button>
                 </div>
-                <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 10px;">
-                    <div class="form-group"><label>Categoría V31.4</label><select id="inputCategoria"></select></div>
-                    <div class="form-group"><label>% Fuga</label>
-                        <select id="inputFuga">
-                            <option value="100">100%</option><option value="90">90%</option><option value="80">80%</option><option value="70">70%</option><option value="60">60%</option>
-                            <option value="50">50%</option><option value="40">40%</option><option value="30">30%</option><option value="20">20%</option><option value="10">10%</option>
-                            <option value="0" selected>0%</option>
-                        </select>
-                    </div>
-                </div>
-                
-                <div id="boxCuotas" style="display:none; margin-top:8px;">
-                    <label style="font-size: 0.6rem; font-weight: 800; color: var(--text-muted); margin-bottom: 2px; text-transform: uppercase;">Cuotas (Sin Interés)</label>
-                    <select id="inputCuotas" class="custom-select" style="border-color:var(--color-ingresos);">
-                        <option value="1">1 Cuota</option>
-                        <option value="2">2 Cuotas</option>
-                        <option value="3">3 Cuotas</option>
-                        <option value="6">6 Cuotas</option>
-                        <option value="12">12 Cuotas</option>
-                        <option value="24">24 Cuotas</option>
-                    </select>
-                </div>
-                
-                <div style="display: grid; grid-template-columns: 1fr 110px; gap: 10px; margin-top:10px;">
-                    <div class="form-group"><label>Descripción</label><input type="text" id="inputNombre"></div>
-                    <div class="form-group"><label>Monto</label><input type="text" id="inputMonto" oninput="formatearEntradaNumerica(this)"></div>
-                </div>
-                <button id="btnGuardar" class="btn-guardar" onclick="agregarMovimiento()">GUARDAR EN BÚNKER</button>
             </div>
             
-            <div class="sidebar-panel">
-                <h4 style="margin:0 0 10px 0; font-size:0.85rem; color:var(--text-muted); text-transform:uppercase;">Eficiencia de Gasto</h4>
-                <div class="eficiencia-kpi"><div class="monto">$<span id="txtTotalEvitable">0</span></div><div class="label">Fugas Detectadas</div></div>
-                <div class="bar-container"><div id="barEvitable" class="bar-fill"></div></div>
-                <div style="margin-top:12px; padding-top:10px; border-top:1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center;">
-                    <span style="font-size:0.65rem; color:var(--text-muted); font-weight:800; text-transform:uppercase;">% Sueldo a Fugas:</span>
-                    <span id="txtPorcentajeFugas" style="font-size:0.9rem; font-weight:900; color:var(--color-fuga);">0%</span>
+            <div style="padding: 10px; border-bottom: 1px solid rgba(218, 54, 51, 0.3);">
+                <div id="boxImpactoTC" class="tc-impact-box" style="display:none;">
+                    <span id="lblImpactoMes">⚠️ IMPACTO PRÓXIMO MES</span>
+                    <strong id="txtImpactoMonto">$0</strong>
+                    <div style="flex:1;"></div>
+                    <button class="btn-sys" onclick="exportarTablaBunker('tablaCuotas', 'Bunker_Proyeccion_TC')" style="border-color: #ff9800; color: #ff9800; background: transparent; padding: 4px 8px;">📥 EXPORTAR</button>
+                </div>
+                
+                <div id="barraAccionesTC" style="display:none; background: #b71c1c; color: white; padding: 6px 12px; border-radius: 4px; justify-content: space-between; align-items: center; margin-top: 5px;">
+                    <span id="txtSeleccionadosTC" style="font-weight: bold; font-size: 0.75rem;">0 CUOTAS SELECCIONADAS</span>
+                    <button onclick="ejecutarPurgaMasivaTC()" style="background: white; color: #b71c1c; border: none; padding: 4px 10px; border-radius: 4px; font-weight: 900; cursor: pointer; font-size: 0.7rem; text-transform: uppercase;">🗑️ PURGAR DATOS</button>
                 </div>
             </div>
 
-            <div class="sidebar-panel tc-panel" id="panelTC" style="flex:1; display:flex; flex-direction:column; border-color:rgba(218, 54, 51, 0.3); background:rgba(218, 54, 51, 0.02); min-height: 0; overflow:hidden;" ondragover="dragOverPanel(event, 'tc')" ondragleave="dragLeavePanel(event, 'tc')" ondrop="dropOnPanel(event, 'tc')">
-                
-                <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-color); padding-bottom:8px; margin-bottom:12px; flex-shrink:0;">
-                    <div style="display:flex; align-items:center; gap: 8px; flex-wrap: wrap;">
-                        <h4 style="color:var(--color-fuga); margin:0; font-size:0.85rem; text-transform:uppercase;">DEUDA TC</h4>
-                        <button class="btn-sys" onclick="cargarCSV_TC()" style="background-color: #673ab7; color: white; border: none; padding: 2px 8px; border-radius: 4px; font-weight: bold; font-size: 0.65rem;">💳 CSV</button>
-                        <button class="btn-sys" onclick="exportarTablaBunker('tablaCuotas', 'Bunker_Proyeccion_TC')" style="font-size: 0.65rem; padding: 2px 6px; border-color: rgba(218, 54, 51, 0.3); color: var(--color-fuga); background: transparent;">📥 EXPORT</button>
-                    </div>
-                    <div style="font-size:1.1rem; font-weight:900; color:var(--color-fuga);">$<span id="txtTotalTC">0</span></div>
-                </div>
-
-                <div id="boxImpactoTC" style="display:none; background: rgba(255, 152, 0, 0.1); border-left: 4px solid #ff9800; padding: 8px 12px; margin-bottom: 12px; border-radius: 4px; justify-content: space-between; align-items: center; flex-shrink: 0; box-shadow: 0 4px 10px rgba(0,0,0,0.2);">
-                    <span style="font-size: 0.75rem; font-weight: 900; color: #ff9800; text-transform: uppercase; letter-spacing: 0.5px;" id="lblImpactoMes">⚠️ IMPACTO EN --</span>
-                    <span style="font-size: 1.1rem; font-weight: 900; color: #ff9800; font-family: monospace;" id="txtImpactoMonto">$0</span>
-                </div>
-
-                <div id="barraAccionesTC" style="display:none; background: #b71c1c; color: white; padding: 8px; border-radius: 6px; margin-bottom: 8px; justify-content: space-between; align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.5); flex-shrink:0;">
-                    <span id="txtSeleccionadosTC" style="font-weight: bold; font-size: 0.75rem;">0 CUOTAS SELECCIONADAS</span>
-                    <button onclick="ejecutarPurgaMasivaTC()" style="background: white; color: #b71c1c; border: none; padding: 4px 10px; border-radius: 4px; font-weight: 900; cursor: pointer; font-size: 0.7rem; text-transform: uppercase;">🗑️ Purgar</button>
-                </div>
-
-                <div style="flex:1; overflow-y:auto; scrollbar-width:thin; scrollbar-color:var(--border-color) transparent;">
-                    <table id="tablaCuotas" style="width:100%; border-collapse:collapse; text-align:left;">
-                        <thead style="position: sticky; top: 0; background: var(--bg-body); z-index: 10;">
-                            <tr style="border-bottom: 2px solid var(--border-color); color: var(--text-muted); font-size: 0.65rem; text-transform: uppercase;">
-                                <th style="padding: 4px; width: 30px; text-align: center;"><input type="checkbox" id="checkMaestroTC" onclick="toggleTodosTC(this)" style="accent-color: #b71c1c;"></th>
-                                <th style="padding: 4px;">Mes/Cuota</th>
-                                <th style="padding: 4px;">Comercio</th>
-                                <th style="padding: 4px; text-align: right;">Monto</th>
-                            </tr>
-                        </thead>
-                        <tbody id="listaDetalleTC"></tbody>
-                    </table>
-                </div>
+            <div class="core-body">
+                <table id="tablaCuotas" class="data-grid">
+                    <thead style="background: rgba(218, 54, 51, 0.05);">
+                        <tr>
+                            <th style="width: 30px; text-align: center;"><input type="checkbox" id="checkMaestroTC" onclick="toggleTodosTC(this)" style="accent-color: #b71c1c;"></th>
+                            <th>Mes/Cuota</th>
+                            <th>Comercio Asociado</th>
+                            <th style="text-align: right;">Cuota ($)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="listaDetalleTC"></tbody>
+                </table>
             </div>
         </div>
+
     </div>
     
     <div id="massActionsBar" class="floating-mass-actions" style="display: none;">
-        <span id="massCount">0 seleccionado(s)</span>
-        <div class="mass-actions-controls">
-            <select id="massCategorySelect" class="custom-select" style="width:180px;"></select>
-            <button class="btn-sys" onclick="massCategorize()">APLICAR</button>
-            <button class="btn-sys" onclick="massDelete()" style="color:var(--color-fuga);">🗑️</button>
-        </div>
+        <span id="massCount" style="font-weight:bold; font-size:0.8rem;">0 seleccionado(s)</span>
+        <select id="massCategorySelect" class="form-control" style="width:200px; height: 28px;"></select>
+        <button class="btn-sys" style="background:var(--color-edit); color:#000;" onclick="massCategorize()">APLICAR CAT</button>
+        <button class="btn-sys" style="background:transparent; border:none; font-size:1.2rem;" onclick="massDelete()">🗑️</button>
     </div>
 </div>
 <script src="motor.js"></script>
