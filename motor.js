@@ -1,10 +1,19 @@
 // ==========================================================
-// 🧠 BÚNKER SCADA PRO - MOTOR LÓGICO V8.5 (EDICIÓN DEFINITIVA)
+// 🧠 BÚNKER SCADA PRO - MOTOR LÓGICO V9.0 (DUAL-CORE EDITION)
 // ==========================================================
 const BYRON_EMAIL = "bvhcc94@gmail.com"; 
 const CREDIT_SETPOINT = -300000; 
 const catEvitables = ["Dopamina & Antojos"]; 
 const SUELDO_BASE_DEFAULT = 3602505;
+
+// 🟢 MÓDULO A.C.E. (Auto-Categorización Experta) 🟢
+const diccAuto = [
+    { keys: ["uber", "didi", "cabify", "pasaje", "buses", "turbus", "copec", "shell", "metro"], cat: "Transporte & Logística", tipo: "Gasto", fuga: "0" },
+    { keys: ["pedidosya", "mcdonalds", "burger king", "starbucks", "rappi", "helado", "cine", "concierto"], cat: "Dopamina & Antojos", tipo: "Gasto", fuga: "100" },
+    { keys: ["netflix", "spotify", "hbo", "prime", "icloud", "google", "vtr", "wom", "entel"], cat: "Suscripciones", tipo: "Gasto Fijo", fuga: "0" },
+    { keys: ["jumbo", "lider", "unimarc", "santa isabel", "panaderia", "carniceria", "feria", "minimarket"], cat: "Alimentación & Supermercado", tipo: "Gasto", fuga: "0" },
+    { keys: ["farmacia", "cruz verde", "salcobrand", "doctor", "consulta", "integramedica", "medico"], cat: "Mantenimiento Hardware (Salud)", tipo: "Gasto", fuga: "0" }
+];
 
 const catMaestras = [
     { id: "Gastos Fijos (Búnker)", em: "🏠", label: "Gastos Fijos" },
@@ -24,8 +33,7 @@ const catMaestras = [
     { id: "Sin Categoría", em: "❓", label: "Sin Categoría" }
 ];
 
-const catEmojis = {};
-const aliasMap = {}; 
+const catEmojis = {}; const aliasMap = {}; 
 catMaestras.forEach(c => { catEmojis[c.id] = c.em; aliasMap[c.id] = c.label; });
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -37,11 +45,32 @@ document.addEventListener("DOMContentLoaded", () => {
             const fEl = document.getElementById('inputFuga');
             if(fEl) fEl.value = (e.target.value === "Dopamina & Antojos") ? "100" : "0";
             const boxC = document.getElementById('boxCuotas');
-            if(boxC) boxC.style.display = (e.target.value === "Gasto Tarjeta de Crédito") ? "grid" : "none";
+            if(boxC) boxC.style.display = (e.target.value === "Gasto Tarjeta de Crédito") ? "block" : "none";
         });
     }
     const selectMass = document.getElementById('massCategorySelect');
     if (selectMass) selectMass.innerHTML = `<option value="">-- Recategorizar a --</option>` + optionsHTML;
+
+    // 🟢 SENSOR DE ESCRITURA (Auto-Piloto) 🟢
+    const inputNombre = document.getElementById('inputNombre');
+    if(inputNombre) {
+        inputNombre.addEventListener('input', (e) => {
+            if(modoEdicionActivo) return; // No auto-cambiar si el usuario está editando un registro antiguo
+            let texto = e.target.value.toLowerCase();
+            for(let dict of diccAuto) {
+                if(dict.keys.some(k => texto.includes(k))) {
+                    document.getElementById('inputCategoria').value = dict.cat;
+                    document.getElementById('inputTipo').value = dict.tipo;
+                    let fEl = document.getElementById('inputFuga');
+                    if(fEl) fEl.value = dict.fuga;
+                    // Animación de feedback táctil
+                    inputNombre.style.borderBottom = "2px solid var(--color-saldo)";
+                    setTimeout(() => inputNombre.style.borderBottom = "1px solid var(--border-color)", 1000);
+                    break;
+                }
+            }
+        });
+    }
 });
 
 const logosComerciales = { "uber": "uber.com", "pedidosya": "pedidosya.com", "mcdonald": "mcdonalds.com", "starbucks": "starbucks.cl", "jumbo": "jumbo.cl", "lider": "lider.cl" };
@@ -76,12 +105,12 @@ window.mostrarToast = function(mensaje) {
     let toast = document.getElementById('toast-notif');
     if(!toast) {
         toast = document.createElement('div'); toast.id = 'toast-notif';
-        toast.style.cssText = 'position:fixed; top:-100px; left:50%; transform:translateX(-50%); background:var(--color-ingresos, #1f6feb); color:#fff; padding:12px 24px; border-radius:30px; font-weight:900; font-size:0.85rem; z-index:10000; transition:top 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow:0 10px 25px rgba(31,111,235,0.4); text-transform:uppercase; letter-spacing:0.5px; pointer-events:none;';
+        toast.style.cssText = 'position:fixed; top:20px; right:20px; background:var(--bg-panel); color:var(--color-saldo); padding:12px 24px; border-radius:6px; border: 1px solid var(--color-saldo); font-weight:900; font-size:0.85rem; font-family:monospace; z-index:10000; transition:opacity 0.4s; box-shadow:0 0 15px rgba(63,185,80,0.2); text-transform:uppercase;';
         document.body.appendChild(toast);
     }
-    toast.innerHTML = '✅ ' + mensaje;
-    toast.style.top = 'max(20px, env(safe-area-inset-top))';
-    setTimeout(() => { toast.style.top = '-100px'; }, 3500);
+    toast.innerHTML = '⚡ ' + mensaje;
+    toast.style.opacity = '1';
+    setTimeout(() => { toast.style.opacity = '0'; }, 3000);
 };
 
 function loginWithGoogle() { auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
@@ -89,6 +118,8 @@ function logout() { auth.signOut().then(() => window.location.reload()); }
 
 auth.onAuthStateChanged(user => {
     if (user && user.email.toLowerCase() === BYRON_EMAIL.toLowerCase()) {
+        console.log("%c[SCADA V9.0] BOOT SEQUENCE INITIATED", "color: #00bcd4; font-weight: bold; font-size: 14px;");
+        
         const loginScreen = document.getElementById('login-screen'), reportZone = document.getElementById('reportZone');
         if(loginScreen) loginScreen.style.display = 'none';
         if(reportZone) reportZone.classList.add('active-app');
@@ -96,8 +127,10 @@ auth.onAuthStateChanged(user => {
         const userDisplay = document.getElementById('user-display');
         if(userDisplay) userDisplay.innerText = user.displayName.split(" ")[0];
         
+        console.log("%c[NET] Conectando matriz de sueldos...", "color: #ff9800;");
         db.collection("parametros").doc("sueldos").onSnapshot(snap => { if(snap.exists) sueldosHistoricos = snap.data(); });
 
+        console.log("%c[NET] Conectando sensor de flujo de efectivo...", "color: #ff9800;");
         db.collection("movimientos").onSnapshot(snap => {
             listaMovimientos = [];
             snap.forEach(doc => {
@@ -106,10 +139,10 @@ auth.onAuthStateChanged(user => {
                 d.monto = Number(d.monto) || 0;
                 listaMovimientos.push(d);
             });
+            console.log(`%c[SYS] ${listaMovimientos.length} registros cargados en memoria.`, "color: #4caf50; font-weight:bold;");
             aplicarCicloAlSistema();
         });
 
-        // 🟢 ANTENA TC BLINDADA
         inicializarListenerTC();
     }
 });
@@ -119,15 +152,6 @@ function cargarSueldoVisual() {
     if(!elMes || !elAnio || !elSueldo) return;
     const sueldoActivo = obtenerSueldoMes(parseInt(elAnio.value), parseInt(elMes.value));
     if (document.activeElement !== elSueldo) elSueldo.value = sueldoActivo.toLocaleString('es-CL');
-}
-
-function guardarSueldoEnNube() {
-    const elMes = document.getElementById('navMesConceptual'), elAnio = document.getElementById('navAnio'), elSueldo = document.getElementById('inputSueldo');
-    if(!elMes || !elAnio || !elSueldo) return;
-    const valor = parseInt(elSueldo.value.replace(/\./g,'')) || 0;
-    elSueldo.style.color = "var(--color-saldo)"; setTimeout(() => elSueldo.style.color = "inherit", 800);
-    db.collection("parametros").doc("sueldos").set({ [`${elAnio.value}_${elMes.value}`]: valor }, { merge: true });
-    actualizarDashboard();
 }
 
 function actualizarDashboard() {
@@ -156,13 +180,10 @@ function actualizarDashboard() {
 
     datosMesGlobal = [...dataMes];
     let saldoAcc = sueldo, tI = 0, tF = 0, tO = 0, tC = 0, tEvitable = 0, gCat = {};
-    
     let totalTC_legacy = 0; 
     
     [...dataMes].sort((x,y) => x.fechaISO < y.fechaISO ? -1 : 1).forEach(x => {
-        if (x.catV === 'Gasto Tarjeta de Crédito') {
-            totalTC_legacy += x.monto;
-        } 
+        if (x.catV === 'Gasto Tarjeta de Crédito') totalTC_legacy += x.monto;
         else { 
             if (x.esIn) { tI += x.monto; saldoAcc += x.monto; }
             else if (x.tipo === 'Por Cobrar') tC += x.monto;
@@ -181,71 +202,44 @@ function actualizarDashboard() {
     setTxt('txtTotalFijos', tF); setTxt('txtTotalOtros', tO); setTxt('txtTotalIngresos', tI);
     setTxt('txtCxC', tC); setTxt('txtSaldo', saldoAcc);
     
-    const saldoProyVal = saldoAcc + tC;
-    const txtSaldoProy = document.getElementById('txtProyectado');
-    if(txtSaldoProy) {
-        if (saldoProyVal < CREDIT_SETPOINT) txtSaldoProy.innerHTML = '<span style="color:var(--color-fuga)">⚠️ ' + saldoProyVal.toLocaleString('es-CL') + '</span>';
-        else txtSaldoProy.innerText = saldoProyVal.toLocaleString('es-CL');
-    }
-
     const diasCiclo = Math.max(1, Math.round((TFinal - T0) / 86400000));
     const hoy = new Date();
     let diasT = (hoy >= T0 && hoy <= TFinal) ? Math.max(Math.floor((hoy - T0) / 86400000) + 1, 1) : (hoy > TFinal ? diasCiclo : 0);
     
     const badgeDias = document.getElementById('badgeDias');
-    if(badgeDias) badgeDias.innerText = `${Math.max(diasCiclo - diasT, 0)}`;
+    if(badgeDias) badgeDias.innerText = `${Math.max(diasCiclo - diasT, 0)} DÍAS`;
     
-    let proyC = saldoAcc - ((tO / Math.max(diasT, 1)) * Math.max(diasCiclo - diasT, 0));
-    setTxt('txtProyeccionCierre', Math.round(proyC));
-
     const setW = (id, val) => { const el = document.getElementById(id); if(el) el.style.width = Math.min(val, 100) + "%"; };
     setW('barFijos', (tF / (sueldo || 1)) * 100); setW('barOtros', (tO / (sueldo || 1)) * 100);
     setTxt('txtTotalEvitable', Math.round(tEvitable));
-    const pctFugas = sueldo > 0 ? ((tEvitable / sueldo) * 100).toFixed(1) : 0;
     
+    const pctFugas = sueldo > 0 ? ((tEvitable / sueldo) * 100).toFixed(1) : 0;
     const txtPctFugas = document.getElementById('txtPorcentajeFugas');
-    const barraEvitable = document.getElementById('barEvitable');
-    if(txtPctFugas && barraEvitable) {
-        txtPctFugas.innerText = pctFugas + '%'; barraEvitable.style.width = Math.min(pctFugas, 100) + "%";
-        if (pctFugas < 5) { txtPctFugas.style.color = "var(--color-saldo)"; barraEvitable.style.backgroundColor = "var(--color-saldo)"; } 
-        else if (pctFugas <= 10) { txtPctFugas.style.color = "#ff9800"; barraEvitable.style.backgroundColor = "#ff9800"; } 
-        else { txtPctFugas.style.color = "var(--color-fuga)"; barraEvitable.style.backgroundColor = "var(--color-fuga)"; }
+    if(txtPctFugas) {
+        txtPctFugas.innerText = pctFugas + '%';
+        if (pctFugas < 5) txtPctFugas.style.color = "var(--color-saldo)";
+        else if (pctFugas <= 10) txtPctFugas.style.color = "#ff9800";
+        else txtPctFugas.style.color = "var(--color-fuga)";
+    }
+
+    let deudaAprox = typeof window.totalTC !== 'undefined' ? window.totalTC : (typeof totalTC_legacy !== 'undefined' ? totalTC_legacy : 0); 
+    const txtProyectado = document.getElementById('txtProyectado');
+    if(txtProyectado) {
+        let proyVal = saldoAcc - deudaAprox;
+        txtProyectado.innerText = proyVal.toLocaleString('es-CL');
+        txtProyectado.style.color = proyVal < 0 ? "var(--color-fuga)" : "#8c9eff";
     }
 
     let dataGraficos = dataMes.filter(x => x.catV !== 'Gasto Tarjeta de Crédito');
-    
-    try {
-        let hoyStr = new Date().toISOString().split('T')[0];
-        let ayerObj = new Date(); ayerObj.setDate(ayerObj.getDate() - 1);
-        let ayerStr = ayerObj.toISOString().split('T')[0];
-
-        let gastoHoy = datosMesGlobal.filter(x => x.fechaISO.startsWith(hoyStr) && !x.esIn && !x.esNeutro).reduce((acc, val) => acc + val.monto, 0);
-        let gastoAyer = datosMesGlobal.filter(x => x.fechaISO.startsWith(ayerStr) && !x.esIn && !x.esNeutro).reduce((acc, val) => acc + val.monto, 0);
-
-        let tendenciaStr = gastoHoy > gastoAyer ? '▲ ACELERANDO' : (gastoHoy === 0 ? '■ ESTABLE' : '▼ FRENANDO');
-        let colorTendencia = gastoHoy > gastoAyer ? '#ff5252' : '#4caf50'; 
-
-        let deudaAprox = typeof window.totalTC !== 'undefined' ? window.totalTC : (typeof totalTC_legacy !== 'undefined' ? totalTC_legacy : 0); 
-        let saldoManiobra = saldoAcc - deudaAprox;
-
-        const elManiobra = document.getElementById('txtManiobra');
-        const elVelocidad = document.getElementById('txtVelocidad');
-        
-        if (elManiobra) elManiobra.innerText = '$' + saldoManiobra.toLocaleString('es-CL');
-        if (elVelocidad) {
-            elVelocidad.innerText = `$${gastoHoy.toLocaleString('es-CL')} (${tendenciaStr})`;
-            elVelocidad.style.color = colorTendencia;
-        }
-    } catch (err) { console.warn("Sensor V8.5 en espera de datos: ", err); }
-    
     renderizarListas(sueldo, b);
-    if(typeof dibujarGraficos === 'function') dibujarGraficos(sueldo, [...dataGraficos].sort((x,y) => x.fechaISO < y.fechaISO ? -1 : 1), gCat, diasCiclo, T0);
+    
+    // 🟢 Pasamos "tF" (Total Fijos) para el cálculo de Límites Dinámicos 🟢
+    if(typeof dibujarGraficos === 'function') dibujarGraficos(sueldo, [...dataGraficos].sort((x,y) => x.fechaISO < y.fechaISO ? -1 : 1), gCat, diasCiclo, T0, tF);
     
     setTxt('txtGastoTramo', tO + tF);
     setTxt('txtPromedioZoom', Math.round((tO + tF) / diasCiclo));
 }
 
-// 🟢 LIMPIEZA INDUSTRIAL Y GRADIENTE DE FUGAS
 function renderizarListas(sueldoBase, filtroBuscador) {
     let datos = [...datosMesGlobal].filter(x => x.catV !== 'Gasto Tarjeta de Crédito'); 
     if (filtroBuscador) datos = datos.filter(x => x.nombre?.toLowerCase().includes(filtroBuscador) || x.catV.toLowerCase().includes(filtroBuscador));
@@ -268,50 +262,44 @@ function renderizarListas(sueldoBase, filtroBuscador) {
     if (!contenedorPC) return;
 
     if(datos.length === 0) {
-        contenedorPC.innerHTML = `<tr><td colspan="9" style="text-align:center;">Sin telemetría en este periodo.</td></tr>`;
+        contenedorPC.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:20px; color:var(--text-muted);">MATRIZ SIN DATOS</td></tr>`;
         return;
     }
 
     let htmlPC = '';
-    let currentDayGroup = ""; 
     let now = new Date(); now.setHours(0,0,0,0);
     let yesterday = new Date(now); yesterday.setDate(yesterday.getDate() - 1);
 
-    datos.forEach((x, idx) => {
+    datos.forEach((x) => {
         const d = new Date(x.fechaISO);
         let dClean = new Date(d); dClean.setHours(0,0,0,0);
-        const dateStr = d.toLocaleDateString('es-CL');
+        const dateStr = d.toLocaleDateString('es-CL', {day:'2-digit', month:'2-digit'});
         const timeStr = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
 
-        const em = catEmojis[x.catV] || "❓";
         const colorMonto = x.esIn ? "var(--color-ingresos)" : x.esNeutro ? "#ff9800" : "var(--text-main)";
         const nombreSeguro = x.nombre || "Dato no identificado";
         const montoSeguro = (typeof x.monto === 'number' && !isNaN(x.monto)) ? x.monto : 0;
         const colorSaldo = x.saldoCalculadoVista < 0 ? 'var(--color-fuga)' : 'var(--text-muted)';
-        let iconImpacto = x.esIn ? `<span class="impact-icon impact-pos">(+)</span>` : x.esNeutro ? `<span class="impact-icon impact-neu">(=)</span>` : `<span class="impact-icon impact-neg">(-)</span>`;
-        let pctFugaStr = x.innecesarioPct !== undefined ? x.innecesarioPct + '%' : (catEvitables.includes(x.catV) ? '100%' : '0%');
+        let iconImpacto = x.esIn ? `<span class="impact-icon impact-pos">+</span>` : x.esNeutro ? `<span class="impact-icon impact-neu">=</span>` : `<span class="impact-icon impact-neg">-</span>`;
         
         let editIdVal = document.getElementById('editId') ? document.getElementById('editId').value : '';
         let esEditando = (editIdVal === x.firestoreId);
         
-        // 🟢 SENSOR DE FUGA VIVO (Degradado Rojo para "Dopamina")
-        let cssFuga = x.catV === 'Dopamina & Antojos' && !esEditando ? 'background: linear-gradient(90deg, rgba(255,255,255,0.02) 40%, rgba(218,54,51,0.2) 100%); border-right: 2px solid #ff5252;' : '';
+        let cssFuga = x.catV === 'Dopamina & Antojos' && !esEditando ? 'background: linear-gradient(90deg, rgba(255,255,255,0.01) 60%, rgba(218,54,51,0.15) 100%); border-right: 2px solid #ff5252;' : '';
         let bgEdicion = esEditando ? 'background-color: rgba(210, 153, 34, 0.15); border-left: 3px solid var(--color-edit);' : cssFuga;
 
         htmlPC += `<tr style="${bgEdicion}" draggable="true" ondragstart="dragStart(event, '${x.firestoreId}')" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dropRow(event, '${x.firestoreId}')">
-            <td class="col-check hide-mobile"><input type="checkbox" class="row-check" value="${x.firestoreId}" onchange="updateMassActions()"></td>
-            <td class="col-drag hide-mobile" style="cursor: grab; text-align: center; color: var(--text-muted); font-size: 1.2rem;">☰</td>
+            <td style="text-align: center;"><input type="checkbox" class="row-check" value="${x.firestoreId}" onchange="updateMassActions()"></td>
             <td style="font-size:0.75rem; color:var(--text-muted);">${dateStr} <span class="col-hora">${timeStr}</span></td>
             <td class="col-desc" title="${nombreSeguro}">${nombreSeguro}</td>
-            <td class="hide-mobile" style="font-size:0.75rem;"><span class="cat-badge">${em} ${x.catV}</span></td>
+            <td style="font-size:0.7rem;"><span class="cat-badge">${x.catV.replace(' & ','&')}</span></td>
             <td class="col-monto" style="color:${colorMonto};">${iconImpacto}$${montoSeguro.toLocaleString('es-CL')}</td>
-            <td class="col-monto hide-mobile" style="color:${colorSaldo};">$${x.saldoCalculadoVista.toLocaleString('es-CL')}</td>
-            <td class="hide-mobile" style="text-align:center; font-size:0.7rem; color:var(--text-muted);">${pctFugaStr}</td>
-            <td style="text-align:center; padding: 2px;"><button class="btn-sys" style="padding:4px 6px; border-color:var(--border-color); color:var(--text-muted); background:transparent;" onclick="editarMovimiento('${x.firestoreId}')">✏️</button></td>
+            <td class="col-monto hide-mobile" style="color:${colorSaldo}; font-size:0.75rem;">$${x.saldoCalculadoVista.toLocaleString('es-CL')}</td>
+            <td style="text-align:center;"><button class="btn-sys" style="padding:2px 6px; border:none; background:transparent;" onclick="editarMovimiento('${x.firestoreId}')">✏️</button></td>
         </tr>`;
     });
 
-    if (contenedorPC) contenedorPC.innerHTML = htmlPC;
+    contenedorPC.innerHTML = htmlPC;
 }
 
 function sortTable(column) {
@@ -332,7 +320,7 @@ function editarMovimiento(id) {
     if(document.getElementById('inputCategoria')) {
         document.getElementById('inputCategoria').value = mov.categoria || 'Sin Categoría';
         const boxC = document.getElementById('boxCuotas');
-        if(boxC) boxC.style.display = (mov.categoria === "Gasto Tarjeta de Crédito") ? "grid" : "none";
+        if(boxC) boxC.style.display = (mov.categoria === "Gasto Tarjeta de Crédito") ? "block" : "none";
     }
     if(document.getElementById('inputFuga')) document.getElementById('inputFuga').value = mov.innecesarioPct !== undefined ? mov.innecesarioPct : "0";
     if(document.getElementById('inputCuotas')) document.getElementById('inputCuotas').value = mov.cuotas !== undefined ? mov.cuotas : "1";
@@ -347,7 +335,7 @@ function editarMovimiento(id) {
         if(document.getElementById('inputFecha')) document.getElementById('inputFecha').value = dLocal;
     } catch(e) { console.error(e); }
     const btn = document.getElementById('btnGuardar');
-    if(btn) { btn.innerHTML = "💾 ACTUALIZAR REGISTRO"; btn.style.backgroundColor = "var(--color-edit)"; }
+    if(btn) { btn.innerHTML = "ACTUALIZAR"; btn.style.backgroundColor = "var(--color-saldo)"; }
     modoEdicionActivo = true;
     actualizarDashboard(); 
 }
@@ -365,16 +353,17 @@ function agregarMovimiento() {
     const cuotasEl = document.getElementById('inputCuotas');
     const cantCuotas = (cuotasEl && c === "Gasto Tarjeta de Crédito") ? parseInt(cuotasEl.value) : 1;
 
-    if (!m || !n || !fInput) return alert("⚠️ Faltan datos críticos.");
+    if (!m || !n || !fInput) return alert("⚠️ Faltan parámetros en la consola.");
     const btn = document.getElementById('btnGuardar');
-    btn.innerHTML = "⏳ GUARDANDO..."; btn.disabled = true;
+    btn.innerHTML = "INYECTANDO..."; btn.disabled = true;
     const dataPayload = { nombre: n, monto: m, categoria: c, tipo: t, fecha: new Date(fInput), status: 'Manual', innecesarioPct: pctFuga, cuotas: cantCuotas };
+    
     let op = (modoEdicionActivo && editId) ? db.collection("movimientos").doc(editId).update(dataPayload) : db.collection("movimientos").add(dataPayload);
     op.then(() => {
         document.getElementById('editId').value = ''; document.getElementById('inputNombre').value = ''; document.getElementById('inputMonto').value = '';
-        btn.innerHTML = "GUARDAR EN BÚNKER"; btn.style.backgroundColor = "var(--color-guardar)"; btn.disabled = false; modoEdicionActivo = false;
-        if (typeof mostrarToast === "function") mostrarToast("REGISTRO GUARDADO EN EL BÚNKER");
-    }).catch(err => { alert("❌ Error: " + err.message); btn.innerHTML = "ERROR"; btn.disabled = false; });
+        btn.innerHTML = "INYECTAR"; btn.style.backgroundColor = "var(--color-edit)"; btn.disabled = false; modoEdicionActivo = false;
+        mostrarToast("REGISTRO CONFIRMADO");
+    }).catch(err => { alert("❌ Error de Matriz: " + err.message); btn.innerHTML = "ERROR"; btn.disabled = false; });
 }
 
 function formatearEntradaNumerica(i) { let v = i.value.replace(/\D/g,''); i.value = v ? parseInt(v).toLocaleString('es-CL') : ''; }
@@ -386,14 +375,14 @@ function massDelete() { const ids = Array.from(document.querySelectorAll('.row-c
 function massCategorize() { const ids = Array.from(document.querySelectorAll('.row-check:not(#checkAll):checked')).map(cb => cb.value); const cat = document.getElementById('massCategorySelect').value; if(ids.length === 0 || !cat || !confirm(`¿Categorizar como "${cat}"?`)) return; const btn = document.querySelector('button[onclick="massCategorize()"]'); const orig = btn.innerHTML; btn.innerHTML = '⏳'; Promise.all(ids.map(id => db.collection("movimientos").doc(id).update({categoria: cat}))).then(() => { document.getElementById('massActionsBar').style.display = 'none'; document.getElementById('checkAll').checked = false; document.getElementById('massCategorySelect').value = ''; btn.innerHTML = orig; }); }
 
 // =====================================================================
-// 🟢 LÓGICA DE GRÁFICOS (CON SCADA TWEAKS PRO Y DEADBAND TC) 🟢
+// 🟢 LÓGICA DE GRÁFICOS (SMART DCL Y PROYECCIÓN 6 MESES) 🟢
 // =====================================================================
-function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0) {
+function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0, totalFijosMes) {
     if(chartBD) chartBD.destroy(); if(chartP) chartP.destroy(); 
     if(chartDiario) chartDiario.destroy(); if(chartRadar) chartRadar.destroy();
     
     const cT = getComputedStyle(document.body).getPropertyValue('--text-main').trim() || "#f0f6fc"; 
-    const cG = getComputedStyle(document.body).getPropertyValue('--border-color').trim() || "#30363d"; 
+    const cG = getComputedStyle(document.body).getPropertyValue('--border-color').trim() || "#2d333b"; 
     
     let daily = Array(diasCiclo + 1).fill(0);
     let dailyGastosVar = Array(diasCiclo + 1).fill(0); 
@@ -437,7 +426,7 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0) {
             if (indexInicio !== -1) {
                 const xPixel = xAxis.getPixelForTick(indexInicio);
                 ctx.save(); ctx.beginPath(); ctx.moveTo(xPixel, yAxis.top); ctx.lineTo(xPixel, yAxis.bottom);
-                ctx.lineWidth = 2; ctx.strokeStyle = '#ff9800'; ctx.stroke(); ctx.restore();
+                ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(255, 152, 0, 0.5)'; ctx.stroke(); ctx.restore();
             }
         }
     };
@@ -446,7 +435,7 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0) {
         type: 'line', 
         data: { labels: labelsX, datasets: [
             { 
-                label: 'Consumo Real', data: actual, borderColor: '#1f6feb', borderWidth: 3, fill: false, pointRadius: 2,
+                label: 'Consumo Real', data: actual, borderColor: '#1f6feb', borderWidth: 3, fill: false, pointRadius: 0,
                 segment: {
                     borderColor: ctx => ctx.p1.parsed.y < 0 ? 'rgba(31, 111, 235, 0.3)' : '#1f6feb',
                     borderDash: ctx => ctx.p1.parsed.y < 0 ? [5, 5] : undefined
@@ -457,123 +446,90 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0) {
         options: { 
             maintainAspectRatio:false, plugins:{legend:{display:false}}, 
             scales: {
-                x: {
-                    ticks: {
-                        color: function(context) { return (context.tick && context.tick.label && context.tick.label.toString().includes('01')) ? '#ff9800' : '#8b949e'; },
-                        font: function(context) { return (context.tick && context.tick.label && context.tick.label.toString().includes('01')) ? { weight: 'bold', size: 11 } : { weight: 'normal', size: 10 }; }
-                    }
-                },
-                y: { 
-                    grid: {
-                        color: function(context) { return (context.tick && context.tick.value === 0) ? '#ff5252' : cG; },
-                        lineWidth: function(context) { return (context.tick && context.tick.value === 0) ? 2 : 1; }
-                    },
-                    ticks: { color: cT, callback: function(value) { return '$' + Math.round(value/1000) + 'k'; } }
-                }
+                x: { ticks: { color: cT, font: {size: 9} } },
+                y: { grid: { color: cG }, ticks: { color: cT, callback: function(value) { return '$' + Math.round(value/1000) + 'k'; } } }
             },
-            layout: { padding: { bottom: 0, top: 0, left:0, right:0 } }
+            layout: { padding: 0 }
         },
         plugins: [marcadorInicioMes]
     });
 
-    const sorted = Object.entries(cats).sort((a,b)=>b[1]-a[1]).slice(0,8); const totalTop8 = sorted.reduce((sum, val) => sum + val[1], 0) || 1;
-    let acumulado = 0; const dataAcumulada = sorted.map(c => { acumulado += c[1]; return (acumulado / totalTop8) * 100; });
+    const sorted = Object.entries(cats).sort((a,b)=>b[1]-a[1]).slice(0,5); const totalTop5 = sorted.reduce((sum, val) => sum + val[1], 0) || 1;
+    let acumulado = 0; const dataAcumulada = sorted.map(c => { acumulado += c[1]; return (acumulado / totalTop5) * 100; });
 
     chartP = new Chart(document.getElementById('chartPareto'), {
         type: 'bar', 
         data: { labels: sorted.map(c => aliasMap[c[0]] || c[0].split(' ')[0]), datasets: [
             { type: 'line', label: '% Acumulado', data: dataAcumulada, borderColor: '#ff9800', borderWidth: 2, borderDash: [5, 5], pointBackgroundColor: '#ff9800', pointRadius: 3, fill: false, yAxisID: 'y1' },
-            { type: 'bar', label: 'Gasto', data: sorted.map(c => c[1]), backgroundColor: '#1f6feb', borderRadius: 4, yAxisID: 'y' }
+            { type: 'bar', label: 'Gasto', data: sorted.map(c => c[1]), backgroundColor: 'rgba(31, 111, 235, 0.6)', borderRadius: 2, yAxisID: 'y' }
         ]},
-        options: { maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{ x:{ticks:{color:cT, font:{size:9}}}, y:{ type: 'linear', position: 'left', ticks:{color:cT, callback:v=>'$'+Math.round(v/1000)+'k'} }, y1:{ type: 'linear', position: 'right', min: 0, max: 100, grid: { drawOnChartArea: false }, ticks:{color:'#ff9800', callback:v=>Math.round(v)+'%', font:{weight:'bold'}} } } }
+        options: { maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{ x:{ticks:{color:cT, font:{size:8}}}, y:{ ticks:{color:cT, callback:v=>'$'+Math.round(v/1000)+'k'} }, y1:{ type: 'linear', position: 'right', min: 0, max: 100, grid: { drawOnChartArea: false }, ticks:{color:'#ff9800', callback:v=>Math.round(v)+'%'} } } }
     });
+
+    // 🟢 SENSOR D.C.L. (Límite Dinámico Diario) 🟢
+    let presupuestoLibre = sueldo - totalFijosMes;
+    let limiteDiarioIdeal = Math.max(presupuestoLibre / diasCiclo, 0);
 
     const ctxDiario = document.getElementById('chartDiario');
     if(ctxDiario) {
         let lastDayWithData = diasCiclo;
         while(lastDayWithData > 0 && dailyGastosVar[lastDayWithData] === 0) lastDayWithData--;
-        let startDayForBars = Math.max(1, lastDayWithData - 6); 
+        let startDayForBars = Math.max(1, lastDayWithData - 14); // Mostrar 14 días en el panorama
         let barLabels = labelsFechas.slice(startDayForBars, lastDayWithData + 1); 
         let barData = dailyGastosVar.slice(startDayForBars, lastDayWithData + 1);
 
+        // Barras se vuelven rojas si superan el límite dinámico
+        let coloresBarras = barData.map(v => v > limiteDiarioIdeal ? 'rgba(218, 54, 51, 0.8)' : 'rgba(31, 111, 235, 0.5)');
+
+        const limiteDiarioPlugin = {
+            id: 'limiteDiarioPlugin',
+            afterDraw: (chart) => {
+                if(limiteDiarioIdeal <= 0) return;
+                const ctx = chart.ctx; const xAxis = chart.scales.x; const yAxis = chart.scales.y;
+                const yPos = yAxis.getPixelForValue(limiteDiarioIdeal);
+                if(yPos >= yAxis.top && yPos <= yAxis.bottom) {
+                    ctx.save(); ctx.beginPath(); ctx.moveTo(xAxis.left, yPos); ctx.lineTo(xAxis.right, yPos);
+                    ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(218, 54, 51, 0.8)'; ctx.setLineDash([4, 4]); ctx.stroke(); ctx.restore();
+                }
+            }
+        };
+
         chartDiario = new Chart(ctxDiario, {
             type: 'bar',
-            data: { labels: barLabels, datasets: [{ label: 'Gasto Físico', data: barData, backgroundColor: '#da3633', borderRadius: 4 }] },
-            options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: cT, font:{size:9} }, grid: { display:false } }, y: { ticks: { color: cT, callback: v => '$' + Math.round(v / 1000) + 'k' }, grid: { color: cG } } } }
+            data: { labels: barLabels, datasets: [{ label: 'Gasto Variable', data: barData, backgroundColor: coloresBarras, borderRadius: 2 }] },
+            options: { maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: {callbacks: {afterLabel: function(ctx){ return 'Límite: $' + Math.round(limiteDiarioIdeal).toLocaleString(); }}} }, scales: { x: { ticks: { color: cT, font:{size:8} }, grid: { display:false } }, y: { ticks: { color: cT, callback: v => '$' + Math.round(v / 1000) + 'k' }, grid: { color: cG } } } },
+            plugins: [limiteDiarioPlugin]
         });
     }
 
-    // 🟢 NUEVO: PLUGIN DE "DEADBAND" (SETPOINT 15%) PARA TC 🟢
     const setpointTCPlugin = {
         id: 'setpointTCPlugin',
-        afterDatasetsDraw: (chart) => {
-            const ctx = chart.ctx;
-            const xAxis = chart.scales.x;
-            const yAxis = chart.scales.y;
-            const umbralSeguridad = sueldo * 0.15; // Límite rojo al 15% del sueldo
-            
-            // Solo dibujar si el umbral está dentro de la gráfica visible
+        afterDraw: (chart) => {
+            const ctx = chart.ctx; const xAxis = chart.scales.x; const yAxis = chart.scales.y;
+            const umbralSeguridad = sueldo * 0.15;
             if(yAxis.max > umbralSeguridad) {
                 const yPos = yAxis.getPixelForValue(umbralSeguridad);
-                ctx.save();
-                ctx.beginPath();
-                ctx.moveTo(xAxis.left, yPos);
-                ctx.lineTo(xAxis.right, yPos);
-                ctx.lineWidth = 2;
-                ctx.strokeStyle = 'rgba(218, 54, 51, 0.8)'; // Rojo alarma
-                ctx.setLineDash([5, 5]); // Línea punteada SCADA
-                ctx.stroke();
-                
-                // Etiqueta flotante
-                ctx.fillStyle = 'rgba(218, 54, 51, 0.9)';
-                ctx.font = 'bold 9px sans-serif';
-                ctx.fillText('⚡ LÍMITE (15%)', xAxis.left + 5, yPos - 5);
-                ctx.restore();
+                ctx.save(); ctx.beginPath(); ctx.moveTo(xAxis.left, yPos); ctx.lineTo(xAxis.right, yPos);
+                ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(218, 54, 51, 0.5)'; ctx.setLineDash([5, 5]); ctx.stroke();
+                ctx.fillStyle = 'rgba(218, 54, 51, 0.8)'; ctx.font = 'bold 9px monospace'; ctx.fillText('MAX (15%)', xAxis.left + 5, yPos - 5); ctx.restore();
             }
         }
     };
 
     const ctxProyeccion = document.getElementById('chartRadar');
     if(ctxProyeccion) {
-        let mesesLabels = [];
-        let montosProyectados = [];
-        let fechaHoy = new Date();
-
+        let mesesLabels = []; let montosProyectados = []; let fechaHoy = new Date();
         for(let i=1; i<=6; i++) {
             let f = new Date(fechaHoy.getFullYear(), fechaHoy.getMonth() + i, 1);
-            let label = f.toLocaleString('es-CL', { month: 'short' }).toUpperCase();
-            mesesLabels.push(label);
-
-            let sumaMes = datosTCGlobal
-                .filter(d => {
-                    let fCobro = new Date(d.mesCobro);
-                    return fCobro.getMonth() === f.getMonth() && fCobro.getFullYear() === f.getFullYear();
-                })
-                .reduce((acc, curr) => acc + curr.monto, 0);
-            
+            mesesLabels.push(f.toLocaleString('es-CL', { month: 'short' }).toUpperCase());
+            let sumaMes = datosTCGlobal.filter(d => { let fCobro = new Date(d.mesCobro); return fCobro.getMonth() === f.getMonth() && fCobro.getFullYear() === f.getFullYear(); }).reduce((acc, curr) => acc + curr.monto, 0);
             montosProyectados.push(sumaMes);
         }
-
         chartRadar = new Chart(ctxProyeccion, {
             type: 'bar',
-            data: {
-                labels: mesesLabels,
-                datasets: [{
-                    label: 'Deuda Proyectada',
-                    data: montosProyectados,
-                    backgroundColor: montosProyectados.map(m => m > (sueldo * 0.15) ? 'rgba(218, 54, 51, 0.8)' : 'rgba(31, 111, 235, 0.8)'),
-                    borderRadius: 4
-                }]
-            },
-            options: {
-                maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: {
-                    y: { beginAtZero: true, ticks: { color: cT, callback: v => '$' + Math.round(v/1000) + 'k' }, grid: { color: cG } },
-                    x: { ticks: { color: cT }, grid: { display: false } }
-                }
-            },
-            plugins: [setpointTCPlugin] // Inyección del Setpoint
+            data: { labels: mesesLabels, datasets: [{ label: 'Deuda TC', data: montosProyectados, backgroundColor: montosProyectados.map(m => m > (sueldo * 0.15) ? 'rgba(218, 54, 51, 0.8)' : 'rgba(31, 111, 235, 0.6)'), borderRadius: 2 }] },
+            options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { color: cT, callback: v => '$' + Math.round(v/1000) + 'k' }, grid: { color: cG } }, x: { ticks: { color: cT, font: {size: 9} }, grid: { display: false } } } },
+            plugins: [setpointTCPlugin]
         });
     }
 }
@@ -603,38 +559,36 @@ function aplicarCicloAlSistema() {
     if(fD) fD.value = ''; if(fH) fH.value = '';
     const { T0, fechaFinVisual } = calcularFechasCiclo(parseInt(navMes.value), parseInt(navAnio.value));
     const badge = document.getElementById('navRangoBadge');
-    if(badge) badge.innerText = `PERIODO: ${T0.toLocaleDateString('es-CL', {day:'2-digit', month:'short'}).toUpperCase()} - ${fechaFinVisual.toLocaleDateString('es-CL', {day:'2-digit', month:'short'}).toUpperCase()}`;
+    if(badge) badge.innerText = `[${T0.toLocaleDateString('es-CL', {day:'2-digit', month:'short'}).toUpperCase()} - ${fechaFinVisual.toLocaleDateString('es-CL', {day:'2-digit', month:'short'}).toUpperCase()}]`;
     cargarSueldoVisual(); actualizarDashboard();
 }
 
-// 🟢 LÓGICA DE DRAG AND DROP 🟢
 let draggedRowId = null;
-
 window.dragStart = function(e, id) { draggedRowId = id; e.dataTransfer.effectAllowed = 'move'; setTimeout(() => e.target.style.opacity = '0.4', 0); }
-window.dragOverPanel = function(e, tipo) { e.preventDefault(); const panel = e.currentTarget; panel.style.transition = "border-color 0.2s, box-shadow 0.2s"; if (tipo === 'tc') { panel.style.borderColor = "var(--color-fuga)"; panel.style.boxShadow = "0 0 15px rgba(218, 54, 51, 0.2)"; } else { panel.style.borderColor = "var(--color-ingresos)"; panel.style.boxShadow = "0 0 15px rgba(31, 111, 235, 0.2)"; } }
+window.dragOverPanel = function(e, tipo) { e.preventDefault(); const panel = e.currentTarget; panel.style.transition = "border-color 0.2s, box-shadow 0.2s"; if (tipo === 'tc') { panel.style.borderColor = "var(--color-fuga)"; panel.style.boxShadow = "inset 0 0 15px rgba(218, 54, 51, 0.1)"; } else { panel.style.borderColor = "var(--color-ingresos)"; panel.style.boxShadow = "inset 0 0 15px rgba(31, 111, 235, 0.1)"; } }
 window.dragLeavePanel = function(e, tipo) { const panel = e.currentTarget; if (tipo === 'tc') { panel.style.borderColor = "rgba(218, 54, 51, 0.3)"; } else { panel.style.borderColor = "var(--border-color)"; } panel.style.boxShadow = "none"; }
 window.dropOnPanel = function(e, tipo) {
     e.preventDefault(); dragLeavePanel(e, tipo); if (!draggedRowId) return;
     const mov = listaMovimientos.find(m => m.firestoreId === draggedRowId); if (!mov) return;
     if (tipo === 'tc' && mov.catV !== 'Gasto Tarjeta de Crédito') {
-        if(confirm("💳 ¿Transferir este gasto a la Deuda de Tarjeta de Crédito?")) {
+        if(confirm("💳 INYECCIÓN MANUAL:\n¿Transferir este gasto a la matriz de Deuda TC?")) {
             db.collection("movimientos").doc(draggedRowId).update({ categoria: "Gasto Tarjeta de Crédito", tipo: "Gasto" });
-            if(typeof mostrarToast === 'function') mostrarToast("TRANSFERIDO A TARJETA DE CRÉDITO");
+            mostrarToast("TRANSFERIDO A MATRIZ TC");
         }
     } else if (tipo === 'main' && mov.catV === 'Gasto Tarjeta de Crédito') {
-        if(confirm("🔄 ¿Devolver a Flujo de Efectivo (Como Ruido de Sistema)?")) {
+        if(confirm("🔄 INYECCIÓN MANUAL:\n¿Devolver gasto a Flujo de Efectivo Presente?")) {
             db.collection("movimientos").doc(draggedRowId).update({ categoria: "Ruido de Sistema", tipo: "Gasto", cuotas: 1 });
-            if(typeof mostrarToast === 'function') mostrarToast("DEVUELTO A FLUJO DE EFECTIVO");
+            mostrarToast("DEVUELTO A FLUJO PRESENTE");
         }
     }
     draggedRowId = null;
 }
-window.dragOver = function(e) { e.preventDefault(); e.currentTarget.style.borderTop = '3px solid var(--color-ingresos)'; }
+window.dragOver = function(e) { e.preventDefault(); e.currentTarget.style.borderTop = '2px solid var(--color-saldo)'; }
 window.dragLeave = function(e) { e.currentTarget.style.borderTop = ''; }
 window.dropRow = function(e, targetId) {
     e.preventDefault(); e.stopPropagation(); e.currentTarget.style.borderTop = '';
     if (!draggedRowId || draggedRowId === targetId) return;
-    if (currentSort.column !== 'fechaISO') return alert("⚠️ ALARMA: Para recalibrar el tiempo, la tabla debe estar ordenada por Fecha.");
+    if (currentSort.column !== 'fechaISO') return alert("⚠️ SYS ALARM: Ordena por fecha para habilitar recalibración de tiempo.");
     
     let vistaActual = [...datosMesGlobal].sort((a, b) => { if (a.fechaISO < b.fechaISO) return currentSort.direction === 'asc' ? -1 : 1; if (a.fechaISO > b.fechaISO) return currentSort.direction === 'asc' ? 1 : -1; return 0; });
     let draggedIdx = vistaActual.findIndex(x => x.firestoreId === draggedRowId);
@@ -649,138 +603,78 @@ window.dropRow = function(e, targetId) {
     else if (!t1_ms) newTimeMs = t2_ms + (dir === 'desc' ? 60000 : -60000); 
     else if (!t2_ms) newTimeMs = t1_ms + (dir === 'desc' ? -60000 : 60000);
     
-    if(confirm("⚙️ ¿Inyectar nuevo Timestamp para forzar cuadratura?")) { db.collection("movimientos").doc(draggedRowId).update({ fecha: new Date(newTimeMs) }); }
+    if(confirm("⚙️ ¿Forzar nuevo Timestamp para cuadratura de libro?")) { db.collection("movimientos").doc(draggedRowId).update({ fecha: new Date(newTimeMs) }); }
     draggedRowId = null;
 }
 document.addEventListener('dragend', (e) => { if(e.target.tagName === 'TR') e.target.style.opacity = '1'; });
 
 window.triggerSync = function() {
     fetch("https://script.google.com/macros/s/AKfycbwKlub0qrv8_d24ZuyKKNryqOw1E68xv1_JvPOoEUc6W8TICllFfodNcwkigQE_7AuoNg/exec", {mode:'no-cors'})
-    .then(()=>alert("✅ Base de datos Sincronizada."))
-    .catch(e => alert("Error de red: " + e));
-};
-
-window.enviarReporteTelegram = function() {
-    const txtSaldo = document.getElementById('txtSaldo');
-    const badge = document.getElementById('navRangoBadge');
-    const saldo = txtSaldo ? txtSaldo.innerText : '0';
-    const periodo = badge ? badge.innerText : 'Periodo Actual';
-    const msg = `🏭 *BÚNKER SCADA*\n💰 Saldo: $${saldo}\n🗓️ Periodo: ${periodo}`;
-    
-    fetch(`https://api.telegram.org/bot8614679709:AAEJGy9yAlKnhjVmJ0VUZpT-YmZQ6J5IOps/sendMessage`, { 
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ chat_id: "1484213465", text: msg, parse_mode: 'Markdown' }) 
-    })
-    .then(r => r.ok ? alert("✅ Telemetría Transmitida a Telegram.") : alert("❌ Error API Telegram"))
-    .catch(e => alert("Error de red: " + e));
+    .then(()=>mostrarToast("SYNC MANUAL COMPLETADO"))
+    .catch(e => alert("Error Net: " + e));
 };
 
 window.exportarTablaBunker = function(idTabla, nombreArchivo) {
-    console.log("📡 Iniciando exportación CSV para:", idTabla);
     const tabla = document.getElementById(idTabla);
-    if (!tabla) return alert("Error: No se encontró la tabla " + idTabla);
-
-    let csv = '';
-    const filas = tabla.querySelectorAll("tr");
-    
+    if (!tabla) return alert("Error SYS: Tabla " + idTabla + " no hallada.");
+    let csv = ''; const filas = tabla.querySelectorAll("tr");
     filas.forEach(fila => {
         let celdas = Array.from(fila.querySelectorAll("th, td"));
         celdas = celdas.filter(c => !c.classList.contains('col-check') && !c.classList.contains('col-drag') && !c.querySelector('button'));
-
-        const datosFila = celdas.map(celda => {
-            let texto = celda.innerText.replace(/(\r\n|\n|\r)/gm, " - ").replace(/"/g, '""').trim();
-            return `"${texto}"`;
-        });
-        
+        const datosFila = celdas.map(celda => `"${celda.innerText.replace(/(\r\n|\n|\r)/gm, " - ").replace(/"/g, '""').trim()}"`);
         if (datosFila.length > 0) csv += datosFila.join(";") + "\n";
     });
-
     try {
         const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
+        const link = document.createElement("a"); link.href = URL.createObjectURL(blob);
         link.download = `${nombreArchivo}_${new Date().toISOString().slice(0,10)}.csv`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    } catch (e) { console.error("Falla en navegador:", e); }
+        document.body.appendChild(link); link.click(); document.body.removeChild(link);
+    } catch (e) { console.error("Error Export:", e); }
 };
 
 // ==========================================================
-// 💳 MÓDULO FASE 2: TARJETA DE CRÉDITO (MASTER SCRIPT)
+// 💳 MATRIZ TC (Lector Híbrido V3)
 // ==========================================================
 let datosTCGlobal = [];
 
 function inicializarListenerTC() {
-    if (!db) return console.error("Firebase no está inicializado.");
-    console.log("📡 Conectando antena TC con Firebase...");
-    
+    console.log("%c[NET] Levantando Antena Matriz TC...", "color: #ff9800;");
     db.collection("deuda_tc").orderBy("mesCobro", "asc").onSnapshot(snapshot => {
-        console.log(`📥 Firebase reporta: ${snapshot.docs.length} cuotas leídas.`);
-        datosTCGlobal = [];
-        let totalDeuda = 0;
-        snapshot.forEach(doc => {
-            let data = doc.data();
-            data.id = doc.id;
-            datosTCGlobal.push(data);
-            totalDeuda += data.monto;
-        });
-        
+        datosTCGlobal = []; let totalDeuda = 0;
+        snapshot.forEach(doc => { let data = doc.data(); data.id = doc.id; datosTCGlobal.push(data); totalDeuda += data.monto; });
         const txtTotalTC = document.getElementById("txtTotalTC");
         if(txtTotalTC) txtTotalTC.innerText = totalDeuda.toLocaleString('es-CL');
-        
         if(typeof renderizarTablaTC === 'function') renderizarTablaTC();
-        
         window.totalTC = totalDeuda; 
         if(typeof actualizarDashboard === 'function') actualizarDashboard();
-    }, error => {
-        console.error("🛑 ALARMA FIREBASE TC:", error);
-        alert("El Búnker no tiene permisos para leer la Deuda TC. Revisa las reglas de Firestore.");
-    });
+    }, error => { console.error("🛑 FIREWALL TC:", error); });
 }
 
 function renderizarTablaTC() {
-    const tbody = document.getElementById("listaDetalleTC");
-    if (!tbody) return;
-    
+    const tbody = document.getElementById("listaDetalleTC"); if (!tbody) return;
     tbody.innerHTML = "";
-    
     if (datosTCGlobal.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:20px; color:#666;">No hay deuda proyectada. Ingesta un CSV.</td></tr>`;
-        
-        // Apagar el sensor de impacto si no hay deuda
-        let boxImpacto = document.getElementById('boxImpactoTC');
-        if(boxImpacto) boxImpacto.style.display = 'none';
+        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:20px; color:var(--text-muted);">MATRIZ SIN DATOS</td></tr>`;
+        let boxImpacto = document.getElementById('boxImpactoTC'); if(boxImpacto) boxImpacto.style.display = 'none';
         return;
     }
-
-    let sumaProximoMes = 0;
-    let fechaHoy = new Date();
-    let proximoMes = fechaHoy.getMonth() + 1;
-    let proximoAnio = fechaHoy.getFullYear();
+    let sumaProximoMes = 0; let fechaHoy = new Date();
+    let proximoMes = fechaHoy.getMonth() + 1; let proximoAnio = fechaHoy.getFullYear();
     if (proximoMes > 11) { proximoMes = 0; proximoAnio++; }
 
     datosTCGlobal.forEach(doc => {
         let fechaObj = new Date(doc.mesCobro);
         let mesTxt = fechaObj.toLocaleString('es-CL', { month: 'short', year: 'numeric' }).toUpperCase();
-        
-        if (fechaObj.getMonth() === proximoMes && fechaObj.getFullYear() === proximoAnio) {
-            sumaProximoMes += doc.monto;
-        }
-
+        if (fechaObj.getMonth() === proximoMes && fechaObj.getFullYear() === proximoAnio) sumaProximoMes += doc.monto;
         let tr = document.createElement("tr");
-        tr.style.borderBottom = "1px solid var(--border-color)";
         tr.innerHTML = `
-            <td style="text-align: center; padding: 6px;">
-                <input type="checkbox" class="checkItemTC" value="${doc.id}" onclick="actualizarBarraTC()" style="accent-color: #b71c1c;">
-            </td>
+            <td style="text-align: center;"><input type="checkbox" class="checkItemTC" value="${doc.id}" onclick="actualizarBarraTC()" style="accent-color: #b71c1c;"></td>
             <td style="font-size: 0.75rem; color: #00bcd4; font-weight: bold;">${mesTxt} (${doc.cuota})</td>
-            <td style="font-size: 0.7rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px;" title="${doc.nombre}">${doc.nombre}</td>
-            <td style="text-align: right; font-family: monospace; font-weight: bold; font-size: 0.8rem;">$${doc.monto.toLocaleString('es-CL')}</td>
-        `;
+            <td class="col-desc" title="${doc.nombre}">${doc.nombre}</td>
+            <td class="col-monto">$${doc.monto.toLocaleString('es-CL')}</td>`;
         tbody.appendChild(tr);
     });
 
-    // 🟢 INYECCIÓN DEL SENSOR DE IMPACTO AL HEADER 🟢
     let mesNombreStr = new Date(proximoAnio, proximoMes, 1).toLocaleString('es-CL', { month: 'long' }).toUpperCase();
     let boxImpacto = document.getElementById('boxImpactoTC');
     if (boxImpacto) {
@@ -788,46 +682,27 @@ function renderizarTablaTC() {
             boxImpacto.style.display = 'flex';
             document.getElementById('lblImpactoMes').innerText = `⚠️ IMPACTO EN ${mesNombreStr}`;
             document.getElementById('txtImpactoMonto').innerText = `$${sumaProximoMes.toLocaleString('es-CL')}`;
-        } else {
-            boxImpacto.style.display = 'none';
-        }
+        } else { boxImpacto.style.display = 'none'; }
     }
-
     actualizarBarraTC(); 
 }
 
-// 3. Motor Lector de CSV (Híbrido V3 - Facturado/No Facturado)
 function cargarCSV_TC() {
-    let fileInputTC = document.createElement('input');
-    fileInputTC.type = 'file';
-    fileInputTC.accept = '.csv';
+    let fileInputTC = document.createElement('input'); fileInputTC.type = 'file'; fileInputTC.accept = '.csv';
     fileInputTC.onchange = e => {
         let file = e.target.files[0];
-        
-        // INTERFAZ HMI: Confirmación de tipo de datos
-        let esFacturado = confirm("💳 ANÁLISIS DE INGESTA\n\n¿Este archivo corresponde a Movimientos FACTURADOS?\n\n[OK] = Sí, ya están facturados.\n[Cancelar] = No, son NO facturados.");
-        
+        let esFacturado = confirm("💳 PARÁMETRO DE INGESTA\n\n¿Corresponde a movimientos FACTURADOS?\n\n[OK] = Sí, se cobra este ciclo.\n[Cancelar] = No, es proyección futura.");
         let reader = new FileReader();
         reader.onload = async ev => {
             try {
-                let text = ev.target.result;
-                let lineas = text.split('\n');
-                let batch = db.batch(); 
-                let cuotasProcesadas = 0;
-
+                let text = ev.target.result; let lineas = text.split('\n'); let batch = db.batch(); let cuotasProcesadas = 0;
                 for(let i = 1; i < lineas.length; i++) {
                     if(lineas[i].trim() === '') continue; 
-                    
                     let separador = lineas[i].includes(';') ? ';' : ',';
-                    let cols = lineas[i].split(separador); 
-                    if(cols.length < 4) continue; 
-
-                    let fecha = cols[0].trim();
-                    let nombre = cols[1].trim().replace(/\s+/g, ' ').toUpperCase(); 
-                    
+                    let cols = lineas[i].split(separador); if(cols.length < 4) continue; 
+                    let fecha = cols[0].trim(); let nombre = cols[1].trim().replace(/\s+/g, ' ').toUpperCase(); 
                     let colCuotas = cols.find(c => c.includes('/') && c.length <= 5) || "01/01";
                     let cuotasInfo = colCuotas.trim().split('/'); 
-                    
                     let montoStr = cols[cols.length - 1].replace(/[^0-9-]/g, '');
                     if(!montoStr && cols.length > 1) montoStr = cols[cols.length - 2].replace(/[^0-9-]/g, '');
                     let montoTotal = parseInt(montoStr);
@@ -835,52 +710,24 @@ function cargarCSV_TC() {
                     if(isNaN(montoTotal) || montoTotal <= 0) continue;
                     if(nombre.includes("REV.COMPRAS") || nombre.includes("PAGO PESOS") || nombre.includes("TEF") || nombre.includes("PAGO EN LINEA")) continue;
 
-                    let cuotaActual = parseInt(cuotasInfo[0]) || 1;
-                    let totalCuotas = parseInt(cuotasInfo[1]) || 1;
+                    let cuotaActual = parseInt(cuotasInfo[0]) || 1; let totalCuotas = parseInt(cuotasInfo[1]) || 1;
                     let montoMensual = totalCuotas > 1 ? Math.round(montoTotal / totalCuotas) : montoTotal;
-                    
-                    let partesF = fecha.replace(/-/g, '/').split('/');
-                    if (partesF.length !== 3) continue; 
-
-                    let fechaCompra = new Date(partesF[2], partesF[1] - 1, partesF[0]);
-                    let hoy = new Date();
+                    let partesF = fecha.replace(/-/g, '/').split('/'); if (partesF.length !== 3) continue; 
+                    let fechaCompra = new Date(partesF[2], partesF[1] - 1, partesF[0]); let hoy = new Date();
 
                     for(let c = cuotaActual; c <= totalCuotas; c++) {
                         let fechaCobro;
-                        
-                        if (esFacturado) {
-                            fechaCobro = new Date(hoy.getFullYear(), hoy.getMonth() + (c - cuotaActual), 15);
-                        } else {
-                            let mesesDesfase = totalCuotas > 1 ? 2 : 1; 
-                            fechaCobro = new Date(fechaCompra);
-                            fechaCobro.setMonth(fechaCobro.getMonth() + mesesDesfase + (c - cuotaActual));
-                        }
-                        
+                        if (esFacturado) fechaCobro = new Date(hoy.getFullYear(), hoy.getMonth() + (c - cuotaActual), 15);
+                        else { let mesesDesfase = totalCuotas > 1 ? 2 : 1; fechaCobro = new Date(fechaCompra); fechaCobro.setMonth(fechaCobro.getMonth() + mesesDesfase + (c - cuotaActual)); }
                         let docId = `${fecha.replace(/[^0-9]/g, '')}-${nombre.replace(/[^A-Z0-9]/g, '').substring(0,10)}-C${c}de${totalCuotas}`;
-                        
                         let ref = db.collection("deuda_tc").doc(docId);
-                        batch.set(ref, {
-                            nombre: nombre,
-                            monto: montoMensual,
-                            cuota: `${c}/${totalCuotas}`,
-                            mesCobro: fechaCobro.toISOString(),
-                            status: esFacturado ? "Facturado" : "Proyectado"
-                        });
+                        batch.set(ref, { nombre: nombre, monto: montoMensual, cuota: `${c}/${totalCuotas}`, mesCobro: fechaCobro.toISOString(), status: esFacturado ? "Facturado" : "Proyectado" });
                         cuotasProcesadas++;
                     }
                 }
-
-                if (cuotasProcesadas === 0) {
-                    alert("⚠️ ESCUDO ACTIVO:\nNo se detectaron deudas válidas.\n(Los abonos y pagos a la tarjeta fueron ignorados).");
-                } else {
-                    await batch.commit();
-                    alert(`✅ INGESTA EXITOSA:\n\nSe inyectaron ${cuotasProcesadas} cuotas exactas al SCADA.`);
-                }
-
-            } catch (error) {
-                console.error("Falla Crítica en Lector:", error);
-                alert("❌ ERROR DE CÓDIGO: " + error.message);
-            }
+                if (cuotasProcesadas === 0) alert("⚠️ RECHAZO DE DATOS:\nNo hay cuotas válidas.");
+                else { await batch.commit(); mostrarToast(`${cuotasProcesadas} CUOTAS INYECTADAS`); }
+            } catch (error) { console.error("Error Ingesta:", error); alert("❌ SYS ERROR: " + error.message); }
         };
         reader.readAsText(file, 'UTF-8');
     };
@@ -891,38 +738,15 @@ function actualizarBarraTC() {
     const seleccionados = document.querySelectorAll('.checkItemTC:checked');
     const barra = document.getElementById('barraAccionesTC');
     const txt = document.getElementById('txtSeleccionadosTC');
-    
-    if (seleccionados.length > 0) {
-        if(barra) barra.style.display = 'flex';
-        if(txt) txt.innerText = `${seleccionados.length} CUOTAS SELECCIONADAS`;
-    } else {
-        if(barra) barra.style.display = 'none';
-        let maestro = document.getElementById('checkMaestroTC');
-        if(maestro) maestro.checked = false;
-    }
+    if (seleccionados.length > 0) { if(barra) barra.style.display = 'flex'; if(txt) txt.innerText = `${seleccionados.length} CMD`; } 
+    else { if(barra) barra.style.display = 'none'; let maestro = document.getElementById('checkMaestroTC'); if(maestro) maestro.checked = false; }
 }
 
-function toggleTodosTC(maestro) {
-    const checks = document.querySelectorAll('.checkItemTC');
-    checks.forEach(c => c.checked = maestro.checked);
-    actualizarBarraTC();
-}
-
+function toggleTodosTC(maestro) { document.querySelectorAll('.checkItemTC').forEach(c => c.checked = maestro.checked); actualizarBarraTC(); }
 async function ejecutarPurgaMasivaTC() {
     const seleccionados = document.querySelectorAll('.checkItemTC:checked');
-    if (!confirm(`⚠️ ¿Confirmas la eliminación de ${seleccionados.length} cuotas?`)) return;
-
-    const batch = db.batch();
-    seleccionados.forEach(checkbox => {
-        const ref = db.collection("deuda_tc").doc(checkbox.value);
-        batch.delete(ref);
-    });
-
-    try {
-        await batch.commit();
-    } catch (error) {
-        console.error("Falla en la purga: ", error);
-        alert("❌ Error de comunicación.");
-    }
+    if (!confirm(`⚠️ WARNING: Borrar ${seleccionados.length} registros permanentemente?`)) return;
+    const batch = db.batch(); seleccionados.forEach(cb => { batch.delete(db.collection("deuda_tc").doc(cb.value)); });
+    try { await batch.commit(); mostrarToast("PURGA COMPLETADA"); } catch (error) { alert("❌ Error Net."); }
 }
 // ==========================================================
