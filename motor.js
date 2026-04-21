@@ -108,6 +108,9 @@ auth.onAuthStateChanged(user => {
             });
             aplicarCicloAlSistema();
         });
+
+        // 🟢 ANTENA TC BLINDADA: Solo se enciende cuando el usuario está 100% logueado
+        inicializarListenerTC();
     }
 });
 
@@ -936,6 +939,4 @@ async function ejecutarPurgaMasivaTC() {
     }
 }
 
-// 🔥 AUTO-ARRANQUE DEL SENSOR TC
-setTimeout(() => { inicializarListenerTC(); }, 1500);
 // ==========================================================
