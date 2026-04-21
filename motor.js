@@ -1014,4 +1014,36 @@ function ejecutarArranque() {
         cerrarPreVuelo();
     }
 }
+
+// ==========================================================
+// 🟢 PARCHE V12.4.1: GUARDADO DE SUELDO DINÁMICO EN LA NUBE 
+// ==========================================================
+window.guardarSueldoEnNube = function() {
+    const elMes = document.getElementById('navMesConceptual');
+    const elAnio = document.getElementById('navAnio');
+    const elSueldo = document.getElementById('inputSueldo');
+    
+    if(!elMes || !elAnio || !elSueldo) return;
+    
+    let m = elMes.value;
+    let a = elAnio.value;
+    // Si lo dejas vacío, asume 0 para no romper las matemáticas
+    let s = parseInt(elSueldo.value.replace(/\./g, '')) || 0; 
+    
+    // Creamos la llave única para ese mes (ej: "2026_4" para mayo)
+    let llave = `${a}_${m}`;
+    
+    // Actualizamos la memoria local al instante
+    sueldosHistoricos[llave] = s;
+    
+    // Lo disparamos a Firebase
+    db.collection("parametros").doc("sueldos").set({
+        [llave]: s
+    }, {merge: true}).then(() => {
+        mostrarToast("SUELDO BASE GUARDADO");
+        actualizarDashboard(); // Recalcula los gráficos con el nuevo valor
+    }).catch(err => {
+        alert("❌ Error de comunicación con la Nube: " + err.message);
+    });
+};
 // ==========================================================
