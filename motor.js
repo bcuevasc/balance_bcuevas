@@ -1,5 +1,5 @@
 // ==========================================================
-// 🧠 BÚNKER SCADA PRO - MOTOR LÓGICO V9.0 (DUAL-CORE EDITION)
+// 🧠 BÚNKER SCADA ORACLE - MOTOR LÓGICO V10.0
 // ==========================================================
 const BYRON_EMAIL = "bvhcc94@gmail.com"; 
 const CREDIT_SETPOINT = -300000; 
@@ -8,11 +8,11 @@ const SUELDO_BASE_DEFAULT = 3602505;
 
 // 🟢 MÓDULO A.C.E. (Auto-Categorización Experta) 🟢
 const diccAuto = [
-    { keys: ["uber", "didi", "cabify", "pasaje", "buses", "turbus", "copec", "shell", "metro"], cat: "Transporte & Logística", tipo: "Gasto", fuga: "0" },
+    { keys: ["uber", "didi", "cabify", "pasaje", "buses", "turbus", "copec", "shell", "metro", "autopase"], cat: "Transporte & Logística", tipo: "Gasto", fuga: "0" },
     { keys: ["pedidosya", "mcdonalds", "burger king", "starbucks", "rappi", "helado", "cine", "concierto"], cat: "Dopamina & Antojos", tipo: "Gasto", fuga: "100" },
-    { keys: ["netflix", "spotify", "hbo", "prime", "icloud", "google", "vtr", "wom", "entel"], cat: "Suscripciones", tipo: "Gasto Fijo", fuga: "0" },
-    { keys: ["jumbo", "lider", "unimarc", "santa isabel", "panaderia", "carniceria", "feria", "minimarket"], cat: "Alimentación & Supermercado", tipo: "Gasto", fuga: "0" },
-    { keys: ["farmacia", "cruz verde", "salcobrand", "doctor", "consulta", "integramedica", "medico"], cat: "Mantenimiento Hardware (Salud)", tipo: "Gasto", fuga: "0" }
+    { keys: ["netflix", "spotify", "hbo", "prime", "icloud", "google", "vtr", "wom", "entel", "movistar"], cat: "Suscripciones", tipo: "Gasto Fijo", fuga: "0" },
+    { keys: ["jumbo", "lider", "unimarc", "santa isabel", "panaderia", "carniceria", "feria", "minimarket", "tottus"], cat: "Alimentación & Supermercado", tipo: "Gasto", fuga: "0" },
+    { keys: ["farmacia", "cruz verde", "salcobrand", "doctor", "consulta", "integramedica", "medico", "ahumada"], cat: "Mantenimiento Hardware (Salud)", tipo: "Gasto", fuga: "0" }
 ];
 
 const catMaestras = [
@@ -51,11 +51,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const selectMass = document.getElementById('massCategorySelect');
     if (selectMass) selectMass.innerHTML = `<option value="">-- Recategorizar a --</option>` + optionsHTML;
 
-    // 🟢 SENSOR DE ESCRITURA (Auto-Piloto) 🟢
     const inputNombre = document.getElementById('inputNombre');
     if(inputNombre) {
         inputNombre.addEventListener('input', (e) => {
-            if(modoEdicionActivo) return; // No auto-cambiar si el usuario está editando un registro antiguo
+            if(modoEdicionActivo) return; 
             let texto = e.target.value.toLowerCase();
             for(let dict of diccAuto) {
                 if(dict.keys.some(k => texto.includes(k))) {
@@ -63,9 +62,8 @@ document.addEventListener("DOMContentLoaded", () => {
                     document.getElementById('inputTipo').value = dict.tipo;
                     let fEl = document.getElementById('inputFuga');
                     if(fEl) fEl.value = dict.fuga;
-                    // Animación de feedback táctil
-                    inputNombre.style.borderBottom = "2px solid var(--color-saldo)";
-                    setTimeout(() => inputNombre.style.borderBottom = "1px solid var(--border-color)", 1000);
+                    inputNombre.style.borderBottom = "2px solid #2ea043";
+                    setTimeout(() => inputNombre.style.borderBottom = "2px solid var(--accent-blue)", 1000);
                     break;
                 }
             }
@@ -105,7 +103,7 @@ window.mostrarToast = function(mensaje) {
     let toast = document.getElementById('toast-notif');
     if(!toast) {
         toast = document.createElement('div'); toast.id = 'toast-notif';
-        toast.style.cssText = 'position:fixed; top:20px; right:20px; background:var(--bg-panel); color:var(--color-saldo); padding:12px 24px; border-radius:6px; border: 1px solid var(--color-saldo); font-weight:900; font-size:0.85rem; font-family:monospace; z-index:10000; transition:opacity 0.4s; box-shadow:0 0 15px rgba(63,185,80,0.2); text-transform:uppercase;';
+        toast.style.cssText = 'position:fixed; top:20px; right:20px; background:rgba(46, 160, 67, 0.1); color:#2ea043; padding:12px 24px; border-radius:8px; border: 1px solid #2ea043; font-weight:900; font-size:0.85rem; font-family:monospace; z-index:10000; transition:opacity 0.4s; box-shadow:0 0 20px rgba(46, 160, 67, 0.3); text-transform:uppercase; letter-spacing:1px; backdrop-filter:blur(5px);';
         document.body.appendChild(toast);
     }
     toast.innerHTML = '⚡ ' + mensaje;
@@ -118,7 +116,7 @@ function logout() { auth.signOut().then(() => window.location.reload()); }
 
 auth.onAuthStateChanged(user => {
     if (user && user.email.toLowerCase() === BYRON_EMAIL.toLowerCase()) {
-        console.log("%c[SCADA V9.0] BOOT SEQUENCE INITIATED", "color: #00bcd4; font-weight: bold; font-size: 14px;");
+        console.log("%c[ORACLE V10.0] BOOT SEQUENCE INITIATED", "color: #79c0ff; font-weight: bold; font-size: 14px;");
         
         const loginScreen = document.getElementById('login-screen'), reportZone = document.getElementById('reportZone');
         if(loginScreen) loginScreen.style.display = 'none';
@@ -127,10 +125,7 @@ auth.onAuthStateChanged(user => {
         const userDisplay = document.getElementById('user-display');
         if(userDisplay) userDisplay.innerText = user.displayName.split(" ")[0];
         
-        console.log("%c[NET] Conectando matriz de sueldos...", "color: #ff9800;");
         db.collection("parametros").doc("sueldos").onSnapshot(snap => { if(snap.exists) sueldosHistoricos = snap.data(); });
-
-        console.log("%c[NET] Conectando sensor de flujo de efectivo...", "color: #ff9800;");
         db.collection("movimientos").onSnapshot(snap => {
             listaMovimientos = [];
             snap.forEach(doc => {
@@ -139,10 +134,9 @@ auth.onAuthStateChanged(user => {
                 d.monto = Number(d.monto) || 0;
                 listaMovimientos.push(d);
             });
-            console.log(`%c[SYS] ${listaMovimientos.length} registros cargados en memoria.`, "color: #4caf50; font-weight:bold;");
+            console.log(`%c[SYS] ${listaMovimientos.length} registros cargados en núcleo.`, "color: #2ea043; font-weight:bold;");
             aplicarCicloAlSistema();
         });
-
         inicializarListenerTC();
     }
 });
@@ -218,7 +212,7 @@ function actualizarDashboard() {
     if(txtPctFugas) {
         txtPctFugas.innerText = pctFugas + '%';
         if (pctFugas < 5) txtPctFugas.style.color = "var(--color-saldo)";
-        else if (pctFugas <= 10) txtPctFugas.style.color = "#ff9800";
+        else if (pctFugas <= 10) txtPctFugas.style.color = "#d29922";
         else txtPctFugas.style.color = "var(--color-fuga)";
     }
 
@@ -227,13 +221,12 @@ function actualizarDashboard() {
     if(txtProyectado) {
         let proyVal = saldoAcc - deudaAprox;
         txtProyectado.innerText = proyVal.toLocaleString('es-CL');
-        txtProyectado.style.color = proyVal < 0 ? "var(--color-fuga)" : "#8c9eff";
+        txtProyectado.style.color = proyVal < 0 ? "var(--color-fuga)" : "#79c0ff";
     }
 
     let dataGraficos = dataMes.filter(x => x.catV !== 'Gasto Tarjeta de Crédito');
     renderizarListas(sueldo, b);
     
-    // 🟢 Pasamos "tF" (Total Fijos) para el cálculo de Límites Dinámicos 🟢
     if(typeof dibujarGraficos === 'function') dibujarGraficos(sueldo, [...dataGraficos].sort((x,y) => x.fechaISO < y.fechaISO ? -1 : 1), gCat, diasCiclo, T0, tF);
     
     setTxt('txtGastoTramo', tO + tF);
@@ -262,7 +255,7 @@ function renderizarListas(sueldoBase, filtroBuscador) {
     if (!contenedorPC) return;
 
     if(datos.length === 0) {
-        contenedorPC.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:20px; color:var(--text-muted);">MATRIZ SIN DATOS</td></tr>`;
+        contenedorPC.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:20px; color:var(--text-muted); font-family:monospace;">MATRIZ SIN DATOS</td></tr>`;
         return;
     }
 
@@ -276,7 +269,7 @@ function renderizarListas(sueldoBase, filtroBuscador) {
         const dateStr = d.toLocaleDateString('es-CL', {day:'2-digit', month:'2-digit'});
         const timeStr = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
 
-        const colorMonto = x.esIn ? "var(--color-ingresos)" : x.esNeutro ? "#ff9800" : "var(--text-main)";
+        const colorMonto = x.esIn ? "var(--color-ingresos)" : x.esNeutro ? "#d29922" : "var(--text-main)";
         const nombreSeguro = x.nombre || "Dato no identificado";
         const montoSeguro = (typeof x.monto === 'number' && !isNaN(x.monto)) ? x.monto : 0;
         const colorSaldo = x.saldoCalculadoVista < 0 ? 'var(--color-fuga)' : 'var(--text-muted)';
@@ -285,7 +278,7 @@ function renderizarListas(sueldoBase, filtroBuscador) {
         let editIdVal = document.getElementById('editId') ? document.getElementById('editId').value : '';
         let esEditando = (editIdVal === x.firestoreId);
         
-        let cssFuga = x.catV === 'Dopamina & Antojos' && !esEditando ? 'background: linear-gradient(90deg, rgba(255,255,255,0.01) 60%, rgba(218,54,51,0.15) 100%); border-right: 2px solid #ff5252;' : '';
+        let cssFuga = x.catV === 'Dopamina & Antojos' && !esEditando ? 'background: linear-gradient(90deg, rgba(255,255,255,0.01) 60%, rgba(255,82,82,0.15) 100%); border-right: 2px solid #ff5252;' : '';
         let bgEdicion = esEditando ? 'background-color: rgba(210, 153, 34, 0.15); border-left: 3px solid var(--color-edit);' : cssFuga;
 
         htmlPC += `<tr style="${bgEdicion}" draggable="true" ondragstart="dragStart(event, '${x.firestoreId}')" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dropRow(event, '${x.firestoreId}')">
@@ -295,7 +288,7 @@ function renderizarListas(sueldoBase, filtroBuscador) {
             <td style="font-size:0.7rem;"><span class="cat-badge">${x.catV.replace(' & ','&')}</span></td>
             <td class="col-monto" style="color:${colorMonto};">${iconImpacto}$${montoSeguro.toLocaleString('es-CL')}</td>
             <td class="col-monto hide-mobile" style="color:${colorSaldo}; font-size:0.75rem;">$${x.saldoCalculadoVista.toLocaleString('es-CL')}</td>
-            <td style="text-align:center;"><button class="btn-sys" style="padding:2px 6px; border:none; background:transparent;" onclick="editarMovimiento('${x.firestoreId}')">✏️</button></td>
+            <td style="text-align:center;"><button class="btn-sys" style="padding:2px 6px; border:none; background:transparent; font-size:1rem;" onclick="editarMovimiento('${x.firestoreId}')">✏️</button></td>
         </tr>`;
     });
 
@@ -370,22 +363,23 @@ function formatearEntradaNumerica(i) { let v = i.value.replace(/\D/g,''); i.valu
 function toggleTheme() { document.body.classList.toggle('light-theme'); }
 setInterval(() => { const c = document.getElementById('cronos'); if(c) c.innerText = new Date().toLocaleString('es-CL').toUpperCase(); }, 1000);
 function toggleAllChecks() { const checkEl = document.getElementById('checkAll'); if(!checkEl) return; const check = checkEl.checked; document.querySelectorAll('.row-check').forEach(cb => cb.checked = check); updateMassActions(); }
-function updateMassActions() { const bar = document.getElementById('massActionsBar'); if(!bar) return; const cnt = document.querySelectorAll('.row-check:not(#checkAll):checked').length; bar.style.display = cnt > 0 ? 'flex' : 'none'; document.getElementById('massCount').innerText = `${cnt} seleccionado(s)`; if(cnt === 0) document.getElementById('checkAll').checked = false; }
+function updateMassActions() { const bar = document.getElementById('massActionsBar'); if(!bar) return; const cnt = document.querySelectorAll('.row-check:not(#checkAll):checked').length; bar.style.display = cnt > 0 ? 'flex' : 'none'; document.getElementById('massCount').innerText = `${cnt} SEL`; if(cnt === 0) document.getElementById('checkAll').checked = false; }
 function massDelete() { const ids = Array.from(document.querySelectorAll('.row-check:not(#checkAll):checked')).map(cb => cb.value); if(ids.length === 0 || !confirm(`⚠️ ¿Eliminar ${ids.length} registro(s)?`)) return; const btn = document.querySelector('button[onclick="massDelete()"]'); const orig = btn.innerHTML; btn.innerHTML = '⏳'; Promise.all(ids.map(id => db.collection("movimientos").doc(id).delete())).then(() => { document.getElementById('massActionsBar').style.display = 'none'; document.getElementById('checkAll').checked = false; btn.innerHTML = orig; }); }
 function massCategorize() { const ids = Array.from(document.querySelectorAll('.row-check:not(#checkAll):checked')).map(cb => cb.value); const cat = document.getElementById('massCategorySelect').value; if(ids.length === 0 || !cat || !confirm(`¿Categorizar como "${cat}"?`)) return; const btn = document.querySelector('button[onclick="massCategorize()"]'); const orig = btn.innerHTML; btn.innerHTML = '⏳'; Promise.all(ids.map(id => db.collection("movimientos").doc(id).update({categoria: cat}))).then(() => { document.getElementById('massActionsBar').style.display = 'none'; document.getElementById('checkAll').checked = false; document.getElementById('massCategorySelect').value = ''; btn.innerHTML = orig; }); }
 
 // =====================================================================
-// 🟢 LÓGICA DE GRÁFICOS (SMART DCL Y PROYECCIÓN 6 MESES) 🟢
+// 🔮 PROYECTO ORÁCULO: TELEMETRÍA V10.0
 // =====================================================================
 function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0, totalFijosMes) {
     if(chartBD) chartBD.destroy(); if(chartP) chartP.destroy(); 
     if(chartDiario) chartDiario.destroy(); if(chartRadar) chartRadar.destroy();
     
     const cT = getComputedStyle(document.body).getPropertyValue('--text-main').trim() || "#f0f6fc"; 
-    const cG = getComputedStyle(document.body).getPropertyValue('--border-color').trim() || "#2d333b"; 
+    const cG = getComputedStyle(document.body).getPropertyValue('--border-color').trim() || "#21262d"; 
     
     let daily = Array(diasCiclo + 1).fill(0);
-    let dailyGastosVar = Array(diasCiclo + 1).fill(0); 
+    let dailyNecesario = Array(diasCiclo + 1).fill(0); 
+    let dailyFugas = Array(diasCiclo + 1).fill(0); 
     let msT0 = T0.getTime();
 
     chronData.forEach(m => {
@@ -395,13 +389,16 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0, totalFijosMes) 
             if(m.esIn) daily[diff] += m.monto; 
             else if(!m.esNeutro) { 
                 daily[diff] -= m.monto; 
-                if(m.tipo !== 'Gasto Fijo') dailyGastosVar[diff] += m.monto; 
+                if(m.tipo !== 'Gasto Fijo') {
+                    if(catEvitables.includes(m.catV)) dailyFugas[diff] += m.monto;
+                    else dailyNecesario[diff] += m.monto;
+                }
             } 
         }
     });
 
-    let actual = [sueldo], ideal = [sueldo], labelsX = ["INI"];
-    let labelsFechas = ["INI"]; 
+    let actual = [sueldo], ideal = [sueldo], proyeccion = Array(diasCiclo + 1).fill(null);
+    let labelsX = ["INI"]; let labelsFechas = ["INI"]; 
     
     let acc = sueldo, limit = Math.floor((Date.now() - msT0) / 86400000) + 1;
     const nombresMes = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"];
@@ -410,98 +407,71 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0, totalFijosMes) 
         ideal.push(sueldo - (sueldo/diasCiclo)*i); 
         acc += daily[i]; 
         actual.push(i > limit ? null : acc);
+        
         let f = new Date(msT0 + (i-1)*86400000); let dia = String(f.getDate()).padStart(2, '0');
         let mesStr = nombresMes[f.getMonth()];
         labelsFechas.push(`${dia} ${mesStr}`); 
         labelsX.push(f.getDate() === 1 ? `${dia} ${mesStr}` : dia); 
     }
 
-    const marcadorInicioMes = {
-        id: 'marcadorInicioMes',
-        afterDraw: (chart) => {
-            const ctx = chart.ctx;
-            const xAxis = chart.scales.x;
-            const yAxis = chart.scales.y;
-            const indexInicio = chart.data.labels.findIndex(label => label.toString().includes('01'));
-            if (indexInicio !== -1) {
-                const xPixel = xAxis.getPixelForTick(indexInicio);
-                ctx.save(); ctx.beginPath(); ctx.moveTo(xPixel, yAxis.top); ctx.lineTo(xPixel, yAxis.bottom);
-                ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(255, 152, 0, 0.5)'; ctx.stroke(); ctx.restore();
-            }
+    // 🔮 ORACLE: Calcular línea predictiva
+    if(limit > 1 && limit <= diasCiclo) {
+        let gastoAcumulado = sueldo - actual[limit];
+        let promedioGastoDiario = gastoAcumulado / limit;
+        proyeccion[limit] = actual[limit];
+        for(let i = limit + 1; i <= diasCiclo; i++) {
+            proyeccion[i] = proyeccion[i-1] - promedioGastoDiario;
         }
-    };
+    }
 
-    chartBD = new Chart(document.getElementById('chartBurnDown'), {
-        type: 'line', 
-        data: { labels: labelsX, datasets: [
-            { 
-                label: 'Consumo Real', data: actual, borderColor: '#1f6feb', borderWidth: 3, fill: false, pointRadius: 0,
-                segment: {
-                    borderColor: ctx => ctx.p1.parsed.y < 0 ? 'rgba(31, 111, 235, 0.3)' : '#1f6feb',
-                    borderDash: ctx => ctx.p1.parsed.y < 0 ? [5, 5] : undefined
-                }
-            },
-            { label: 'Gasto Ideal', data: ideal, borderColor: 'rgba(63,185,80,0.3)', borderDash:[5,5], pointRadius:0 }
-        ]},
-        options: { 
-            maintainAspectRatio:false, plugins:{legend:{display:false}}, 
-            scales: {
-                x: { ticks: { color: cT, font: {size: 9} } },
-                y: { grid: { color: cG }, ticks: { color: cT, callback: function(value) { return '$' + Math.round(value/1000) + 'k'; } } }
-            },
-            layout: { padding: 0 }
-        },
-        plugins: [marcadorInicioMes]
-    });
-
-    const sorted = Object.entries(cats).sort((a,b)=>b[1]-a[1]).slice(0,5); const totalTop5 = sorted.reduce((sum, val) => sum + val[1], 0) || 1;
-    let acumulado = 0; const dataAcumulada = sorted.map(c => { acumulado += c[1]; return (acumulado / totalTop5) * 100; });
-
-    chartP = new Chart(document.getElementById('chartPareto'), {
-        type: 'bar', 
-        data: { labels: sorted.map(c => aliasMap[c[0]] || c[0].split(' ')[0]), datasets: [
-            { type: 'line', label: '% Acumulado', data: dataAcumulada, borderColor: '#ff9800', borderWidth: 2, borderDash: [5, 5], pointBackgroundColor: '#ff9800', pointRadius: 3, fill: false, yAxisID: 'y1' },
-            { type: 'bar', label: 'Gasto', data: sorted.map(c => c[1]), backgroundColor: 'rgba(31, 111, 235, 0.6)', borderRadius: 2, yAxisID: 'y' }
-        ]},
-        options: { maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{ x:{ticks:{color:cT, font:{size:8}}}, y:{ ticks:{color:cT, callback:v=>'$'+Math.round(v/1000)+'k'} }, y1:{ type: 'linear', position: 'right', min: 0, max: 100, grid: { drawOnChartArea: false }, ticks:{color:'#ff9800', callback:v=>Math.round(v)+'%'} } } }
-    });
-
-    // 🟢 SENSOR D.C.L. (Límite Dinámico Diario) 🟢
-    let presupuestoLibre = sueldo - totalFijosMes;
-    let limiteDiarioIdeal = Math.max(presupuestoLibre / diasCiclo, 0);
-
-    const ctxDiario = document.getElementById('chartDiario');
-    if(ctxDiario) {
-        let lastDayWithData = diasCiclo;
-        while(lastDayWithData > 0 && dailyGastosVar[lastDayWithData] === 0) lastDayWithData--;
-        let startDayForBars = Math.max(1, lastDayWithData - 14); // Mostrar 14 días en el panorama
-        let barLabels = labelsFechas.slice(startDayForBars, lastDayWithData + 1); 
-        let barData = dailyGastosVar.slice(startDayForBars, lastDayWithData + 1);
-
-        // Barras se vuelven rojas si superan el límite dinámico
-        let coloresBarras = barData.map(v => v > limiteDiarioIdeal ? 'rgba(218, 54, 51, 0.8)' : 'rgba(31, 111, 235, 0.5)');
-
-        const limiteDiarioPlugin = {
-            id: 'limiteDiarioPlugin',
-            afterDraw: (chart) => {
-                if(limiteDiarioIdeal <= 0) return;
-                const ctx = chart.ctx; const xAxis = chart.scales.x; const yAxis = chart.scales.y;
-                const yPos = yAxis.getPixelForValue(limiteDiarioIdeal);
-                if(yPos >= yAxis.top && yPos <= yAxis.bottom) {
-                    ctx.save(); ctx.beginPath(); ctx.moveTo(xAxis.left, yPos); ctx.lineTo(xAxis.right, yPos);
-                    ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(218, 54, 51, 0.8)'; ctx.setLineDash([4, 4]); ctx.stroke(); ctx.restore();
-                }
-            }
-        };
-
-        chartDiario = new Chart(ctxDiario, {
-            type: 'bar',
-            data: { labels: barLabels, datasets: [{ label: 'Gasto Variable', data: barData, backgroundColor: coloresBarras, borderRadius: 2 }] },
-            options: { maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: {callbacks: {afterLabel: function(ctx){ return 'Límite: $' + Math.round(limiteDiarioIdeal).toLocaleString(); }}} }, scales: { x: { ticks: { color: cT, font:{size:8} }, grid: { display:false } }, y: { ticks: { color: cT, callback: v => '$' + Math.round(v / 1000) + 'k' }, grid: { color: cG } } } },
-            plugins: [limiteDiarioPlugin]
+    const ctxBD = document.getElementById('chartBurnDown');
+    if(ctxBD) {
+        let grad = ctxBD.getContext('2d').createLinearGradient(0, 0, 0, 400);
+        grad.addColorStop(0, 'rgba(31, 111, 235, 0.4)'); grad.addColorStop(1, 'rgba(31, 111, 235, 0)');
+        
+        chartBD = new Chart(ctxBD, {
+            type: 'line', 
+            data: { labels: labelsX, datasets: [
+                { label: 'Consumo Real', data: actual, borderColor: '#1f6feb', backgroundColor: grad, borderWidth: 3, fill: true, pointRadius: 0, tension: 0.2 },
+                { label: 'Proyección (Oráculo)', data: proyeccion, borderColor: '#d29922', borderDash: [5, 5], borderWidth: 2, fill: false, pointRadius: 0, tension: 0.2 },
+                { label: 'Ideal', data: ideal, borderColor: 'rgba(46, 160, 67, 0.4)', borderDash: [5, 5], borderWidth: 2, fill: false, pointRadius: 0 }
+            ]},
+            options: { maintainAspectRatio:false, plugins:{legend:{display:false}}, scales: { x: { ticks: { color: cT, font: {size: 9} }, grid:{color:cG} }, y: { grid: { color: cG }, ticks: { color: cT, callback: v => '$' + Math.round(v/1000) + 'k' } } }, layout: { padding: 0 } }
         });
     }
 
+    // 🔮 ORACLE: Gráfico Polar de Espectro
+    const sorted = Object.entries(cats).sort((a,b)=>b[1]-a[1]).slice(0,6);
+    const bgColors = ['rgba(31, 111, 235, 0.7)', 'rgba(46, 160, 67, 0.7)', 'rgba(210, 153, 34, 0.7)', 'rgba(255, 82, 82, 0.7)', 'rgba(163, 113, 247, 0.7)', 'rgba(121, 192, 255, 0.7)'];
+    const borderColors = ['#1f6feb', '#2ea043', '#d29922', '#ff5252', '#a371f7', '#79c0ff'];
+    
+    chartP = new Chart(document.getElementById('chartPareto'), {
+        type: 'polarArea', 
+        data: { labels: sorted.map(c => aliasMap[c[0]] || c[0].split(' ')[0]), datasets: [{ data: sorted.map(c => c[1]), backgroundColor: bgColors, borderColor: borderColors, borderWidth: 2 }] },
+        options: { maintainAspectRatio:false, plugins:{legend:{position: 'right', labels:{color:cT, font:{size:10, family:'monospace'}}}}, scales:{ r:{ticks:{display:false}, grid:{color:cG}, angleLines:{color:cG}} } }
+    });
+
+    // 🔮 ORACLE: Pulso Stacked Bicolor
+    const ctxDiario = document.getElementById('chartDiario');
+    if(ctxDiario) {
+        let lastDayWithData = diasCiclo;
+        while(lastDayWithData > 0 && (dailyNecesario[lastDayWithData] === 0 && dailyFugas[lastDayWithData] === 0)) lastDayWithData--;
+        let startDayForBars = Math.max(1, lastDayWithData - 14); 
+        let barLabels = labelsFechas.slice(startDayForBars, lastDayWithData + 1); 
+        let barNecesario = dailyNecesario.slice(startDayForBars, lastDayWithData + 1);
+        let barFugas = dailyFugas.slice(startDayForBars, lastDayWithData + 1);
+
+        chartDiario = new Chart(ctxDiario, {
+            type: 'bar',
+            data: { labels: barLabels, datasets: [
+                { label: 'Gasto Base', data: barNecesario, backgroundColor: 'rgba(31, 111, 235, 0.6)', borderRadius: 2 },
+                { label: 'Fuga (Dopamina)', data: barFugas, backgroundColor: 'rgba(255, 82, 82, 0.9)', borderRadius: 2 }
+            ]},
+            options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { stacked: true, ticks: { color: cT, font:{size:8} }, grid: { display:false } }, y: { stacked: true, ticks: { color: cT, callback: v => '$' + Math.round(v / 1000) + 'k' }, grid: { color: cG } } } }
+        });
+    }
+
+    // 🔮 ORACLE: Horizonte TC (Área Curva Radiactiva)
     const setpointTCPlugin = {
         id: 'setpointTCPlugin',
         afterDraw: (chart) => {
@@ -510,8 +480,8 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0, totalFijosMes) 
             if(yAxis.max > umbralSeguridad) {
                 const yPos = yAxis.getPixelForValue(umbralSeguridad);
                 ctx.save(); ctx.beginPath(); ctx.moveTo(xAxis.left, yPos); ctx.lineTo(xAxis.right, yPos);
-                ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(218, 54, 51, 0.5)'; ctx.setLineDash([5, 5]); ctx.stroke();
-                ctx.fillStyle = 'rgba(218, 54, 51, 0.8)'; ctx.font = 'bold 9px monospace'; ctx.fillText('MAX (15%)', xAxis.left + 5, yPos - 5); ctx.restore();
+                ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(255, 82, 82, 0.8)'; ctx.setLineDash([5, 5]); ctx.stroke();
+                ctx.fillStyle = '#ff5252'; ctx.font = 'bold 10px monospace'; ctx.fillText('LÍMITE CRÍTICO (15%)', xAxis.left + 5, yPos - 5); ctx.restore();
             }
         }
     };
@@ -525,10 +495,14 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0, totalFijosMes) 
             let sumaMes = datosTCGlobal.filter(d => { let fCobro = new Date(d.mesCobro); return fCobro.getMonth() === f.getMonth() && fCobro.getFullYear() === f.getFullYear(); }).reduce((acc, curr) => acc + curr.monto, 0);
             montosProyectados.push(sumaMes);
         }
+        
+        let grad = ctxProyeccion.getContext('2d').createLinearGradient(0, 0, 0, 300);
+        grad.addColorStop(0, 'rgba(255, 82, 82, 0.6)'); grad.addColorStop(1, 'rgba(255, 82, 82, 0.05)');
+
         chartRadar = new Chart(ctxProyeccion, {
-            type: 'bar',
-            data: { labels: mesesLabels, datasets: [{ label: 'Deuda TC', data: montosProyectados, backgroundColor: montosProyectados.map(m => m > (sueldo * 0.15) ? 'rgba(218, 54, 51, 0.8)' : 'rgba(31, 111, 235, 0.6)'), borderRadius: 2 }] },
-            options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { color: cT, callback: v => '$' + Math.round(v/1000) + 'k' }, grid: { color: cG } }, x: { ticks: { color: cT, font: {size: 9} }, grid: { display: false } } } },
+            type: 'line',
+            data: { labels: mesesLabels, datasets: [{ label: 'Deuda TC', data: montosProyectados, backgroundColor: grad, borderColor: '#ff5252', borderWidth: 3, fill: true, tension: 0.4, pointRadius: 4, pointBackgroundColor: '#030508', pointBorderColor: '#ff5252' }] },
+            options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { color: cT, callback: v => '$' + Math.round(v/1000) + 'k' }, grid: { color: cG } }, x: { ticks: { color: cT, font: {size: 10, weight: 'bold'} }, grid: { display: false } } } },
             plugins: [setpointTCPlugin]
         });
     }
@@ -565,20 +539,20 @@ function aplicarCicloAlSistema() {
 
 let draggedRowId = null;
 window.dragStart = function(e, id) { draggedRowId = id; e.dataTransfer.effectAllowed = 'move'; setTimeout(() => e.target.style.opacity = '0.4', 0); }
-window.dragOverPanel = function(e, tipo) { e.preventDefault(); const panel = e.currentTarget; panel.style.transition = "border-color 0.2s, box-shadow 0.2s"; if (tipo === 'tc') { panel.style.borderColor = "var(--color-fuga)"; panel.style.boxShadow = "inset 0 0 15px rgba(218, 54, 51, 0.1)"; } else { panel.style.borderColor = "var(--color-ingresos)"; panel.style.boxShadow = "inset 0 0 15px rgba(31, 111, 235, 0.1)"; } }
-window.dragLeavePanel = function(e, tipo) { const panel = e.currentTarget; if (tipo === 'tc') { panel.style.borderColor = "rgba(218, 54, 51, 0.3)"; } else { panel.style.borderColor = "var(--border-color)"; } panel.style.boxShadow = "none"; }
+window.dragOverPanel = function(e, tipo) { e.preventDefault(); const panel = e.currentTarget; panel.style.transition = "border-color 0.2s, box-shadow 0.2s"; if (tipo === 'tc') { panel.style.borderColor = "var(--color-fuga)"; panel.style.boxShadow = "inset 0 0 20px rgba(255, 82, 82, 0.15)"; } else { panel.style.borderColor = "var(--color-saldo)"; panel.style.boxShadow = "inset 0 0 20px rgba(46, 160, 67, 0.15)"; } }
+window.dragLeavePanel = function(e, tipo) { const panel = e.currentTarget; if (tipo === 'tc') { panel.style.borderColor = "rgba(255, 82, 82, 0.2)"; } else { panel.style.borderColor = "var(--border-color)"; } panel.style.boxShadow = "none"; }
 window.dropOnPanel = function(e, tipo) {
     e.preventDefault(); dragLeavePanel(e, tipo); if (!draggedRowId) return;
     const mov = listaMovimientos.find(m => m.firestoreId === draggedRowId); if (!mov) return;
     if (tipo === 'tc' && mov.catV !== 'Gasto Tarjeta de Crédito') {
-        if(confirm("💳 INYECCIÓN MANUAL:\n¿Transferir este gasto a la matriz de Deuda TC?")) {
+        if(confirm("💳 INYECCIÓN TÁCTICA:\n¿Transferir gasto a la Matriz TC?")) {
             db.collection("movimientos").doc(draggedRowId).update({ categoria: "Gasto Tarjeta de Crédito", tipo: "Gasto" });
-            mostrarToast("TRANSFERIDO A MATRIZ TC");
+            mostrarToast("TRANSFERIDO A TC");
         }
     } else if (tipo === 'main' && mov.catV === 'Gasto Tarjeta de Crédito') {
-        if(confirm("🔄 INYECCIÓN MANUAL:\n¿Devolver gasto a Flujo de Efectivo Presente?")) {
+        if(confirm("🔄 EXTRACCIÓN TÁCTICA:\n¿Devolver a Flujo Presente?")) {
             db.collection("movimientos").doc(draggedRowId).update({ categoria: "Ruido de Sistema", tipo: "Gasto", cuotas: 1 });
-            mostrarToast("DEVUELTO A FLUJO PRESENTE");
+            mostrarToast("DEVUELTO A FLUJO");
         }
     }
     draggedRowId = null;
@@ -588,7 +562,7 @@ window.dragLeave = function(e) { e.currentTarget.style.borderTop = ''; }
 window.dropRow = function(e, targetId) {
     e.preventDefault(); e.stopPropagation(); e.currentTarget.style.borderTop = '';
     if (!draggedRowId || draggedRowId === targetId) return;
-    if (currentSort.column !== 'fechaISO') return alert("⚠️ SYS ALARM: Ordena por fecha para habilitar recalibración de tiempo.");
+    if (currentSort.column !== 'fechaISO') return alert("⚠️ ALERTA: Ordena por fecha para calibrar tiempo.");
     
     let vistaActual = [...datosMesGlobal].sort((a, b) => { if (a.fechaISO < b.fechaISO) return currentSort.direction === 'asc' ? -1 : 1; if (a.fechaISO > b.fechaISO) return currentSort.direction === 'asc' ? 1 : -1; return 0; });
     let draggedIdx = vistaActual.findIndex(x => x.firestoreId === draggedRowId);
@@ -603,7 +577,7 @@ window.dropRow = function(e, targetId) {
     else if (!t1_ms) newTimeMs = t2_ms + (dir === 'desc' ? 60000 : -60000); 
     else if (!t2_ms) newTimeMs = t1_ms + (dir === 'desc' ? -60000 : 60000);
     
-    if(confirm("⚙️ ¿Forzar nuevo Timestamp para cuadratura de libro?")) { db.collection("movimientos").doc(draggedRowId).update({ fecha: new Date(newTimeMs) }); }
+    if(confirm("⚙️ ¿Forzar nuevo Timestamp para el registro?")) { db.collection("movimientos").doc(draggedRowId).update({ fecha: new Date(newTimeMs) }); }
     draggedRowId = null;
 }
 document.addEventListener('dragend', (e) => { if(e.target.tagName === 'TR') e.target.style.opacity = '1'; });
@@ -616,7 +590,7 @@ window.triggerSync = function() {
 
 window.exportarTablaBunker = function(idTabla, nombreArchivo) {
     const tabla = document.getElementById(idTabla);
-    if (!tabla) return alert("Error SYS: Tabla " + idTabla + " no hallada.");
+    if (!tabla) return alert("Error SYS: Tabla no hallada.");
     let csv = ''; const filas = tabla.querySelectorAll("tr");
     filas.forEach(fila => {
         let celdas = Array.from(fila.querySelectorAll("th, td"));
@@ -638,7 +612,6 @@ window.exportarTablaBunker = function(idTabla, nombreArchivo) {
 let datosTCGlobal = [];
 
 function inicializarListenerTC() {
-    console.log("%c[NET] Levantando Antena Matriz TC...", "color: #ff9800;");
     db.collection("deuda_tc").orderBy("mesCobro", "asc").onSnapshot(snapshot => {
         datosTCGlobal = []; let totalDeuda = 0;
         snapshot.forEach(doc => { let data = doc.data(); data.id = doc.id; datosTCGlobal.push(data); totalDeuda += data.monto; });
@@ -654,7 +627,7 @@ function renderizarTablaTC() {
     const tbody = document.getElementById("listaDetalleTC"); if (!tbody) return;
     tbody.innerHTML = "";
     if (datosTCGlobal.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:20px; color:var(--text-muted);">MATRIZ SIN DATOS</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:20px; color:var(--text-muted); font-family:monospace;">MATRIZ SIN DATOS</td></tr>`;
         let boxImpacto = document.getElementById('boxImpactoTC'); if(boxImpacto) boxImpacto.style.display = 'none';
         return;
     }
@@ -668,8 +641,8 @@ function renderizarTablaTC() {
         if (fechaObj.getMonth() === proximoMes && fechaObj.getFullYear() === proximoAnio) sumaProximoMes += doc.monto;
         let tr = document.createElement("tr");
         tr.innerHTML = `
-            <td style="text-align: center;"><input type="checkbox" class="checkItemTC" value="${doc.id}" onclick="actualizarBarraTC()" style="accent-color: #b71c1c;"></td>
-            <td style="font-size: 0.75rem; color: #00bcd4; font-weight: bold;">${mesTxt} (${doc.cuota})</td>
+            <td style="text-align: center;"><input type="checkbox" class="checkItemTC" value="${doc.id}" onclick="actualizarBarraTC()" style="accent-color: #ff5252;"></td>
+            <td style="font-size: 0.75rem; color: #79c0ff; font-weight: bold;">${mesTxt} (${doc.cuota})</td>
             <td class="col-desc" title="${doc.nombre}">${doc.nombre}</td>
             <td class="col-monto">$${doc.monto.toLocaleString('es-CL')}</td>`;
         tbody.appendChild(tr);
@@ -680,7 +653,7 @@ function renderizarTablaTC() {
     if (boxImpacto) {
         if (sumaProximoMes > 0) {
             boxImpacto.style.display = 'flex';
-            document.getElementById('lblImpactoMes').innerText = `⚠️ IMPACTO EN ${mesNombreStr}`;
+            document.getElementById('lblImpactoMes').innerText = `${mesNombreStr}`;
             document.getElementById('txtImpactoMonto').innerText = `$${sumaProximoMes.toLocaleString('es-CL')}`;
         } else { boxImpacto.style.display = 'none'; }
     }
@@ -725,9 +698,9 @@ function cargarCSV_TC() {
                         cuotasProcesadas++;
                     }
                 }
-                if (cuotasProcesadas === 0) alert("⚠️ RECHAZO DE DATOS:\nNo hay cuotas válidas.");
-                else { await batch.commit(); mostrarToast(`${cuotasProcesadas} CUOTAS INYECTADAS`); }
-            } catch (error) { console.error("Error Ingesta:", error); alert("❌ SYS ERROR: " + error.message); }
+                if (cuotasProcesadas === 0) alert("⚠️ RECHAZO:\nNo hay cuotas válidas.");
+                else { await batch.commit(); mostrarToast(`${cuotasProcesadas} INYECTADAS`); }
+            } catch (error) { console.error("Error:", error); alert("❌ SYS ERROR: " + error.message); }
         };
         reader.readAsText(file, 'UTF-8');
     };
@@ -738,7 +711,7 @@ function actualizarBarraTC() {
     const seleccionados = document.querySelectorAll('.checkItemTC:checked');
     const barra = document.getElementById('barraAccionesTC');
     const txt = document.getElementById('txtSeleccionadosTC');
-    if (seleccionados.length > 0) { if(barra) barra.style.display = 'flex'; if(txt) txt.innerText = `${seleccionados.length} CMD`; } 
+    if (seleccionados.length > 0) { if(barra) barra.style.display = 'flex'; if(txt) txt.innerText = `${seleccionados.length} SEL`; } 
     else { if(barra) barra.style.display = 'none'; let maestro = document.getElementById('checkMaestroTC'); if(maestro) maestro.checked = false; }
 }
 
