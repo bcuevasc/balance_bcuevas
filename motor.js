@@ -127,6 +127,7 @@ function guardarSueldoEnNube() {
     actualizarDashboard();
 }
 
+// --- FUNCIÓN 1: ACTUALIZAR DASHBOARD (BLINDADA) ---
 function actualizarDashboard() {
     const elMes = document.getElementById('navMesConceptual'), elAnio = document.getElementById('navAnio');
     const mesVal = parseInt(elMes.value), anioVal = parseInt(elAnio.value);
@@ -153,7 +154,9 @@ function actualizarDashboard() {
 
     datosMesGlobal = [...dataMes];
     let saldoAcc = sueldo, tI = 0, tF = 0, tO = 0, tC = 0, tEvitable = 0, gCat = {};
-    let totalTC_legacy = 0;
+    
+    // SENSOR DE CORTE ARREGLADO:
+    let totalTC_legacy = 0; 
     
     [...dataMes].sort((x,y) => x.fechaISO < y.fechaISO ? -1 : 1).forEach(x => {
         if (x.catV === 'Gasto Tarjeta de Crédito') {
@@ -210,9 +213,6 @@ function actualizarDashboard() {
 
     let dataGraficos = dataMes.filter(x => x.catV !== 'Gasto Tarjeta de Crédito');
     
-    // ==========================================================
-    // ⚙️ PARCHE V8.5: SALDO DE MANIOBRA Y VELOCÍMETRO
-    // ==========================================================
     try {
         let hoyStr = new Date().toISOString().split('T')[0];
         let ayerObj = new Date(); ayerObj.setDate(ayerObj.getDate() - 1);
@@ -224,8 +224,7 @@ function actualizarDashboard() {
         let tendenciaStr = gastoHoy > gastoAyer ? '▲ ACELERANDO' : (gastoHoy === 0 ? '■ ESTABLE' : '▼ FRENANDO');
         let colorTendencia = gastoHoy > gastoAyer ? '#ff5252' : '#4caf50'; 
 
-        // Saldo Maniobra = Saldo Actual - Deuda TC Proyectada (Global)
-        let deudaAprox = typeof window.totalTC !== 'undefined' ? window.totalTC : totalTC_legacy; 
+        let deudaAprox = typeof window.totalTC !== 'undefined' ? window.totalTC : (typeof totalTC_legacy !== 'undefined' ? totalTC_legacy : 0); 
         let saldoManiobra = saldoAcc - deudaAprox;
 
         const elManiobra = document.getElementById('txtManiobra');
@@ -239,15 +238,13 @@ function actualizarDashboard() {
     } catch (err) {
         console.warn("Sensor V8.5 en espera de datos: ", err);
     }
-    // ==========================================================
     
     renderizarListas(sueldo, b);
-    
-    if(document.getElementById('chartBurnDown')) dibujarGraficos(sueldo, [...dataGraficos].sort((x,y) => x.fechaISO < y.fechaISO ? -1 : 1), gCat, diasCiclo, T0);
+    if(typeof dibujarGraficos === 'function') dibujarGraficos(sueldo, [...dataGraficos].sort((x,y) => x.fechaISO < y.fechaISO ? -1 : 1), gCat, diasCiclo, T0);
     
     setTxt('txtGastoTramo', tO + tF);
     setTxt('txtPromedioZoom', Math.round((tO + tF) / diasCiclo));
-}   
+}
 
 function renderizarListas(sueldoBase, filtroBuscador) {
     let datos = [...datosMesGlobal].filter(x => x.catV !== 'Gasto Tarjeta de Crédito'); 
@@ -722,10 +719,13 @@ window.exportarTablaBunker = function(idTabla, nombreArchivo) {
 // ==========================================================
 let datosTCGlobal = [];
 
+// --- FUNCIÓN 2: ESCUCHADOR TC (CON SONDAS DE DIAGNÓSTICO) ---
 function inicializarListenerTC() {
     if (!db) return console.error("Firebase no está inicializado.");
+    console.log("📡 Conectando antena TC con Firebase...");
     
     db.collection("deuda_tc").orderBy("mesCobro", "asc").onSnapshot(snapshot => {
+        console.log(`📥 Firebase reporta: ${snapshot.docs.length} cuotas leídas.`);
         datosTCGlobal = [];
         let totalDeuda = 0;
         snapshot.forEach(doc => {
@@ -738,10 +738,13 @@ function inicializarListenerTC() {
         const txtTotalTC = document.getElementById("txtTotalTC");
         if(txtTotalTC) txtTotalTC.innerText = totalDeuda.toLocaleString('es-CL');
         
-        renderizarTablaTC();
+        if(typeof renderizarTablaTC === 'function') renderizarTablaTC();
         
-        if(typeof window !== 'undefined') window.totalTC = totalDeuda; 
+        window.totalTC = totalDeuda; 
         if(typeof actualizarDashboard === 'function') actualizarDashboard();
+    }, error => {
+        console.error("🛑 ALARMA FIREBASE TC:", error);
+        alert("El Búnker no tiene permisos para leer la Deuda TC. Revisa las reglas de Firestore.");
     });
 }
 
