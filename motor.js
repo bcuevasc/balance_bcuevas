@@ -541,22 +541,51 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0) {
         });
     }
 
-    const ctxRadar = document.getElementById('chartRadar');
-    if(ctxRadar) {
-        let radarCats = {...cats};
-        delete radarCats["Gastos Fijos (Búnker)"]; delete radarCats["Transferencia Propia / Ahorro"]; delete radarCats["Transferencia Recibida"]; delete radarCats["Ingreso Adicional"]; delete radarCats["Sin Categoría"]; delete radarCats["Ruido de Sistema"];
+    // REEMPLAZO DEL RADAR POR PROYECCIÓN DE DEUDA
+const ctxProyeccion = document.getElementById('chartRadar'); // Reutilizamos el canvas
+if(ctxProyeccion) {
+    // Calculamos la deuda por los próximos 6 meses
+    let mesesLabels = [];
+    let montosProyectados = [];
+    let hoy = new Date();
 
-        let rSorted = Object.entries(radarCats).sort((a,b)=>b[1]-a[1]).slice(0,5); 
-        if(rSorted.length < 3) rSorted.push(["Sin Datos", 0], ["Sin Datos 2", 0]); 
-        let rLabels = rSorted.map(c => aliasMap[c[0]] || c[0].split(' ')[0]);
-        let rData = rSorted.map(c => c[1]);
+    for(let i=1; i<=6; i++) {
+        let f = new Date(hoy.getFullYear(), hoy.getMonth() + i, 1);
+        let label = f.toLocaleString('es-CL', { month: 'short' }).toUpperCase();
+        mesesLabels.push(label);
 
-        chartRadar = new Chart(ctxRadar, {
-            type: 'radar',
-            data: { labels: rLabels, datasets: [{ label: 'Perfil de Gasto', data: rData, borderColor: '#ff9800', backgroundColor: 'rgba(255,152,0,0.2)', borderWidth: 2 }] },
-            options: { maintainAspectRatio: false, scales: { r: { ticks: { display: false }, grid: { color: cG }, angleLines: { color: cG }, pointLabels: { color: cT, font: {size: 9, weight: 'bold'} } } }, plugins: { legend: { display: false } } }
-        });
+        // Sumamos lo que hay en datosTCGlobal para ese mes específico
+        let sumaMes = datosTCGlobal
+            .filter(d => {
+                let fCobro = new Date(d.mesCobro);
+                return fCobro.getMonth() === f.getMonth() && fCobro.getFullYear() === f.getFullYear();
+            })
+            .reduce((acc, curr) => acc + curr.monto, 0);
+        
+        montosProyectados.push(sumaMes);
     }
+
+    chartRadar = new Chart(ctxProyeccion, {
+        type: 'bar',
+        data: {
+            labels: mesesLabels,
+            datasets: [{
+                label: 'Deuda Proyectada',
+                data: montosProyectados,
+                backgroundColor: montosProyectados.map(m => m > 500000 ? 'rgba(218, 54, 51, 0.8)' : 'rgba(31, 111, 235, 0.8)'),
+                borderRadius: 4
+            }]
+        },
+        options: {
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { beginAtZero: true, ticks: { color: cT, callback: v => '$' + Math.round(v/1000) + 'k' } },
+                x: { ticks: { color: cT } }
+            }
+        }
+    });
+}
 }
 
 function calcularFechasCiclo(mesConceptual, anio) {
