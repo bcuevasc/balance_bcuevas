@@ -153,12 +153,11 @@ function actualizarDashboard() {
 
     datosMesGlobal = [...dataMes];
     let saldoAcc = sueldo, tI = 0, tF = 0, tO = 0, tC = 0, tEvitable = 0, gCat = {};
-    let datosTC = [], totalTC = 0;
+    let totalTC_legacy = 0;
     
     [...dataMes].sort((x,y) => x.fechaISO < y.fechaISO ? -1 : 1).forEach(x => {
         if (x.catV === 'Gasto Tarjeta de Crédito') {
-            datosTC.push(x);
-            totalTC += x.monto;
+            totalTC_legacy += x.monto;
         } 
         else { 
             if (x.esIn) { tI += x.monto; saldoAcc += x.monto; }
@@ -210,28 +209,25 @@ function actualizarDashboard() {
     }
 
     let dataGraficos = dataMes.filter(x => x.catV !== 'Gasto Tarjeta de Crédito');
+    
     // ==========================================================
     // ⚙️ PARCHE V8.5: SALDO DE MANIOBRA Y VELOCÍMETRO
     // ==========================================================
     try {
-        // 1. Cálculo de Velocidad (Gasto Hoy vs Ayer)
         let hoyStr = new Date().toISOString().split('T')[0];
         let ayerObj = new Date(); ayerObj.setDate(ayerObj.getDate() - 1);
         let ayerStr = ayerObj.toISOString().split('T')[0];
 
-        // Filtramos solo gastos puros (no ingresos, no transferencias propias)
         let gastoHoy = datosMesGlobal.filter(x => x.fechaISO.startsWith(hoyStr) && !x.esIn && !x.esNeutro).reduce((acc, val) => acc + val.monto, 0);
         let gastoAyer = datosMesGlobal.filter(x => x.fechaISO.startsWith(ayerStr) && !x.esIn && !x.esNeutro).reduce((acc, val) => acc + val.monto, 0);
 
         let tendenciaStr = gastoHoy > gastoAyer ? '▲ ACELERANDO' : (gastoHoy === 0 ? '■ ESTABLE' : '▼ FRENANDO');
-        let colorTendencia = gastoHoy > gastoAyer ? '#ff5252' : '#4caf50'; // Rojo si sube, Verde si baja
+        let colorTendencia = gastoHoy > gastoAyer ? '#ff5252' : '#4caf50'; 
 
-        // 2. Cálculo de Saldo de Maniobra (Saldo Actual - Deuda TC)
-        // Asume que 'totalTC' o tu variable de sumatoria de deuda existe en este scope.
-        let deudaAprox = typeof totalTC !== 'undefined' ? totalTC : 0; 
+        // Saldo Maniobra = Saldo Actual - Deuda TC Proyectada (Global)
+        let deudaAprox = typeof window.totalTC !== 'undefined' ? window.totalTC : totalTC_legacy; 
         let saldoManiobra = saldoAcc - deudaAprox;
 
-        // 3. Inyección en el DOM
         const elManiobra = document.getElementById('txtManiobra');
         const elVelocidad = document.getElementById('txtVelocidad');
         
@@ -244,81 +240,14 @@ function actualizarDashboard() {
         console.warn("Sensor V8.5 en espera de datos: ", err);
     }
     // ==========================================================
+    
     renderizarListas(sueldo, b);
-    renderizarListaTC(datosTC); 
+    
     if(document.getElementById('chartBurnDown')) dibujarGraficos(sueldo, [...dataGraficos].sort((x,y) => x.fechaISO < y.fechaISO ? -1 : 1), gCat, diasCiclo, T0);
     
     setTxt('txtGastoTramo', tO + tF);
     setTxt('txtPromedioZoom', Math.round((tO + tF) / diasCiclo));
 }   
-
-// Reemplaza toda tu función anterior por esta:
-function renderizarTablaTC() {
-    const tbody = document.getElementById("listaDetalleTC");
-    if (!tbody) return;
-    
-    tbody.innerHTML = "";
-    
-    if (datosTCGlobal.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:20px; color:#666;">No hay deuda proyectada. Ingesta un CSV.</td></tr>`;
-        return;
-    }
-
-    datosTCGlobal.forEach(doc => {
-        // Formatear fecha a texto legible (ej: may. 2026)
-        let fechaObj = new Date(doc.mesCobro);
-        let mesTxt = fechaObj.toLocaleString('es-CL', { month: 'short', year: 'numeric' }).toUpperCase();
-        
-        let tr = document.createElement("tr");
-        tr.style.borderBottom = "1px solid var(--border-color)";
-        tr.innerHTML = `
-            <td style="text-align: center; padding: 6px;">
-                <input type="checkbox" class="checkItemTC" value="${doc.id}" onclick="actualizarBarraTC()" style="accent-color: #b71c1c;">
-            </td>
-            <td style="font-size: 0.75rem; color: #00bcd4; font-weight: bold;">${mesTxt} (${doc.cuota})</td>
-            <td style="font-size: 0.7rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px;" title="${doc.nombre}">${doc.nombre}</td>
-            <td style="text-align: right; font-family: monospace; font-weight: bold; font-size: 0.8rem;">$${doc.monto.toLocaleString('es-CL')}</td>
-        `;
-        tbody.appendChild(tr);
-    });
-    
-    // Activa o desactiva la barra roja si hay casillas marcadas
-    actualizarBarraTC(); 
-}
-        
-        if(contenedorPC) {
-            htmlPC += `<tr style="border-bottom:1px solid var(--border-color); cursor:pointer;" draggable="true" ondragstart="dragStart(event, '${x.firestoreId}')" onclick="${clickAction}">
-                <td style="font-size:0.65rem; color:var(--text-muted); padding:6px 4px;">${dateStr}</td>
-                <td style="font-size:0.75rem; font-weight:700; padding:6px 4px;">${x.nombre}</td>
-                <td style="font-size:0.65rem; color:var(--accent-blue); padding:6px 4px; text-align:center;">${cuotaStr}</td>
-                <td style="font-size:0.8rem; font-weight:bold; color:var(--color-fuga); text-align:right; padding:6px 4px;">$${x.monto.toLocaleString('es-CL')}</td>
-            </tr>`;
-        }
-        if(contenedorMovil) {
-            htmlMovil += `
-            <div class="mobile-card" style="background:var(--bg-card) !important; border:1px solid rgba(31,111,235,0.2) !important; margin-bottom:8px;" onclick="${typeof openBottomSheet === 'function' ? `openBottomSheet('${x.firestoreId}', '${x.nombre.replace(/'/g, "\\'")}', ${x.monto})` : clickAction}">
-                <div style="font-size:1.5rem; margin-right:15px; text-shadow: 0 2px 5px rgba(0,0,0,0.5);">💳</div>
-                <div style="flex: 1; min-width: 0;">
-                    <div style="font-weight:bold; font-size:0.95rem; color: var(--text-main);">${x.nombre}</div>
-                    <div style="font-size:0.7rem; color:var(--accent-blue); margin-top:2px;">${dateStr} • ${cuotaStr}</div>
-                </div>
-                <div style="font-weight:900; color:var(--color-fuga); font-size:1.05rem;">$${x.monto.toLocaleString('es-CL')}</div>
-            </div>`;
-        }
-    });
-
-    if(contenedorPC) {
-        if(datos.length === 0) contenedorPC.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:20px; color:var(--text-muted); font-size:0.7rem;">Sin movimientos TC este periodo</td></tr>`;
-        else contenedorPC.innerHTML = htmlPC;
-    }
-    if(contenedorMovil) {
-        if(datos.length === 0) contenedorMovil.innerHTML = `<div style="text-align:center; padding: 40px 20px; color: var(--text-dim);">💳<br>Sin deuda registrada este periodo.</div>`;
-        else contenedorMovil.innerHTML = htmlMovil;
-    }
-    
-    const txtTotalTC = document.getElementById('txtTotalTC');
-    if(txtTotalTC) txtTotalTC.innerText = datos.reduce((sum, x) => sum + x.monto, 0).toLocaleString('es-CL');
-}
 
 function renderizarListas(sueldoBase, filtroBuscador) {
     let datos = [...datosMesGlobal].filter(x => x.catV !== 'Gasto Tarjeta de Crédito'); 
@@ -658,49 +587,6 @@ function aplicarCicloAlSistema() {
     cargarSueldoVisual(); actualizarDashboard();
 }
 
-// 1. Lógica para mostrar/ocultar la barra y actualizar el contador
-function actualizarBarraTC() {
-    const seleccionados = document.querySelectorAll('.checkItemTC:checked');
-    const barra = document.getElementById('barraAccionesTC');
-    const txt = document.getElementById('txtSeleccionados');
-    
-    if (seleccionados.length > 0) {
-        barra.style.display = 'flex';
-        txt.innerText = `${seleccionados.length} CUOTAS SELECCIONADAS`;
-    } else {
-        barra.style.display = 'none';
-        document.getElementById('checkMaestroTC').checked = false;
-    }
-}
-
-// 2. Seleccionar Todo / Deseleccionar Todo
-function toggleTodosTC(maestro) {
-    const checks = document.querySelectorAll('.checkItemTC');
-    checks.forEach(c => c.checked = maestro.checked);
-    actualizarBarraTC();
-}
-
-// 3. LA PURGA (Ejecución en Firebase)
-async function ejecutarPurgaMasivaTC() {
-    const seleccionados = document.querySelectorAll('.checkItemTC:checked');
-    if (!confirm(`⚠️ ¿Confirmas la eliminación de ${seleccionados.length} cuotas? Esta acción es irreversible.`)) return;
-
-    const batch = db.batch();
-    seleccionados.forEach(checkbox => {
-        const ref = db.collection("deuda_tc").doc(checkbox.value);
-        batch.delete(ref);
-    });
-
-    try {
-        await batch.commit();
-        alert("✅ PURGA COMPLETADA: El sistema ha sido saneado.");
-        location.reload(); // Recarga para refrescar los cálculos
-    } catch (error) {
-        console.error("Falla en la purga: ", error);
-        alert("❌ Error en la comunicación con Firebase.");
-    }
-}
-
 // 🟢 LÓGICA DE DRAG AND DROP 🟢
 let draggedRowId = null;
 
@@ -807,11 +693,9 @@ window.exportarTablaBunker = function(idTabla, nombreArchivo) {
 // ==========================================================
 let datosTCGlobal = [];
 
-// 1. Escuchador de Firebase para la Deuda TC
 function inicializarListenerTC() {
     if (!db) return console.error("Firebase no está inicializado.");
     
-    // Escucha la colección "deuda_tc" en tiempo real
     db.collection("deuda_tc").orderBy("mesCobro", "asc").onSnapshot(snapshot => {
         datosTCGlobal = [];
         let totalDeuda = 0;
@@ -822,19 +706,16 @@ function inicializarListenerTC() {
             totalDeuda += data.monto;
         });
         
-        // Actualizar total en la interfaz (El panel rojo)
         const txtTotalTC = document.getElementById("txtTotalTC");
         if(txtTotalTC) txtTotalTC.innerText = totalDeuda.toLocaleString('es-CL');
         
         renderizarTablaTC();
         
-        // Inyectar a variable global para el Saldo de Maniobra
         if(typeof window !== 'undefined') window.totalTC = totalDeuda; 
         if(typeof actualizarDashboard === 'function') actualizarDashboard();
     });
 }
 
-// 2. Renderizar la tabla de proyecciones
 function renderizarTablaTC() {
     const tbody = document.getElementById("listaDetalleTC");
     if (!tbody) return;
@@ -847,7 +728,6 @@ function renderizarTablaTC() {
     }
 
     datosTCGlobal.forEach(doc => {
-        // Formatear fecha a texto legible (ej: may. 2026)
         let fechaObj = new Date(doc.mesCobro);
         let mesTxt = fechaObj.toLocaleString('es-CL', { month: 'short', year: 'numeric' }).toUpperCase();
         
@@ -857,7 +737,7 @@ function renderizarTablaTC() {
             <td style="text-align: center; padding: 6px;">
                 <input type="checkbox" class="checkItemTC" value="${doc.id}" onclick="actualizarBarraTC()" style="accent-color: #b71c1c;">
             </td>
-            <td style="font-size: 0.75rem; color: #00bcd4;">${mesTxt} (${doc.cuota})</td>
+            <td style="font-size: 0.75rem; color: #00bcd4; font-weight: bold;">${mesTxt} (${doc.cuota})</td>
             <td style="font-size: 0.7rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px;" title="${doc.nombre}">${doc.nombre}</td>
             <td style="text-align: right; font-family: monospace; font-weight: bold; font-size: 0.8rem;">$${doc.monto.toLocaleString('es-CL')}</td>
         `;
@@ -866,7 +746,6 @@ function renderizarTablaTC() {
     actualizarBarraTC(); 
 }
 
-// 3. Motor Lector de CSV (Ingesta)
 function cargarCSV_TC() {
     let fileInputTC = document.createElement('input');
     fileInputTC.type = 'file';
@@ -882,7 +761,7 @@ function cargarCSV_TC() {
 
             for(let i = 1; i < lineas.length; i++) {
                 if(lineas[i].trim() === '') continue; 
-                let cols = lineas[i].split(';'); // Separador de tu archivo
+                let cols = lineas[i].split(';'); 
                 if(cols.length < 5) continue; 
 
                 let fecha = cols[0].trim();
@@ -925,17 +804,16 @@ function cargarCSV_TC() {
     fileInputTC.click();
 }
 
-// 4. Lógica de Purga Masiva (Casillas)
 function actualizarBarraTC() {
     const seleccionados = document.querySelectorAll('.checkItemTC:checked');
     const barra = document.getElementById('barraAccionesTC');
     const txt = document.getElementById('txtSeleccionadosTC');
     
     if (seleccionados.length > 0) {
-        barra.style.display = 'flex';
-        txt.innerText = `${seleccionados.length} CUOTAS SELECCIONADAS`;
+        if(barra) barra.style.display = 'flex';
+        if(txt) txt.innerText = `${seleccionados.length} CUOTAS SELECCIONADAS`;
     } else {
-        barra.style.display = 'none';
+        if(barra) barra.style.display = 'none';
         let maestro = document.getElementById('checkMaestroTC');
         if(maestro) maestro.checked = false;
     }
@@ -959,7 +837,6 @@ async function ejecutarPurgaMasivaTC() {
 
     try {
         await batch.commit();
-        // No necesitas recargar la página, Firebase actualizará la tabla en tiempo real.
     } catch (error) {
         console.error("Falla en la purga: ", error);
         alert("❌ Error de comunicación.");
