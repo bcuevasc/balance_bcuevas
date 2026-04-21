@@ -1,17 +1,18 @@
 // ==========================================================
-// 🧠 BÚNKER SCADA ORACLE - MOTOR LÓGICO V12.2 (3-STATE)
+// 🧠 BÚNKER SCADA ORACLE - MOTOR LÓGICO V12.3 (TUNED)
 // ==========================================================
 const BYRON_EMAIL = "bvhcc94@gmail.com"; 
 const CREDIT_SETPOINT = -300000; 
 const catEvitables = ["Dopamina & Antojos"]; 
 const SUELDO_BASE_DEFAULT = 3602505;
 
+// 🟢 MÓDULO A.C.E. (Auto-Categorización Experta) V12.3 Tuned 🟢
 const diccAuto = [
     { keys: ["prestamo", "debe", "pagar dps", "por cobrar", "cuota de"], cat: "Cuentas por Cobrar (Activos)", tipo: "Por Cobrar", fuga: "0" },
     { keys: ["uber", "didi", "cabify", "pasaje", "buses", "turbus", "metro"], cat: "Transporte & Logística", tipo: "Gasto", fuga: "0" },
-    { keys: ["copec", "shell", "autopase", "revision tecnica", "lavado auto", "mecanico", "peaje", "seguro auto", "permiso circulacion", "credito auto"], cat: "Flota & Movilidad", tipo: "Gasto Fijo", fuga: "0" },
+    { keys: ["copec", "shell", "autopase", "revision tecnica", "lavado auto", "mecanico", "peaje", "seguro auto", "permiso circulacion"], cat: "Flota & Movilidad", tipo: "Gasto Fijo", fuga: "0" },
     { keys: ["dividendo", "arriendo", "gastos comunes", "ggcc", "contribuciones", "hipotecario", "departamento", "luz", "agua", "gas", "internet", "udec", "cae"], cat: "Infraestructura (Depto)", tipo: "Gasto Fijo", fuga: "0" },
-    { keys: ["pedidosya", "mcdonalds", "burger king", "starbucks", "rappi", "helado", "cine", "concierto", "fother muckers"], cat: "Dopamina & Antojos", tipo: "Gasto", fuga: "100" },
+    { keys: ["pedidosya", "mcdonalds", "burger king", "starbucks", "rappi", "helado", "cine", "concierto", "fother muckers", "mall plaza", "los angeles"], cat: "Dopamina & Antojos", tipo: "Gasto", fuga: "100" },
     { keys: ["netflix", "spotify", "hbo", "prime", "icloud", "google", "vtr", "wom", "entel", "movistar", "celu mio plan", "movistar madre", "pack suscripciones"], cat: "Suscripciones", tipo: "Gasto Fijo", fuga: "0" },
     { keys: ["jumbo", "lider", "unimarc", "santa isabel", "panaderia", "carniceria", "feria", "minimarket", "tottus"], cat: "Alimentación & Supermercado", tipo: "Gasto", fuga: "0" },
     { keys: ["farmacia", "cruz verde", "salcobrand", "doctor", "consulta", "integramedica", "medico", "ahumada"], cat: "Mantenimiento Hardware (Salud)", tipo: "Gasto", fuga: "0" },
@@ -68,7 +69,13 @@ document.addEventListener("DOMContentLoaded", () => {
     if (selectMass) selectMass.innerHTML = `<option value="">-- Recategorizar a --</option>` + optionsHTML;
 
     const inputNombre = document.getElementById('inputNombre');
+    const inputMonto = document.getElementById('inputMonto');
+    
+    // 🟢 V12.3: ERGONOMÍA DOBLE-ENTER 🟢
     if(inputNombre) {
+        inputNombre.addEventListener('keypress', e => {
+            if(e.key === 'Enter') { e.preventDefault(); if(inputMonto && !inputMonto.value) inputMonto.focus(); else document.getElementById('btnGuardar').click(); }
+        });
         inputNombre.addEventListener('input', (e) => {
             if(modoEdicionActivo) return; 
             let texto = e.target.value.toLowerCase();
@@ -83,6 +90,12 @@ document.addEventListener("DOMContentLoaded", () => {
                     break;
                 }
             }
+        });
+    }
+    
+    if(inputMonto) {
+        inputMonto.addEventListener('keypress', e => {
+            if(e.key === 'Enter') { e.preventDefault(); if(inputNombre && !inputNombre.value) inputNombre.focus(); else document.getElementById('btnGuardar').click(); }
         });
     }
 });
@@ -132,7 +145,7 @@ function logout() { auth.signOut().then(() => window.location.reload()); }
 
 auth.onAuthStateChanged(user => {
     if (user && user.email.toLowerCase() === BYRON_EMAIL.toLowerCase()) {
-        console.log("%c[ORACLE V12.2] FULL STACK BOOT SEQUENCE INITIATED", "color: #79c0ff; font-weight: bold; font-size: 14px;");
+        console.log("%c[ORACLE V12.3] FULL STACK BOOT SEQUENCE INITIATED", "color: #79c0ff; font-weight: bold; font-size: 14px;");
         
         const loginScreen = document.getElementById('login-screen'), reportZone = document.getElementById('reportZone');
         if(loginScreen) loginScreen.style.display = 'none';
@@ -262,7 +275,6 @@ function actualizarDashboard() {
     setTxt('txtPromedioZoom', Math.round((tO + tF) / diasCiclo));
 }
 
-// Para PC
 if (typeof window.renderizarListas === 'undefined') {
     window.renderizarListas = function(sueldoBase, filtroBuscador) {
         let datos = [...datosMesGlobal].filter(x => x.catV !== 'Gasto Tarjeta de Crédito'); 
@@ -808,7 +820,7 @@ async function ejecutarPurgaMasivaTC() {
 }
 
 // ==========================================================
-// 🚀 MÓDULO DÍA CERO V12.2 (SISTEMA TRINARIO)
+// 🚀 MÓDULO DÍA CERO V12.3 (SINTONÍA FINA)
 // ==========================================================
 function abrirPreVuelo() {
     const modal = document.getElementById('modal-dia-cero');
@@ -834,7 +846,6 @@ function abrirPreVuelo() {
         }
     });
     
-    // Solo sobreescribir si la TC no ha sido manipulada por el usuario (evitar borrar sus ajustes si entra y sale)
     let elTcNac = document.getElementById('pv-tc-nac');
     if(elTcNac && elTcNac.getAttribute('data-estado') === 'est') {
         elTcNac.value = sumaTCMes > 0 ? sumaTCMes.toLocaleString('es-CL') : "";
@@ -857,21 +868,18 @@ window.toggleEstadoPV = function(btn, inputId) {
     let estadoActual = input.getAttribute('data-estado') || 'est';
     
     if (estadoActual === 'est') {
-        // Pasa a REAL
         input.setAttribute('data-estado', 'real');
         btn.className = "btn-estado real";
         btn.innerText = "📄";
         input.classList.remove('pagado');
         input.readOnly = false;
     } else if (estadoActual === 'real') {
-        // Pasa a PAGADO
         input.setAttribute('data-estado', 'pag');
         btn.className = "btn-estado pag";
         btn.innerText = "✔️";
         input.classList.add('pagado');
-        input.readOnly = true; // Bloquea edición si ya está pagado
+        input.readOnly = true;
     } else {
-        // Vuelve a ESTIMADO
         input.setAttribute('data-estado', 'est');
         btn.className = "btn-estado est";
         btn.innerText = "EST";
@@ -879,15 +887,14 @@ window.toggleEstadoPV = function(btn, inputId) {
         input.readOnly = false;
     }
     
-    calcularDiaCero(); // Recalcula liquidez basado en los nuevos estados
+    calcularDiaCero(); 
 }
 
 function calcularDiaCero() {
-    // Función auxiliar: Solo suma el valor si NO está en estado 'pag' (Pagado)
     const valSiNoPagado = (id) => {
         let el = document.getElementById(id);
         if (!el) return 0;
-        if (el.getAttribute('data-estado') === 'pag') return 0; // 🟢 TRINARIO: Si está pagado, es 0 carga para el próximo mes
+        if (el.getAttribute('data-estado') === 'pag') return 0; 
         return parseInt(el.value.replace(/\./g, '')) || 0;
     };
 
@@ -898,7 +905,6 @@ function calcularDiaCero() {
     let linea = valSiNoPagado('pv-linea');
     
     let arr = valSiNoPagado('pv-arriendo');
-    let auto = valSiNoPagado('pv-auto');
     let udec = valSiNoPagado('pv-udec');
     let cae = valSiNoPagado('pv-cae');
     
@@ -913,7 +919,7 @@ function calcularDiaCero() {
     let seguro = valSiNoPagado('pv-seguro');
     
     let deudasDuras = tcNac + tcInt + linea;
-    let estructural = arr + auto + udec + cae + ggcc + luz + agua + gas + celu + madre + subs + seguro;
+    let estructural = arr + udec + cae + ggcc + luz + agua + gas + celu + madre + subs + seguro;
     
     let liquidez = sueldo - deudasDuras - estructural;
     
@@ -928,10 +934,23 @@ function calcularDiaCero() {
         document.getElementById('pv-barra-naranja').style.width = pctNaranja + '%';
         document.getElementById('pv-barra-verde').style.width = pctVerde + '%';
     }
+
+    // 🟢 V12.3 SENSOR DE CERTEZA 🟢
+    let toggles = document.querySelectorAll('.btn-estado');
+    let confirmados = 0;
+    toggles.forEach(btn => {
+        if(btn.classList.contains('real') || btn.classList.contains('pag')) confirmados++;
+    });
+    let certeza = toggles.length > 0 ? Math.round((confirmados / toggles.length) * 100) : 0;
+    let elCertezaPct = document.getElementById('pv-certeza-pct');
+    if(elCertezaPct) {
+        elCertezaPct.innerText = certeza + '%';
+        elCertezaPct.style.color = certeza < 40 ? '#ff5252' : (certeza < 80 ? '#ff9800' : '#2ea043');
+    }
 }
 
 function ejecutarArranque() {
-    if(!confirm("⚠️ INYECCIÓN CRÍTICA V12.2\n\n¿Estás seguro de inyectar toda tu Planilla Operativa en la Matriz del mes seleccionado?\n\nNota: Los gastos marcados como ✔️ PAGADO serán ignorados para evitar doble contabilización.")) return;
+    if(!confirm("⚠️ INYECCIÓN CRÍTICA V12.3\n\n¿Estás seguro de inyectar toda tu Planilla Operativa en la Matriz del mes seleccionado?\n\nNota: Los gastos marcados como ✔️ PAGADO serán ignorados para evitar doble contabilización.")) return;
     
     const elMes = document.getElementById('navMesConceptual');
     const elAnio = document.getElementById('navAnio');
@@ -940,13 +959,12 @@ function ejecutarArranque() {
     const batch = db.batch();
     let inyectados = 0;
     
-    // Función auxiliar para inyectar: Solo procesa si el estado es 'est' o 'real'
     const procesarInyeccion = (idInput, nombre, cat) => {
         let el = document.getElementById(idInput);
         if (!el) return;
         
         let estado = el.getAttribute('data-estado') || 'est';
-        if (estado === 'pag') return; // 🟢 TRINARIO: Ignora inyección si ya está pagado
+        if (estado === 'pag') return; 
         
         let monto = parseInt(el.value.replace(/\./g, '')) || 0;
         
@@ -958,7 +976,7 @@ function ejecutarArranque() {
                 categoria: cat, 
                 tipo: "Gasto Fijo", 
                 fecha: fechaDestino, 
-                status: estado === 'real' ? 'Real' : 'Estimado', // Etiqueta si era real o estimado
+                status: estado === 'real' ? 'Real' : 'Estimado', 
                 innecesarioPct: 0, 
                 cuotas: 1 
             });
@@ -971,7 +989,6 @@ function ejecutarArranque() {
     procesarInyeccion('pv-linea', "PAGO LÍNEA CRÉDITO (DÍA CERO)", "Gastos Fijos (Búnker)");
     
     procesarInyeccion('pv-arriendo', "ARRIENDO / DIVIDENDO", "Infraestructura (Depto)");
-    procesarInyeccion('pv-auto', "CRÉDITO AUTO", "Flota & Movilidad");
     procesarInyeccion('pv-udec', "PAGO UDEC 2024", "Infraestructura (Depto)");
     procesarInyeccion('pv-cae', "PAGO CAE", "Infraestructura (Depto)");
     
