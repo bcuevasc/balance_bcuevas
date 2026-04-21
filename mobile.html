@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Bunker Móvil HUD V12.2 (Full Stack)</title>
+    <title>Bunker Móvil HUD V12.3 (Tuned)</title>
     <link rel="apple-touch-icon" href="bunker-icon.png">
     <meta name="theme-color" content="#030508">
 
@@ -82,7 +82,7 @@
         .log-item.critical { border-color: #ff5252; color: #ff5252; }
         .log-item.warning { border-color: #ff9800; color: #ff9800; }
 
-        /* 🟢 MÓDULO PRE-VUELO V12.2 MÓVIL (3 STATES) 🟢 */
+        /* 🟢 MÓDULO PRE-VUELO V12.3 MÓVIL 🟢 */
         #modal-dia-cero { position: fixed; inset: 0; background: rgba(3, 5, 8, 0.98); z-index: 20000; display: none; flex-direction: column; overflow-y: auto; padding: 20px 15px 100px 15px; }
         .pv-title { font-size: 1.3rem; font-weight: 900; color: #ff9800; letter-spacing: 2px; margin: 20px 0 5px 0; text-transform: uppercase; text-align: center; }
         .pv-subtitle { font-size: 0.75rem; color: var(--text-muted); font-family: monospace; text-align: center; margin-bottom: 20px;}
@@ -93,32 +93,32 @@
         .pv-fill-naranja { background: linear-gradient(90deg, #e65100, #ff9800); height: 100%; transition: width 0.4s ease; }
         .pv-fill-verde { background: linear-gradient(90deg, #1b5e20, #2ea043); height: 100%; transition: width 0.4s ease; }
         .pv-liquidez-text { text-align: center; font-size: 2.8rem; font-weight: 900; color: var(--color-saldo); font-family: monospace; margin-top: 15px; text-shadow: 0 0 20px rgba(46, 160, 67, 0.4); }
+        .pv-certeza { font-size: 0.7rem; font-weight: bold; color: var(--text-muted); text-align: center; margin-top: 10px; text-transform: uppercase; letter-spacing: 1px;}
         .pv-section-title { font-size: 0.75rem; font-weight: 900; text-transform: uppercase; margin: 15px 0 10px 0; border-bottom: 1px solid var(--border-subtle); padding-bottom: 5px; display:flex; align-items:center; gap:5px;}
-        .pv-input-group { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; background: var(--bg-card); padding: 8px 12px; border-radius: 10px; border: 1px solid var(--border-subtle); gap:5px;}
-        .pv-input-group label { font-size: 0.7rem; font-weight: 800; color: var(--text-main); flex:1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
-        .pv-input { background: var(--bg-elevated); border: 1px solid var(--border-subtle); color: white; padding: 6px; border-radius: 6px; font-family: monospace; font-size: 1rem; width: 90px; text-align: right; outline: none; font-weight: bold; transition: all 0.3s;}
-        .pv-input.pagado { text-decoration: line-through; color: var(--text-muted); background: transparent; border-color: transparent;}
+        .pv-input-group { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; background: var(--bg-card); padding: 10px; border-radius: 10px; border: 1px solid var(--border-subtle); }
+        .pv-input-group label { font-size: 0.75rem; font-weight: 800; color: var(--text-main); }
+        .pv-input { background: var(--bg-elevated); border: 1px solid var(--border-subtle); color: white; padding: 6px; border-radius: 6px; font-family: monospace; font-size: 1rem; width: 100px; text-align: right; outline: none; font-weight: bold; }
+        .btn-pv-launch { width: 100%; padding: 18px; background: #ff9800; color: #000; border: none; border-radius: 12px; font-weight: 900; font-size: 1rem; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; margin-top: 20px; box-shadow: 0 10px 20px rgba(255, 152, 0, 0.3); }
+        .btn-pv-close { width: 100%; padding: 15px; background: transparent; color: var(--text-muted); border: none; font-weight: 900; margin-top: 10px; text-transform: uppercase; }
         
         .btn-estado { width: 30px; height: 30px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-panel); color: var(--text-muted); font-size: 0.65rem; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; font-weight: bold; flex-shrink: 0;}
         .btn-estado.est { border-color: rgba(255, 152, 0, 0.4); color: #ff9800; background: rgba(255, 152, 0, 0.1); }
         .btn-estado.real { border-color: rgba(31, 111, 235, 0.6); color: #79c0ff; background: rgba(31, 111, 235, 0.2); box-shadow: 0 0 8px rgba(31, 111, 235, 0.3);}
         .btn-estado.pag { border-color: rgba(46, 160, 67, 0.6); color: #2ea043; background: rgba(46, 160, 67, 0.2); box-shadow: 0 0 8px rgba(46, 160, 67, 0.3);}
-
-        .btn-pv-launch { width: 100%; padding: 18px; background: #ff9800; color: #000; border: none; border-radius: 12px; font-weight: 900; font-size: 1rem; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; margin-top: 20px; box-shadow: 0 10px 20px rgba(255, 152, 0, 0.3); }
-        .btn-pv-close { width: 100%; padding: 15px; background: transparent; color: var(--text-muted); border: none; font-weight: 900; margin-top: 10px; text-transform: uppercase; }
+        .pv-input.pagado { text-decoration: line-through; color: var(--text-muted); background: transparent; border-color: transparent;}
     </style>
 </head>
 <body>
 
 <div id="login-screen">
     <h2 style="color:var(--color-proyectado); margin: 20px 0; font-weight:900; font-size:2.5rem; letter-spacing: 2px;">BÚNKER SCADA</h2>
-    <p style="color:var(--text-dim); font-size:0.9rem; margin-bottom:40px; font-family: monospace; letter-spacing: 1px;">[ HUD MÓVIL V12.2 ]</p>
+    <p style="color:var(--text-dim); font-size:0.9rem; margin-bottom:40px; font-family: monospace; letter-spacing: 1px;">[ HUD MÓVIL V12.3 TUNED ]</p>
     <button onclick="loginWithGoogle()" style="padding:18px 40px; border-radius:12px; font-weight:900; color:black; background:white; border:none; font-size:1.1rem; box-shadow: 0 0 30px rgba(255,255,255,0.3);">INICIAR ENLACE</button>
 </div>
 
 <div class="app-container" id="reportZone">
     <div class="top-bar">
-        <div class="brand">BÚNKER <span class="brand-badge">V12.2</span></div>
+        <div class="brand">BÚNKER <span class="brand-badge">V12.3</span></div>
         <div style="display:flex; gap:8px;">
             <button onclick="toggleLanguage()" style="background:rgba(121,192,255,0.1); border:1px solid rgba(121,192,255,0.4); color:#79c0ff; border-radius:6px; font-weight:bold; font-size:0.7rem; padding:4px 8px;">ENG</button>
             <div id="user-display" class="user-tag">OPERATOR</div>
@@ -342,6 +342,7 @@
             <div id="pv-barra-verde" style="background:linear-gradient(90deg, #1b5e20, #2ea043); height:100%; transition:width 0.4s ease; width:100%;"></div>
         </div>
         <div style="text-align:center; font-size:2.8rem; font-weight:900; color:var(--color-saldo); font-family:monospace; margin-top:15px; text-shadow:0 0 20px rgba(46,160,67,0.4);">$<span id="pv-txt-liquidez">0</span></div>
+        <div class="pv-certeza" style="font-size:0.7rem; font-weight:bold; color:var(--text-muted); text-align:center; margin-top:10px; text-transform:uppercase; letter-spacing:1px;">CERTEZA DEL CÁLCULO: <span id="pv-certeza-pct" style="color:#ff5252;">0%</span></div>
     </div>
 
     <div style="font-size:0.75rem; font-weight:900; color:#ff5252; text-transform:uppercase; margin:20px 0 10px 0; border-bottom:1px solid var(--border-subtle); padding-bottom:5px; display:flex; align-items:center; gap:5px;"><span>💳</span> Deducciones Críticas</div>
@@ -352,7 +353,6 @@
 
     <div style="font-size:0.75rem; font-weight:900; color:var(--color-infra); text-transform:uppercase; margin:25px 0 10px 0; border-bottom:1px solid var(--border-subtle); padding-bottom:5px; display:flex; align-items:center; gap:5px;"><span>🏢</span> Carga Estructural</div>
     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; background:var(--bg-card); padding:8px 12px; border-radius:10px; border:1px solid var(--border-subtle); gap:5px;"><label style="font-size:0.7rem; font-weight:800; flex:1;">Arriendo</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-arriendo')">EST</button><input type="text" id="pv-arriendo" style="background:var(--bg-elevated); border:1px solid var(--border-subtle); color:white; padding:6px; border-radius:6px; font-family:monospace; font-size:1rem; width:85px; text-align:right; font-weight:bold; outline:none;" value="330.000" data-estado="est" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
-    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; background:var(--bg-card); padding:8px 12px; border-radius:10px; border:1px solid var(--border-subtle); gap:5px;"><label style="font-size:0.7rem; font-weight:800; flex:1;">Crédito Auto</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-auto')">EST</button><input type="text" id="pv-auto" style="background:var(--bg-elevated); border:1px solid var(--border-subtle); color:white; padding:6px; border-radius:6px; font-family:monospace; font-size:1rem; width:85px; text-align:right; font-weight:bold; outline:none;" value="230.125" data-estado="est" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; background:var(--bg-card); padding:8px 12px; border-radius:10px; border:1px solid var(--border-subtle); gap:5px;"><label style="font-size:0.7rem; font-weight:800; flex:1;">UDEC 2024</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-udec')">EST</button><input type="text" id="pv-udec" style="background:var(--bg-elevated); border:1px solid var(--border-subtle); color:white; padding:6px; border-radius:6px; font-family:monospace; font-size:1rem; width:85px; text-align:right; font-weight:bold; outline:none;" value="48.000" data-estado="est" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; background:var(--bg-card); padding:8px 12px; border-radius:10px; border:1px solid var(--border-subtle); gap:5px;"><label style="font-size:0.7rem; font-weight:800; flex:1;">CAE</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-cae')">EST</button><input type="text" id="pv-cae" style="background:var(--bg-elevated); border:1px solid var(--border-subtle); color:white; padding:6px; border-radius:6px; font-family:monospace; font-size:1rem; width:85px; text-align:right; font-weight:bold; outline:none;" value="38.742" data-estado="est" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
 
@@ -372,176 +372,6 @@
     <button onclick="cerrarPreVuelo()" style="width:100%; padding:15px; background:transparent; color:var(--text-muted); border:none; font-weight:900; margin-top:10px; text-transform:uppercase;">ABORTAR</button>
 </div>
 
-<script>
-    document.addEventListener("DOMContentLoaded", () => {
-        if(typeof renderizarListas === 'function') {
-            window.renderizarListas = function(sueldoBase, filtroBuscador) {
-                let datos = [...datosMesGlobal].filter(x => x.catV !== 'Gasto Tarjeta de Crédito'); 
-                if (filtroBuscador) datos = datos.filter(x => x.nombre?.toLowerCase().includes(filtroBuscador) || x.catV.toLowerCase().includes(filtroBuscador));
-
-                datos.sort((a, b) => {
-                    let valA = a[currentSort.column], valB = b[currentSort.column];
-                    if (valA < valB) return currentSort.direction === 'asc' ? -1 : 1;
-                    if (valA > valB) return currentSort.direction === 'asc' ? 1 : -1;
-                    return 0;
-                });
-
-                const contenedorMovil = document.getElementById('listaMovilDetalle');
-                if (!contenedorMovil) return;
-
-                if(datos.length === 0) {
-                    contenedorMovil.innerHTML = `<div style="text-align:center; padding: 40px 20px; color: var(--text-dim);"><i>📡</i><br>MATRIZ SIN DATOS</div>`;
-                    return;
-                }
-
-                let htmlMovil = ''; let currentDayGroup = ""; 
-                let now = new Date(); now.setHours(0,0,0,0);
-                let yesterday = new Date(now); yesterday.setDate(yesterday.getDate() - 1);
-
-                datos.forEach((x) => {
-                    const d = new Date(x.fechaISO);
-                    let dClean = new Date(d); dClean.setHours(0,0,0,0);
-                    const dateStr = d.toLocaleDateString('es-CL');
-                    const timeStr = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-                    
-                    if (currentSort.column === 'fechaISO' && currentSort.direction === 'desc' && dateStr !== currentDayGroup) {
-                        let labelText = dateStr;
-                        if (dClean.getTime() === now.getTime()) labelText = "HOY";
-                        else if (dClean.getTime() === yesterday.getTime()) labelText = "AYER";
-                        else {
-                            const meses = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"];
-                            labelText = `${d.getDate()} ${meses[d.getMonth()]}`;
-                        }
-                        htmlMovil += `<div class="date-header">${labelText}</div>`;
-                        currentDayGroup = dateStr;
-                    }
-
-                    const em = catEmojis[x.catV] || "❓";
-                    const colorMonto = x.esIn ? "var(--accent-green)" : x.esNeutro ? "#d29922" : "var(--text-main)";
-                    const iconoVisual = obtenerIconoVisual(x.nombre, em);
-                    const nombreSeguro = x.nombre || "Dato no identificado";
-                    const montoSeguro = (typeof x.monto === 'number' && !isNaN(x.monto)) ? x.monto : 0;
-                    
-                    let styleExtra = x.catV === 'Dopamina & Antojos' ? 'background: linear-gradient(90deg, rgba(255,255,255,0.01) 30%, rgba(255, 82, 82, 0.15) 100%) !important; border-right: 2px solid var(--accent-red) !important;' : '';
-
-                    const clickAction = typeof openBottomSheet === 'function' ? `openBottomSheet('${x.firestoreId}', '${nombreSeguro.replace(/'/g, "\\'")}', ${montoSeguro})` : `editarMovimiento('${x.firestoreId}')`;
-                    
-                    htmlMovil += `
-                    <div class="mobile-card" onclick="${clickAction}" style="${styleExtra}">
-                        <div style="width: 46px; height: 46px; margin-right: 12px; background: var(--bg-elevated); border-radius: 50%; display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0; border: 1px solid var(--border-subtle); box-shadow: inset 0 2px 5px rgba(0,0,0,0.5);">
-                            ${iconoVisual}
-                        </div>
-                        <div style="flex: 1; min-width: 0;">
-                            <div style="font-weight:bold; font-size:0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text-main); letter-spacing: 0.5px;">${nombreSeguro}</div>
-                            <div style="font-size:0.7rem; color:var(--text-dim); margin-top:3px;">${timeStr} • ${x.catV.replace(' & ','&')}</div>
-                        </div>
-                        <div style="font-weight:900; color:${colorMonto}; flex-shrink: 0; font-size:1.15rem; font-family:monospace;">${x.esIn?'+':(x.esNeutro?'=':'-')}$${Math.round(montoSeguro/1000)}k</div>
-                    </div>`;
-                });
-                contenedorMovil.innerHTML = htmlMovil;
-            }
-        }
-        
-        if(typeof renderizarTablaTC === 'function') {
-            window.renderizarTablaTC = function() {
-                const tbody = document.getElementById("listaMovilTC");
-                if (!tbody) return;
-                
-                if (datosTCGlobal.length === 0) {
-                    tbody.innerHTML = `<div style="text-align:center; padding: 40px 20px; color: var(--text-dim);"><i>📡</i><br>MATRIZ TC SIN DATOS</div>`;
-                    let boxImpacto = document.getElementById('boxImpactoTC'); if(boxImpacto) boxImpacto.style.display = 'none';
-                    return;
-                }
-
-                let htmlMovil = '';
-                let sumaProximoMes = 0; let fechaHoy = new Date();
-                let proximoMes = fechaHoy.getMonth() + 1; let proximoAnio = fechaHoy.getFullYear();
-                if (proximoMes > 11) { proximoMes = 0; proximoAnio++; }
-
-                datosTCGlobal.forEach(doc => {
-                    let fechaObj = new Date(doc.mesCobro);
-                    let mesTxt = fechaObj.toLocaleString('es-CL', { month: 'short', year: 'numeric' }).toUpperCase();
-                    if (fechaObj.getMonth() === proximoMes && fechaObj.getFullYear() === proximoAnio) sumaProximoMes += doc.monto;
-                    
-                    const clickAction = typeof openBottomSheet === 'function' ? `openBottomSheet('${doc.id}', '${doc.nombre.replace(/'/g, "\\'")}', ${doc.monto})` : ``;
-                    
-                    htmlMovil += `
-                    <div class="mobile-card" style="margin-bottom:6px; border-radius:12px !important; background: var(--bg-card) !important; padding: 14px 15px !important; border: 1px solid rgba(255,82,82,0.1) !important;">
-                        <div style="flex: 1; min-width: 0;">
-                            <div style="font-weight:bold; font-size:0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text-main);">${doc.nombre}</div>
-                            <div style="font-size:0.7rem; color:var(--accent-red); margin-top:3px; font-weight:800; letter-spacing: 0.5px;">${mesTxt} (${doc.cuota})</div>
-                        </div>
-                        <div style="font-weight:900; color:var(--text-main); flex-shrink: 0; font-size:1.15rem; font-family:monospace;">$${doc.monto.toLocaleString('es-CL')}</div>
-                    </div>`;
-                });
-                
-                tbody.innerHTML = htmlMovil;
-
-                let mesNombreStr = new Date(proximoAnio, proximoMes, 1).toLocaleString('es-CL', { month: 'long' }).toUpperCase();
-                let boxImpacto = document.getElementById('boxImpactoTC');
-                if (boxImpacto) {
-                    if (sumaProximoMes > 0) {
-                        boxImpacto.style.display = 'flex';
-                        document.getElementById('lblImpactoMes').innerText = `${mesNombreStr}`;
-                        document.getElementById('txtImpactoMonto').innerText = `$${sumaProximoMes.toLocaleString('es-CL')}`;
-                    } else { boxImpacto.style.display = 'none'; }
-                }
-            }
-        }
-    });
-
-    function switchDualCore(viewId, el) {
-        document.querySelectorAll('.core-btn').forEach(b => { b.classList.remove('active'); b.classList.remove('blue'); b.classList.remove('red'); });
-        el.classList.add('active');
-        const highlighter = document.getElementById('core-highlighter');
-        
-        if (viewId === 'efectivo') {
-            el.classList.add('blue');
-            highlighter.style.transform = 'translateX(0)';
-            highlighter.style.background = 'var(--accent-blue)';
-            document.getElementById('vista-tc').style.display = 'none';
-            document.getElementById('vista-efectivo').style.display = 'block';
-        } else {
-            el.classList.add('red');
-            highlighter.style.transform = 'translateX(100%)';
-            highlighter.style.background = 'var(--accent-red)';
-            document.getElementById('vista-efectivo').style.display = 'none';
-            document.getElementById('vista-tc').style.display = 'block';
-        }
-    }
-
-    function switchTabApp(tabId, element) {
-        document.querySelectorAll('.tab-content').forEach(d => { d.style.display = 'none'; });
-        document.getElementById('tab-' + tabId).style.display = 'block';
-        if(element) {
-            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-            element.classList.add('active');
-        }
-        if(tabId === 'trend') { setTimeout(() => { if(typeof chartBD !== 'undefined' && chartBD) chartBD.resize(); if(typeof chartDiario !== 'undefined' && chartDiario) chartDiario.resize(); if(typeof chartP !== 'undefined' && chartP) chartP.resize(); if(typeof chartRadar !== 'undefined' && chartRadar) chartRadar.resize(); }, 10); }
-        if (tabId === 'add' && !document.getElementById('editId').value) {
-            let now = new Date(); now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-            document.getElementById('inputFecha').value = now.toISOString().slice(0,16);
-            document.getElementById('inputFuga').value = "0";
-            document.getElementById('boxCuotas').style.display = 'none'; 
-            document.getElementById('inputNombre').focus();
-        }
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-    
-    window.switchTab = function(t) { switchTabApp(t === 'list' ? 'dash' : 'add', document.querySelectorAll('.nav-item')[t === 'list' ? 0 : 2]); };
-    
-    function switchSubChart(id, el, index) {
-        document.querySelectorAll('.v-chart').forEach(v => v.style.display='none');
-        document.getElementById(id).style.display='block';
-        document.querySelectorAll('#tab-trend .core-btn').forEach(b => b.classList.remove('active'));
-        el.classList.add('active');
-        const highlighter = document.getElementById('trend-highlighter');
-        highlighter.style.transform = `translateX(${index * 100}%)`;
-    }
-    
-    function openBottomSheet(id, n, m) { document.getElementById('sheet-title').innerText = n; document.getElementById('sheet-subtitle').innerText = "$" + m.toLocaleString('es-CL'); document.getElementById('sheet-id-target').value = id; const overlay = document.getElementById('bottom-sheet-overlay'); const sheet = document.getElementById('bottom-sheet'); overlay.style.display = 'block'; setTimeout(() => { overlay.style.opacity = '1'; sheet.style.bottom = '0'; }, 10); }
-    function closeBottomSheet() { const overlay = document.getElementById('bottom-sheet-overlay'); const sheet = document.getElementById('bottom-sheet'); sheet.style.bottom = '-100%'; overlay.style.opacity = '0'; setTimeout(()=> overlay.style.display = 'none', 300); }
-</script>
 <script src="motor.js"></script>
 </body>
 </html>
