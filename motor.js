@@ -1,12 +1,11 @@
 // ==========================================================
-// 🧠 BÚNKER SCADA ORACLE - MOTOR LÓGICO V12.1 (PRE-FLIGHT)
+// 🧠 BÚNKER SCADA ORACLE - MOTOR LÓGICO V12.2 (3-STATE)
 // ==========================================================
 const BYRON_EMAIL = "bvhcc94@gmail.com"; 
 const CREDIT_SETPOINT = -300000; 
 const catEvitables = ["Dopamina & Antojos"]; 
 const SUELDO_BASE_DEFAULT = 3602505;
 
-// 🟢 MÓDULO A.C.E. (Auto-Categorización Experta) 🟢
 const diccAuto = [
     { keys: ["prestamo", "debe", "pagar dps", "por cobrar", "cuota de"], cat: "Cuentas por Cobrar (Activos)", tipo: "Por Cobrar", fuga: "0" },
     { keys: ["uber", "didi", "cabify", "pasaje", "buses", "turbus", "metro"], cat: "Transporte & Logística", tipo: "Gasto", fuga: "0" },
@@ -133,7 +132,7 @@ function logout() { auth.signOut().then(() => window.location.reload()); }
 
 auth.onAuthStateChanged(user => {
     if (user && user.email.toLowerCase() === BYRON_EMAIL.toLowerCase()) {
-        console.log("%c[ORACLE V12.1] FULL STACK BOOT SEQUENCE INITIATED", "color: #79c0ff; font-weight: bold; font-size: 14px;");
+        console.log("%c[ORACLE V12.2] FULL STACK BOOT SEQUENCE INITIATED", "color: #79c0ff; font-weight: bold; font-size: 14px;");
         
         const loginScreen = document.getElementById('login-screen'), reportZone = document.getElementById('reportZone');
         if(loginScreen) loginScreen.style.display = 'none';
@@ -809,7 +808,7 @@ async function ejecutarPurgaMasivaTC() {
 }
 
 // ==========================================================
-// 🚀 MÓDULO DÍA CERO V12.1 (PERSONALIZADO BYRON)
+// 🚀 MÓDULO DÍA CERO V12.2 (SISTEMA TRINARIO)
 // ==========================================================
 function abrirPreVuelo() {
     const modal = document.getElementById('modal-dia-cero');
@@ -835,7 +834,11 @@ function abrirPreVuelo() {
         }
     });
     
-    document.getElementById('pv-tc-nac').value = sumaTCMes > 0 ? sumaTCMes.toLocaleString('es-CL') : "";
+    // Solo sobreescribir si la TC no ha sido manipulada por el usuario (evitar borrar sus ajustes si entra y sale)
+    let elTcNac = document.getElementById('pv-tc-nac');
+    if(elTcNac && elTcNac.getAttribute('data-estado') === 'est') {
+        elTcNac.value = sumaTCMes > 0 ? sumaTCMes.toLocaleString('es-CL') : "";
+    }
     
     calcularDiaCero();
     modal.style.display = 'flex';
@@ -846,28 +849,68 @@ function cerrarPreVuelo() {
     if(modal) modal.style.display = 'none';
 }
 
+// 🟢 SISTEMA DE 3 ESTADOS 🟢
+window.toggleEstadoPV = function(btn, inputId) {
+    const input = document.getElementById(inputId);
+    if(!input) return;
+    
+    let estadoActual = input.getAttribute('data-estado') || 'est';
+    
+    if (estadoActual === 'est') {
+        // Pasa a REAL
+        input.setAttribute('data-estado', 'real');
+        btn.className = "btn-estado real";
+        btn.innerText = "📄";
+        input.classList.remove('pagado');
+        input.readOnly = false;
+    } else if (estadoActual === 'real') {
+        // Pasa a PAGADO
+        input.setAttribute('data-estado', 'pag');
+        btn.className = "btn-estado pag";
+        btn.innerText = "✔️";
+        input.classList.add('pagado');
+        input.readOnly = true; // Bloquea edición si ya está pagado
+    } else {
+        // Vuelve a ESTIMADO
+        input.setAttribute('data-estado', 'est');
+        btn.className = "btn-estado est";
+        btn.innerText = "EST";
+        input.classList.remove('pagado');
+        input.readOnly = false;
+    }
+    
+    calcularDiaCero(); // Recalcula liquidez basado en los nuevos estados
+}
+
 function calcularDiaCero() {
-    const val = id => parseInt((document.getElementById(id).value || "0").replace(/\./g, '')) || 0;
+    // Función auxiliar: Solo suma el valor si NO está en estado 'pag' (Pagado)
+    const valSiNoPagado = (id) => {
+        let el = document.getElementById(id);
+        if (!el) return 0;
+        if (el.getAttribute('data-estado') === 'pag') return 0; // 🟢 TRINARIO: Si está pagado, es 0 carga para el próximo mes
+        return parseInt(el.value.replace(/\./g, '')) || 0;
+    };
+
+    let sueldo = parseInt((document.getElementById('pv-sueldo').value || "0").replace(/\./g, '')) || 0;
     
-    let sueldo = val('pv-sueldo');
-    let tcNac = val('pv-tc-nac');
-    let tcInt = val('pv-tc-int');
-    let linea = val('pv-linea');
+    let tcNac = valSiNoPagado('pv-tc-nac');
+    let tcInt = valSiNoPagado('pv-tc-int');
+    let linea = valSiNoPagado('pv-linea');
     
-    let arr = val('pv-arriendo');
-    let auto = val('pv-auto');
-    let udec = val('pv-udec');
-    let cae = val('pv-cae');
+    let arr = valSiNoPagado('pv-arriendo');
+    let auto = valSiNoPagado('pv-auto');
+    let udec = valSiNoPagado('pv-udec');
+    let cae = valSiNoPagado('pv-cae');
     
-    let ggcc = val('pv-ggcc');
-    let luz = val('pv-luz');
-    let agua = val('pv-agua');
-    let gas = val('pv-gas');
+    let ggcc = valSiNoPagado('pv-ggcc');
+    let luz = valSiNoPagado('pv-luz');
+    let agua = valSiNoPagado('pv-agua');
+    let gas = valSiNoPagado('pv-gas');
     
-    let celu = val('pv-celu');
-    let madre = val('pv-madre');
-    let subs = val('pv-subs');
-    let seguro = val('pv-seguro');
+    let celu = valSiNoPagado('pv-celu');
+    let madre = valSiNoPagado('pv-madre');
+    let subs = valSiNoPagado('pv-subs');
+    let seguro = valSiNoPagado('pv-seguro');
     
     let deudasDuras = tcNac + tcInt + linea;
     let estructural = arr + auto + udec + cae + ggcc + luz + agua + gas + celu + madre + subs + seguro;
@@ -888,25 +931,7 @@ function calcularDiaCero() {
 }
 
 function ejecutarArranque() {
-    if(!confirm("⚠️ INYECCIÓN CRÍTICA V12.1\n\n¿Estás seguro de inyectar toda tu Planilla Operativa en la Matriz del mes seleccionado?")) return;
-    
-    const val = id => parseInt((document.getElementById(id).value || "0").replace(/\./g, '')) || 0;
-    
-    let tcNac = val('pv-tc-nac');
-    let tcInt = val('pv-tc-int');
-    let linea = val('pv-linea');
-    let arr = val('pv-arriendo');
-    let auto = val('pv-auto');
-    let udec = val('pv-udec');
-    let cae = val('pv-cae');
-    let ggcc = val('pv-ggcc');
-    let luz = val('pv-luz');
-    let agua = val('pv-agua');
-    let gas = val('pv-gas');
-    let celu = val('pv-celu');
-    let madre = val('pv-madre');
-    let subs = val('pv-subs');
-    let seguro = val('pv-seguro');
+    if(!confirm("⚠️ INYECCIÓN CRÍTICA V12.2\n\n¿Estás seguro de inyectar toda tu Planilla Operativa en la Matriz del mes seleccionado?\n\nNota: Los gastos marcados como ✔️ PAGADO serán ignorados para evitar doble contabilización.")) return;
     
     const elMes = document.getElementById('navMesConceptual');
     const elAnio = document.getElementById('navAnio');
@@ -915,33 +940,50 @@ function ejecutarArranque() {
     const batch = db.batch();
     let inyectados = 0;
     
-    const inyectar = (monto, nombre, cat) => {
+    // Función auxiliar para inyectar: Solo procesa si el estado es 'est' o 'real'
+    const procesarInyeccion = (idInput, nombre, cat) => {
+        let el = document.getElementById(idInput);
+        if (!el) return;
+        
+        let estado = el.getAttribute('data-estado') || 'est';
+        if (estado === 'pag') return; // 🟢 TRINARIO: Ignora inyección si ya está pagado
+        
+        let monto = parseInt(el.value.replace(/\./g, '')) || 0;
+        
         if (monto > 0) {
             let ref = db.collection("movimientos").doc();
-            batch.set(ref, { monto: monto, nombre: nombre, categoria: cat, tipo: "Gasto Fijo", fecha: fechaDestino, status: "Auto-Launch", innecesarioPct: 0, cuotas: 1 });
+            batch.set(ref, { 
+                monto: monto, 
+                nombre: nombre, 
+                categoria: cat, 
+                tipo: "Gasto Fijo", 
+                fecha: fechaDestino, 
+                status: estado === 'real' ? 'Real' : 'Estimado', // Etiqueta si era real o estimado
+                innecesarioPct: 0, 
+                cuotas: 1 
+            });
             inyectados++;
         }
     };
     
-    // Mapeo Inteligente a la Matriz V12.1
-    if(tcNac > 0) inyectar(tcNac, "PAGO TC NACIONAL (DÍA CERO)", "Gastos Fijos (Búnker)"); 
-    if(tcInt > 0) inyectar(tcInt, "PAGO TC INTERNACIONAL (DÍA CERO)", "Gastos Fijos (Búnker)"); 
-    if(linea > 0) inyectar(linea, "PAGO LÍNEA CRÉDITO (DÍA CERO)", "Gastos Fijos (Búnker)");
+    procesarInyeccion('pv-tc-nac', "PAGO TC NACIONAL (DÍA CERO)", "Gastos Fijos (Búnker)"); 
+    procesarInyeccion('pv-tc-int', "PAGO TC INTERNACIONAL (DÍA CERO)", "Gastos Fijos (Búnker)"); 
+    procesarInyeccion('pv-linea', "PAGO LÍNEA CRÉDITO (DÍA CERO)", "Gastos Fijos (Búnker)");
     
-    if(arr > 0) inyectar(arr, "ARRIENDO / DIVIDENDO", "Infraestructura (Depto)");
-    if(auto > 0) inyectar(auto, "CRÉDITO AUTO", "Flota & Movilidad");
-    if(udec > 0) inyectar(udec, "PAGO UDEC 2024", "Infraestructura (Depto)");
-    if(cae > 0) inyectar(cae, "PAGO CAE", "Infraestructura (Depto)");
+    procesarInyeccion('pv-arriendo', "ARRIENDO / DIVIDENDO", "Infraestructura (Depto)");
+    procesarInyeccion('pv-auto', "CRÉDITO AUTO", "Flota & Movilidad");
+    procesarInyeccion('pv-udec', "PAGO UDEC 2024", "Infraestructura (Depto)");
+    procesarInyeccion('pv-cae', "PAGO CAE", "Infraestructura (Depto)");
     
-    if(ggcc > 0) inyectar(ggcc, "GASTOS COMUNES", "Infraestructura (Depto)");
-    if(luz > 0) inyectar(luz, "LUZ / ELECTRICIDAD", "Infraestructura (Depto)");
-    if(agua > 0) inyectar(agua, "AGUA / SANEAMIENTO", "Infraestructura (Depto)");
-    if(gas > 0) inyectar(gas, "GAS", "Infraestructura (Depto)");
+    procesarInyeccion('pv-ggcc', "GASTOS COMUNES", "Infraestructura (Depto)");
+    procesarInyeccion('pv-luz', "LUZ / ELECTRICIDAD", "Infraestructura (Depto)");
+    procesarInyeccion('pv-agua', "AGUA / SANEAMIENTO", "Infraestructura (Depto)");
+    procesarInyeccion('pv-gas', "GAS", "Infraestructura (Depto)");
     
-    if(celu > 0) inyectar(celu, "CELU MIO PLAN", "Suscripciones");
-    if(madre > 0) inyectar(madre, "MOVISTAR MADRE", "Red de Apoyo (Familia)");
-    if(subs > 0) inyectar(subs, "PACK SUSCRIPCIONES (YT, Disney, etc)", "Suscripciones");
-    if(seguro > 0) inyectar(seguro, "SEGURO AUTO", "Flota & Movilidad");
+    procesarInyeccion('pv-celu', "CELU MIO PLAN", "Suscripciones");
+    procesarInyeccion('pv-madre', "MOVISTAR MADRE", "Red de Apoyo (Familia)");
+    procesarInyeccion('pv-subs', "PACK SUSCRIPCIONES (YT, Disney, etc)", "Suscripciones");
+    procesarInyeccion('pv-seguro', "SEGURO AUTO", "Flota & Movilidad");
     
     if (inyectados > 0) {
         batch.commit().then(() => {
@@ -952,7 +994,8 @@ function ejecutarArranque() {
             alert("❌ Error de Inyección: " + err.message);
         });
     } else {
-        alert("No hay montos válidos para inyectar.");
+        alert("No se inyectaron registros (todos estaban marcados como pagados o con valor 0).");
+        cerrarPreVuelo();
     }
 }
 // ==========================================================
