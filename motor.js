@@ -201,32 +201,41 @@ auth.onAuthStateChanged(user => {
 
 // 🟢 PARCHE V12.4.4: PRECISIÓN DE SUELDO MENSUAL AISLADO 🟢
 
+// ==========================================================
+// 🟢 PARCHE V12.4.5: ANCLAJE TEMPORAL DE SUELDO Y PRECISIÓN
+// ==========================================================
+
 window.cargarSueldoVisual = function() {
-    const elMes = document.getElementById('navMesConceptual'), elAnio = document.getElementById('navAnio'), elSueldo = document.getElementById('inputSueldo');
+    const elMes = document.getElementById('navMesConceptual');
+    const elAnio = document.getElementById('navAnio');
+    const elSueldo = document.getElementById('inputSueldo');
+    
     if(!elMes || !elAnio || !elSueldo) return;
     
-    let llave = `${elAnio.value}_${elMes.value}`;
+    let m = elMes.value; 
+    let a = elAnio.value;
+    let llave = `${a}_${m}`;
+    
+    // ANCLAJE TÁCTICO: Pegamos una etiqueta oculta al input indicando de qué mes es este dato.
+    elSueldo.setAttribute('data-mes-ancla', m);
+    elSueldo.setAttribute('data-anio-ancla', a);
     
     if (document.activeElement !== elSueldo) {
         if (sueldosHistoricos[llave]) {
-            // Si ya guardaste el sueldo exacto de este mes, lo muestra.
             elSueldo.value = sueldosHistoricos[llave].toLocaleString('es-CL');
         } else {
-            // Si NO está guardado, vacía la caja para obligarte a poner el valor exacto.
             elSueldo.value = '';
-            elSueldo.placeholder = 'SUELDO PENDIENTE';
+            elSueldo.placeholder = 'PENDIENTE';
         }
     }
 };
 
 window.obtenerSueldoMes = function(anio, mes) {
     let llave = `${anio}_${mes}`;
-    // 1. Si existe un sueldo EXACTO para este mes, lo usa.
     if (sueldosHistoricos[llave]) return sueldosHistoricos[llave];
     
-    // 2. Si no hay sueldo, busca el último real hacia atrás 
-    // SOLO para que los gráficos matemáticos de fondo no colapsen a $0.
-    let iterAnio = anio;
+    // Búsqueda hacia atrás SOLO para no colapsar la gráfica matemática a $0
+    let iterAnio = anio; 
     let iterMes = mes;
     for(let i=0; i<12; i++) {
         iterMes--;
@@ -234,21 +243,19 @@ window.obtenerSueldoMes = function(anio, mes) {
         let k = `${iterAnio}_${iterMes}`;
         if(sueldosHistoricos[k]) return sueldosHistoricos[k];
     }
-    return 3602505; // Fallback estructural
+    return 3602505; // Fallback Estructural
 };
 
 window.guardarSueldoEnNube = function() {
-    const elMes = document.getElementById('navMesConceptual');
-    const elAnio = document.getElementById('navAnio');
     const elSueldo = document.getElementById('inputSueldo');
+    if(!elSueldo) return;
     
-    if(!elMes || !elAnio || !elSueldo) return;
+    // Extraemos el mes desde el ANCLA (fija), no desde el selector de arriba (variable)
+    let m = parseInt(elSueldo.getAttribute('data-mes-ancla'));
+    let a = parseInt(elSueldo.getAttribute('data-anio-ancla'));
     
-    let m = parseInt(elMes.value);
-    let a = parseInt(elAnio.value);
-    
-    // Si la caja está vacía, abortamos el guardado para no meter basura a la Base de Datos
-    if (elSueldo.value.trim() === '') return; 
+    // Prevención de guardado de basura
+    if (isNaN(m) || isNaN(a) || elSueldo.value.trim() === '') return; 
 
     let s = parseInt(elSueldo.value.replace(/\./g, '')); 
     if (isNaN(s) || s <= 0) return;
@@ -260,13 +267,12 @@ window.guardarSueldoEnNube = function() {
         [llave]: s
     }, {merge: true}).then(() => {
         const nombresMes = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"];
-        mostrarToast(`SUELDO EXACTO [${nombresMes[m]} ${a}] GUARDADO`);
+        mostrarToast(`SUELDO [${nombresMes[m]} ${a}] GUARDADO: $${s.toLocaleString('es-CL')}`);
         actualizarDashboard();
     }).catch(err => {
-        alert("❌ Error Nube: " + err.message);
+        console.error("Error Nube:", err);
     });
 };
-
 let alarmLogCache = "";
 window.abrirHistorian = function() {
     document.getElementById('historian-content').innerHTML = alarmLogCache || "<div style='color:var(--color-saldo); font-weight:bold; text-align:center; padding:20px;'>SYSTEM NOMINAL.<br>NO BREACHES DETECTED.</div>";
