@@ -49,7 +49,24 @@ h2 { color: var(--color-ingresos); margin: 0; font-size: 1.2rem; font-weight: 90
 .master-layout { display: grid; grid-template-columns: 1fr 340px; gap: 12px; margin-top: 5px; flex: 1; min-height: 0; overflow: hidden; }
 
 /* 🟢 MASTER LAYOUT BLINDADO (TABLA ABAJO, GRÁFICOS ARRIBA) 🟢 */
-.master-layout { display: grid; grid-template-columns: 1fr 340px; gap: 12px; margin-top: 5px; flex: 1 1 0px; min-height: 0; overflow: hidden; height: 100%; }
+.master-layout { 
+    display: grid; 
+    grid-template-columns: 1fr 400px; /* Dale más espacio (400px) a la derecha */
+    gap: 12px; 
+    margin-top: 5px; 
+    flex: 1 1 0px; 
+    min-height: 0; 
+    overflow: hidden; 
+    height: 100%; 
+}
+        .right-col { 
+    display: flex; 
+    flex-direction: column; 
+    gap: 10px; 
+    height: 100%; 
+    overflow-y: auto; /* Permite scroll si la pantalla es pequeña */
+    padding-right: 5px; /* Evita que el scroll pegue en el borde */
+}
 
 .left-col { display: flex; flex-direction: column; gap: 10px; flex: 1 1 0px; min-height: 0; overflow: hidden; height: 100%; }
 
@@ -85,7 +102,10 @@ h2 { color: var(--color-ingresos); margin: 0; font-size: 1.2rem; font-weight: 90
 .bd-badge { padding: 2px 5px; font-size: 0.65rem; font-weight: bold; color: var(--text-main); text-shadow: 0px 2px 4px rgba(0,0,0,0.9); }
 
 .right-col { display: flex; flex-direction: column; gap: 10px; height: 100%; overflow: hidden;}
-.sidebar-panel { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; transition: border-color 0.2s, box-shadow 0.2s; flex-shrink: 0;}
+/* Evita que el panel TC se aplaste a 0px */
+.sidebar-panel.tc-panel {
+    min-height: 320px; 
+}
 .form-group { margin-bottom: 8px; width: 100%; position: relative; }
 .form-group label { display: block; font-size: 0.6rem; font-weight: 800; color: var(--text-muted); margin-bottom: 2px; text-transform: uppercase; }
 .custom-select, .form-group input, .form-group select { width: 100%; border: 1px solid var(--border-color); border-radius: 4px; background-color: var(--input-bg); color: var(--text-main); outline: none; padding: 6px 8px; font-size: 0.8rem; height: 32px; }
