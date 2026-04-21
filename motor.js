@@ -256,7 +256,16 @@ function renderizarListaTC(datos) {
     const contenedorPC = document.getElementById('listaDetalleTC');
     const contenedorMovil = document.getElementById('listaMovilTC');
     let htmlPC = '', htmlMovil = '';
-    
+    let htmlFila = `
+    <tr style="border-bottom: 1px solid #222;">
+        <td style="text-align: center; padding: 10px;">
+            <input type="checkbox" class="checkItemTC" value="${doc.id}" onclick="actualizarBarraTC()">
+        </td>
+        <td style="font-size: 0.85rem; color: #00bcd4;">${doc.mesCobro} (${doc.cuota})</td>
+        <td style="font-size: 0.85rem;">${doc.nombre}</td>
+        <td style="text-align: right; font-weight: bold; padding: 10px;">$${doc.monto.toLocaleString('es-CL')}</td>
+    </tr>
+`;
     datos.sort((a,b)=> b.fechaISO > a.fechaISO ? 1 : -1).forEach(x => {
         const d = new Date(x.fechaISO);
         const dateStr = d.toLocaleDateString('es-CL', {day:'2-digit', month:'short'}).toUpperCase();
