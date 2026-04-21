@@ -202,9 +202,8 @@ auth.onAuthStateChanged(user => {
 // 🟢 PARCHE V12.4.4: PRECISIÓN DE SUELDO MENSUAL AISLADO 🟢
 
 // ==========================================================
-// 🟢 PARCHE V12.4.5: ANCLAJE TEMPORAL DE SUELDO Y PRECISIÓN
+// 🟢 PARCHE V12.4.6: AISLAMIENTO TOTAL DE MESES 🟢
 // ==========================================================
-
 window.cargarSueldoVisual = function() {
     const elMes = document.getElementById('navMesConceptual');
     const elAnio = document.getElementById('navAnio');
@@ -216,7 +215,6 @@ window.cargarSueldoVisual = function() {
     let a = elAnio.value;
     let llave = `${a}_${m}`;
     
-    // ANCLAJE TÁCTICO: Pegamos una etiqueta oculta al input indicando de qué mes es este dato.
     elSueldo.setAttribute('data-mes-ancla', m);
     elSueldo.setAttribute('data-anio-ancla', a);
     
@@ -232,29 +230,22 @@ window.cargarSueldoVisual = function() {
 
 window.obtenerSueldoMes = function(anio, mes) {
     let llave = `${anio}_${mes}`;
+    
+    // Aislamiento total: Solo usa el sueldo si está guardado explícitamente en ese mes exacto.
     if (sueldosHistoricos[llave]) return sueldosHistoricos[llave];
     
-    // Búsqueda hacia atrás SOLO para no colapsar la gráfica matemática a $0
-    let iterAnio = anio; 
-    let iterMes = mes;
-    for(let i=0; i<12; i++) {
-        iterMes--;
-        if(iterMes < 0) { iterMes = 11; iterAnio--; }
-        let k = `${iterAnio}_${iterMes}`;
-        if(sueldosHistoricos[k]) return sueldosHistoricos[k];
-    }
-    return 3602505; // Fallback Estructural
+    // Eliminamos la herencia hacia atrás. Si no hay dato, asume el base por defecto (3.6M) 
+    // SOLO para que la interfaz matemática no arroje errores, pero la caja te exigirá el valor exacto.
+    return SUELDO_BASE_DEFAULT;
 };
 
 window.guardarSueldoEnNube = function() {
     const elSueldo = document.getElementById('inputSueldo');
     if(!elSueldo) return;
     
-    // Extraemos el mes desde el ANCLA (fija), no desde el selector de arriba (variable)
     let m = parseInt(elSueldo.getAttribute('data-mes-ancla'));
     let a = parseInt(elSueldo.getAttribute('data-anio-ancla'));
     
-    // Prevención de guardado de basura
     if (isNaN(m) || isNaN(a) || elSueldo.value.trim() === '') return; 
 
     let s = parseInt(elSueldo.value.replace(/\./g, '')); 
