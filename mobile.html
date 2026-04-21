@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Bunker Móvil HUD V12.3 (Tuned)</title>
+    <title>Bunker Móvil HUD V12.4 (Ergonomía Pro)</title>
     <link rel="apple-touch-icon" href="bunker-icon.png">
     <meta name="theme-color" content="#030508">
 
@@ -24,8 +24,9 @@
         .brand-badge { background: linear-gradient(90deg, #1f6feb, #79c0ff); color: #fff; font-size: 0.65rem; padding: 2px 8px; border-radius: 4px; font-family: monospace; text-shadow: 0 1px 2px rgba(0,0,0,0.8);}
         .user-tag { color: var(--accent-green); background: rgba(46, 160, 67, 0.1); border: 1px solid rgba(46, 160, 67, 0.3); font-weight: 800; padding: 4px 10px; border-radius: 6px; font-size: 0.7rem; letter-spacing: 1px; box-shadow: 0 0 10px rgba(46, 160, 67, 0.2); }
 
-        .master-hud { text-align: center; padding: 10px 20px 25px 20px; }
-        .hud-value { font-size: 4rem; font-weight: 900; letter-spacing: -2px; font-family: monospace; text-shadow: 0 0 30px rgba(31, 111, 235, 0.3); transition: transform 0.3s; }
+        .master-hud { text-align: center; padding: 10px 20px 25px 20px; width: 100%; overflow: hidden;}
+        /* 🟢 MEJORA 3: Tipografía Elástica (Clamp) */
+        .hud-value { font-size: clamp(2.5rem, 12vw, 4.5rem); font-weight: 900; letter-spacing: -2px; font-family: monospace; text-shadow: 0 0 30px rgba(31, 111, 235, 0.3); transition: transform 0.3s; word-break: break-all; line-height: 1.1;}
         .hud-value.danger { color: var(--accent-red); text-shadow: 0 0 30px rgba(255, 82, 82, 0.3); }
         
         .slave-kpis { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 15px; margin-bottom: 20px; }
@@ -74,15 +75,24 @@
         .impact-pill { background: rgba(255, 82, 82, 0.08); border: 1px solid rgba(255,82,82,0.3); border-radius: 12px; padding: 15px; display: flex; justify-content: space-between; align-items: center; margin: 0 15px 15px 15px; box-shadow: 0 0 25px rgba(255,82,82,0.15); border-left: 5px solid var(--accent-red); }
         .mini-kpi-fugas { display: flex; align-items: center; justify-content: space-between; padding: 12px 20px; background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 12px; margin: 0 15px 10px 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.2);}
         
+        /* 🟢 MEJORA 5: HISTORIAN LOG REDISEÑADO 🟢 */
         #modal-historian { position: fixed; inset: 0; background: rgba(3, 5, 8, 0.95); z-index: 25000; display: none; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(10px); padding: 20px; }
         .hist-box { background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 12px; width: 100%; box-shadow: 0 0 40px rgba(255, 82, 82, 0.2); overflow: hidden; border-top: 4px solid #ff5252;}
         .hist-header { padding: 15px; background: rgba(0,0,0,0.3); border-bottom: 1px solid var(--border-subtle); display: flex; justify-content: space-between; align-items: center;}
-        .hist-body { padding: 15px; max-height: 60vh; overflow-y: auto; font-family: monospace; font-size: 0.8rem;}
-        .log-item { padding: 8px; border-radius: 4px; margin-bottom: 8px; border-left: 3px solid; background: rgba(255,255,255,0.02);}
-        .log-item.critical { border-color: #ff5252; color: #ff5252; }
-        .log-item.warning { border-color: #ff9800; color: #ff9800; }
+        .hist-body { padding: 15px; max-height: 60vh; overflow-y: auto;}
+        
+        .log-item { display: flex; gap: 15px; padding: 15px; border-radius: 12px; margin-bottom: 12px; background: var(--bg-elevated); border: 1px solid transparent; align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.2);}
+        .log-icon { font-size: 1.8rem; background: rgba(0,0,0,0.2); width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; border-radius: 50%; flex-shrink: 0;}
+        .log-content { flex: 1; line-height: 1.3; }
+        .log-content strong { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; }
+        .log-content div.log-date { font-size: 0.75rem; color: var(--text-dim); margin-bottom: 4px; }
+        .log-content span { font-family: monospace; font-size: 1.2rem; font-weight: 900; }
+        .log-item.critical { border-color: rgba(255,82,82,0.4); background: linear-gradient(90deg, rgba(255,82,82,0.1), transparent); }
+        .log-item.critical strong, .log-item.critical span { color: #ff5252; }
+        .log-item.warning { border-color: rgba(255,152,0,0.4); background: linear-gradient(90deg, rgba(255,152,0,0.1), transparent); }
+        .log-item.warning strong, .log-item.warning span { color: #ff9800; }
 
-        /* 🟢 MÓDULO PRE-VUELO V12.3 MÓVIL 🟢 */
+        /* 🟢 MEJORA 4: TAP TARGETS MÁS GRANDES EN PRE-VUELO 🟢 */
         #modal-dia-cero { position: fixed; inset: 0; background: rgba(3, 5, 8, 0.98); z-index: 20000; display: none; flex-direction: column; overflow-y: auto; padding: 20px 15px 100px 15px; }
         .pv-title { font-size: 1.3rem; font-weight: 900; color: #ff9800; letter-spacing: 2px; margin: 20px 0 5px 0; text-transform: uppercase; text-align: center; }
         .pv-subtitle { font-size: 0.75rem; color: var(--text-muted); font-family: monospace; text-align: center; margin-bottom: 20px;}
@@ -95,30 +105,33 @@
         .pv-liquidez-text { text-align: center; font-size: 2.8rem; font-weight: 900; color: var(--color-saldo); font-family: monospace; margin-top: 15px; text-shadow: 0 0 20px rgba(46, 160, 67, 0.4); }
         .pv-certeza { font-size: 0.7rem; font-weight: bold; color: var(--text-muted); text-align: center; margin-top: 10px; text-transform: uppercase; letter-spacing: 1px;}
         .pv-section-title { font-size: 0.75rem; font-weight: 900; text-transform: uppercase; margin: 15px 0 10px 0; border-bottom: 1px solid var(--border-subtle); padding-bottom: 5px; display:flex; align-items:center; gap:5px;}
-        .pv-input-group { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; background: var(--bg-card); padding: 10px; border-radius: 10px; border: 1px solid var(--border-subtle); }
-        .pv-input-group label { font-size: 0.75rem; font-weight: 800; color: var(--text-main); }
-        .pv-input { background: var(--bg-elevated); border: 1px solid var(--border-subtle); color: white; padding: 6px; border-radius: 6px; font-family: monospace; font-size: 1rem; width: 100px; text-align: right; outline: none; font-weight: bold; }
-        .btn-pv-launch { width: 100%; padding: 18px; background: #ff9800; color: #000; border: none; border-radius: 12px; font-weight: 900; font-size: 1rem; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; margin-top: 20px; box-shadow: 0 10px 20px rgba(255, 152, 0, 0.3); }
-        .btn-pv-close { width: 100%; padding: 15px; background: transparent; color: var(--text-muted); border: none; font-weight: 900; margin-top: 10px; text-transform: uppercase; }
         
-        .btn-estado { width: 30px; height: 30px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-panel); color: var(--text-muted); font-size: 0.65rem; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; font-weight: bold; flex-shrink: 0;}
+        /* Modificación Ergonomía */
+        .pv-input-group { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; background: var(--bg-card); padding: 12px 14px; border-radius: 12px; border: 1px solid var(--border-subtle); gap:10px;}
+        .pv-input-group label { font-size: 0.8rem; font-weight: 800; color: var(--text-main); flex:1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
+        .pv-input { background: var(--bg-elevated); border: 1px solid var(--border-subtle); color: white; padding: 10px; border-radius: 8px; font-family: monospace; font-size: 1.1rem; width: 110px; text-align: right; outline: none; font-weight: bold; transition: all 0.3s;}
+        .btn-estado { width: 48px; height: 48px; border-radius: 10px; border: 1px solid var(--border-color); background: var(--bg-panel); color: var(--text-muted); font-size: 0.85rem; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; font-weight: 900; flex-shrink: 0;}
+        
         .btn-estado.est { border-color: rgba(255, 152, 0, 0.4); color: #ff9800; background: rgba(255, 152, 0, 0.1); }
         .btn-estado.real { border-color: rgba(31, 111, 235, 0.6); color: #79c0ff; background: rgba(31, 111, 235, 0.2); box-shadow: 0 0 8px rgba(31, 111, 235, 0.3);}
         .btn-estado.pag { border-color: rgba(46, 160, 67, 0.6); color: #2ea043; background: rgba(46, 160, 67, 0.2); box-shadow: 0 0 8px rgba(46, 160, 67, 0.3);}
         .pv-input.pagado { text-decoration: line-through; color: var(--text-muted); background: transparent; border-color: transparent;}
+        
+        .btn-pv-launch { width: 100%; padding: 18px; background: #ff9800; color: #000; border: none; border-radius: 12px; font-weight: 900; font-size: 1rem; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; margin-top: 20px; box-shadow: 0 10px 20px rgba(255, 152, 0, 0.3); }
+        .btn-pv-close { width: 100%; padding: 15px; background: transparent; color: var(--text-muted); border: none; font-weight: 900; margin-top: 10px; text-transform: uppercase; }
     </style>
 </head>
 <body>
 
 <div id="login-screen">
     <h2 style="color:var(--color-proyectado); margin: 20px 0; font-weight:900; font-size:2.5rem; letter-spacing: 2px;">BÚNKER SCADA</h2>
-    <p style="color:var(--text-dim); font-size:0.9rem; margin-bottom:40px; font-family: monospace; letter-spacing: 1px;">[ HUD MÓVIL V12.3 TUNED ]</p>
+    <p style="color:var(--text-dim); font-size:0.9rem; margin-bottom:40px; font-family: monospace; letter-spacing: 1px;">[ HUD MÓVIL V12.4 ERGO ]</p>
     <button onclick="loginWithGoogle()" style="padding:18px 40px; border-radius:12px; font-weight:900; color:black; background:white; border:none; font-size:1.1rem; box-shadow: 0 0 30px rgba(255,255,255,0.3);">INICIAR ENLACE</button>
 </div>
 
 <div class="app-container" id="reportZone">
     <div class="top-bar">
-        <div class="brand">BÚNKER <span class="brand-badge">V12.3</span></div>
+        <div class="brand">BÚNKER <span class="brand-badge">V12.4</span></div>
         <div style="display:flex; gap:8px;">
             <button onclick="toggleLanguage()" style="background:rgba(121,192,255,0.1); border:1px solid rgba(121,192,255,0.4); color:#79c0ff; border-radius:6px; font-weight:bold; font-size:0.7rem; padding:4px 8px;">ENG</button>
             <div id="user-display" class="user-tag">OPERATOR</div>
@@ -126,7 +139,6 @@
     </div>
 
     <div id="tab-dash" class="tab-content" style="display:block; padding:0;">
-        
         <div class="core-tabs">
             <div id="core-highlighter"></div>
             <button class="core-btn active blue" onclick="switchDualCore('efectivo', this)" style="color:white;" data-en="PRESENT FLOW">Flujo Pres.</button>
@@ -165,7 +177,6 @@
                     <span id="txtPorcentajeFugas" style="font-size:0.9rem; font-weight:900; color:var(--accent-red); background: rgba(255,82,82,0.1); padding: 4px 8px; border-radius: 6px; box-shadow: 0 0 10px rgba(255,82,82,0.2);">0%</span>
                 </div>
             </div>
-
             <div id="listaMovilDetalle" class="lista-contenedor"></div>
         </div>
 
@@ -174,7 +185,6 @@
                 <div style="font-size:0.7rem; color:var(--text-dim); font-weight:900; text-transform:uppercase; margin-bottom:5px; letter-spacing: 3px;" data-en="GLOBAL TC LIABILITIES">Carga TC Global</div>
                 <div class="hud-value danger">$<span id="txtTotalTC">0</span></div>
             </div>
-            
             <div id="boxImpactoTC" class="impact-pill" style="display:none;">
                 <div style="display:flex; flex-direction:column; gap:4px;">
                     <span style="font-size: 0.7rem; font-weight: 900; color: var(--accent-red); text-transform:uppercase; letter-spacing: 1px;" data-en="NEXT MONTH IMPACT">Alarma de Impacto</span>
@@ -182,7 +192,6 @@
                 </div>
                 <strong id="txtImpactoMonto" style="font-size: 1.5rem; font-family: monospace; font-weight: 900; color: var(--accent-red); text-shadow: 0 0 15px rgba(255,82,82,0.5);">$0</strong>
             </div>
-
             <div id="listaMovilTC" class="lista-contenedor"></div>
         </div>
     </div>
@@ -275,18 +284,20 @@
         
         <button onclick="abrirPreVuelo()" style="width:100%; padding:22px; border-radius:16px; background:rgba(255, 152, 0, 0.1); color:#ff9800; border:1px solid rgba(255, 152, 0, 0.4); font-weight:900; margin-bottom:15px; box-shadow: 0 10px 25px rgba(255, 152, 0, 0.2); letter-spacing: 1px;" data-en="🚀 PRE-FLIGHT (DAY ZERO)">🚀 PRE-VUELO (DÍA CERO)</button>
         
-        <button onclick="exportarDataLink()" style="width:100%; padding:22px; border-radius:16px; background:rgba(121, 192, 255, 0.1); color:#79c0ff; border:1px solid rgba(121, 192, 255, 0.4); font-weight:900; margin-bottom:15px; box-shadow: 0 10px 25px rgba(121, 192, 255, 0.2); letter-spacing: 1px;" data-en="📥 DATA-LINK EXPORT">📥 DATA-LINK PRO</button>
+        <button onclick="let b=this; b.innerHTML='⏳ EXPORTANDO...'; b.style.opacity='0.7'; exportarDataLink(); setTimeout(()=>{b.innerHTML='📥 DATA-LINK PRO'; b.style.opacity='1';}, 2000)" style="width:100%; padding:22px; border-radius:16px; background:rgba(121, 192, 255, 0.1); color:#79c0ff; border:1px solid rgba(121, 192, 255, 0.4); font-weight:900; margin-bottom:15px; box-shadow: 0 10px 25px rgba(121, 192, 255, 0.2); letter-spacing: 1px; transition: all 0.2s;" data-en="📥 DATA-LINK EXPORT">📥 DATA-LINK PRO</button>
+        
         <button onclick="abrirHistorian()" style="width:100%; padding:22px; border-radius:16px; background:rgba(255, 82, 82, 0.1); color:#ff5252; border:1px solid rgba(255, 82, 82, 0.4); font-weight:900; margin-bottom:15px; box-shadow: 0 10px 25px rgba(255, 82, 82, 0.2); letter-spacing: 1px;" data-en="⚠️ HISTORIAN ALARMS">⚠️ LOG DE ALARMAS</button>
         
-        <button onclick="triggerSync()" style="width:100%; padding:22px; border-radius:16px; background:var(--bg-card); color:white; border:1px solid var(--border-subtle); font-weight:900; margin-bottom:15px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); letter-spacing: 1px;">🔄 FORZAR SYNC</button>
-        <button onclick="enviarReporteTelegram()" style="width:100%; padding:22px; border-radius:16px; background:rgba(0,136,204,0.1); color:#0088cc; border:1px solid rgba(0,136,204,0.3); font-weight:900; margin-bottom:15px; box-shadow: 0 10px 25px rgba(0,136,204,0.15); letter-spacing: 1px;">🚀 TRANSMITIR TELEGRAM</button>
+        <button onclick="let b=this; b.innerHTML='⏳ SINCRONIZANDO...'; b.style.opacity='0.7'; triggerSync(); setTimeout(()=>{b.innerHTML='🔄 FORZAR SYNC'; b.style.opacity='1';}, 2500)" style="width:100%; padding:22px; border-radius:16px; background:var(--bg-card); color:white; border:1px solid var(--border-subtle); font-weight:900; margin-bottom:15px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); letter-spacing: 1px; transition: all 0.2s;">🔄 FORZAR SYNC</button>
+        
+        <button onclick="let b=this; b.innerHTML='🚀 TRANSMITIENDO...'; b.style.opacity='0.7'; enviarReporteTelegram(); setTimeout(()=>{b.innerHTML='🚀 TRANSMITIR TELEGRAM'; b.style.opacity='1';}, 2500)" style="width:100%; padding:22px; border-radius:16px; background:rgba(0,136,204,0.1); color:#0088cc; border:1px solid rgba(0,136,204,0.3); font-weight:900; margin-bottom:15px; box-shadow: 0 10px 25px rgba(0,136,204,0.15); letter-spacing: 1px; transition: all 0.2s;">🚀 TRANSMITIR TELEGRAM</button>
     </div>
 
     <div id="tab-settings" class="tab-content">
         <h3 style="font-weight:900; text-align:center; letter-spacing:2px; color:var(--text-dim);" data-en="[ SYSTEM CONFIG ]">[ SISTEMA ]</h3>
         <div style="background:var(--bg-card); border-radius: 16px; padding:20px; border:1px solid var(--border-subtle); margin-bottom:15px; box-shadow: 0 8px 20px rgba(0,0,0,0.3);">
             <label style="font-size:0.75rem; font-weight:800; color:var(--text-dim); margin-bottom:10px; display:block; text-transform:uppercase;" data-en="Base Operative Salary">Sueldo Base Operativo</label>
-            <input type="text" id="inputSueldo" style="width:100%; padding:5px 0; background:transparent; border:none; border-bottom:2px solid var(--accent-green); color:var(--text-main); font-size:2.2rem; font-weight:900; outline:none; font-family:monospace;" onchange="guardarSueldoEnNube()">
+            <input type="text" id="inputSueldo" style="width:100%; padding:5px 0; background:transparent; border:none; border-bottom:2px solid var(--accent-green); color:var(--text-main); font-size:2.2rem; font-weight:900; outline:none; font-family:monospace;" oninput="formatearEntradaNumerica(this); actualizarDashboard();" onchange="guardarSueldoEnNube()">
         </div>
         <div style="margin-top:15px; background:var(--bg-card); border-radius: 16px; padding:20px; border:1px solid var(--border-subtle); margin-bottom:20px; box-shadow: 0 8px 20px rgba(0,0,0,0.3);">
             <label style="font-size:0.75rem; font-weight:800; color:var(--text-dim); margin-bottom:10px; display:block; text-transform:uppercase;" data-en="Time Navigator">Navegador de Tiempo</label>
@@ -321,12 +332,12 @@
 </div>
 
 <div id="modal-historian" style="display:none; position:fixed; inset:0; background:rgba(3, 5, 8, 0.95); z-index:25000; flex-direction:column; align-items:center; justify-content:center; backdrop-filter:blur(10px); padding:20px;">
-    <div style="background:var(--bg-card); border:1px solid var(--border-subtle); border-radius:12px; width:100%; max-width:600px; box-shadow:0 0 40px rgba(255,82,82,0.2); border-top:4px solid #ff5252;">
-        <div style="padding:15px; background:rgba(0,0,0,0.3); border-bottom:1px solid var(--border-subtle); display:flex; justify-content:space-between; align-items:center;">
+    <div style="background:var(--bg-card); border:1px solid var(--border-subtle); border-radius:12px; width:100%; max-width:600px; box-shadow:0 0 40px rgba(255,82,82,0.2); border-top:4px solid #ff5252; display:flex; flex-direction:column; max-height:85vh;">
+        <div style="padding:15px; background:rgba(0,0,0,0.3); border-bottom:1px solid var(--border-subtle); display:flex; justify-content:space-between; align-items:center; flex-shrink:0;">
             <h3 style="color:#ff5252; margin:0; display:flex; align-items:center; gap:10px;"><span style="font-size:1.5rem;">⚠️</span> HISTORIAN LOG</h3>
             <button onclick="document.getElementById('modal-historian').style.display='none'" style="background:transparent; border:1px solid var(--text-muted); color:var(--text-muted); border-radius:6px; padding:6px 12px; font-weight:bold;">✖ CLOSE</button>
         </div>
-        <div id="historian-content" style="padding:15px; max-height:60vh; overflow-y:auto; font-family:monospace; font-size:0.8rem;"></div>
+        <div id="historian-content" style="padding:15px; overflow-y:auto; flex-grow:1;"></div>
     </div>
 </div>
 
@@ -346,33 +357,34 @@
     </div>
 
     <div style="font-size:0.75rem; font-weight:900; color:#ff5252; text-transform:uppercase; margin:20px 0 10px 0; border-bottom:1px solid var(--border-subtle); padding-bottom:5px; display:flex; align-items:center; gap:5px;"><span>💳</span> Deducciones Críticas</div>
-    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; background:rgba(46,160,67,0.1); padding:10px; border-radius:10px; border:1px solid var(--color-saldo);"><label style="font-size:0.75rem; font-weight:800; color:var(--color-saldo);">Sueldo (Ingreso)</label><input type="text" id="pv-sueldo" style="background:transparent; border:none; color:var(--color-saldo); padding:6px; font-family:monospace; font-size:1.1rem; width:110px; text-align:right; font-weight:bold; outline:none;" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
-    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; background:var(--bg-card); padding:8px 12px; border-radius:10px; border:1px solid var(--border-subtle); gap:5px;"><label style="font-size:0.7rem; font-weight:800; flex:1;">TC Nacional</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-tc-nac')">EST</button><input type="text" id="pv-tc-nac" style="background:var(--bg-elevated); border:1px solid var(--border-subtle); color:#ff5252; padding:6px; border-radius:6px; font-family:monospace; font-size:1rem; width:85px; text-align:right; font-weight:bold; outline:none;" placeholder="0" data-estado="est" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
-    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; background:var(--bg-card); padding:8px 12px; border-radius:10px; border:1px solid var(--border-subtle); gap:5px;"><label style="font-size:0.7rem; font-weight:800; flex:1;">TC Internacional</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-tc-int')">EST</button><input type="text" id="pv-tc-int" style="background:var(--bg-elevated); border:1px solid var(--border-subtle); color:#ff5252; padding:6px; border-radius:6px; font-family:monospace; font-size:1rem; width:85px; text-align:right; font-weight:bold; outline:none;" placeholder="0" data-estado="est" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
-    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; background:var(--bg-card); padding:8px 12px; border-radius:10px; border:1px solid var(--border-subtle); gap:5px;"><label style="font-size:0.7rem; font-weight:800; flex:1;">Línea de Crédito</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-linea')">EST</button><input type="text" id="pv-linea" style="background:var(--bg-elevated); border:1px solid var(--border-subtle); color:#ff5252; padding:6px; border-radius:6px; font-family:monospace; font-size:1rem; width:85px; text-align:right; font-weight:bold; outline:none;" placeholder="0" data-estado="est" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
+    <div class="pv-input-group" style="background:rgba(46,160,67,0.1); border-color:var(--color-saldo);"><label style="color:var(--color-saldo);">Sueldo (Ingreso)</label><input type="text" id="pv-sueldo" style="background:transparent; border:none; color:var(--color-saldo); padding:6px; font-family:monospace; font-size:1.1rem; width:110px; text-align:right; font-weight:bold; outline:none;" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
+    <div class="pv-input-group"><label>TC Nacional</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-tc-nac')">EST</button><input type="text" id="pv-tc-nac" class="pv-input" style="color:#ff5252;" placeholder="0" data-estado="est" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
+    <div class="pv-input-group"><label>TC Internacional</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-tc-int')">EST</button><input type="text" id="pv-tc-int" class="pv-input" style="color:#ff5252;" placeholder="0" data-estado="est" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
+    <div class="pv-input-group"><label>Línea de Crédito</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-linea')">EST</button><input type="text" id="pv-linea" class="pv-input" style="color:#ff5252;" placeholder="0" data-estado="est" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
 
     <div style="font-size:0.75rem; font-weight:900; color:var(--color-infra); text-transform:uppercase; margin:25px 0 10px 0; border-bottom:1px solid var(--border-subtle); padding-bottom:5px; display:flex; align-items:center; gap:5px;"><span>🏢</span> Carga Estructural</div>
-    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; background:var(--bg-card); padding:8px 12px; border-radius:10px; border:1px solid var(--border-subtle); gap:5px;"><label style="font-size:0.7rem; font-weight:800; flex:1;">Arriendo</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-arriendo')">EST</button><input type="text" id="pv-arriendo" style="background:var(--bg-elevated); border:1px solid var(--border-subtle); color:white; padding:6px; border-radius:6px; font-family:monospace; font-size:1rem; width:85px; text-align:right; font-weight:bold; outline:none;" value="330.000" data-estado="est" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
-    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; background:var(--bg-card); padding:8px 12px; border-radius:10px; border:1px solid var(--border-subtle); gap:5px;"><label style="font-size:0.7rem; font-weight:800; flex:1;">UDEC 2024</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-udec')">EST</button><input type="text" id="pv-udec" style="background:var(--bg-elevated); border:1px solid var(--border-subtle); color:white; padding:6px; border-radius:6px; font-family:monospace; font-size:1rem; width:85px; text-align:right; font-weight:bold; outline:none;" value="48.000" data-estado="est" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
-    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; background:var(--bg-card); padding:8px 12px; border-radius:10px; border:1px solid var(--border-subtle); gap:5px;"><label style="font-size:0.7rem; font-weight:800; flex:1;">CAE</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-cae')">EST</button><input type="text" id="pv-cae" style="background:var(--bg-elevated); border:1px solid var(--border-subtle); color:white; padding:6px; border-radius:6px; font-family:monospace; font-size:1rem; width:85px; text-align:right; font-weight:bold; outline:none;" value="38.742" data-estado="est" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
+    <div class="pv-input-group"><label>Arriendo</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-arriendo')">EST</button><input type="text" id="pv-arriendo" class="pv-input" value="330.000" data-estado="est" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
+    <div class="pv-input-group"><label>UDEC 2024</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-udec')">EST</button><input type="text" id="pv-udec" class="pv-input" value="48.000" data-estado="est" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
+    <div class="pv-input-group"><label>CAE</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-cae')">EST</button><input type="text" id="pv-cae" class="pv-input" value="38.742" data-estado="est" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
 
     <div style="font-size:0.75rem; font-weight:900; color:#d29922; text-transform:uppercase; margin:25px 0 10px 0; border-bottom:1px solid var(--border-subtle); padding-bottom:5px; display:flex; align-items:center; gap:5px;"><span>⚡</span> Serv. Básicos Hogar</div>
-    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; background:var(--bg-card); padding:8px 12px; border-radius:10px; border:1px solid var(--border-subtle); gap:5px;"><label style="font-size:0.7rem; font-weight:800; flex:1;">Gastos Comunes</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-ggcc')">EST</button><input type="text" id="pv-ggcc" style="background:var(--bg-elevated); border:1px solid var(--border-subtle); color:white; padding:6px; border-radius:6px; font-family:monospace; font-size:1rem; width:85px; text-align:right; font-weight:bold; outline:none;" value="63.220" data-estado="est" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
-    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; background:var(--bg-card); padding:8px 12px; border-radius:10px; border:1px solid var(--border-subtle); gap:5px;"><label style="font-size:0.7rem; font-weight:800; flex:1;">Luz</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-luz')">EST</button><input type="text" id="pv-luz" style="background:var(--bg-elevated); border:1px solid var(--border-subtle); color:white; padding:6px; border-radius:6px; font-family:monospace; font-size:1rem; width:85px; text-align:right; font-weight:bold; outline:none;" value="20.000" data-estado="est" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
-    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; background:var(--bg-card); padding:8px 12px; border-radius:10px; border:1px solid var(--border-subtle); gap:5px;"><label style="font-size:0.7rem; font-weight:800; flex:1;">Agua</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-agua')">EST</button><input type="text" id="pv-agua" style="background:var(--bg-elevated); border:1px solid var(--border-subtle); color:white; padding:6px; border-radius:6px; font-family:monospace; font-size:1rem; width:85px; text-align:right; font-weight:bold; outline:none;" value="8.000" data-estado="est" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
-    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; background:var(--bg-card); padding:8px 12px; border-radius:10px; border:1px solid var(--border-subtle); gap:5px;"><label style="font-size:0.7rem; font-weight:800; flex:1;">Gas</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-gas')">EST</button><input type="text" id="pv-gas" style="background:var(--bg-elevated); border:1px solid var(--border-subtle); color:white; padding:6px; border-radius:6px; font-family:monospace; font-size:1rem; width:85px; text-align:right; font-weight:bold; outline:none;" value="0" data-estado="est" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
+    <div class="pv-input-group"><label>Gastos Comunes</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-ggcc')">EST</button><input type="text" id="pv-ggcc" class="pv-input" value="63.220" data-estado="est" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
+    <div class="pv-input-group"><label>Luz</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-luz')">EST</button><input type="text" id="pv-luz" class="pv-input" value="20.000" data-estado="est" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
+    <div class="pv-input-group"><label>Agua</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-agua')">EST</button><input type="text" id="pv-agua" class="pv-input" value="8.000" data-estado="est" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
+    <div class="pv-input-group"><label>Gas</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-gas')">EST</button><input type="text" id="pv-gas" class="pv-input" value="0" data-estado="est" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
 
     <div style="font-size:0.75rem; font-weight:900; color:#79c0ff; text-transform:uppercase; margin:25px 0 10px 0; border-bottom:1px solid var(--border-subtle); padding-bottom:5px; display:flex; align-items:center; gap:5px;"><span>📱</span> Op. Complementaria</div>
-    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; background:var(--bg-card); padding:8px 12px; border-radius:10px; border:1px solid var(--border-subtle); gap:5px;"><label style="font-size:0.7rem; font-weight:800; flex:1;">Celu Mio</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-celu')">EST</button><input type="text" id="pv-celu" style="background:var(--bg-elevated); border:1px solid var(--border-subtle); color:white; padding:6px; border-radius:6px; font-family:monospace; font-size:1rem; width:85px; text-align:right; font-weight:bold; outline:none;" value="13.990" data-estado="est" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
-    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; background:var(--bg-card); padding:8px 12px; border-radius:10px; border:1px solid var(--border-subtle); gap:5px;"><label style="font-size:0.7rem; font-weight:800; flex:1;">Movistar Madre</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-madre')">EST</button><input type="text" id="pv-madre" style="background:var(--bg-elevated); border:1px solid var(--border-subtle); color:white; padding:6px; border-radius:6px; font-family:monospace; font-size:1rem; width:85px; text-align:right; font-weight:bold; outline:none;" value="19.290" data-estado="est" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
-    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; background:var(--bg-card); padding:8px 12px; border-radius:10px; border:1px solid var(--border-subtle); gap:5px;"><label style="font-size:0.7rem; font-weight:800; flex:1;">Pack Subs</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-subs')">EST</button><input type="text" id="pv-subs" style="background:var(--bg-elevated); border:1px solid var(--border-subtle); color:white; padding:6px; border-radius:6px; font-family:monospace; font-size:1rem; width:85px; text-align:right; font-weight:bold; outline:none;" value="20.540" data-estado="est" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
-    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; background:var(--bg-card); padding:8px 12px; border-radius:10px; border:1px solid var(--border-subtle); gap:5px;"><label style="font-size:0.7rem; font-weight:800; flex:1;">Seguro Auto</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-seguro')">EST</button><input type="text" id="pv-seguro" style="background:var(--bg-elevated); border:1px solid var(--border-subtle); color:white; padding:6px; border-radius:6px; font-family:monospace; font-size:1rem; width:85px; text-align:right; font-weight:bold; outline:none;" value="38.300" data-estado="est" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
+    <div class="pv-input-group"><label>Celu Mio</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-celu')">EST</button><input type="text" id="pv-celu" class="pv-input" value="13.990" data-estado="est" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
+    <div class="pv-input-group"><label>Movistar Madre</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-madre')">EST</button><input type="text" id="pv-madre" class="pv-input" value="19.290" data-estado="est" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
+    <div class="pv-input-group"><label>Pack Subs</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-subs')">EST</button><input type="text" id="pv-subs" class="pv-input" value="20.540" data-estado="est" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
+    <div class="pv-input-group"><label>Seguro Auto</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-seguro')">EST</button><input type="text" id="pv-seguro" class="pv-input" value="38.300" data-estado="est" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
 
-    <button onclick="ejecutarArranque()" style="width:100%; padding:18px; background:#ff9800; color:#000; border:none; border-radius:12px; font-weight:900; font-size:1rem; cursor:pointer; text-transform:uppercase; letter-spacing:1px; margin-top:20px; box-shadow:0 10px 20px rgba(255,152,0,0.3);">EFECTUAR ARRANQUE</button>
-    <button onclick="cerrarPreVuelo()" style="width:100%; padding:15px; background:transparent; color:var(--text-muted); border:none; font-weight:900; margin-top:10px; text-transform:uppercase;">ABORTAR</button>
+    <button onclick="ejecutarArranque()" class="btn-pv-launch">EFECTUAR ARRANQUE</button>
+    <button onclick="cerrarPreVuelo()" class="btn-pv-close">ABORTAR</button>
 </div>
+
 <script>
-    // 🟢 RENDERIZADOR MÓVIL V12.3 (CABLES CONECTADOS) 🟢
+    // 🟢 RENDERIZADOR MÓVIL V12.4 (CON CABLES) 🟢
     document.addEventListener("DOMContentLoaded", () => {
         if(typeof renderizarListas === 'function') {
             window.renderizarListas = function(sueldoBase, filtroBuscador) {
