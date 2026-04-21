@@ -1,5 +1,5 @@
 // ==========================================================
-// 🧠 BÚNKER SCADA ORACLE - MOTOR LÓGICO V12.0 (FULL STACK)
+// 🧠 BÚNKER SCADA ORACLE - MOTOR LÓGICO V12.1 (PRE-FLIGHT)
 // ==========================================================
 const BYRON_EMAIL = "bvhcc94@gmail.com"; 
 const CREDIT_SETPOINT = -300000; 
@@ -10,16 +10,15 @@ const SUELDO_BASE_DEFAULT = 3602505;
 const diccAuto = [
     { keys: ["prestamo", "debe", "pagar dps", "por cobrar", "cuota de"], cat: "Cuentas por Cobrar (Activos)", tipo: "Por Cobrar", fuga: "0" },
     { keys: ["uber", "didi", "cabify", "pasaje", "buses", "turbus", "metro"], cat: "Transporte & Logística", tipo: "Gasto", fuga: "0" },
-    { keys: ["copec", "shell", "autopase", "revision tecnica", "lavado auto", "mecanico", "peaje", "seguro auto", "permiso circulacion"], cat: "Flota & Movilidad", tipo: "Gasto Fijo", fuga: "0" },
-    { keys: ["dividendo", "gastos comunes", "ggcc", "contribuciones", "hipotecario", "departamento"], cat: "Infraestructura (Depto)", tipo: "Gasto Fijo", fuga: "0" },
+    { keys: ["copec", "shell", "autopase", "revision tecnica", "lavado auto", "mecanico", "peaje", "seguro auto", "permiso circulacion", "credito auto"], cat: "Flota & Movilidad", tipo: "Gasto Fijo", fuga: "0" },
+    { keys: ["dividendo", "arriendo", "gastos comunes", "ggcc", "contribuciones", "hipotecario", "departamento", "luz", "agua", "gas", "internet", "udec", "cae"], cat: "Infraestructura (Depto)", tipo: "Gasto Fijo", fuga: "0" },
     { keys: ["pedidosya", "mcdonalds", "burger king", "starbucks", "rappi", "helado", "cine", "concierto", "fother muckers"], cat: "Dopamina & Antojos", tipo: "Gasto", fuga: "100" },
-    { keys: ["netflix", "spotify", "hbo", "prime", "icloud", "google", "vtr", "wom", "entel", "movistar"], cat: "Suscripciones", tipo: "Gasto Fijo", fuga: "0" },
+    { keys: ["netflix", "spotify", "hbo", "prime", "icloud", "google", "vtr", "wom", "entel", "movistar", "celu mio plan", "movistar madre", "pack suscripciones"], cat: "Suscripciones", tipo: "Gasto Fijo", fuga: "0" },
     { keys: ["jumbo", "lider", "unimarc", "santa isabel", "panaderia", "carniceria", "feria", "minimarket", "tottus"], cat: "Alimentación & Supermercado", tipo: "Gasto", fuga: "0" },
     { keys: ["farmacia", "cruz verde", "salcobrand", "doctor", "consulta", "integramedica", "medico", "ahumada"], cat: "Mantenimiento Hardware (Salud)", tipo: "Gasto", fuga: "0" },
     { keys: ["ahorro", "inversion", "fintual", "deposito", "traspaso"], cat: "Transferencia Propia / Ahorro", tipo: "Ahorro", fuga: "0" }
 ];
 
-// V12.0: NUEVAS CATEGORÍAS DE INFRAESTRUCTURA Y FLOTA AISLADAS
 const catMaestras = [
     { id: "Gastos Fijos (Búnker)", em: "🏠", label: "Carga Fija (Base)" },
     { id: "Infraestructura (Depto)", em: "🏢", label: "Infraestructura (Depto)" },
@@ -44,7 +43,6 @@ const catMaestras = [
 const catEmojis = {}; const aliasMap = {}; 
 catMaestras.forEach(c => { catEmojis[c.id] = c.em; aliasMap[c.id] = c.label; });
 
-// 🟢 MÓDULO ENGLISH TOGGLE V12.0 🟢
 let isEng = false;
 window.toggleLanguage = function() {
     isEng = !isEng;
@@ -135,7 +133,7 @@ function logout() { auth.signOut().then(() => window.location.reload()); }
 
 auth.onAuthStateChanged(user => {
     if (user && user.email.toLowerCase() === BYRON_EMAIL.toLowerCase()) {
-        console.log("%c[ORACLE V12.0] FULL STACK BOOT SEQUENCE INITIATED", "color: #79c0ff; font-weight: bold; font-size: 14px;");
+        console.log("%c[ORACLE V12.1] FULL STACK BOOT SEQUENCE INITIATED", "color: #79c0ff; font-weight: bold; font-size: 14px;");
         
         const loginScreen = document.getElementById('login-screen'), reportZone = document.getElementById('reportZone');
         if(loginScreen) loginScreen.style.display = 'none';
@@ -167,7 +165,6 @@ function cargarSueldoVisual() {
     if (document.activeElement !== elSueldo) elSueldo.value = sueldoActivo.toLocaleString('es-CL');
 }
 
-// 🟢 MÓDULO HISTORIAN LOG V12.0 🟢
 let alarmLogCache = "";
 window.abrirHistorian = function() {
     document.getElementById('historian-content').innerHTML = alarmLogCache || "<div style='color:var(--color-saldo); font-weight:bold;'>SYSTEM NOMINAL. NO BREACHES DETECTED.</div>";
@@ -210,7 +207,6 @@ function actualizarDashboard() {
             else if (!x.esNeutro) {
                 saldoAcc -= x.monto;
                 
-                // 🟢 LÓGICA V12: AISLAMIENTO DE INFRAESTRUCTURA Y FLOTA
                 if (x.catV === 'Infraestructura (Depto)') { tInfra += x.monto; }
                 else if (x.catV === 'Flota & Movilidad') { tFlota += x.monto; }
                 else if (x.tipo === 'Gasto Fijo') { tF += x.monto; } 
@@ -227,8 +223,8 @@ function actualizarDashboard() {
     const setTxt = (id, val) => { const el = document.getElementById(id); if(el) el.innerText = val.toLocaleString('es-CL'); };
     setTxt('txtTotalFijos', tF); setTxt('txtTotalOtros', tO); setTxt('txtTotalIngresos', tI);
     setTxt('txtCxC', tC); setTxt('txtSaldo', saldoAcc);
-    setTxt('txtTotalInfra', tInfra); // KPI V12
-    setTxt('txtTotalFlota', tFlota); // KPI V12
+    setTxt('txtTotalInfra', tInfra); 
+    setTxt('txtTotalFlota', tFlota); 
     
     const diasCiclo = Math.max(1, Math.round((TFinal - T0) / 86400000));
     const hoy = new Date();
@@ -238,7 +234,6 @@ function actualizarDashboard() {
     if(badgeDias) badgeDias.innerText = `${Math.max(diasCiclo - diasT, 0)} DÍAS`;
     
     const setW = (id, val) => { const el = document.getElementById(id); if(el) el.style.width = Math.min(val, 100) + "%"; };
-    // Base operative salary for calculations ignores Infra and Fleet to see true burn
     let sueldoOperativoBase = sueldo - tInfra - tFlota;
     setW('barFijos', (tF / (sueldoOperativoBase || 1)) * 100); setW('barOtros', (tO / (sueldoOperativoBase || 1)) * 100);
     setTxt('txtTotalEvitable', Math.round(tEvitable));
@@ -427,7 +422,6 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0, totalFijosMes, 
             if(m.esIn) daily[diff] += m.monto; 
             else if(!m.esNeutro) { 
                 daily[diff] -= m.monto; 
-                // V12.0: AISLAMIENTO PARA PULSO VITAL
                 if(m.catV !== 'Infraestructura (Depto)' && m.catV !== 'Flota & Movilidad' && m.tipo !== 'Gasto Fijo') {
                     if(catEvitables.includes(m.catV)) dailyFugas[diff] += m.monto;
                     else dailyNecesario[diff] += m.monto;
@@ -489,9 +483,8 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0, totalFijosMes, 
     });
 
     const ctxDiario = document.getElementById('chartDiario');
-    let limiteDiarioIdeal = Math.max((sueldo - totalFijosMes - tInfra - tFlota) / diasCiclo, 0); // V12.0 Dinámico real
+    let limiteDiarioIdeal = Math.max((sueldo - totalFijosMes - tInfra - tFlota) / diasCiclo, 0);
     
-    // 🟢 V12.0 HISTORIAN LOG GENERATOR 🟢
     alarmLogCache = "";
     if (deudaAprox > sueldo * 0.15) {
         alarmLogCache += `<div class='log-item critical'>[TC OVERLOAD] Liabilities exceed 15% safety threshold. ($${deudaAprox.toLocaleString('es-CL')})</div>`;
@@ -505,7 +498,6 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0, totalFijosMes, 
         let barNecesario = dailyNecesario.slice(startDayForBars, lastDayWithData + 1);
         let barFugas = dailyFugas.slice(startDayForBars, lastDayWithData + 1);
         
-        // Populate Historian Log for Pulses
         for(let i=startDayForBars; i<=lastDayWithData; i++) {
             if (dailyFugas[i] > 0) {
                 alarmLogCache += `<div class='log-item warning'>[LEAK DETECTED] Dopamine leak on ${labelsFechas[i]}: $${dailyFugas[i].toLocaleString('es-CL')}</div>`;
@@ -662,7 +654,6 @@ window.triggerSync = function() {
     .catch(e => alert("Error Net: " + e));
 };
 
-// 🟢 V12.0 DATA-LINK EXPORT (PRO) 🟢
 window.exportarDataLink = function() {
     let csv = "ISO_DATE,YEAR,MONTH,DAY,CATEGORY,TYPE,AMOUNT_CLP,DETAIL,ML_FLAG\n";
     datosMesGlobal.forEach(x => {
@@ -818,7 +809,7 @@ async function ejecutarPurgaMasivaTC() {
 }
 
 // ==========================================================
-// 🚀 MÓDULO DÍA CERO (PRE-FLIGHT CHECK) V12
+// 🚀 MÓDULO DÍA CERO V12.1 (PERSONALIZADO BYRON)
 // ==========================================================
 function abrirPreVuelo() {
     const modal = document.getElementById('modal-dia-cero');
@@ -844,7 +835,7 @@ function abrirPreVuelo() {
         }
     });
     
-    document.getElementById('pv-tc').value = sumaTCMes > 0 ? sumaTCMes.toLocaleString('es-CL') : "";
+    document.getElementById('pv-tc-nac').value = sumaTCMes > 0 ? sumaTCMes.toLocaleString('es-CL') : "";
     
     calcularDiaCero();
     modal.style.display = 'flex';
@@ -859,23 +850,35 @@ function calcularDiaCero() {
     const val = id => parseInt((document.getElementById(id).value || "0").replace(/\./g, '')) || 0;
     
     let sueldo = val('pv-sueldo');
-    let tc = val('pv-tc');
+    let tcNac = val('pv-tc-nac');
+    let tcInt = val('pv-tc-int');
     let linea = val('pv-linea');
-    let f1 = val('pv-fijo-1');
-    let f2 = val('pv-fijo-2');
-    let f3 = val('pv-fijo-3');
-    let f4 = val('pv-fijo-4');
     
-    let fijosTotal = f1 + f2 + f3 + f4;
-    let deudasDuras = tc + linea;
+    let arr = val('pv-arriendo');
+    let auto = val('pv-auto');
+    let udec = val('pv-udec');
+    let cae = val('pv-cae');
     
-    let liquidez = sueldo - deudasDuras - fijosTotal;
+    let ggcc = val('pv-ggcc');
+    let luz = val('pv-luz');
+    let agua = val('pv-agua');
+    let gas = val('pv-gas');
+    
+    let celu = val('pv-celu');
+    let madre = val('pv-madre');
+    let subs = val('pv-subs');
+    let seguro = val('pv-seguro');
+    
+    let deudasDuras = tcNac + tcInt + linea;
+    let estructural = arr + auto + udec + cae + ggcc + luz + agua + gas + celu + madre + subs + seguro;
+    
+    let liquidez = sueldo - deudasDuras - estructural;
     
     document.getElementById('pv-txt-liquidez').innerText = liquidez.toLocaleString('es-CL');
     
     if (sueldo > 0) {
         let pctRojo = Math.min((deudasDuras / sueldo) * 100, 100);
-        let pctNaranja = Math.min((fijosTotal / sueldo) * 100, 100 - pctRojo);
+        let pctNaranja = Math.min((estructural / sueldo) * 100, 100 - pctRojo);
         let pctVerde = Math.max(100 - pctRojo - pctNaranja, 0);
         
         document.getElementById('pv-barra-roja').style.width = pctRojo + '%';
@@ -885,16 +888,25 @@ function calcularDiaCero() {
 }
 
 function ejecutarArranque() {
-    if(!confirm("⚠️ INYECCIÓN CRÍTICA\n\n¿Estás seguro de inyectar estos Gastos Fijos y Obligaciones directamente en la Matriz del mes seleccionado?")) return;
+    if(!confirm("⚠️ INYECCIÓN CRÍTICA V12.1\n\n¿Estás seguro de inyectar toda tu Planilla Operativa en la Matriz del mes seleccionado?")) return;
     
     const val = id => parseInt((document.getElementById(id).value || "0").replace(/\./g, '')) || 0;
     
-    let tc = val('pv-tc');
+    let tcNac = val('pv-tc-nac');
+    let tcInt = val('pv-tc-int');
     let linea = val('pv-linea');
-    let f1 = val('pv-fijo-1');
-    let f2 = val('pv-fijo-2');
-    let f3 = val('pv-fijo-3');
-    let f4 = val('pv-fijo-4');
+    let arr = val('pv-arriendo');
+    let auto = val('pv-auto');
+    let udec = val('pv-udec');
+    let cae = val('pv-cae');
+    let ggcc = val('pv-ggcc');
+    let luz = val('pv-luz');
+    let agua = val('pv-agua');
+    let gas = val('pv-gas');
+    let celu = val('pv-celu');
+    let madre = val('pv-madre');
+    let subs = val('pv-subs');
+    let seguro = val('pv-seguro');
     
     const elMes = document.getElementById('navMesConceptual');
     const elAnio = document.getElementById('navAnio');
@@ -906,31 +918,35 @@ function ejecutarArranque() {
     const inyectar = (monto, nombre, cat) => {
         if (monto > 0) {
             let ref = db.collection("movimientos").doc();
-            batch.set(ref, {
-                monto: monto,
-                nombre: nombre,
-                categoria: cat,
-                tipo: "Gasto Fijo",
-                fecha: fechaDestino,
-                status: "Auto-Launch",
-                innecesarioPct: 0,
-                cuotas: 1
-            });
+            batch.set(ref, { monto: monto, nombre: nombre, categoria: cat, tipo: "Gasto Fijo", fecha: fechaDestino, status: "Auto-Launch", innecesarioPct: 0, cuotas: 1 });
             inyectados++;
         }
     };
     
-    if(tc > 0) inyectar(tc, "PAGO TC FACTURADA (PRE-VUELO)", "Gastos Fijos (Búnker)"); 
-    if(linea > 0) inyectar(linea, "PAGO LÍNEA CRÉDITO (PRE-VUELO)", "Gastos Fijos (Búnker)");
-    if(f1 > 0) inyectar(f1, "ARRIENDO / DIVIDENDO", "Infraestructura (Depto)");
-    if(f2 > 0) inyectar(f2, "LUZ / ELECTRICIDAD", "Infraestructura (Depto)");
-    if(f3 > 0) inyectar(f3, "AGUA / SANEAMIENTO", "Infraestructura (Depto)");
-    if(f4 > 0) inyectar(f4, "INTERNET / PLANES", "Infraestructura (Depto)");
+    // Mapeo Inteligente a la Matriz V12.1
+    if(tcNac > 0) inyectar(tcNac, "PAGO TC NACIONAL (DÍA CERO)", "Gastos Fijos (Búnker)"); 
+    if(tcInt > 0) inyectar(tcInt, "PAGO TC INTERNACIONAL (DÍA CERO)", "Gastos Fijos (Búnker)"); 
+    if(linea > 0) inyectar(linea, "PAGO LÍNEA CRÉDITO (DÍA CERO)", "Gastos Fijos (Búnker)");
+    
+    if(arr > 0) inyectar(arr, "ARRIENDO / DIVIDENDO", "Infraestructura (Depto)");
+    if(auto > 0) inyectar(auto, "CRÉDITO AUTO", "Flota & Movilidad");
+    if(udec > 0) inyectar(udec, "PAGO UDEC 2024", "Infraestructura (Depto)");
+    if(cae > 0) inyectar(cae, "PAGO CAE", "Infraestructura (Depto)");
+    
+    if(ggcc > 0) inyectar(ggcc, "GASTOS COMUNES", "Infraestructura (Depto)");
+    if(luz > 0) inyectar(luz, "LUZ / ELECTRICIDAD", "Infraestructura (Depto)");
+    if(agua > 0) inyectar(agua, "AGUA / SANEAMIENTO", "Infraestructura (Depto)");
+    if(gas > 0) inyectar(gas, "GAS", "Infraestructura (Depto)");
+    
+    if(celu > 0) inyectar(celu, "CELU MIO PLAN", "Suscripciones");
+    if(madre > 0) inyectar(madre, "MOVISTAR MADRE", "Red de Apoyo (Familia)");
+    if(subs > 0) inyectar(subs, "PACK SUSCRIPCIONES (YT, Disney, etc)", "Suscripciones");
+    if(seguro > 0) inyectar(seguro, "SEGURO AUTO", "Flota & Movilidad");
     
     if (inyectados > 0) {
         batch.commit().then(() => {
             cerrarPreVuelo();
-            mostrarToast("ARRANQUE COMPLETADO. MATRIZ ACTUALIZADA.");
+            mostrarToast(`ARRANQUE COMPLETADO: ${inyectados} REGISTROS INYECTADOS.`);
             actualizarDashboard();
         }).catch(err => {
             alert("❌ Error de Inyección: " + err.message);
