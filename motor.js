@@ -423,6 +423,9 @@ function massCategorize() { const ids = Array.from(document.querySelectorAll('.r
 // =====================================================================
 // LÓGICA DE GRÁFICOS (CON SCADA TWEAKS: LÍNEA NARANJA, CERO ROJO, ALPHA)
 // =====================================================================
+// =====================================================================
+// LÓGICA DE GRÁFICOS (CON SCADA TWEAKS Y PROYECCIÓN 6 MESES TC)
+// =====================================================================
 function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0) {
     if(chartBD) chartBD.destroy(); if(chartP) chartP.destroy(); 
     if(chartDiario) chartDiario.destroy(); if(chartRadar) chartRadar.destroy();
@@ -538,52 +541,51 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0) {
         });
     }
 
-    // REEMPLAZO DEL RADAR POR PROYECCIÓN DE DEUDA
-const ctxProyeccion = document.getElementById('chartRadar'); // Reutilizamos el canvas
-if(ctxProyeccion) {
-    // Calculamos la deuda por los próximos 6 meses
-    let mesesLabels = [];
-    let montosProyectados = [];
-    let hoy = new Date();
+    // --- NUEVO: GRÁFICO PROYECCIÓN 6 MESES (Reemplaza al Radar) ---
+    const ctxProyeccion = document.getElementById('chartRadar');
+    if(ctxProyeccion) {
+        let mesesLabels = [];
+        let montosProyectados = [];
+        let fechaHoy = new Date();
 
-    for(let i=1; i<=6; i++) {
-        let f = new Date(hoy.getFullYear(), hoy.getMonth() + i, 1);
-        let label = f.toLocaleString('es-CL', { month: 'short' }).toUpperCase();
-        mesesLabels.push(label);
+        for(let i=1; i<=6; i++) {
+            let f = new Date(fechaHoy.getFullYear(), fechaHoy.getMonth() + i, 1);
+            let label = f.toLocaleString('es-CL', { month: 'short' }).toUpperCase();
+            mesesLabels.push(label);
 
-        // Sumamos lo que hay en datosTCGlobal para ese mes específico
-        let sumaMes = datosTCGlobal
-            .filter(d => {
-                let fCobro = new Date(d.mesCobro);
-                return fCobro.getMonth() === f.getMonth() && fCobro.getFullYear() === f.getFullYear();
-            })
-            .reduce((acc, curr) => acc + curr.monto, 0);
-        
-        montosProyectados.push(sumaMes);
-    }
-
-    chartRadar = new Chart(ctxProyeccion, {
-        type: 'bar',
-        data: {
-            labels: mesesLabels,
-            datasets: [{
-                label: 'Deuda Proyectada',
-                data: montosProyectados,
-                backgroundColor: montosProyectados.map(m => m > 500000 ? 'rgba(218, 54, 51, 0.8)' : 'rgba(31, 111, 235, 0.8)'),
-                borderRadius: 4
-            }]
-        },
-        options: {
-            maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
-            scales: {
-                y: { beginAtZero: true, ticks: { color: cT, callback: v => '$' + Math.round(v/1000) + 'k' } },
-                x: { ticks: { color: cT } }
-            }
+            let sumaMes = datosTCGlobal
+                .filter(d => {
+                    let fCobro = new Date(d.mesCobro);
+                    return fCobro.getMonth() === f.getMonth() && fCobro.getFullYear() === f.getFullYear();
+                })
+                .reduce((acc, curr) => acc + curr.monto, 0);
+            
+            montosProyectados.push(sumaMes);
         }
-    });
+
+        chartRadar = new Chart(ctxProyeccion, {
+            type: 'bar',
+            data: {
+                labels: mesesLabels,
+                datasets: [{
+                    label: 'Deuda Proyectada',
+                    data: montosProyectados,
+                    backgroundColor: montosProyectados.map(m => m > 500000 ? 'rgba(218, 54, 51, 0.8)' : 'rgba(31, 111, 235, 0.8)'),
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, ticks: { color: cT, callback: v => '$' + Math.round(v/1000) + 'k' }, grid: { color: cG } },
+                    x: { ticks: { color: cT }, grid: { display: false } }
+                }
+            }
+        });
+    }
 }
-}
+// =====================================================================
 
 function calcularFechasCiclo(mesConceptual, anio) {
     let mesInicio = mesConceptual - 1; let anioInicio = anio; if (mesInicio < 0) { mesInicio = 11; anioInicio--; }
