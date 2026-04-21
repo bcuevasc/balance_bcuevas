@@ -746,6 +746,7 @@ function renderizarTablaTC() {
     actualizarBarraTC(); 
 }
 
+// 3. Motor Lector de CSV (Ingesta Blindada V2)
 function cargarCSV_TC() {
     let fileInputTC = document.createElement('input');
     fileInputTC.type = 'file';
@@ -754,50 +755,79 @@ function cargarCSV_TC() {
         let file = e.target.files[0];
         let reader = new FileReader();
         reader.onload = async ev => {
-            let text = ev.target.result;
-            let lineas = text.split('\n');
-            let batch = db.batch(); 
-            let cuotasProcesadas = 0;
+            try {
+                let text = ev.target.result;
+                let lineas = text.split('\n');
+                let batch = db.batch(); 
+                let cuotasProcesadas = 0;
 
-            for(let i = 1; i < lineas.length; i++) {
-                if(lineas[i].trim() === '') continue; 
-                let cols = lineas[i].split(';'); 
-                if(cols.length < 5) continue; 
-
-                let fecha = cols[0].trim();
-                let nombre = cols[1].trim().replace(/\s+/g, ' '); 
-                let cuotasInfo = cols[3].trim().split('/'); 
-                let montoTotal = parseInt(cols[cols.length - 1].trim().replace(/\./g, ''));
-
-                if(isNaN(montoTotal) || montoTotal < 0 || nombre.includes("REV.COMPRAS")) continue;
-
-                let cuotaActual = parseInt(cuotasInfo[0]) || 1;
-                let totalCuotas = parseInt(cuotasInfo[1]) || 1;
-                let montoMensual = totalCuotas > 1 ? Math.round(montoTotal / totalCuotas) : montoTotal;
-                
-                let partesF = fecha.split('/');
-                let fechaCompra = new Date(partesF[2], partesF[1] - 1, partesF[0]);
-                let mesesDesfase = totalCuotas > 1 ? 2 : 1; 
-
-                for(let c = cuotaActual; c <= totalCuotas; c++) {
-                    let fechaCobro = new Date(fechaCompra);
-                    fechaCobro.setMonth(fechaCobro.getMonth() + mesesDesfase + (c - cuotaActual));
+                for(let i = 1; i < lineas.length; i++) {
+                    if(lineas[i].trim() === '') continue; 
                     
-                    let docId = `${fecha.replace(/\//g, '')}-${nombre.replace(/[^a-zA-Z0-9]/g, '').substring(0,10)}-C${c}de${totalCuotas}`;
+                    // Todoterreno 1: Detecta si tu Excel usó comas o punto y coma
+                    let separador = lineas[i].includes(';') ? ';' : ',';
+                    let cols = lineas[i].split(separador); 
+                    if(cols.length < 4) continue; 
+
+                    let fecha = cols[0].trim();
+                    let nombre = cols[1].trim().replace(/\s+/g, ' '); 
                     
-                    let ref = db.collection("deuda_tc").doc(docId);
-                    batch.set(ref, {
-                        nombre: nombre,
-                        monto: montoMensual,
-                        cuota: `${c}/${totalCuotas}`,
-                        mesCobro: fechaCobro.toISOString(),
-                        status: "Pendiente"
-                    });
-                    cuotasProcesadas++;
+                    // Todoterreno 2: Busca inteligentemente la columna de cuotas (ej. 01/06)
+                    let colCuotas = cols.find(c => c.includes('/') && c.length <= 5) || "01/01";
+                    let cuotasInfo = colCuotas.trim().split('/'); 
+                    
+                    // Todoterreno 3: Busca el monto al final y limpia cualquier signo de peso o punto
+                    let montoStr = cols[cols.length - 1].replace(/[^0-9-]/g, '');
+                    if(!montoStr) montoStr = cols[cols.length - 2].replace(/[^0-9-]/g, ''); // Por si hay columnas vacías
+                    let montoTotal = parseInt(montoStr);
+
+                    if(isNaN(montoTotal) || montoTotal < 0 || nombre.includes("REV.COMPRAS")) continue;
+
+                    let cuotaActual = parseInt(cuotasInfo[0]) || 1;
+                    let totalCuotas = parseInt(cuotasInfo[1]) || 1;
+                    let montoMensual = totalCuotas > 1 ? Math.round(montoTotal / totalCuotas) : montoTotal;
+                    
+                    // Todoterreno 4: Acepta fechas con guiones o slashes indistintamente
+                    let partesF = fecha.replace(/-/g, '/').split('/');
+                    if (partesF.length !== 3) continue; 
+
+                    let fechaCompra = new Date(partesF[2], partesF[1] - 1, partesF[0]);
+                    let mesesDesfase = totalCuotas > 1 ? 2 : 1; 
+
+                    for(let c = cuotaActual; c <= totalCuotas; c++) {
+                        let fechaCobro = new Date(fechaCompra);
+                        fechaCobro.setMonth(fechaCobro.getMonth() + mesesDesfase + (c - cuotaActual));
+                        
+                        let docId = `${fecha.replace(/[^0-9]/g, '')}-${nombre.replace(/[^a-zA-Z0-9]/g, '').substring(0,10)}-C${c}de${totalCuotas}`;
+                        
+                        let ref = db.collection("deuda_tc").doc(docId);
+                        batch.set(ref, {
+                            nombre: nombre,
+                            monto: montoMensual,
+                            cuota: `${c}/${totalCuotas}`,
+                            mesCobro: fechaCobro.toISOString(),
+                            status: "Pendiente"
+                        });
+                        cuotasProcesadas++;
+                    }
+                }
+
+                if (cuotasProcesadas === 0) {
+                    alert("⚠️ No se detectaron datos válidos. Verifica que tu CSV no esté vacío.");
+                } else {
+                    // Si Firebase rechaza la escritura, el CATCH atrapará el error
+                    await batch.commit();
+                    alert(`✅ INGESTA EXITOSA: ${cuotasProcesadas} cuotas inyectadas en la matriz.`);
+                }
+
+            } catch (error) {
+                console.error("Falla Crítica en Lector:", error);
+                if (error.message.includes("Missing or insufficient permissions")) {
+                    alert("🛑 FIREBASE BLOQUEADO: Tienes que ir a Firebase > Firestore > Rules y dar permiso a la tabla 'deuda_tc'.");
+                } else {
+                    alert("❌ ERROR DE CÓDIGO: " + error.message);
                 }
             }
-            await batch.commit();
-            alert(`✅ INGESTA EXITOSA: ${cuotasProcesadas} cuotas proyectadas.`);
         };
         reader.readAsText(file, 'UTF-8');
     };
