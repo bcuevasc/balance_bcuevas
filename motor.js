@@ -812,13 +812,17 @@ function renderizarTablaTC() {
     actualizarBarraTC(); 
 }
 
-// 3. Motor Lector de CSV (Ingesta Blindada V2)
+// 3. Motor Lector de CSV (Híbrido V3 - Facturado/No Facturado)
 function cargarCSV_TC() {
     let fileInputTC = document.createElement('input');
     fileInputTC.type = 'file';
     fileInputTC.accept = '.csv';
     fileInputTC.onchange = e => {
         let file = e.target.files[0];
+        
+        // INTERFAZ HMI: Confirmación de tipo de datos (Control de Tiempo)
+        let esFacturado = confirm("💳 ANÁLISIS DE INGESTA\n\n¿Este archivo corresponde a Movimientos FACTURADOS?\n\n[OK] = Sí, ya están facturados (Se cobran en este ciclo).\n[Cancelar] = No, son NO facturados (Proyección futura).");
+        
         let reader = new FileReader();
         reader.onload = async ev => {
             try {
@@ -830,41 +834,52 @@ function cargarCSV_TC() {
                 for(let i = 1; i < lineas.length; i++) {
                     if(lineas[i].trim() === '') continue; 
                     
-                    // Todoterreno 1: Detecta si tu Excel usó comas o punto y coma
+                    // Todoterreno: Identifica comas o punto y coma
                     let separador = lineas[i].includes(';') ? ';' : ',';
                     let cols = lineas[i].split(separador); 
                     if(cols.length < 4) continue; 
 
                     let fecha = cols[0].trim();
-                    let nombre = cols[1].trim().replace(/\s+/g, ' '); 
+                    let nombre = cols[1].trim().replace(/\s+/g, ' ').toUpperCase(); 
                     
-                    // Todoterreno 2: Busca inteligentemente la columna de cuotas (ej. 01/06)
+                    // Cazador de Cuotas: Busca el formato 01/03 sin importar dónde esté
                     let colCuotas = cols.find(c => c.includes('/') && c.length <= 5) || "01/01";
                     let cuotasInfo = colCuotas.trim().split('/'); 
                     
-                    // Todoterreno 3: Busca el monto al final y limpia cualquier signo de peso o punto
+                    // Cazador de Montos: Limpia la columna final
                     let montoStr = cols[cols.length - 1].replace(/[^0-9-]/g, '');
-                    if(!montoStr) montoStr = cols[cols.length - 2].replace(/[^0-9-]/g, ''); // Por si hay columnas vacías
+                    if(!montoStr && cols.length > 1) montoStr = cols[cols.length - 2].replace(/[^0-9-]/g, '');
                     let montoTotal = parseInt(montoStr);
 
-                    if(isNaN(montoTotal) || montoTotal < 0 || nombre.includes("REV.COMPRAS")) continue;
+                    // 🛑 ESCUDO FIREWALL: Bloquea pagos a la TC y devoluciones
+                    if(isNaN(montoTotal) || montoTotal <= 0) continue;
+                    if(nombre.includes("REV.COMPRAS") || nombre.includes("PAGO PESOS") || nombre.includes("TEF") || nombre.includes("PAGO EN LINEA")) continue;
 
                     let cuotaActual = parseInt(cuotasInfo[0]) || 1;
                     let totalCuotas = parseInt(cuotasInfo[1]) || 1;
                     let montoMensual = totalCuotas > 1 ? Math.round(montoTotal / totalCuotas) : montoTotal;
                     
-                    // Todoterreno 4: Acepta fechas con guiones o slashes indistintamente
                     let partesF = fecha.replace(/-/g, '/').split('/');
                     if (partesF.length !== 3) continue; 
 
                     let fechaCompra = new Date(partesF[2], partesF[1] - 1, partesF[0]);
-                    let mesesDesfase = totalCuotas > 1 ? 2 : 1; 
+                    let hoy = new Date();
 
                     for(let c = cuotaActual; c <= totalCuotas; c++) {
-                        let fechaCobro = new Date(fechaCompra);
-                        fechaCobro.setMonth(fechaCobro.getMonth() + mesesDesfase + (c - cuotaActual));
+                        let fechaCobro;
                         
-                        let docId = `${fecha.replace(/[^0-9]/g, '')}-${nombre.replace(/[^a-zA-Z0-9]/g, '').substring(0,10)}-C${c}de${totalCuotas}`;
+                        if (esFacturado) {
+                            // FACTURADO: La cuota que dice el Excel corresponde al mes actual
+                            fechaCobro = new Date(hoy.getFullYear(), hoy.getMonth() + (c - cuotaActual), 15);
+                        } else {
+                            // NO FACTURADO: Aplica los meses de gracia del banco
+                            let mesesDesfase = totalCuotas > 1 ? 2 : 1; 
+                            fechaCobro = new Date(fechaCompra);
+                            fechaCobro.setMonth(fechaCobro.getMonth() + mesesDesfase + (c - cuotaActual));
+                        }
+                        
+                        // ID Criptográfico para que Firebase no duplique registros
+                        let docId = `${fecha.replace(/[^0-9]/g, '')}-${nombre.replace(/[^A-Z0-9]/g, '').substring(0,10)}-C${c}de${totalCuotas}`;
                         
                         let ref = db.collection("deuda_tc").doc(docId);
                         batch.set(ref, {
@@ -872,34 +887,28 @@ function cargarCSV_TC() {
                             monto: montoMensual,
                             cuota: `${c}/${totalCuotas}`,
                             mesCobro: fechaCobro.toISOString(),
-                            status: "Pendiente"
+                            status: esFacturado ? "Facturado" : "Proyectado"
                         });
                         cuotasProcesadas++;
                     }
                 }
 
                 if (cuotasProcesadas === 0) {
-                    alert("⚠️ No se detectaron datos válidos. Verifica que tu CSV no esté vacío.");
+                    alert("⚠️ ESCUDO ACTIVO:\nNo se detectaron deudas válidas.\n(Los abonos y pagos a la tarjeta fueron ignorados).");
                 } else {
-                    // Si Firebase rechaza la escritura, el CATCH atrapará el error
                     await batch.commit();
-                    alert(`✅ INGESTA EXITOSA: ${cuotasProcesadas} cuotas inyectadas en la matriz.`);
+                    alert(`✅ INGESTA EXITOSA:\n\nSe inyectaron ${cuotasProcesadas} cuotas exactas al SCADA.`);
                 }
 
             } catch (error) {
                 console.error("Falla Crítica en Lector:", error);
-                if (error.message.includes("Missing or insufficient permissions")) {
-                    alert("🛑 FIREBASE BLOQUEADO: Tienes que ir a Firebase > Firestore > Rules y dar permiso a la tabla 'deuda_tc'.");
-                } else {
-                    alert("❌ ERROR DE CÓDIGO: " + error.message);
-                }
+                alert("❌ ERROR DE CÓDIGO: " + error.message);
             }
         };
         reader.readAsText(file, 'UTF-8');
     };
     fileInputTC.click();
 }
-
 function actualizarBarraTC() {
     const seleccionados = document.querySelectorAll('.checkItemTC:checked');
     const barra = document.getElementById('barraAccionesTC');
