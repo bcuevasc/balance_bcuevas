@@ -789,3 +789,171 @@ window.exportarTablaBunker = function(idTabla, nombreArchivo) {
         document.body.removeChild(link);
     } catch (e) { console.error("Falla en navegador:", e); }
 };
+
+// ==========================================================
+// 💳 MÓDULO FASE 2: TARJETA DE CRÉDITO (MASTER SCRIPT)
+// ==========================================================
+let datosTCGlobal = [];
+
+// 1. Escuchador de Firebase para la Deuda TC
+function inicializarListenerTC() {
+    if (!db) return console.error("Firebase no está inicializado.");
+    
+    // Escucha la colección "deuda_tc" en tiempo real
+    db.collection("deuda_tc").orderBy("mesCobro", "asc").onSnapshot(snapshot => {
+        datosTCGlobal = [];
+        let totalDeuda = 0;
+        snapshot.forEach(doc => {
+            let data = doc.data();
+            data.id = doc.id;
+            datosTCGlobal.push(data);
+            totalDeuda += data.monto;
+        });
+        
+        // Actualizar total en la interfaz (El panel rojo)
+        const txtTotalTC = document.getElementById("txtTotalTC");
+        if(txtTotalTC) txtTotalTC.innerText = totalDeuda.toLocaleString('es-CL');
+        
+        renderizarTablaTC();
+        
+        // Inyectar a variable global para el Saldo de Maniobra
+        if(typeof window !== 'undefined') window.totalTC = totalDeuda; 
+        if(typeof actualizarDashboard === 'function') actualizarDashboard();
+    });
+}
+
+// 2. Renderizar la tabla de proyecciones
+function renderizarTablaTC() {
+    const tbody = document.getElementById("listaDetalleTC");
+    if (!tbody) return;
+    
+    tbody.innerHTML = "";
+    
+    if (datosTCGlobal.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:20px; color:#666;">No hay deuda proyectada. Ingesta un CSV.</td></tr>`;
+        return;
+    }
+
+    datosTCGlobal.forEach(doc => {
+        // Formatear fecha a texto legible (ej: may. 2026)
+        let fechaObj = new Date(doc.mesCobro);
+        let mesTxt = fechaObj.toLocaleString('es-CL', { month: 'short', year: 'numeric' }).toUpperCase();
+        
+        let tr = document.createElement("tr");
+        tr.style.borderBottom = "1px solid var(--border-color)";
+        tr.innerHTML = `
+            <td style="text-align: center; padding: 6px;">
+                <input type="checkbox" class="checkItemTC" value="${doc.id}" onclick="actualizarBarraTC()" style="accent-color: #b71c1c;">
+            </td>
+            <td style="font-size: 0.75rem; color: #00bcd4;">${mesTxt} (${doc.cuota})</td>
+            <td style="font-size: 0.7rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px;" title="${doc.nombre}">${doc.nombre}</td>
+            <td style="text-align: right; font-family: monospace; font-weight: bold; font-size: 0.8rem;">$${doc.monto.toLocaleString('es-CL')}</td>
+        `;
+        tbody.appendChild(tr);
+    });
+    actualizarBarraTC(); 
+}
+
+// 3. Motor Lector de CSV (Ingesta)
+function cargarCSV_TC() {
+    let fileInputTC = document.createElement('input');
+    fileInputTC.type = 'file';
+    fileInputTC.accept = '.csv';
+    fileInputTC.onchange = e => {
+        let file = e.target.files[0];
+        let reader = new FileReader();
+        reader.onload = async ev => {
+            let text = ev.target.result;
+            let lineas = text.split('\n');
+            let batch = db.batch(); 
+            let cuotasProcesadas = 0;
+
+            for(let i = 1; i < lineas.length; i++) {
+                if(lineas[i].trim() === '') continue; 
+                let cols = lineas[i].split(';'); // Separador de tu archivo
+                if(cols.length < 5) continue; 
+
+                let fecha = cols[0].trim();
+                let nombre = cols[1].trim().replace(/\s+/g, ' '); 
+                let cuotasInfo = cols[3].trim().split('/'); 
+                let montoTotal = parseInt(cols[cols.length - 1].trim().replace(/\./g, ''));
+
+                if(isNaN(montoTotal) || montoTotal < 0 || nombre.includes("REV.COMPRAS")) continue;
+
+                let cuotaActual = parseInt(cuotasInfo[0]) || 1;
+                let totalCuotas = parseInt(cuotasInfo[1]) || 1;
+                let montoMensual = totalCuotas > 1 ? Math.round(montoTotal / totalCuotas) : montoTotal;
+                
+                let partesF = fecha.split('/');
+                let fechaCompra = new Date(partesF[2], partesF[1] - 1, partesF[0]);
+                let mesesDesfase = totalCuotas > 1 ? 2 : 1; 
+
+                for(let c = cuotaActual; c <= totalCuotas; c++) {
+                    let fechaCobro = new Date(fechaCompra);
+                    fechaCobro.setMonth(fechaCobro.getMonth() + mesesDesfase + (c - cuotaActual));
+                    
+                    let docId = `${fecha.replace(/\//g, '')}-${nombre.replace(/[^a-zA-Z0-9]/g, '').substring(0,10)}-C${c}de${totalCuotas}`;
+                    
+                    let ref = db.collection("deuda_tc").doc(docId);
+                    batch.set(ref, {
+                        nombre: nombre,
+                        monto: montoMensual,
+                        cuota: `${c}/${totalCuotas}`,
+                        mesCobro: fechaCobro.toISOString(),
+                        status: "Pendiente"
+                    });
+                    cuotasProcesadas++;
+                }
+            }
+            await batch.commit();
+            alert(`✅ INGESTA EXITOSA: ${cuotasProcesadas} cuotas proyectadas.`);
+        };
+        reader.readAsText(file, 'UTF-8');
+    };
+    fileInputTC.click();
+}
+
+// 4. Lógica de Purga Masiva (Casillas)
+function actualizarBarraTC() {
+    const seleccionados = document.querySelectorAll('.checkItemTC:checked');
+    const barra = document.getElementById('barraAccionesTC');
+    const txt = document.getElementById('txtSeleccionadosTC');
+    
+    if (seleccionados.length > 0) {
+        barra.style.display = 'flex';
+        txt.innerText = `${seleccionados.length} CUOTAS SELECCIONADAS`;
+    } else {
+        barra.style.display = 'none';
+        let maestro = document.getElementById('checkMaestroTC');
+        if(maestro) maestro.checked = false;
+    }
+}
+
+function toggleTodosTC(maestro) {
+    const checks = document.querySelectorAll('.checkItemTC');
+    checks.forEach(c => c.checked = maestro.checked);
+    actualizarBarraTC();
+}
+
+async function ejecutarPurgaMasivaTC() {
+    const seleccionados = document.querySelectorAll('.checkItemTC:checked');
+    if (!confirm(`⚠️ ¿Confirmas la eliminación de ${seleccionados.length} cuotas?`)) return;
+
+    const batch = db.batch();
+    seleccionados.forEach(checkbox => {
+        const ref = db.collection("deuda_tc").doc(checkbox.value);
+        batch.delete(ref);
+    });
+
+    try {
+        await batch.commit();
+        // No necesitas recargar la página, Firebase actualizará la tabla en tiempo real.
+    } catch (error) {
+        console.error("Falla en la purga: ", error);
+        alert("❌ Error de comunicación.");
+    }
+}
+
+// 🔥 AUTO-ARRANQUE DEL SENSOR TC
+setTimeout(() => { inicializarListenerTC(); }, 1500);
+// ==========================================================
