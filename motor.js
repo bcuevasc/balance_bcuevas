@@ -756,10 +756,22 @@ function renderizarTablaTC() {
         return;
     }
 
+    let sumaProximoMes = 0;
+    let fechaHoy = new Date();
+    // Calculamos cuál es el mes siguiente (con manejo de cambio de año)
+    let proximoMes = fechaHoy.getMonth() + 1;
+    let proximoAnio = fechaHoy.getFullYear();
+    if (proximoMes > 11) { proximoMes = 0; proximoAnio++; }
+
     datosTCGlobal.forEach(doc => {
         let fechaObj = new Date(doc.mesCobro);
         let mesTxt = fechaObj.toLocaleString('es-CL', { month: 'short', year: 'numeric' }).toUpperCase();
         
+        // SENSOR: Si la cuota corresponde al próximo mes, la sumamos al total de advertencia
+        if (fechaObj.getMonth() === proximoMes && fechaObj.getFullYear() === proximoAnio) {
+            sumaProximoMes += doc.monto;
+        }
+
         let tr = document.createElement("tr");
         tr.style.borderBottom = "1px solid var(--border-color)";
         tr.innerHTML = `
@@ -772,6 +784,22 @@ function renderizarTablaTC() {
         `;
         tbody.appendChild(tr);
     });
+
+    // INYECCIÓN VISUAL DEL SENSOR DE PRÓXIMO PAGO
+    let mesNombreStr = new Date(proximoAnio, proximoMes, 1).toLocaleString('es-CL', { month: 'long' }).toUpperCase();
+    let trTotal = document.createElement("tr");
+    trTotal.style.backgroundColor = "rgba(255, 152, 0, 0.1)"; // Fondo naranja suave de advertencia
+    trTotal.style.borderTop = "2px solid #ff9800";
+    trTotal.innerHTML = `
+        <td colspan="3" style="font-size: 0.8rem; font-weight: 900; color: #ff9800; padding: 10px; text-align: right;">
+            ⚠️ IMPACTO EN ${mesNombreStr}:
+        </td>
+        <td style="text-align: right; font-family: monospace; font-weight: 900; font-size: 0.9rem; color: #ff9800; padding: 10px;">
+            $${sumaProximoMes.toLocaleString('es-CL')}
+        </td>
+    `;
+    tbody.prepend(trTotal); // Lo pone arriba de todo para que sea lo primero que veas
+
     actualizarBarraTC(); 
 }
 
