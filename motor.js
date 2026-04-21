@@ -252,27 +252,39 @@ function actualizarDashboard() {
     setTxt('txtPromedioZoom', Math.round((tO + tF) / diasCiclo));
 }   
 
-function renderizarListaTC(datos) {
-    const contenedorPC = document.getElementById('listaDetalleTC');
-    const contenedorMovil = document.getElementById('listaMovilTC');
-    let htmlPC = '', htmlMovil = '';
-    let htmlFila = `
-    <tr style="border-bottom: 1px solid #222;">
-        <td style="text-align: center; padding: 10px;">
-            <input type="checkbox" class="checkItemTC" value="${doc.id}" onclick="actualizarBarraTC()">
-        </td>
-        <td style="font-size: 0.85rem; color: #00bcd4;">${doc.mesCobro} (${doc.cuota})</td>
-        <td style="font-size: 0.85rem;">${doc.nombre}</td>
-        <td style="text-align: right; font-weight: bold; padding: 10px;">$${doc.monto.toLocaleString('es-CL')}</td>
-    </tr>
-`;
-    datos.sort((a,b)=> b.fechaISO > a.fechaISO ? 1 : -1).forEach(x => {
-        const d = new Date(x.fechaISO);
-        const dateStr = d.toLocaleDateString('es-CL', {day:'2-digit', month:'short'}).toUpperCase();
-        const cuotas = x.cuotas || 1;
-        const valorCuota = Math.round(x.monto / cuotas);
-        const cuotaStr = cuotas > 1 ? `${cuotas}x $${valorCuota.toLocaleString('es-CL')}` : '1 Cuota';
-        const clickAction = `editarMovimiento('${x.firestoreId}')`;
+// Reemplaza toda tu función anterior por esta:
+function renderizarTablaTC() {
+    const tbody = document.getElementById("listaDetalleTC");
+    if (!tbody) return;
+    
+    tbody.innerHTML = "";
+    
+    if (datosTCGlobal.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:20px; color:#666;">No hay deuda proyectada. Ingesta un CSV.</td></tr>`;
+        return;
+    }
+
+    datosTCGlobal.forEach(doc => {
+        // Formatear fecha a texto legible (ej: may. 2026)
+        let fechaObj = new Date(doc.mesCobro);
+        let mesTxt = fechaObj.toLocaleString('es-CL', { month: 'short', year: 'numeric' }).toUpperCase();
+        
+        let tr = document.createElement("tr");
+        tr.style.borderBottom = "1px solid var(--border-color)";
+        tr.innerHTML = `
+            <td style="text-align: center; padding: 6px;">
+                <input type="checkbox" class="checkItemTC" value="${doc.id}" onclick="actualizarBarraTC()" style="accent-color: #b71c1c;">
+            </td>
+            <td style="font-size: 0.75rem; color: #00bcd4; font-weight: bold;">${mesTxt} (${doc.cuota})</td>
+            <td style="font-size: 0.7rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px;" title="${doc.nombre}">${doc.nombre}</td>
+            <td style="text-align: right; font-family: monospace; font-weight: bold; font-size: 0.8rem;">$${doc.monto.toLocaleString('es-CL')}</td>
+        `;
+        tbody.appendChild(tr);
+    });
+    
+    // Activa o desactiva la barra roja si hay casillas marcadas
+    actualizarBarraTC(); 
+}
         
         if(contenedorPC) {
             htmlPC += `<tr style="border-bottom:1px solid var(--border-color); cursor:pointer;" draggable="true" ondragstart="dragStart(event, '${x.firestoreId}')" onclick="${clickAction}">
