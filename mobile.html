@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Bunker Móvil HUD V8.2</title>
+    <title>Bunker Móvil HUD V8.5 PRO</title>
     <link rel="apple-touch-icon" href="bunker-icon.png">
     <meta name="theme-color" content="#0b0e14">
 
@@ -13,29 +13,29 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
     
     <style>
-        :root { --bg-base: #0b0e14; --bg-card: #161b22; --bg-elevated: #21262d; --text-main: #f0f6fc; --text-dim: #8b949e; --accent-blue: #1f6feb; --accent-green: #3fb950; --accent-red: #ff5252; --accent-orange: #d29922; --border-subtle: rgba(255,255,255,0.08); color-scheme: dark; }
+        :root { --bg-base: #05070a; --bg-card: #11151c; --bg-elevated: #1a1f29; --text-main: #e6edf3; --text-dim: #7d8590; --accent-blue: #1f6feb; --accent-green: #3fb950; --accent-red: #ff5252; --accent-orange: #d29922; --border-subtle: #2d333b; color-scheme: dark; }
         * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
-        body { background-color: var(--bg-base); color: var(--text-main); margin: 0; padding-bottom: calc(90px + env(safe-area-inset-bottom)); overscroll-behavior-y: none; }
+        body { background-color: var(--bg-base); background-image: radial-gradient(rgba(255,255,255,0.02) 1px, transparent 1px); background-size: 20px 20px; color: var(--text-main); margin: 0; padding-bottom: calc(90px + env(safe-area-inset-bottom)); overscroll-behavior-y: none; }
 
         #login-screen { position: fixed; inset: 0; background: var(--bg-base); display: flex; align-items: center; justify-content: center; z-index: 10000; flex-direction: column; }
         .top-bar { padding: max(20px, env(safe-area-inset-top)) 20px 10px 20px; display: flex; justify-content: space-between; align-items: center; }
-        .master-hud { text-align: center; padding: 15px 20px 20px 20px; }
-        .hud-value { font-size: 3.5rem; font-weight: 900; letter-spacing: -1.5px; transition: transform 0.3s ease; }
+        .master-hud { text-align: center; padding: 10px 20px 20px 20px; }
+        .hud-value { font-size: 3.5rem; font-weight: 900; letter-spacing: -1.5px; transition: transform 0.3s ease; font-family: monospace; }
         
-        .slave-kpis { display: flex; gap: 15px; padding: 0 20px; margin-bottom: 25px; }
-        .slave-pill { flex: 1; background: var(--bg-card); border: 1px solid var(--border-subtle); padding: 15px; border-radius: 20px; display: flex; flex-direction: column; align-items: center; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+        .slave-kpis { display: flex; gap: 10px; padding: 0 15px; margin-bottom: 20px; }
+        .slave-pill { flex: 1; background: var(--bg-card); border: 1px solid var(--border-subtle); padding: 12px; border-radius: 16px; display: flex; flex-direction: column; align-items: center; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
 
         .lista-contenedor { padding: 0 10px; display: flex; flex-direction: column; gap: 4px; margin-top: -10px; }
         .mobile-card { 
-            background: transparent !important; border: none !important; border-radius: 16px !important; 
+            background: rgba(255,255,255,0.01) !important; border: 1px solid rgba(255,255,255,0.03) !important; border-radius: 16px !important; 
             padding: 12px 10px !important; display: flex; align-items: center; transition: background-color 0.2s ease, transform 0.1s ease; 
             cursor: pointer; box-shadow: none !important;
         }
         .mobile-card:active { transform: scale(0.97); background: rgba(255,255,255,0.05) !important; }
-        .date-header { padding-left: 5px; font-size: 0.65rem; font-weight: 900; color: var(--text-dim); text-transform: uppercase; margin: 15px 0 5px 5px; letter-spacing: 1px; }
+        .date-header { padding-left: 5px; font-size: 0.65rem; font-weight: 900; color: var(--text-dim); text-transform: uppercase; margin: 15px 0 5px 5px; letter-spacing: 1px; border-bottom: 1px solid var(--border-subtle); padding-bottom: 3px;}
 
         /* ANIMACIONES INSTAGRAM-STYLE */
-        .tab-content { display: none; padding: 20px; animation: fadeSlideUp 0.3s cubic-bezier(0.165, 0.84, 0.44, 1); }
+        .tab-content { display: none; padding: 15px; animation: fadeSlideUp 0.3s cubic-bezier(0.165, 0.84, 0.44, 1); }
         .v-chart { animation: fadeSlideUp 0.4s cubic-bezier(0.165, 0.84, 0.44, 1); }
         @keyframes fadeSlideUp { 
             from { opacity: 0; transform: translateY(15px); } 
@@ -44,43 +44,52 @@
         
         /* SEGMENTED CONTROL TÁCTICO */
         .chart-tabs { display: flex; gap: 5px; margin-bottom: 15px; background: rgba(255,255,255,0.05); padding: 4px; border-radius: 12px; position: relative; }
-        .chart-tab-btn { flex: 1; border: none; padding: 12px 2px; border-radius: 8px; font-size: 0.65rem; font-weight: 800; color: var(--text-dim); background: transparent; transition: all 0.3s ease; text-transform: uppercase; z-index: 2; position: relative; cursor: pointer; }
+        .chart-tab-btn { flex: 1; border: none; padding: 10px 2px; border-radius: 8px; font-size: 0.65rem; font-weight: 800; color: var(--text-dim); background: transparent; transition: all 0.3s ease; text-transform: uppercase; z-index: 2; position: relative; cursor: pointer; }
         .chart-tab-btn.active { color: white; text-shadow: 0 1px 3px rgba(0,0,0,0.5); }
         .chart-tab-btn.active::before { content: ""; position: absolute; inset: 0; background: var(--accent-blue); border-radius: 8px; z-index: -1; box-shadow: 0 4px 10px rgba(31, 111, 235, 0.4); animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         @keyframes popIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
-        /* FORMULARIO ULTRA COMPACTO */
+        /* FORMULARIO ULTRA COMPACTO V8.5 */
         .huge-input-wrapper { background: transparent; padding: 0; margin-bottom: 10px; text-align: center; }
-        .monto-gigante { background: transparent; border: none; color: var(--text-main); font-size: 3.5rem; font-weight: 900; text-align: center; width: 100%; outline: none; padding: 0; transition: transform 0.2s;}
-        .monto-gigante:focus { transform: scale(1.05); }
-        .compact-form { background: var(--bg-card); border-radius: 20px; padding: 15px; border: 1px solid var(--border-subtle); box-shadow: inset 0 0 15px rgba(0,0,0,0.2); }
+        .monto-gigante { background: transparent; border: none; color: var(--accent-blue); font-size: 4rem; font-weight: 900; text-align: center; width: 100%; outline: none; padding: 0; transition: transform 0.2s; font-family: monospace;}
+        .monto-gigante:focus { transform: scale(1.05); color: var(--text-main); }
+        .compact-form { background: var(--bg-card); border-radius: 20px; padding: 15px; border: 1px solid var(--border-subtle); box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
         .compact-form input[type="text"]:not(.monto-gigante), .compact-form select, .compact-form input[type="datetime-local"] { width: 100%; padding: 14px; margin-bottom: 10px; background: var(--bg-elevated); color: white; border: 1px solid var(--border-subtle); border-radius: 12px; font-size: 0.95rem; outline: none; -webkit-appearance: none; transition: border-color 0.3s ease;}
         .compact-form input:focus, .compact-form select:focus { border-color: var(--accent-blue); }
         
-        /* 🟢 BOTÓN GUARDAR EN AZUL COMO SOLICITADO 🟢 */
         .btn-guardar { width: 100%; padding: 18px; background: var(--accent-blue); color: white; border: none; font-weight: 900; border-radius: 14px; font-size: 1.1rem; text-transform: uppercase; transition: transform 0.1s; box-shadow: 0 4px 15px rgba(31, 111, 235, 0.3);}
         .btn-guardar:active { transform: scale(0.96); }
 
         /* NAVEGACIÓN INFERIOR (5 BOTONES) */
-        .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(11, 14, 20, 0.85); backdrop-filter: blur(15px); border-top: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-around; align-items: center; padding: 10px 5px calc(15px + env(safe-area-inset-bottom)) 5px; z-index: 1000; }
+        .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(5, 7, 10, 0.85); backdrop-filter: blur(15px); border-top: 1px solid var(--border-subtle); display: flex; justify-content: space-around; align-items: center; padding: 10px 5px calc(15px + env(safe-area-inset-bottom)) 5px; z-index: 1000; }
         .nav-item { color: var(--text-dim); text-align: center; font-size: 0.6rem; font-weight: 800; padding: 10px 0; flex: 1; text-transform: uppercase; transition: color 0.3s ease, transform 0.2s ease; cursor: pointer; }
         .nav-item.active { color: var(--text-main); transform: translateY(-2px); }
         .nav-item i { display: block; font-size: 1.4rem; margin-bottom: 5px; font-style: normal; transition: transform 0.3s ease; }
         .nav-item.active i { transform: scale(1.15); }
         .nav-fab { background: linear-gradient(135deg, #1f6feb, #0b4abf); color: #fff; width: 60px; height: 60px; border-radius: 30px; display: flex; justify-content: center; align-items: center; font-size: 2rem; margin: -35px 10px 0 10px; box-shadow: 0 10px 25px rgba(31, 111, 235, 0.5); flex-shrink: 0; border: 4px solid var(--bg-base); transition: transform 0.2s ease; }
         .nav-fab:active { transform: scale(0.9); }
+
+        /* SENSOR DE IMPACTO MÓVIL */
+        .impact-pill { background: rgba(255, 152, 0, 0.1); border: 1px solid #ff9800; border-radius: 12px; padding: 10px; display: flex; justify-content: space-between; align-items: center; margin: 0 15px 15px 15px; box-shadow: 0 4px 10px rgba(255,152,0,0.1); }
     </style>
 </head>
 <body>
 
-<div id="login-screen">🛡️<h2 style="color:var(--accent-blue); margin: 20px 0; font-weight:900;">BÚNKER SCADA</h2><button onclick="loginWithGoogle()" style="padding:15px 30px; border-radius:30px; font-weight:bold; color:black;">AUTENTICAR</button></div>
+<div id="login-screen">
+    <h2 style="color:var(--accent-blue); margin: 20px 0; font-weight:900;">BÚNKER SCADA PRO</h2>
+    <p style="color:var(--text-dim); font-size:0.8rem; margin-bottom:30px;">HUD DE MANDO MÓVIL V8.5</p>
+    <button onclick="loginWithGoogle()" style="padding:15px 30px; border-radius:30px; font-weight:bold; color:black; background:white; border:none;">AUTENTICAR</button>
+</div>
 
 <div class="app-container" id="reportZone">
-    <div class="top-bar"><div class="brand">SCADA MÓVIL V8.2</div><div id="user-display" class="user-tag" style="color:var(--accent-blue); background:rgba(31, 111, 235, 0.1); font-weight:bold; padding:4px 8px; border-radius:6px;">BYRON</div></div>
+    <div class="top-bar">
+        <div style="font-weight:900; font-size:1.1rem; letter-spacing: 1px;">SCADA MÓVIL <span style="color:var(--accent-blue); font-size:0.7rem; vertical-align:top;">V8.5</span></div>
+        <div id="user-display" style="color:var(--accent-green); background:rgba(63, 185, 80, 0.1); font-weight:bold; padding:4px 8px; border-radius:6px; font-size:0.7rem; border: 1px solid var(--accent-green);">OPERATOR</div>
+    </div>
 
-    <div id="tab-dash" class="tab-content" style="display:block;">
+    <div id="tab-dash" class="tab-content" style="display:block; padding-top:0;">
         
-        <div class="chart-tabs" style="margin-bottom: 5px;">
+        <div class="chart-tabs" style="margin-bottom: 10px;">
             <button class="chart-tab-btn active" onclick="switchMasterView('efectivo', this)">Flujo Efectivo</button>
             <button class="chart-tab-btn" onclick="switchMasterView('tc', this)" style="display:flex; align-items:center; justify-content:center; gap:5px;">💳 Tarjetas</button>
         </div>
@@ -88,63 +97,79 @@
         <div id="vista-efectivo" style="display: block; animation: fadeSlideUp 0.3s;">
             <div class="master-hud"><div class="hud-value">$<span id="txtSaldo">0</span></div></div>
             <div class="slave-kpis">
-                <div class="slave-pill"><div class="label" style="font-size:0.7rem; font-weight:bold; color:var(--text-dim); text-transform:uppercase;">Fijos</div><div class="val" style="color:var(--accent-red); font-size:1.1rem; font-weight:900; margin-top:5px;">$<span id="txtTotalFijos">0</span></div></div>
-                <div class="slave-pill"><div class="label" style="font-size:0.7rem; font-weight:bold; color:var(--text-dim); text-transform:uppercase;">Variables</div><div class="val" style="color:var(--accent-orange); font-size:1.1rem; font-weight:900; margin-top:5px;">$<span id="txtTotalOtros">0</span></div></div>
+                <div class="slave-pill">
+                    <div style="font-size:0.65rem; font-weight:bold; color:var(--text-dim); text-transform:uppercase;">Fijos</div>
+                    <div style="color:var(--accent-red); font-size:1.1rem; font-weight:900; margin-top:5px; font-family:monospace;">$<span id="txtTotalFijos">0</span></div>
+                </div>
+                <div class="slave-pill">
+                    <div style="font-size:0.65rem; font-weight:bold; color:var(--text-dim); text-transform:uppercase;">Variables</div>
+                    <div style="color:var(--accent-orange); font-size:1.1rem; font-weight:900; margin-top:5px; font-family:monospace;">$<span id="txtTotalOtros">0</span></div>
+                </div>
             </div>
+            
+            <div style="display:flex; justify-content:space-between; align-items:center; padding: 0 15px 10px 15px;">
+                <span style="font-size:0.7rem; color:var(--text-dim); font-weight:bold; text-transform:uppercase;">% Fuga de Sueldo:</span>
+                <span id="txtPorcentajeFugas" style="font-size:0.9rem; font-weight:900; color:var(--accent-red);">0%</span>
+            </div>
+
             <div id="listaMovilDetalle" class="lista-contenedor"></div>
         </div>
 
         <div id="vista-tc" style="display: none; animation: fadeSlideUp 0.3s;">
             <div class="master-hud" style="padding-bottom:15px;">
-                <div style="font-size:0.75rem; color:var(--text-dim); font-weight:900; text-transform:uppercase; margin-bottom:5px;">Deuda TC Acumulada</div>
-                <div class="hud-value" style="color:var(--color-fuga);">$<span id="txtTotalTC">0</span></div>
+                <div style="font-size:0.7rem; color:var(--text-dim); font-weight:900; text-transform:uppercase; margin-bottom:5px;">Deuda TC Total (Matriz)</div>
+                <div class="hud-value" style="color:var(--accent-red);">$<span id="txtTotalTC">0</span></div>
             </div>
+            
+            <div id="boxImpactoTC" class="impact-pill" style="display:none;">
+                <span id="lblImpactoMes" style="font-size: 0.7rem; font-weight: 900; color: #ff9800; text-transform:uppercase;">⚠️ IMPACTO PRÓX. MES</span>
+                <strong id="txtImpactoMonto" style="font-size: 1.1rem; font-family: monospace; font-weight: 900; color: #ff9800;">$0</strong>
+            </div>
+
             <div id="listaMovilTC" class="lista-contenedor"></div>
         </div>
     </div>
 
     <div id="tab-trend" class="tab-content">
-        <h3 style="margin-top:0; font-weight:900; text-align:center;">TELEMETRÍA TÁCTICA</h3>
-        
         <div class="chart-tabs">
             <button class="chart-tab-btn active" onclick="switchSubChart('vBD', this)">Burn</button>
             <button class="chart-tab-btn" onclick="switchSubChart('vDI', this)">Pulso</button>
             <button class="chart-tab-btn" onclick="switchSubChart('vPA', this)">Pareto</button>
-            <button class="chart-tab-btn" onclick="switchSubChart('vRA', this)">Radar</button>
+            <button class="chart-tab-btn" onclick="switchSubChart('vRA', this)">Radar TC</button>
         </div>
         
         <div style="display:flex; gap:5px; margin-bottom: 15px;">
-            <input type="date" id="filtroDesde" style="margin:0; padding:10px; font-size:0.8rem; background:var(--bg-card); color:white; border:1px solid var(--border-subtle); border-radius:10px;" onchange="actualizarDashboard()">
-            <input type="date" id="filtroHasta" style="margin:0; padding:10px; font-size:0.8rem; background:var(--bg-card); color:white; border:1px solid var(--border-subtle); border-radius:10px;" onchange="actualizarDashboard()">
+            <input type="date" id="filtroDesde" style="flex:1; margin:0; padding:10px; font-size:0.8rem; background:var(--bg-card); color:white; border:1px solid var(--border-subtle); border-radius:10px;" onchange="actualizarDashboard()">
+            <input type="date" id="filtroHasta" style="flex:1; margin:0; padding:10px; font-size:0.8rem; background:var(--bg-card); color:white; border:1px solid var(--border-subtle); border-radius:10px;" onchange="actualizarDashboard()">
             <button onclick="document.getElementById('filtroDesde').value=''; document.getElementById('filtroHasta').value=''; actualizarDashboard();" style="background:var(--bg-elevated); color:white; border:1px solid var(--border-subtle); border-radius:10px; padding:10px;">⟳</button>
         </div>
 
         <div id="vBD" class="v-chart" style="display:block; padding:15px; background:var(--bg-card); border-radius: 16px; border:1px solid var(--border-subtle);">
-            <div style="height:200px;"><canvas id="chartBurnDown"></canvas></div>
+            <div style="height:220px;"><canvas id="chartBurnDown"></canvas></div>
             <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border-subtle);">
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                     <div style="background: rgba(255,255,255,0.02); padding: 10px; border-radius: 8px; text-align: center; border: 1px solid var(--border-subtle);">
                         <div style="font-size: 0.6rem; color: var(--text-dim); font-weight: 800; text-transform: uppercase;">Gasto Tramo</div>
-                        <div style="font-size: 1.1rem; font-weight: 900; color: var(--accent-red);" id="txtGastoTramo">$0</div>
+                        <div style="font-size: 1.1rem; font-weight: 900; color: var(--accent-red); font-family:monospace;" id="txtGastoTramo">$0</div>
                     </div>
                     <div style="background: rgba(255,255,255,0.02); padding: 10px; border-radius: 8px; text-align: center; border: 1px solid var(--border-subtle);">
                         <div style="font-size: 0.6rem; color: var(--text-dim); font-weight: 800; text-transform: uppercase;">Promedio Diario</div>
-                        <div style="font-size: 1.1rem; font-weight: 900; color: var(--accent-orange);" id="txtPromedioZoom">$0</div>
+                        <div style="font-size: 1.1rem; font-weight: 900; color: var(--accent-orange); font-family:monospace;" id="txtPromedioZoom">$0</div>
                     </div>
                 </div>
             </div>
         </div>
 
         <div id="vDI" class="v-chart" style="display:none; padding:15px; background:var(--bg-card); border-radius: 16px; border:1px solid var(--border-subtle);">
-            <div style="height:280px;"><canvas id="chartDiario"></canvas></div>
+            <div style="height:300px;"><canvas id="chartDiario"></canvas></div>
         </div>
 
         <div id="vPA" class="v-chart" style="display:none; padding:15px; background:var(--bg-card); border-radius: 16px; border:1px solid var(--border-subtle);">
-            <div style="height:280px;"><canvas id="chartPareto"></canvas></div>
+            <div style="height:300px;"><canvas id="chartPareto"></canvas></div>
         </div>
 
         <div id="vRA" class="v-chart" style="display:none; padding:15px; background:var(--bg-card); border-radius: 16px; border:1px solid var(--border-subtle);">
-            <div style="height:280px;"><canvas id="chartRadar"></canvas></div>
+            <div style="height:300px;"><canvas id="chartRadar"></canvas></div>
         </div>
     </div>
 
@@ -155,62 +180,53 @@
         </div>
         
         <div class="compact-form">
-            <input type="text" id="inputNombre" placeholder="¿En qué gastaste?" style="text-align: center;">
+            <input type="text" id="inputNombre" placeholder="¿En qué gastaste? (Auto-Piloto Activo)" style="text-align: center; font-weight:bold; letter-spacing:0.5px;">
             
-            <div style="display: flex; gap: 5px;">
-                <select id="inputTipo" style="width:50%; margin-bottom:0;">
-                    <option value="Gasto">Gasto Var.</option>
-                    <option value="Gasto Fijo">Fijo</option>
-                    <option value="Ingreso">Ingreso</option>
-                    <option value="Por Cobrar">Préstamo</option>
-                    <option value="Ahorro">Ahorro</option>
+            <div style="display: flex; gap: 8px;">
+                <select id="inputTipo" style="flex:1; margin-bottom:0;">
+                    <option value="Gasto">Gasto Var.</option><option value="Gasto Fijo">Fijo</option><option value="Ingreso">Ingreso</option><option value="Por Cobrar">Préstamo</option><option value="Ahorro">Ahorro</option>
                 </select>
-                <input type="datetime-local" id="inputFecha" style="width:50%; margin-bottom:0;">
+                <input type="datetime-local" id="inputFecha" style="flex:1.2; margin-bottom:0; font-size:0.8rem;">
             </div>
             
-            <div style="display: flex; gap: 5px; margin-top:10px;">
-                <select id="inputCategoria" style="width:65%; margin-bottom:0; text-align:left;"></select>
-                <select id="inputFuga" style="width:35%; margin-bottom:0; text-align:center;">
+            <div style="display: flex; gap: 8px; margin-top:10px;">
+                <select id="inputCategoria" style="flex:1.5; margin-bottom:0; text-align:left;"></select>
+                <select id="inputFuga" style="flex:1; margin-bottom:0; text-align:center;">
                     <option value="100">100% Fuga</option><option value="50">50% Fuga</option><option value="0" selected>0% Fuga</option>
                 </select>
             </div>
             
             <div id="boxCuotas" style="display:none; margin-top:10px; animation: fadeSlideUp 0.2s;">
-                <select id="inputCuotas" style="width:100%; margin-bottom:0; text-align:center; border-color:var(--accent-blue);">
-                    <option value="1">1 Cuota (Sin Interés)</option>
-                    <option value="2">2 Cuotas</option>
-                    <option value="3">3 Cuotas</option>
-                    <option value="6">6 Cuotas</option>
-                    <option value="12">12 Cuotas</option>
-                    <option value="24">24 Cuotas</option>
+                <select id="inputCuotas" style="width:100%; margin-bottom:0; text-align:center; border-color:var(--accent-blue); color:var(--accent-blue); font-weight:bold;">
+                    <option value="1">1 Cuota (Cargo Inmediato)</option><option value="2">2 Cuotas</option><option value="3">3 Cuotas</option><option value="6">6 Cuotas</option><option value="12">12 Cuotas</option>
                 </select>
             </div>
             
-            <button id="btnGuardar" class="btn-guardar" onclick="agregarMovimiento()" style="margin-top: 15px;">REGISTRAR DATOS</button>
+            <button id="btnGuardar" class="btn-guardar" onclick="agregarMovimiento()" style="margin-top: 15px;">INYECTAR A MATRIZ</button>
         </div>
     </div>
 
     <div id="tab-cloud" class="tab-content">
-        <h3 style="font-weight:900; text-align:center;">ENLACE SATELITAL</h3>
-        <button onclick="triggerSync()" style="width:100%; padding:15px; border-radius:12px; background:var(--bg-card); color:white; border:1px solid #30363d; font-weight:bold; margin-bottom:10px;">🔄 SINCRONIZAR SHEETS</button>
-        <button onclick="enviarReporteTelegram()" style="width:100%; padding:15px; border-radius:12px; background:rgba(0,136,204,0.1); color:#0088cc; border:1px solid rgba(0,136,204,0.3); font-weight:bold; margin-bottom:10px;">🚀 ENVIAR A TELEGRAM</button>
+        <h3 style="font-weight:900; text-align:center; letter-spacing:1px; margin-bottom:20px;">ENLACE SATELITAL</h3>
+        <button onclick="triggerSync()" style="width:100%; padding:18px; border-radius:16px; background:var(--bg-card); color:white; border:1px solid var(--border-subtle); font-weight:bold; margin-bottom:15px; box-shadow: 0 4px 10px rgba(0,0,0,0.2);">🔄 SINCRONIZAR SHEETS</button>
+        <button onclick="enviarReporteTelegram()" style="width:100%; padding:18px; border-radius:16px; background:rgba(0,136,204,0.1); color:#0088cc; border:1px solid rgba(0,136,204,0.3); font-weight:bold; margin-bottom:15px; box-shadow: 0 4px 10px rgba(0,136,204,0.1);">🚀 TRANSMITIR A TELEGRAM</button>
     </div>
 
     <div id="tab-settings" class="tab-content">
-        <h3 style="font-weight:900; text-align:center;">SISTEMA</h3>
-        <div style="display:block; background:var(--bg-card); border-radius: 16px; padding:15px; border:1px solid var(--border-subtle); margin-bottom:15px;">
-            <label style="font-size:0.75rem; font-weight:800; color:var(--text-dim); margin-bottom:10px; display:block;">Sueldo Base Operativo</label>
-            <input type="text" id="inputSueldo" style="width:100%; padding:5px 0; background:transparent; border:none; border-bottom:1px solid #30363d; color:var(--accent-blue); font-size:1.5rem; font-weight:900; outline:none;" onchange="guardarSueldoEnNube()">
+        <h3 style="font-weight:900; text-align:center; letter-spacing:1px;">PARÁMETROS DE SISTEMA</h3>
+        <div style="background:var(--bg-card); border-radius: 16px; padding:20px; border:1px solid var(--border-subtle); margin-bottom:15px; box-shadow: 0 4px 10px rgba(0,0,0,0.2);">
+            <label style="font-size:0.75rem; font-weight:800; color:var(--text-dim); margin-bottom:10px; display:block; text-transform:uppercase;">Sueldo Base Operativo</label>
+            <input type="text" id="inputSueldo" style="width:100%; padding:5px 0; background:transparent; border:none; border-bottom:2px solid var(--border-subtle); color:var(--text-main); font-size:2rem; font-weight:900; outline:none; font-family:monospace;" onchange="guardarSueldoEnNube()">
         </div>
-        <div style="display:block; margin-top:15px; background:var(--bg-card); border-radius: 16px; padding:15px; border:1px solid var(--border-subtle); margin-bottom:15px;">
-            <label style="font-size:0.75rem; font-weight:800; color:var(--text-dim); margin-bottom:10px; display:block;">Navegador de Tiempo</label>
+        <div style="margin-top:15px; background:var(--bg-card); border-radius: 16px; padding:20px; border:1px solid var(--border-subtle); margin-bottom:15px; box-shadow: 0 4px 10px rgba(0,0,0,0.2);">
+            <label style="font-size:0.75rem; font-weight:800; color:var(--text-dim); margin-bottom:10px; display:block; text-transform:uppercase;">Navegador de Tiempo</label>
             <div style="display:flex; gap:10px;">
-                <select id="navMesConceptual" onchange="aplicarCicloAlSistema()" style="width:100%; padding:10px; background:var(--bg-elevated); color:white; border:1px solid #30363d; border-radius:8px;"><option value="0">Enero</option><option value="1">Febrero</option><option value="2">Marzo</option><option value="3" selected>Abril</option><option value="4">Mayo</option><option value="5">Junio</option><option value="6">Julio</option><option value="7">Agosto</option><option value="8">Septiembre</option><option value="9">Octubre</option><option value="10">Noviembre</option><option value="11">Diciembre</option></select>
-                <select id="navAnio" onchange="aplicarCicloAlSistema()" style="width:100%; padding:10px; background:var(--bg-elevated); color:white; border:1px solid #30363d; border-radius:8px;"><option value="2025">2025</option><option value="2026" selected>2026</option></select>
+                <select id="navMesConceptual" onchange="aplicarCicloAlSistema()" style="width:100%; padding:12px; background:var(--bg-elevated); color:white; border:1px solid var(--border-subtle); border-radius:10px; outline:none;"><option value="0">Enero</option><option value="1">Febrero</option><option value="2">Marzo</option><option value="3" selected>Abril</option><option value="4">Mayo</option><option value="5">Junio</option><option value="6">Julio</option><option value="7">Agosto</option><option value="8">Septiembre</option><option value="9">Octubre</option><option value="10">Noviembre</option><option value="11">Diciembre</option></select>
+                <select id="navAnio" onchange="aplicarCicloAlSistema()" style="width:100%; padding:12px; background:var(--bg-elevated); color:white; border:1px solid var(--border-subtle); border-radius:10px; outline:none;"><option value="2025">2025</option><option value="2026" selected>2026</option></select>
             </div>
-            <div id="navRangoBadge" style="text-align:center; font-size:0.75rem; color:var(--text-dim); margin-top:10px; font-weight:bold; text-transform:uppercase;"></div>
+            <div id="navRangoBadge" style="text-align:center; font-size:0.75rem; color:var(--accent-blue); margin-top:15px; font-weight:bold; text-transform:uppercase; font-family:monospace; background: rgba(31, 111, 235, 0.1); padding: 5px; border-radius: 6px;"></div>
         </div>
-        <button onclick="logout()" style="width:100%; padding:15px; border-radius:12px; background:rgba(255,82,82,0.1); color:var(--accent-red); border:1px solid rgba(255,82,82,0.3); font-weight:bold;">🚪 CERRAR SESIÓN</button>
+        <button onclick="logout()" style="width:100%; padding:18px; border-radius:16px; background:rgba(255,82,82,0.1); color:var(--accent-red); border:1px solid rgba(255,82,82,0.3); font-weight:bold; text-transform:uppercase; box-shadow: 0 4px 10px rgba(255,82,82,0.1);">🚪 Desconectar Matriz</button>
     </div>
 
     <div class="bottom-nav">
@@ -222,24 +238,146 @@
     </div>
 </div>
 
-<div id="bottom-sheet-overlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:9999; backdrop-filter:blur(4px); opacity:0; transition:opacity 0.3s;" onclick="closeBottomSheet()"></div>
+<div id="bottom-sheet-overlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:9999; backdrop-filter:blur(5px); opacity:0; transition:opacity 0.3s;" onclick="closeBottomSheet()"></div>
 
-<div id="bottom-sheet" style="position:fixed; bottom:-100%; left:0; width:100%; background:var(--bg-card); border-radius:30px 30px 0 0; padding:25px 20px 40px; z-index:10000; transition:bottom 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 -15px 40px rgba(0,0,0,0.5); border-top: 1px solid rgba(255,255,255,0.05);">
-    <div style="width:40px; height:5px; background:rgba(255,255,255,0.2); border-radius:10px; margin:0 auto 20px;"></div>
-    <div id="sheet-title" style="font-weight:900; text-align:center; font-size:1.2rem; margin-bottom:5px; color:var(--text-main);">Operación</div>
-    <div id="sheet-subtitle" style="text-align:center; color:var(--text-dim); margin-bottom:25px; font-size:1rem;">$0</div>
+<div id="bottom-sheet" style="position:fixed; bottom:-100%; left:0; width:100%; background:var(--bg-card); border-radius:30px 30px 0 0; padding:25px 20px 40px; z-index:10000; transition:bottom 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 -15px 40px rgba(0,0,0,0.8); border-top: 1px solid var(--border-subtle);">
+    <div style="width:40px; height:5px; background:var(--border-subtle); border-radius:10px; margin:0 auto 20px;"></div>
+    <div id="sheet-title" style="font-weight:900; text-align:center; font-size:1.3rem; margin-bottom:5px; color:var(--text-main); letter-spacing:0.5px;">Operación</div>
+    <div id="sheet-subtitle" style="text-align:center; color:var(--text-dim); margin-bottom:25px; font-size:1.1rem; font-family:monospace;">$0</div>
     
     <input type="hidden" id="sheet-id-target">
     
-    <button onclick="const id=document.getElementById('sheet-id-target').value; closeBottomSheet(); editarMovimiento(id);" style="width:100%; padding:18px; border-radius:15px; background:rgba(31,111,235,0.1); color:var(--accent-blue); border:none; font-weight:900; font-size:1rem; margin-bottom:12px; transition:transform 0.1s;">✏️ MODIFICAR PARÁMETROS</button>
+    <button onclick="const id=document.getElementById('sheet-id-target').value; closeBottomSheet(); editarMovimiento(id);" style="width:100%; padding:18px; border-radius:15px; background:rgba(31,111,235,0.1); color:var(--accent-blue); border:1px solid rgba(31,111,235,0.2); font-weight:900; font-size:1rem; margin-bottom:12px; transition:transform 0.1s;">✏️ RECALIBRAR PARÁMETROS</button>
     
-    <button onclick="const id=document.getElementById('sheet-id-target').value; if(confirm('¿ELIMINAR DEL BÚNKER?')) { db.collection('movimientos').doc(id).delete().then(()=> { closeBottomSheet(); if(typeof mostrarToast === 'function') mostrarToast('REGISTRO ELIMINADO'); }); }" style="width:100%; padding:18px; border-radius:15px; background:rgba(255,82,82,0.1); color:var(--accent-red); border:none; font-weight:900; font-size:1rem; margin-bottom:12px; transition:transform 0.1s;">🗑️ ELIMINAR REGISTRO</button>
+    <button onclick="const id=document.getElementById('sheet-id-target').value; if(confirm('¿ELIMINAR DEL BÚNKER?')) { db.collection('movimientos').doc(id).delete().then(()=> { closeBottomSheet(); if(typeof mostrarToast === 'function') mostrarToast('REGISTRO DESTRUIDO'); }); }" style="width:100%; padding:18px; border-radius:15px; background:rgba(255,82,82,0.1); color:var(--accent-red); border:1px solid rgba(255,82,82,0.2); font-weight:900; font-size:1rem; margin-bottom:12px; transition:transform 0.1s;">🗑️ ELIMINAR REGISTRO</button>
     
-    <button onclick="closeBottomSheet()" style="width:100%; padding:15px; border-radius:15px; background:transparent; color:var(--text-dim); border:none; font-weight:700;">CANCELAR</button>
+    <button onclick="closeBottomSheet()" style="width:100%; padding:15px; border-radius:15px; background:transparent; color:var(--text-dim); border:none; font-weight:800; text-transform:uppercase;">Cancelar</button>
 </div>
 
 <script>
-    // 🟢 FUNCIÓN INTERRUPTOR MAESTRO (EFECTIVO VS TC) 🟢
+    // Inyecta el motor de listas modificado para MÓVIL V8.5
+    // Esta función sobrescribe la del motor.js original para que las listas de celular 
+    // tengan los colores, gradientes y alertas precisas.
+    document.addEventListener("DOMContentLoaded", () => {
+        if(typeof renderizarListas === 'function') {
+            window.renderizarListas = function(sueldoBase, filtroBuscador) {
+                let datos = [...datosMesGlobal].filter(x => x.catV !== 'Gasto Tarjeta de Crédito'); 
+                if (filtroBuscador) datos = datos.filter(x => x.nombre?.toLowerCase().includes(filtroBuscador) || x.catV.toLowerCase().includes(filtroBuscador));
+
+                datos.sort((a, b) => {
+                    let valA = a[currentSort.column], valB = b[currentSort.column];
+                    if (valA < valB) return currentSort.direction === 'asc' ? -1 : 1;
+                    if (valA > valB) return currentSort.direction === 'asc' ? 1 : -1;
+                    return 0;
+                });
+
+                const contenedorMovil = document.getElementById('listaMovilDetalle');
+                if (!contenedorMovil) return;
+
+                if(datos.length === 0) {
+                    contenedorMovil.innerHTML = `<div style="text-align:center; padding: 40px 20px; color: var(--text-dim);"><i>📡</i><br>MATRIZ SIN DATOS</div>`;
+                    return;
+                }
+
+                let htmlMovil = ''; let currentDayGroup = ""; 
+                let now = new Date(); now.setHours(0,0,0,0);
+                let yesterday = new Date(now); yesterday.setDate(yesterday.getDate() - 1);
+
+                datos.forEach((x) => {
+                    const d = new Date(x.fechaISO);
+                    let dClean = new Date(d); dClean.setHours(0,0,0,0);
+                    const dateStr = d.toLocaleDateString('es-CL');
+                    const timeStr = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+                    
+                    if (currentSort.column === 'fechaISO' && currentSort.direction === 'desc' && dateStr !== currentDayGroup) {
+                        let labelText = dateStr;
+                        if (dClean.getTime() === now.getTime()) labelText = "HOY";
+                        else if (dClean.getTime() === yesterday.getTime()) labelText = "AYER";
+                        else {
+                            const meses = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"];
+                            labelText = `${d.getDate()} ${meses[d.getMonth()]}`;
+                        }
+                        htmlMovil += `<div class="date-header">${labelText}</div>`;
+                        currentDayGroup = dateStr;
+                    }
+
+                    const em = catEmojis[x.catV] || "❓";
+                    const colorMonto = x.esIn ? "var(--accent-green)" : x.esNeutro ? "#ff9800" : "var(--text-main)";
+                    const iconoVisual = obtenerIconoVisual(x.nombre, em);
+                    const nombreSeguro = x.nombre || "Dato no identificado";
+                    const montoSeguro = (typeof x.monto === 'number' && !isNaN(x.monto)) ? x.monto : 0;
+                    
+                    // 🟢 GRADIENTE ROJO MÓVIL PARA FUGAS
+                    let styleExtra = x.catV === 'Dopamina & Antojos' ? 'background: linear-gradient(90deg, transparent 50%, rgba(255, 82, 82, 0.15) 100%) !important; border-right: 2px solid var(--accent-red) !important;' : '';
+
+                    const clickAction = typeof openBottomSheet === 'function' ? `openBottomSheet('${x.firestoreId}', '${nombreSeguro.replace(/'/g, "\\'")}', ${montoSeguro})` : `editarMovimiento('${x.firestoreId}')`;
+                    
+                    htmlMovil += `
+                    <div class="mobile-card" onclick="${clickAction}" style="${styleExtra}">
+                        <div style="width: 42px; height: 42px; margin-right: 15px; background: var(--bg-card); border-radius: 50%; display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0; border: 1px solid var(--border-subtle);">
+                            ${iconoVisual}
+                        </div>
+                        <div style="flex: 1; min-width: 0;">
+                            <div style="font-weight:bold; font-size:0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text-main);">${nombreSeguro}</div>
+                            <div style="font-size:0.7rem; color:var(--text-dim); margin-top:2px;">${timeStr} • ${x.catV.replace(' & ','&')}</div>
+                        </div>
+                        <div style="font-weight:900; color:${colorMonto}; flex-shrink: 0; font-size:1.1rem; font-family:monospace;">${x.esIn?'+':(x.esNeutro?'=':'-')}$${Math.round(montoSeguro/1000)}k</div>
+                    </div>`;
+                });
+                contenedorMovil.innerHTML = htmlMovil;
+            }
+        }
+        
+        // Sobrescribir renderizarTablaTC para inyectar el Sensor Naranja en móvil
+        if(typeof renderizarTablaTC === 'function') {
+            window.renderizarTablaTC = function() {
+                const tbody = document.getElementById("listaMovilTC");
+                if (!tbody) return;
+                
+                if (datosTCGlobal.length === 0) {
+                    tbody.innerHTML = `<div style="text-align:center; padding: 40px 20px; color: var(--text-dim);"><i>📡</i><br>MATRIZ TC SIN DATOS</div>`;
+                    let boxImpacto = document.getElementById('boxImpactoTC'); if(boxImpacto) boxImpacto.style.display = 'none';
+                    return;
+                }
+
+                let htmlMovil = '';
+                let sumaProximoMes = 0; let fechaHoy = new Date();
+                let proximoMes = fechaHoy.getMonth() + 1; let proximoAnio = fechaHoy.getFullYear();
+                if (proximoMes > 11) { proximoMes = 0; proximoAnio++; }
+
+                datosTCGlobal.forEach(doc => {
+                    let fechaObj = new Date(doc.mesCobro);
+                    let mesTxt = fechaObj.toLocaleString('es-CL', { month: 'short', year: 'numeric' }).toUpperCase();
+                    if (fechaObj.getMonth() === proximoMes && fechaObj.getFullYear() === proximoAnio) sumaProximoMes += doc.monto;
+                    
+                    const clickAction = typeof openBottomSheet === 'function' ? `openBottomSheet('${doc.id}', '${doc.nombre.replace(/'/g, "\\'")}', ${doc.monto})` : ``;
+                    
+                    htmlMovil += `
+                    <div class="mobile-card" style="margin-bottom:5px; border-radius:12px !important; background: var(--bg-card) !important;">
+                        <div style="flex: 1; min-width: 0; padding-left:5px;">
+                            <div style="font-weight:bold; font-size:0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text-main);">${doc.nombre}</div>
+                            <div style="font-size:0.7rem; color:var(--accent-blue); margin-top:2px; font-weight:800;">${mesTxt} (${doc.cuota})</div>
+                        </div>
+                        <div style="font-weight:900; color:var(--text-main); flex-shrink: 0; font-size:1rem; font-family:monospace;">$${doc.monto.toLocaleString('es-CL')}</div>
+                    </div>`;
+                });
+                
+                tbody.innerHTML = htmlMovil;
+
+                // ACTIVAR SENSOR DE IMPACTO MÓVIL
+                let mesNombreStr = new Date(proximoAnio, proximoMes, 1).toLocaleString('es-CL', { month: 'long' }).toUpperCase();
+                let boxImpacto = document.getElementById('boxImpactoTC');
+                if (boxImpacto) {
+                    if (sumaProximoMes > 0) {
+                        boxImpacto.style.display = 'flex';
+                        document.getElementById('lblImpactoMes').innerText = `⚠️ IMPACTO EN ${mesNombreStr}`;
+                        document.getElementById('txtImpactoMonto').innerText = `$${sumaProximoMes.toLocaleString('es-CL')}`;
+                    } else { boxImpacto.style.display = 'none'; }
+                }
+            }
+        }
+    });
+
     function switchMasterView(viewId, el) {
         document.querySelectorAll('#tab-dash .chart-tab-btn').forEach(b => b.classList.remove('active'));
         el.classList.add('active');
@@ -265,16 +403,20 @@
             document.getElementById('inputFecha').value = now.toISOString().slice(0,16);
             document.getElementById('inputFuga').value = "0";
             document.getElementById('boxCuotas').style.display = 'none'; 
+            document.getElementById('inputNombre').focus();
         }
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
+    
     window.switchTab = function(t) { switchTabApp(t === 'list' ? 'dash' : 'add', document.querySelectorAll('.nav-item')[t === 'list' ? 0 : 2]); };
+    
     function switchSubChart(id, el) {
         document.querySelectorAll('.v-chart').forEach(v => v.style.display='none');
         document.getElementById(id).style.display='block';
         document.querySelectorAll('#tab-trend .chart-tab-btn').forEach(b => b.classList.remove('active'));
         el.classList.add('active');
     }
+    
     function openBottomSheet(id, n, m) { document.getElementById('sheet-title').innerText = n; document.getElementById('sheet-subtitle').innerText = "$" + m.toLocaleString('es-CL'); document.getElementById('sheet-id-target').value = id; const overlay = document.getElementById('bottom-sheet-overlay'); const sheet = document.getElementById('bottom-sheet'); overlay.style.display = 'block'; setTimeout(() => { overlay.style.opacity = '1'; sheet.style.bottom = '0'; }, 10); }
     function closeBottomSheet() { const overlay = document.getElementById('bottom-sheet-overlay'); const sheet = document.getElementById('bottom-sheet'); sheet.style.bottom = '-100%'; overlay.style.opacity = '0'; setTimeout(()=> overlay.style.display = 'none', 300); }
 </script>
