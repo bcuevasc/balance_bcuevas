@@ -1,5 +1,5 @@
 // ==========================================================
-// 🧠 BÚNKER SCADA ORACLE - MOTOR LÓGICO V11.0 (PRE-FLIGHT)
+// 🧠 BÚNKER SCADA ORACLE - MOTOR LÓGICO V12.0 (FULL STACK)
 // ==========================================================
 const BYRON_EMAIL = "bvhcc94@gmail.com"; 
 const CREDIT_SETPOINT = -300000; 
@@ -9,7 +9,9 @@ const SUELDO_BASE_DEFAULT = 3602505;
 // 🟢 MÓDULO A.C.E. (Auto-Categorización Experta) 🟢
 const diccAuto = [
     { keys: ["prestamo", "debe", "pagar dps", "por cobrar", "cuota de"], cat: "Cuentas por Cobrar (Activos)", tipo: "Por Cobrar", fuga: "0" },
-    { keys: ["uber", "didi", "cabify", "pasaje", "buses", "turbus", "copec", "shell", "metro", "autopase"], cat: "Transporte & Logística", tipo: "Gasto", fuga: "0" },
+    { keys: ["uber", "didi", "cabify", "pasaje", "buses", "turbus", "metro"], cat: "Transporte & Logística", tipo: "Gasto", fuga: "0" },
+    { keys: ["copec", "shell", "autopase", "revision tecnica", "lavado auto", "mecanico", "peaje", "seguro auto", "permiso circulacion"], cat: "Flota & Movilidad", tipo: "Gasto Fijo", fuga: "0" },
+    { keys: ["dividendo", "gastos comunes", "ggcc", "contribuciones", "hipotecario", "departamento"], cat: "Infraestructura (Depto)", tipo: "Gasto Fijo", fuga: "0" },
     { keys: ["pedidosya", "mcdonalds", "burger king", "starbucks", "rappi", "helado", "cine", "concierto", "fother muckers"], cat: "Dopamina & Antojos", tipo: "Gasto", fuga: "100" },
     { keys: ["netflix", "spotify", "hbo", "prime", "icloud", "google", "vtr", "wom", "entel", "movistar"], cat: "Suscripciones", tipo: "Gasto Fijo", fuga: "0" },
     { keys: ["jumbo", "lider", "unimarc", "santa isabel", "panaderia", "carniceria", "feria", "minimarket", "tottus"], cat: "Alimentación & Supermercado", tipo: "Gasto", fuga: "0" },
@@ -17,10 +19,13 @@ const diccAuto = [
     { keys: ["ahorro", "inversion", "fintual", "deposito", "traspaso"], cat: "Transferencia Propia / Ahorro", tipo: "Ahorro", fuga: "0" }
 ];
 
+// V12.0: NUEVAS CATEGORÍAS DE INFRAESTRUCTURA Y FLOTA AISLADAS
 const catMaestras = [
-    { id: "Gastos Fijos (Búnker)", em: "🏠", label: "Carga Fija" },
+    { id: "Gastos Fijos (Búnker)", em: "🏠", label: "Carga Fija (Base)" },
+    { id: "Infraestructura (Depto)", em: "🏢", label: "Infraestructura (Depto)" },
+    { id: "Flota & Movilidad", em: "🚙", label: "Flota & Vehículo" },
     { id: "Alimentación & Supermercado", em: "🛒", label: "Supermercado" },
-    { id: "Transporte & Logística", em: "🚗", label: "Transporte" },
+    { id: "Transporte & Logística", em: "🚗", label: "Transporte Público" },
     { id: "Dopamina & Antojos", em: "🍔", label: "Fugas (Dopamina)" },
     { id: "Cuentas por Cobrar (Activos)", em: "💸", label: "Me Deben Plata" },
     { id: "Transferencia Propia / Ahorro", em: "🏦", label: "Ahorro / Traspaso" },
@@ -28,7 +33,7 @@ const catMaestras = [
     { id: "Ingreso Adicional", em: "💰", label: "Ingreso Extra" },
     { id: "Suscripciones", em: "📱", label: "Suscripciones" },
     { id: "Mantenimiento Hardware (Salud)", em: "💊", label: "Salud" },
-    { id: "Hogar & Búnker", em: "🛠️", label: "Hogar & Búnker" },
+    { id: "Hogar & Búnker", em: "🛠️", label: "Compras Hogar" },
     { id: "Ocio & Experiencias", em: "🎸", label: "Ocio & Experiencias" },
     { id: "Red de Apoyo (Familia)", em: "🫂", label: "Red de Apoyo" },
     { id: "Transferencia Recibida", em: "📲", label: "Transf. Recibida" },
@@ -38,6 +43,17 @@ const catMaestras = [
 
 const catEmojis = {}; const aliasMap = {}; 
 catMaestras.forEach(c => { catEmojis[c.id] = c.em; aliasMap[c.id] = c.label; });
+
+// 🟢 MÓDULO ENGLISH TOGGLE V12.0 🟢
+let isEng = false;
+window.toggleLanguage = function() {
+    isEng = !isEng;
+    document.querySelectorAll('[data-en]').forEach(el => {
+        if (!el.hasAttribute('data-es')) el.setAttribute('data-es', el.innerText);
+        el.innerText = isEng ? el.getAttribute('data-en') : el.getAttribute('data-es');
+    });
+    mostrarToast(isEng ? 'ENGLISH MODE ENGAGED' : 'MODO ESPAÑOL ACTIVADO');
+};
 
 document.addEventListener("DOMContentLoaded", () => {
     const optionsHTML = catMaestras.map(c => `<option value="${c.id}">${c.em} ${c.label}</option>`).join('');
@@ -119,7 +135,7 @@ function logout() { auth.signOut().then(() => window.location.reload()); }
 
 auth.onAuthStateChanged(user => {
     if (user && user.email.toLowerCase() === BYRON_EMAIL.toLowerCase()) {
-        console.log("%c[ORACLE V11.0] BOOT SEQUENCE INITIATED", "color: #79c0ff; font-weight: bold; font-size: 14px;");
+        console.log("%c[ORACLE V12.0] FULL STACK BOOT SEQUENCE INITIATED", "color: #79c0ff; font-weight: bold; font-size: 14px;");
         
         const loginScreen = document.getElementById('login-screen'), reportZone = document.getElementById('reportZone');
         if(loginScreen) loginScreen.style.display = 'none';
@@ -151,6 +167,13 @@ function cargarSueldoVisual() {
     if (document.activeElement !== elSueldo) elSueldo.value = sueldoActivo.toLocaleString('es-CL');
 }
 
+// 🟢 MÓDULO HISTORIAN LOG V12.0 🟢
+let alarmLogCache = "";
+window.abrirHistorian = function() {
+    document.getElementById('historian-content').innerHTML = alarmLogCache || "<div style='color:var(--color-saldo); font-weight:bold;'>SYSTEM NOMINAL. NO BREACHES DETECTED.</div>";
+    document.getElementById('modal-historian').style.display = 'flex';
+};
+
 function actualizarDashboard() {
     const elMes = document.getElementById('navMesConceptual'), elAnio = document.getElementById('navAnio');
     const mesVal = parseInt(elMes.value), anioVal = parseInt(elAnio.value);
@@ -176,17 +199,23 @@ function actualizarDashboard() {
     });
 
     datosMesGlobal = [...dataMes];
-    let saldoAcc = sueldo, tI = 0, tF = 0, tO = 0, tC = 0, tEvitable = 0, gCat = {};
+    let saldoAcc = sueldo, tI = 0, tF = 0, tO = 0, tC = 0, tEvitable = 0, tInfra = 0, tFlota = 0, gCat = {};
     let totalTC_legacy = 0; 
     
     [...dataMes].sort((x,y) => x.fechaISO < y.fechaISO ? -1 : 1).forEach(x => {
         if (x.catV === 'Gasto Tarjeta de Crédito') totalTC_legacy += x.monto;
         else { 
             if (x.esIn) { tI += x.monto; saldoAcc += x.monto; }
-            else if (x.tipo === 'Por Cobrar' || x.categoria === 'Cuentas por Cobrar (Activos)') tC += x.monto; // 🟢 LÓGICA DE ACTIVOS V10
+            else if (x.tipo === 'Por Cobrar' || x.categoria === 'Cuentas por Cobrar (Activos)') tC += x.monto;
             else if (!x.esNeutro) {
                 saldoAcc -= x.monto;
-                if (x.tipo === 'Gasto Fijo') tF += x.monto; else tO += x.monto;
+                
+                // 🟢 LÓGICA V12: AISLAMIENTO DE INFRAESTRUCTURA Y FLOTA
+                if (x.catV === 'Infraestructura (Depto)') { tInfra += x.monto; }
+                else if (x.catV === 'Flota & Movilidad') { tFlota += x.monto; }
+                else if (x.tipo === 'Gasto Fijo') { tF += x.monto; } 
+                else { tO += x.monto; }
+                
                 gCat[x.catV] = (gCat[x.catV] || 0) + x.monto;
                 
                 let pctFuga = x.innecesarioPct !== undefined ? x.innecesarioPct : (catEvitables.includes(x.catV) ? 100 : 0);
@@ -198,6 +227,8 @@ function actualizarDashboard() {
     const setTxt = (id, val) => { const el = document.getElementById(id); if(el) el.innerText = val.toLocaleString('es-CL'); };
     setTxt('txtTotalFijos', tF); setTxt('txtTotalOtros', tO); setTxt('txtTotalIngresos', tI);
     setTxt('txtCxC', tC); setTxt('txtSaldo', saldoAcc);
+    setTxt('txtTotalInfra', tInfra); // KPI V12
+    setTxt('txtTotalFlota', tFlota); // KPI V12
     
     const diasCiclo = Math.max(1, Math.round((TFinal - T0) / 86400000));
     const hoy = new Date();
@@ -207,7 +238,9 @@ function actualizarDashboard() {
     if(badgeDias) badgeDias.innerText = `${Math.max(diasCiclo - diasT, 0)} DÍAS`;
     
     const setW = (id, val) => { const el = document.getElementById(id); if(el) el.style.width = Math.min(val, 100) + "%"; };
-    setW('barFijos', (tF / (sueldo || 1)) * 100); setW('barOtros', (tO / (sueldo || 1)) * 100);
+    // Base operative salary for calculations ignores Infra and Fleet to see true burn
+    let sueldoOperativoBase = sueldo - tInfra - tFlota;
+    setW('barFijos', (tF / (sueldoOperativoBase || 1)) * 100); setW('barOtros', (tO / (sueldoOperativoBase || 1)) * 100);
     setTxt('txtTotalEvitable', Math.round(tEvitable));
     
     const pctFugas = sueldo > 0 ? ((tEvitable / sueldo) * 100).toFixed(1) : 0;
@@ -222,14 +255,14 @@ function actualizarDashboard() {
     let deudaAprox = typeof window.totalTC !== 'undefined' ? window.totalTC : (typeof totalTC_legacy !== 'undefined' ? totalTC_legacy : 0); 
     const txtProyectado = document.getElementById('txtProyectado');
     if(txtProyectado) {
-        let proyVal = saldoAcc - deudaAprox; // Ya no suma tC porque es un Activo separado en saldo de maniobra
+        let proyVal = saldoAcc - deudaAprox;
         txtProyectado.innerText = proyVal.toLocaleString('es-CL');
         txtProyectado.style.color = proyVal < 0 ? "var(--color-fuga)" : "#79c0ff";
     }
 
     let dataGraficos = dataMes.filter(x => x.catV !== 'Gasto Tarjeta de Crédito');
     if (typeof renderizarListas === 'function') renderizarListas(sueldo, b);
-    if (typeof dibujarGraficos === 'function') dibujarGraficos(sueldo, [...dataGraficos].sort((x,y) => x.fechaISO < y.fechaISO ? -1 : 1), gCat, diasCiclo, T0, tF);
+    if (typeof dibujarGraficos === 'function') dibujarGraficos(sueldo, [...dataGraficos].sort((x,y) => x.fechaISO < y.fechaISO ? -1 : 1), gCat, diasCiclo, T0, tF, tInfra, tFlota, deudaAprox);
     
     setTxt('txtGastoTramo', tO + tF);
     setTxt('txtPromedioZoom', Math.round((tO + tF) / diasCiclo));
@@ -333,7 +366,7 @@ function editarMovimiento(id) {
         if(document.getElementById('inputFecha')) document.getElementById('inputFecha').value = dLocal;
     } catch(e) { console.error(e); }
     const btn = document.getElementById('btnGuardar');
-    if(btn) { btn.innerHTML = "ACTUALIZAR"; btn.style.backgroundColor = "var(--color-saldo)"; }
+    if(btn) { btn.innerHTML = isEng ? "UPDATE" : "ACTUALIZAR"; btn.style.backgroundColor = "var(--color-saldo)"; }
     modoEdicionActivo = true;
     actualizarDashboard(); 
 }
@@ -353,13 +386,13 @@ function agregarMovimiento() {
 
     if (!m || !n || !fInput) return alert("⚠️ Faltan parámetros en la consola.");
     const btn = document.getElementById('btnGuardar');
-    btn.innerHTML = "INYECTANDO..."; btn.disabled = true;
+    btn.innerHTML = isEng ? "INJECTING..." : "INYECTANDO..."; btn.disabled = true;
     const dataPayload = { nombre: n, monto: m, categoria: c, tipo: t, fecha: new Date(fInput), status: 'Manual', innecesarioPct: pctFuga, cuotas: cantCuotas };
     
     let op = (modoEdicionActivo && editId) ? db.collection("movimientos").doc(editId).update(dataPayload) : db.collection("movimientos").add(dataPayload);
     op.then(() => {
         document.getElementById('editId').value = ''; document.getElementById('inputNombre').value = ''; document.getElementById('inputMonto').value = '';
-        btn.innerHTML = "INYECTAR"; btn.style.backgroundColor = "var(--color-edit)"; btn.disabled = false; modoEdicionActivo = false;
+        btn.innerHTML = isEng ? "INJECT" : "INYECTAR"; btn.style.backgroundColor = "var(--color-edit)"; btn.disabled = false; modoEdicionActivo = false;
         mostrarToast("REGISTRO CONFIRMADO");
     }).catch(err => { alert("❌ Error de Matriz: " + err.message); btn.innerHTML = "ERROR"; btn.disabled = false; });
 }
@@ -373,9 +406,9 @@ function massDelete() { const ids = Array.from(document.querySelectorAll('.row-c
 function massCategorize() { const ids = Array.from(document.querySelectorAll('.row-check:not(#checkAll):checked')).map(cb => cb.value); const cat = document.getElementById('massCategorySelect').value; if(ids.length === 0 || !cat || !confirm(`¿Categorizar como "${cat}"?`)) return; const btn = document.querySelector('button[onclick="massCategorize()"]'); const orig = btn.innerHTML; btn.innerHTML = '⏳'; Promise.all(ids.map(id => db.collection("movimientos").doc(id).update({categoria: cat}))).then(() => { document.getElementById('massActionsBar').style.display = 'none'; document.getElementById('checkAll').checked = false; document.getElementById('massCategorySelect').value = ''; btn.innerHTML = orig; }); }
 
 // =====================================================================
-// 🔮 PROYECTO ORÁCULO: TELEMETRÍA V10.0
+// 🔮 PROYECTO ORÁCULO: TELEMETRÍA V12.0
 // =====================================================================
-function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0, totalFijosMes) {
+function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0, totalFijosMes, tInfra, tFlota, deudaAprox) {
     if(chartBD) chartBD.destroy(); if(chartP) chartP.destroy(); 
     if(chartDiario) chartDiario.destroy(); if(chartRadar) chartRadar.destroy();
     
@@ -394,7 +427,8 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0, totalFijosMes) 
             if(m.esIn) daily[diff] += m.monto; 
             else if(!m.esNeutro) { 
                 daily[diff] -= m.monto; 
-                if(m.tipo !== 'Gasto Fijo') {
+                // V12.0: AISLAMIENTO PARA PULSO VITAL
+                if(m.catV !== 'Infraestructura (Depto)' && m.catV !== 'Flota & Movilidad' && m.tipo !== 'Gasto Fijo') {
                     if(catEvitables.includes(m.catV)) dailyFugas[diff] += m.monto;
                     else dailyNecesario[diff] += m.monto;
                 }
@@ -445,8 +479,8 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0, totalFijosMes) 
     }
 
     const sorted = Object.entries(cats).sort((a,b)=>b[1]-a[1]).slice(0,6);
-    const bgColors = ['rgba(31, 111, 235, 0.7)', 'rgba(46, 160, 67, 0.7)', 'rgba(210, 153, 34, 0.7)', 'rgba(255, 82, 82, 0.7)', 'rgba(163, 113, 247, 0.7)', 'rgba(121, 192, 255, 0.7)'];
-    const borderColors = ['#1f6feb', '#2ea043', '#d29922', '#ff5252', '#a371f7', '#79c0ff'];
+    const bgColors = ['rgba(31, 111, 235, 0.7)', 'rgba(46, 160, 67, 0.7)', 'rgba(210, 153, 34, 0.7)', 'rgba(255, 82, 82, 0.7)', 'rgba(163, 113, 247, 0.7)', 'rgba(0, 188, 212, 0.7)'];
+    const borderColors = ['#1f6feb', '#2ea043', '#d29922', '#ff5252', '#a371f7', '#00bcd4'];
     
     chartP = new Chart(document.getElementById('chartPareto'), {
         type: 'polarArea', 
@@ -455,6 +489,14 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0, totalFijosMes) 
     });
 
     const ctxDiario = document.getElementById('chartDiario');
+    let limiteDiarioIdeal = Math.max((sueldo - totalFijosMes - tInfra - tFlota) / diasCiclo, 0); // V12.0 Dinámico real
+    
+    // 🟢 V12.0 HISTORIAN LOG GENERATOR 🟢
+    alarmLogCache = "";
+    if (deudaAprox > sueldo * 0.15) {
+        alarmLogCache += `<div class='log-item critical'>[TC OVERLOAD] Liabilities exceed 15% safety threshold. ($${deudaAprox.toLocaleString('es-CL')})</div>`;
+    }
+
     if(ctxDiario) {
         let lastDayWithData = diasCiclo;
         while(lastDayWithData > 0 && (dailyNecesario[lastDayWithData] === 0 && dailyFugas[lastDayWithData] === 0)) lastDayWithData--;
@@ -462,6 +504,29 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0, totalFijosMes) 
         let barLabels = labelsFechas.slice(startDayForBars, lastDayWithData + 1); 
         let barNecesario = dailyNecesario.slice(startDayForBars, lastDayWithData + 1);
         let barFugas = dailyFugas.slice(startDayForBars, lastDayWithData + 1);
+        
+        // Populate Historian Log for Pulses
+        for(let i=startDayForBars; i<=lastDayWithData; i++) {
+            if (dailyFugas[i] > 0) {
+                alarmLogCache += `<div class='log-item warning'>[LEAK DETECTED] Dopamine leak on ${labelsFechas[i]}: $${dailyFugas[i].toLocaleString('es-CL')}</div>`;
+            }
+            if ((dailyNecesario[i] + dailyFugas[i]) > limiteDiarioIdeal) {
+                alarmLogCache += `<div class='log-item critical'>[OVERBURN] Dynamic limit broken on ${labelsFechas[i]}. Gasto: $${(dailyNecesario[i]+dailyFugas[i]).toLocaleString('es-CL')}</div>`;
+            }
+        }
+
+        const limiteDiarioPlugin = {
+            id: 'limiteDiarioPlugin',
+            afterDraw: (chart) => {
+                if(limiteDiarioIdeal <= 0) return;
+                const ctx = chart.ctx; const xAxis = chart.scales.x; const yAxis = chart.scales.y;
+                const yPos = yAxis.getPixelForValue(limiteDiarioIdeal);
+                if(yPos >= yAxis.top && yPos <= yAxis.bottom) {
+                    ctx.save(); ctx.beginPath(); ctx.moveTo(xAxis.left, yPos); ctx.lineTo(xAxis.right, yPos);
+                    ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(210, 153, 34, 0.8)'; ctx.setLineDash([4, 4]); ctx.stroke(); ctx.restore();
+                }
+            }
+        };
 
         chartDiario = new Chart(ctxDiario, {
             type: 'bar',
@@ -469,7 +534,8 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0, totalFijosMes) 
                 { label: 'Gasto Base', data: barNecesario, backgroundColor: 'rgba(31, 111, 235, 0.6)', borderRadius: 2 },
                 { label: 'Fuga (Dopamina)', data: barFugas, backgroundColor: 'rgba(255, 82, 82, 0.9)', borderRadius: 2 }
             ]},
-            options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { stacked: true, ticks: { color: cT, font:{size:8} }, grid: { display:false } }, y: { stacked: true, ticks: { color: cT, callback: v => '$' + Math.round(v / 1000) + 'k' }, grid: { color: cG } } } }
+            options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { stacked: true, ticks: { color: cT, font:{size:8} }, grid: { display:false } }, y: { stacked: true, ticks: { color: cT, callback: v => '$' + Math.round(v / 1000) + 'k' }, grid: { color: cG } } } },
+            plugins: [limiteDiarioPlugin]
         });
     }
 
@@ -482,7 +548,7 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0, totalFijosMes) 
                 const yPos = yAxis.getPixelForValue(umbralSeguridad);
                 ctx.save(); ctx.beginPath(); ctx.moveTo(xAxis.left, yPos); ctx.lineTo(xAxis.right, yPos);
                 ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(255, 82, 82, 0.8)'; ctx.setLineDash([5, 5]); ctx.stroke();
-                ctx.fillStyle = '#ff5252'; ctx.font = 'bold 10px monospace'; ctx.fillText('LÍMITE CRÍTICO (15%)', xAxis.left + 5, yPos - 5); ctx.restore();
+                ctx.fillStyle = '#ff5252'; ctx.font = 'bold 10px monospace'; ctx.fillText('MAX (15%)', xAxis.left + 5, yPos - 5); ctx.restore();
             }
         }
     };
@@ -533,8 +599,7 @@ function aplicarCicloAlSistema() {
     const fD = document.getElementById('filtroDesde'), fH = document.getElementById('filtroHasta');
     if(fD) fD.value = ''; if(fH) fH.value = '';
 
-    // 🟢 UX ORACLE: Auto-plegado del modo Stealth
-    let lbl = document.getElementById('lblPeriodoViendo'); if(lbl) lbl.innerText = 'PERIODO COMPLETO';
+    let lbl = document.getElementById('lblPeriodoViendo'); if(lbl) lbl.innerText = isEng ? 'FULL PERIOD' : 'PERIODO COMPLETO';
     let cajaPC = document.getElementById('cajaFechasCustom'); if(cajaPC) cajaPC.style.display = 'none';
     let btnPC = document.getElementById('btnToggleFechas'); if(btnPC) btnPC.style.display = 'block';
     let cajaMovil = document.getElementById('cajaFechasCustomMovil'); if(cajaMovil) cajaMovil.style.display = 'none';
@@ -595,6 +660,23 @@ window.triggerSync = function() {
     fetch("https://script.google.com/macros/s/AKfycbwKlub0qrv8_d24ZuyKKNryqOw1E68xv1_JvPOoEUc6W8TICllFfodNcwkigQE_7AuoNg/exec", {mode:'no-cors'})
     .then(()=>mostrarToast("SYNC MANUAL COMPLETADO"))
     .catch(e => alert("Error Net: " + e));
+};
+
+// 🟢 V12.0 DATA-LINK EXPORT (PRO) 🟢
+window.exportarDataLink = function() {
+    let csv = "ISO_DATE,YEAR,MONTH,DAY,CATEGORY,TYPE,AMOUNT_CLP,DETAIL,ML_FLAG\n";
+    datosMesGlobal.forEach(x => {
+        let d = new Date(x.fechaISO);
+        let flag = catEvitables.includes(x.catV) ? 'DOPAMINA_LEAK' : (x.tipo === 'Gasto Fijo' ? 'STRUCTURAL' : 'STANDARD');
+        let detailSafe = (x.nombre || "Unknown").replace(/(\r\n|\n|\r)/gm, " ").replace(/"/g, '""').trim();
+        csv += `${x.fechaISO},${d.getFullYear()},${d.getMonth()+1},${d.getDate()},"${x.catV}","${x.tipo}",${x.monto},"${detailSafe}",${flag}\n`;
+    });
+    try {
+        const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a"); link.href = URL.createObjectURL(blob);
+        link.download = `Bunker_DataLink_${new Date().toISOString().slice(0,10)}.csv`;
+        document.body.appendChild(link); link.click(); document.body.removeChild(link);
+    } catch (e) { console.error("Error Export:", e); }
 };
 
 window.exportarTablaBunker = function(idTabla, nombreArchivo) {
@@ -736,24 +818,21 @@ async function ejecutarPurgaMasivaTC() {
 }
 
 // ==========================================================
-// 🚀 MÓDULO DÍA CERO (PRE-FLIGHT CHECK)
+// 🚀 MÓDULO DÍA CERO (PRE-FLIGHT CHECK) V12
 // ==========================================================
 function abrirPreVuelo() {
     const modal = document.getElementById('modal-dia-cero');
     if(!modal) return;
     
-    // Obtener mes seleccionado en el navegador para proyectarlo
     const elMes = document.getElementById('navMesConceptual');
     const elAnio = document.getElementById('navAnio');
     const nombresMes = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
     
     document.getElementById('pv-mes-label').innerText = `${nombresMes[parseInt(elMes.value)]} ${elAnio.value}`.toUpperCase();
     
-    // Auto-Cargar Sueldo
     const sueldoInput = document.getElementById('inputSueldo');
     document.getElementById('pv-sueldo').value = sueldoInput ? sueldoInput.value : "3.602.505";
     
-    // Auto-Calcular Impacto TC de ese mes exacto
     let mesVal = parseInt(elMes.value);
     let anioVal = parseInt(elAnio.value);
     let sumaTCMes = 0;
@@ -792,10 +871,8 @@ function calcularDiaCero() {
     
     let liquidez = sueldo - deudasDuras - fijosTotal;
     
-    // Actualizar Textos
     document.getElementById('pv-txt-liquidez').innerText = liquidez.toLocaleString('es-CL');
     
-    // Actualizar Tanque SCADA (Visual)
     if (sueldo > 0) {
         let pctRojo = Math.min((deudasDuras / sueldo) * 100, 100);
         let pctNaranja = Math.min((fijosTotal / sueldo) * 100, 100 - pctRojo);
@@ -819,7 +896,6 @@ function ejecutarArranque() {
     let f3 = val('pv-fijo-3');
     let f4 = val('pv-fijo-4');
     
-    // Calcular fecha destino (Día 1 del mes seleccionado)
     const elMes = document.getElementById('navMesConceptual');
     const elAnio = document.getElementById('navAnio');
     let fechaDestino = new Date(parseInt(elAnio.value), parseInt(elMes.value), 1, 10, 0, 0);
@@ -844,13 +920,12 @@ function ejecutarArranque() {
         }
     };
     
-    // Mapear los gastos a la matriz
-    if(tc > 0) inyectar(tc, "PAGO TC FACTURADA (PRE-VUELO)", "Gastos Fijos (Búnker)"); // Se inyecta como fijo para matar la liquidez
+    if(tc > 0) inyectar(tc, "PAGO TC FACTURADA (PRE-VUELO)", "Gastos Fijos (Búnker)"); 
     if(linea > 0) inyectar(linea, "PAGO LÍNEA CRÉDITO (PRE-VUELO)", "Gastos Fijos (Búnker)");
-    if(f1 > 0) inyectar(f1, "ARRIENDO / DIVIDENDO", "Gastos Fijos (Búnker)");
-    if(f2 > 0) inyectar(f2, "LUZ / ELECTRICIDAD", "Gastos Fijos (Búnker)");
-    if(f3 > 0) inyectar(f3, "AGUA / SANEAMIENTO", "Gastos Fijos (Búnker)");
-    if(f4 > 0) inyectar(f4, "INTERNET / PLANES", "Gastos Fijos (Búnker)");
+    if(f1 > 0) inyectar(f1, "ARRIENDO / DIVIDENDO", "Infraestructura (Depto)");
+    if(f2 > 0) inyectar(f2, "LUZ / ELECTRICIDAD", "Infraestructura (Depto)");
+    if(f3 > 0) inyectar(f3, "AGUA / SANEAMIENTO", "Infraestructura (Depto)");
+    if(f4 > 0) inyectar(f4, "INTERNET / PLANES", "Infraestructura (Depto)");
     
     if (inyectados > 0) {
         batch.commit().then(() => {
