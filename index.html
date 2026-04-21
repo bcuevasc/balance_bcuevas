@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Bunker Digital SCADA v8.4 (Dashboard Focus)</title>
+    <title>Bunker Digital SCADA v8.5 PRO</title>
     
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -46,9 +46,7 @@ h2 { color: var(--color-ingresos); margin: 0; font-size: 1.2rem; font-weight: 90
 .kpi-proyectado { border: none; background: var(--color-proyectado); color: #fff; }
 .kpi-proyectado h4, .kpi-proyectado .value { color: #fff !important; font-weight: 900; }
 
-.master-layout { display: grid; grid-template-columns: 1fr 340px; gap: 12px; margin-top: 5px; flex: 1; min-height: 0; overflow: hidden; }
-
-/* 🟢 MASTER LAYOUT BLINDADO (TABLA ABAJO, GRÁFICOS ARRIBA) 🟢 */
+/* 🟢 MASTER LAYOUT BLINDADO (70/30) Y SCROLL DERECHO 🟢 */
 .master-layout { 
     display: grid; 
     grid-template-columns: 1fr 400px; /* Dale más espacio (400px) a la derecha */
@@ -59,13 +57,17 @@ h2 { color: var(--color-ingresos); margin: 0; font-size: 1.2rem; font-weight: 90
     overflow: hidden; 
     height: 100%; 
 }
-        .right-col { 
+.right-col { 
     display: flex; 
     flex-direction: column; 
     gap: 10px; 
     height: 100%; 
     overflow-y: auto; /* Permite scroll si la pantalla es pequeña */
     padding-right: 5px; /* Evita que el scroll pegue en el borde */
+}
+/* Evita que el panel TC se aplaste a 0px */
+.sidebar-panel.tc-panel {
+    min-height: 380px; 
 }
 
 .left-col { display: flex; flex-direction: column; gap: 10px; flex: 1 1 0px; min-height: 0; overflow: hidden; height: 100%; }
@@ -83,16 +85,14 @@ h2 { color: var(--color-ingresos); margin: 0; font-size: 1.2rem; font-weight: 90
 .data-grid th { position: sticky; top: 0; background: var(--bg-panel); padding: 6px 8px; font-size: 0.65rem; color: var(--color-ingresos); text-transform: uppercase; z-index: 10; border-bottom: 2px solid var(--border-color); white-space: nowrap; cursor: pointer; user-select: none; letter-spacing: 0.5px;}
 .data-grid td { padding: 4px 8px; font-size: 0.75rem; border-bottom: 1px solid var(--border-color); white-space: nowrap; vertical-align: middle; }
 .data-grid th:last-child, .data-grid td:last-child { padding-right: 24px !important; }
-.data-grid tbody tr:nth-child(even) { background-color: var(--bg-subpanel); }
+.data-grid tbody tr:nth-child(even) { background-color: rgba(255,255,255,0.02); }
 .data-grid tbody tr:hover { background-color: var(--item-hover); }
 .col-monto { text-align: right; font-family: 'Courier New', Courier, monospace; font-weight: 700; font-size: 0.8rem; letter-spacing: -0.5px; }
 .col-hora { font-size: 0.6rem; color: var(--text-muted); font-weight: 700; display: block; margin-top: 1px; }
+.col-desc { color: var(--text-main); font-weight: 600; letter-spacing: 0.3px; }
 .cat-badge { font-size: 0.6rem; padding: 2px 6px; border-radius: 4px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); display: inline-block; margin-top: 2px; color: var(--text-muted); font-weight: 800; }
 .col-check { width: 40px; text-align: center; cursor: default;}
 .row-check { cursor: pointer; transform: scale(1.1); accent-color: var(--color-edit); margin: 0; }
-.status-badge { padding: 2px 6px; border-radius: 4px; font-size: 0.6rem; font-weight: 800; border: 1px solid; }
-.status-ok { color: var(--color-saldo); border-color: rgba(63,185,80,0.3); background: rgba(63,185,80,0.1); }
-.status-warn { color: var(--color-edit); border-color: rgba(210,153,34,0.3); background: rgba(210,153,34,0.1); }
 .impact-icon { font-weight: 900; margin-right: 5px; }
 .impact-pos { color: var(--color-ingresos); }
 .impact-neg { color: var(--color-fuga); }
@@ -101,11 +101,7 @@ h2 { color: var(--color-ingresos); margin: 0; font-size: 1.2rem; font-weight: 90
 .bd-overlay-kpis { position: absolute; top: 10px; width: calc(100% - 24px); display: flex; justify-content: space-between; z-index: 20; pointer-events: none;}
 .bd-badge { padding: 2px 5px; font-size: 0.65rem; font-weight: bold; color: var(--text-main); text-shadow: 0px 2px 4px rgba(0,0,0,0.9); }
 
-.right-col { display: flex; flex-direction: column; gap: 10px; height: 100%; overflow: hidden;}
-/* Evita que el panel TC se aplaste a 0px */
-.sidebar-panel.tc-panel {
-    min-height: 320px; 
-}
+.sidebar-panel { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; transition: border-color 0.2s, box-shadow 0.2s; flex-shrink: 0;}
 .form-group { margin-bottom: 8px; width: 100%; position: relative; }
 .form-group label { display: block; font-size: 0.6rem; font-weight: 800; color: var(--text-muted); margin-bottom: 2px; text-transform: uppercase; }
 .custom-select, .form-group input, .form-group select { width: 100%; border: 1px solid var(--border-color); border-radius: 4px; background-color: var(--input-bg); color: var(--text-main); outline: none; padding: 6px 8px; font-size: 0.8rem; height: 32px; }
@@ -129,7 +125,7 @@ input[type="date"]::-webkit-calendar-picker-indicator, input[type="datetime-loca
 <div id="login-screen">
     <div class="login-box">
         <h2 style="color:var(--color-ingresos); margin-bottom:10px;">BUNKER SCADA</h2>
-        <p style="color:var(--text-muted); font-size:0.8rem;">SISTEMA PRIVADO DE GESTIÓN TÁCTICA V8.4</p>
+        <p style="color:var(--text-muted); font-size:0.8rem;">SISTEMA PRIVADO DE GESTIÓN TÁCTICA V8.5 PRO</p>
         <button class="btn-google" onclick="loginWithGoogle()">ENTRAR CON GOOGLE</button>
     </div>
 </div>
@@ -176,7 +172,7 @@ input[type="date"]::-webkit-calendar-picker-indicator, input[type="datetime-loca
         </div>
         <div class="kpi-card" style="border-top-color: var(--color-ingresos);"><h4>Ingresos Extra</h4><div class="value">$<span id="txtTotalIngresos">0</span></div></div>
         <div class="kpi-card" style="border-top-color: var(--color-fuga);"><h4>Gastos Fijos</h4><div class="value">$<span id="txtTotalFijos">0</span></div><div class="kpi-progress-container"><div id="barFijos" class="kpi-progress-fill" style="background:var(--color-fuga);"></div></div></div>
-        <div class="kpi-card" style="border-top-color: #ff9800);"><h4>Gastos Variables</h4><div class="value">$<span id="txtTotalOtros">0</span></div><div class="kpi-progress-container"><div id="barOtros" class="kpi-progress-fill" style="background:#ff9800;"></div></div></div>
+        <div class="kpi-card" style="border-top-color: #ff9800;"><h4>Gastos Variables</h4><div class="value">$<span id="txtTotalOtros">0</span></div><div class="kpi-progress-container"><div id="barOtros" class="kpi-progress-fill" style="background:#ff9800;"></div></div></div>
         <div class="kpi-card" style="border-top-color: #8b949e;"><h4>CxC (Préstamos)</h4><div class="value">$<span id="txtCxC">0</span></div></div>
         
         <div class="kpi-card kpi-saldo" id="cardBalanceReal">
@@ -209,7 +205,7 @@ input[type="date"]::-webkit-calendar-picker-indicator, input[type="datetime-loca
 
                 <div class="chart-box"><h5>Pulso (7 Días)</h5><div class="canvas-container"><canvas id="chartDiario"></canvas></div></div>
                 <div class="chart-box"><h5>Pareto</h5><div class="canvas-container"><canvas id="chartPareto"></canvas></div></div>
-                <div class="chart-box"><h5>Proyección 6 Meses</h5><div class="canvas-container"><canvas id="chartRadar"></canvas></div></div>
+                <div class="chart-box"><h5>Deuda TC Proyectada</h5><div class="canvas-container"><canvas id="chartRadar"></canvas></div></div>
             </div>
 
             <div class="grid-main-wrapper" id="panelMain" ondragover="dragOverPanel(event, 'main')" ondragleave="dragLeavePanel(event, 'main')" ondrop="dropOnPanel(event, 'main')">
@@ -218,19 +214,17 @@ input[type="date"]::-webkit-calendar-picker-indicator, input[type="datetime-loca
                     <button class="btn-sys" onclick="exportarTablaBunker('tablaGastos', 'Bunker_Libro_Diario')" style="color: var(--text-muted); display:flex; align-items:center; gap:5px; height: 30px;">📥 CSV</button>
             </div>
                 <div class="grid-container">
-                   <table id="tablaGastos" class="data-grid">
+                    <table id="tablaGastos" class="data-grid">
                         <thead>
                             <tr>
                                 <th class="col-check hide-mobile"><input type="checkbox" id="checkAll" onchange="toggleAllChecks()"></th>
                                 <th class="col-drag hide-mobile" style="width: 30px; text-align: center;">☰</th>
-                                <th class="hide-mobile" style="width: 40px; text-align: center;">N°</th>
                                 <th onclick="sortTable('fechaISO')">Fecha</th>
                                 <th onclick="sortTable('nombre')">Descripción</th>
                                 <th class="hide-mobile" onclick="sortTable('catV')">Categoría</th>
                                 <th onclick="sortTable('monto')" style="text-align: right;">Monto</th>
                                 <th class="hide-mobile" style="text-align: right;">Saldo Hist.</th>
                                 <th class="hide-mobile" style="text-align: center;">% Fuga</th>
-                                <th class="hide-mobile" style="text-align: center;">Status</th>
                                 <th style="text-align: center; width: 40px;">⚙️</th>
                             </tr>
                         </thead>
@@ -298,13 +292,18 @@ input[type="date"]::-webkit-calendar-picker-indicator, input[type="datetime-loca
 
             <div class="sidebar-panel tc-panel" id="panelTC" style="flex:1; display:flex; flex-direction:column; border-color:rgba(218, 54, 51, 0.3); background:rgba(218, 54, 51, 0.02); min-height: 0; overflow:hidden;" ondragover="dragOverPanel(event, 'tc')" ondragleave="dragLeavePanel(event, 'tc')" ondrop="dropOnPanel(event, 'tc')">
                 
-                <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-color); padding-bottom:8px; margin-bottom:8px; flex-shrink:0;">
+                <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-color); padding-bottom:8px; margin-bottom:12px; flex-shrink:0;">
                     <div style="display:flex; align-items:center; gap: 8px; flex-wrap: wrap;">
-                        <h4 style="color:var(--color-fuga); margin:0; font-size:0.85rem; text-transform:uppercase;">DEUDA TC PROYECTADA</h4>
-                        <button class="btn-sys" onclick="cargarCSV_TC()" style="background-color: #673ab7; color: white; border: none; padding: 2px 8px; border-radius: 4px; font-weight: bold; font-size: 0.65rem;">💳 INGESTAR CSV</button>
-                        <button class="btn-sys" onclick="exportarTablaBunker('tablaCuotas', 'Bunker_Proyeccion_TC')" style="font-size: 0.65rem; padding: 2px 6px; border-color: rgba(218, 54, 51, 0.3); color: var(--color-fuga); background: transparent;">📥 CSV</button>
+                        <h4 style="color:var(--color-fuga); margin:0; font-size:0.85rem; text-transform:uppercase;">DEUDA TC</h4>
+                        <button class="btn-sys" onclick="cargarCSV_TC()" style="background-color: #673ab7; color: white; border: none; padding: 2px 8px; border-radius: 4px; font-weight: bold; font-size: 0.65rem;">💳 CSV</button>
+                        <button class="btn-sys" onclick="exportarTablaBunker('tablaCuotas', 'Bunker_Proyeccion_TC')" style="font-size: 0.65rem; padding: 2px 6px; border-color: rgba(218, 54, 51, 0.3); color: var(--color-fuga); background: transparent;">📥 EXPORT</button>
                     </div>
                     <div style="font-size:1.1rem; font-weight:900; color:var(--color-fuga);">$<span id="txtTotalTC">0</span></div>
+                </div>
+
+                <div id="boxImpactoTC" style="display:none; background: rgba(255, 152, 0, 0.1); border-left: 4px solid #ff9800; padding: 8px 12px; margin-bottom: 12px; border-radius: 4px; justify-content: space-between; align-items: center; flex-shrink: 0; box-shadow: 0 4px 10px rgba(0,0,0,0.2);">
+                    <span style="font-size: 0.75rem; font-weight: 900; color: #ff9800; text-transform: uppercase; letter-spacing: 0.5px;" id="lblImpactoMes">⚠️ IMPACTO EN --</span>
+                    <span style="font-size: 1.1rem; font-weight: 900; color: #ff9800; font-family: monospace;" id="txtImpactoMonto">$0</span>
                 </div>
 
                 <div id="barraAccionesTC" style="display:none; background: #b71c1c; color: white; padding: 8px; border-radius: 6px; margin-bottom: 8px; justify-content: space-between; align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.5); flex-shrink:0;">
