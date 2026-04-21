@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Bunker Digital SCADA v10.0 (Oracle)</title>
+    <title>Bunker Digital SCADA v11.0 (Pre-Flight)</title>
     
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -100,6 +100,30 @@ h2 { color: var(--text-main); margin: 0; font-size: 1.3rem; font-weight: 900; le
 .tc-impact-box strong { font-size: 1.1rem; font-family: monospace; font-weight: 900; color: var(--color-fuga); text-shadow: 0 0 10px rgba(255, 82, 82, 0.4);}
 
 .floating-mass-actions { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #1c2128; border: 1px solid var(--color-edit); border-radius: 50px; padding: 8px 20px; display: flex; align-items: center; gap: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); z-index: 9999; }
+
+/* 🟢 MÓDULO PRE-VUELO (DÍA CERO) 🟢 */
+#modal-dia-cero { position: fixed; inset: 0; background: rgba(3, 5, 8, 0.95); z-index: 20000; display: none; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(10px); padding: 20px; }
+.pv-container { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 16px; width: 100%; max-width: 800px; box-shadow: 0 0 50px rgba(255, 152, 0, 0.2); overflow: hidden; display: flex; flex-direction: column; border-top: 4px solid #ff9800; }
+.pv-header { padding: 20px; text-align: center; border-bottom: 1px solid var(--border-color); background: rgba(0,0,0,0.3); position: relative;}
+.pv-title { font-size: 1.5rem; font-weight: 900; color: #ff9800; letter-spacing: 3px; margin: 0; text-transform: uppercase; }
+.pv-subtitle { font-size: 0.8rem; color: var(--text-muted); font-family: monospace; margin-top: 5px; }
+.pv-tank-wrapper { padding: 20px; border-bottom: 1px solid var(--border-color); }
+.pv-tank-label { display: flex; justify-content: space-between; font-weight: 900; font-size: 0.8rem; text-transform: uppercase; color: var(--text-muted); margin-bottom: 10px; }
+.pv-tank { width: 100%; height: 40px; background: rgba(255,255,255,0.05); border-radius: 20px; overflow: hidden; display: flex; border: 1px solid var(--border-color); box-shadow: inset 0 0 15px rgba(0,0,0,0.5); }
+.pv-fill-rojo { background: linear-gradient(90deg, #b71c1c, #ff5252); height: 100%; transition: width 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+.pv-fill-naranja { background: linear-gradient(90deg, #e65100, #ff9800); height: 100%; transition: width 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+.pv-fill-verde { background: linear-gradient(90deg, #1b5e20, #2ea043); height: 100%; transition: width 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 0 20px rgba(46, 160, 67, 0.5); }
+.pv-liquidez-text { text-align: center; font-size: 3.5rem; font-weight: 900; color: var(--color-saldo); font-family: monospace; margin-top: 15px; text-shadow: 0 0 20px rgba(46, 160, 67, 0.4); }
+.pv-body { padding: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.pv-section-title { font-size: 0.75rem; font-weight: 900; color: #79c0ff; text-transform: uppercase; margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 5px; }
+.pv-input-group { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; background: rgba(0,0,0,0.2); padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-color); }
+.pv-input-group label { font-size: 0.8rem; font-weight: 700; color: var(--text-main); }
+.pv-input { background: var(--input-bg); border: 1px solid var(--border-color); color: var(--text-main); padding: 6px 10px; border-radius: 4px; font-family: monospace; font-size: 1rem; width: 120px; text-align: right; outline: none; font-weight: bold; }
+.pv-input:focus { border-color: #ff9800; }
+.pv-footer { padding: 20px; display: flex; gap: 15px; background: rgba(0,0,0,0.3); border-top: 1px solid var(--border-color); }
+.btn-pv-close { flex: 1; padding: 15px; background: transparent; border: 1px solid var(--text-muted); color: var(--text-muted); border-radius: 8px; font-weight: 900; cursor: pointer; text-transform: uppercase; }
+.btn-pv-launch { flex: 2; padding: 15px; background: #ff9800; color: #000; border: none; border-radius: 8px; font-weight: 900; font-size: 1.1rem; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 0 20px rgba(255, 152, 0, 0.4); transition: transform 0.1s; }
+.btn-pv-launch:active { transform: scale(0.98); }
     </style>
 </head>
 <body>
@@ -107,7 +131,7 @@ h2 { color: var(--text-main); margin: 0; font-size: 1.3rem; font-weight: 900; le
 <div id="login-screen">
     <div class="login-box">
         <h2 style="color:var(--color-proyectado); margin-bottom:10px; font-size: 2rem;">PROYECTO ORÁCULO</h2>
-        <p style="color:var(--text-muted); font-size:0.85rem; letter-spacing: 2px;">BÚNKER SCADA V10.0</p>
+        <p style="color:var(--text-muted); font-size:0.85rem; letter-spacing: 2px;">BÚNKER SCADA V11.0</p>
         <button class="btn-google" onclick="loginWithGoogle()">INICIAR ENLACE NEURAL</button>
     </div>
 </div>
@@ -116,11 +140,12 @@ h2 { color: var(--text-main); margin: 0; font-size: 1.3rem; font-weight: 900; le
     
     <div class="header-titles">
         <div style="display:flex; align-items:center;">
-            <h2>BUNKER SCADA <span class="scada-badge">V10.0 ORACLE</span></h2>
+            <h2>BUNKER SCADA <span class="scada-badge">V11.0 ORACLE</span></h2>
             <div id="user-display" style="margin-left: 15px; font-size: 0.75rem; color: var(--color-saldo); font-weight:800; text-transform:uppercase;"></div>
         </div>
         <div class="system-btns">
             <div id="cronos" class="cronos">--:--:--</div>
+            <button class="btn-sys" onclick="abrirPreVuelo()" style="color:#ff9800; border-color:rgba(255,152,0,0.4); background:rgba(255,152,0,0.1);">🚀 PRE-VUELO</button>
             <button class="btn-sys" onclick="toggleTheme()">☀️/🌙</button>
             <button class="btn-sys" onclick="triggerSync()">🔄 SYNC</button>
             <button class="btn-sys" onclick="logout()" style="color:var(--color-fuga); border-color:rgba(255,82,82,0.3);">🚪 DESCONECTAR</button>
@@ -286,6 +311,72 @@ h2 { color: var(--text-main); margin: 0; font-size: 1.3rem; font-weight: 900; le
         <button class="btn-sys" style="background:rgba(255,82,82,0.2); border-color:var(--color-fuga); font-size:1.1rem; color:var(--color-fuga);" onclick="massDelete()">🗑️</button>
     </div>
 </div>
+
+<div id="modal-dia-cero">
+    <div class="pv-container">
+        <div class="pv-header">
+            <h2 class="pv-title">SIMULADOR DÍA CERO</h2>
+            <div class="pv-subtitle">CONTROL PREALIMENTADO DE LIQUIDEZ MES DE <span id="pv-mes-label" style="color:#fff; font-weight:bold;">--</span></div>
+        </div>
+        
+        <div class="pv-tank-wrapper">
+            <div class="pv-tank-label">
+                <span>Deducciones Duras</span>
+                <span>Liquidez Neta de Maniobra</span>
+            </div>
+            <div class="pv-tank">
+                <div id="pv-barra-roja" class="pv-fill-rojo" style="width: 0%;"></div>
+                <div id="pv-barra-naranja" class="pv-fill-naranja" style="width: 0%;"></div>
+                <div id="pv-barra-verde" class="pv-fill-verde" style="width: 100%;"></div>
+            </div>
+            <div class="pv-liquidez-text">$<span id="pv-txt-liquidez">0</span></div>
+        </div>
+
+        <div class="pv-body">
+            <div>
+                <div class="pv-section-title">1. Obligaciones Estructurales</div>
+                <div class="pv-input-group">
+                    <label>Deuda TC Facturada</label>
+                    <input type="text" id="pv-tc" class="pv-input" style="color:var(--color-fuga);" placeholder="0" oninput="formatearEntradaNumerica(this); calcularDiaCero();">
+                </div>
+                <div class="pv-input-group">
+                    <label>Línea de Crédito</label>
+                    <input type="text" id="pv-linea" class="pv-input" style="color:var(--color-fuga);" placeholder="0" oninput="formatearEntradaNumerica(this); calcularDiaCero();">
+                </div>
+                <div class="pv-input-group" style="background: rgba(255,152,0,0.1); border-color: rgba(255,152,0,0.3);">
+                    <label style="color:#ff9800;">Sueldo Esperado</label>
+                    <input type="text" id="pv-sueldo" class="pv-input" style="color:#ff9800;" placeholder="0" oninput="formatearEntradaNumerica(this); calcularDiaCero();">
+                </div>
+            </div>
+            
+            <div>
+                <div class="pv-section-title">2. Carga Fija (Estimado vs Real)</div>
+                <div class="pv-input-group">
+                    <label>Arriendo / Dividendo</label>
+                    <input type="text" id="pv-fijo-1" class="pv-input" placeholder="0" value="0" oninput="formatearEntradaNumerica(this); calcularDiaCero();">
+                </div>
+                <div class="pv-input-group">
+                    <label>Luz / Electricidad</label>
+                    <input type="text" id="pv-fijo-2" class="pv-input" placeholder="0" value="0" oninput="formatearEntradaNumerica(this); calcularDiaCero();">
+                </div>
+                <div class="pv-input-group">
+                    <label>Agua / Saneamiento</label>
+                    <input type="text" id="pv-fijo-3" class="pv-input" placeholder="0" value="0" oninput="formatearEntradaNumerica(this); calcularDiaCero();">
+                </div>
+                <div class="pv-input-group">
+                    <label>Internet / Planes</label>
+                    <input type="text" id="pv-fijo-4" class="pv-input" placeholder="0" value="0" oninput="formatearEntradaNumerica(this); calcularDiaCero();">
+                </div>
+            </div>
+        </div>
+        
+        <div class="pv-footer">
+            <button class="btn-pv-close" onclick="cerrarPreVuelo()">ABORTAR</button>
+            <button class="btn-pv-launch" onclick="ejecutarArranque()">EFECTUAR ARRANQUE (INYECTAR MATRIZ)</button>
+        </div>
+    </div>
+</div>
+
 <script src="motor.js"></script>
 </body>
 </html>
