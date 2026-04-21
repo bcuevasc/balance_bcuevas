@@ -646,6 +646,49 @@ function aplicarCicloAlSistema() {
     cargarSueldoVisual(); actualizarDashboard();
 }
 
+// 1. Lógica para mostrar/ocultar la barra y actualizar el contador
+function actualizarBarraTC() {
+    const seleccionados = document.querySelectorAll('.checkItemTC:checked');
+    const barra = document.getElementById('barraAccionesTC');
+    const txt = document.getElementById('txtSeleccionados');
+    
+    if (seleccionados.length > 0) {
+        barra.style.display = 'flex';
+        txt.innerText = `${seleccionados.length} CUOTAS SELECCIONADAS`;
+    } else {
+        barra.style.display = 'none';
+        document.getElementById('checkMaestroTC').checked = false;
+    }
+}
+
+// 2. Seleccionar Todo / Deseleccionar Todo
+function toggleTodosTC(maestro) {
+    const checks = document.querySelectorAll('.checkItemTC');
+    checks.forEach(c => c.checked = maestro.checked);
+    actualizarBarraTC();
+}
+
+// 3. LA PURGA (Ejecución en Firebase)
+async function ejecutarPurgaMasivaTC() {
+    const seleccionados = document.querySelectorAll('.checkItemTC:checked');
+    if (!confirm(`⚠️ ¿Confirmas la eliminación de ${seleccionados.length} cuotas? Esta acción es irreversible.`)) return;
+
+    const batch = db.batch();
+    seleccionados.forEach(checkbox => {
+        const ref = db.collection("deuda_tc").doc(checkbox.value);
+        batch.delete(ref);
+    });
+
+    try {
+        await batch.commit();
+        alert("✅ PURGA COMPLETADA: El sistema ha sido saneado.");
+        location.reload(); // Recarga para refrescar los cálculos
+    } catch (error) {
+        console.error("Falla en la purga: ", error);
+        alert("❌ Error en la comunicación con Firebase.");
+    }
+}
+
 // 🟢 LÓGICA DE DRAG AND DROP 🟢
 let draggedRowId = null;
 
