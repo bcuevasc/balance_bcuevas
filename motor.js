@@ -1,5 +1,5 @@
 // ==========================================================
-// 🧠 BÚNKER SCADA - MOTOR LÓGICO V8.5 (EDICIÓN DEFINITIVA)
+// 🧠 BÚNKER SCADA PRO - MOTOR LÓGICO V8.5 (EDICIÓN DEFINITIVA)
 // ==========================================================
 const BYRON_EMAIL = "bvhcc94@gmail.com"; 
 const CREDIT_SETPOINT = -300000; 
@@ -109,7 +109,7 @@ auth.onAuthStateChanged(user => {
             aplicarCicloAlSistema();
         });
 
-        // 🟢 ANTENA TC BLINDADA: Solo se enciende cuando el usuario está 100% logueado
+        // 🟢 ANTENA TC BLINDADA
         inicializarListenerTC();
     }
 });
@@ -130,7 +130,6 @@ function guardarSueldoEnNube() {
     actualizarDashboard();
 }
 
-// --- FUNCIÓN 1: ACTUALIZAR DASHBOARD (BLINDADA) ---
 function actualizarDashboard() {
     const elMes = document.getElementById('navMesConceptual'), elAnio = document.getElementById('navAnio');
     const mesVal = parseInt(elMes.value), anioVal = parseInt(elAnio.value);
@@ -158,7 +157,6 @@ function actualizarDashboard() {
     datosMesGlobal = [...dataMes];
     let saldoAcc = sueldo, tI = 0, tF = 0, tO = 0, tC = 0, tEvitable = 0, gCat = {};
     
-    // SENSOR DE CORTE ARREGLADO:
     let totalTC_legacy = 0; 
     
     [...dataMes].sort((x,y) => x.fechaISO < y.fechaISO ? -1 : 1).forEach(x => {
@@ -238,9 +236,7 @@ function actualizarDashboard() {
             elVelocidad.innerText = `$${gastoHoy.toLocaleString('es-CL')} (${tendenciaStr})`;
             elVelocidad.style.color = colorTendencia;
         }
-    } catch (err) {
-        console.warn("Sensor V8.5 en espera de datos: ", err);
-    }
+    } catch (err) { console.warn("Sensor V8.5 en espera de datos: ", err); }
     
     renderizarListas(sueldo, b);
     if(typeof dibujarGraficos === 'function') dibujarGraficos(sueldo, [...dataGraficos].sort((x,y) => x.fechaISO < y.fechaISO ? -1 : 1), gCat, diasCiclo, T0);
@@ -249,6 +245,7 @@ function actualizarDashboard() {
     setTxt('txtPromedioZoom', Math.round((tO + tF) / diasCiclo));
 }
 
+// 🟢 LIMPIEZA INDUSTRIAL Y GRADIENTE DE FUGAS
 function renderizarListas(sueldoBase, filtroBuscador) {
     let datos = [...datosMesGlobal].filter(x => x.catV !== 'Gasto Tarjeta de Crédito'); 
     if (filtroBuscador) datos = datos.filter(x => x.nombre?.toLowerCase().includes(filtroBuscador) || x.catV.toLowerCase().includes(filtroBuscador));
@@ -263,22 +260,19 @@ function renderizarListas(sueldoBase, filtroBuscador) {
 
     let saldoRelativo = sueldoBase;
     datos.forEach((x, idx) => {
-        x.indiceVista = datos.length - idx;
         if (x.esIn) saldoRelativo += x.monto; else if (!x.esNeutro) saldoRelativo -= x.monto;
         x.saldoCalculadoVista = saldoRelativo;
     });
 
     const contenedorPC = document.getElementById('listaDetalle'); 
-    const contenedorMovil = document.getElementById('listaMovilDetalle');
-    if (!contenedorMovil && !contenedorPC) return;
+    if (!contenedorPC) return;
 
     if(datos.length === 0) {
-        if(contenedorMovil) contenedorMovil.innerHTML = `<div style="text-align:center; padding: 40px 20px; color: var(--text-dim);"><i>📡</i><br>Sin telemetría en este periodo.</div>`;
-        if(contenedorPC) contenedorPC.innerHTML = `<tr><td colspan="11" style="text-align:center;">Sin telemetría en este periodo.</td></tr>`;
+        contenedorPC.innerHTML = `<tr><td colspan="9" style="text-align:center;">Sin telemetría en este periodo.</td></tr>`;
         return;
     }
 
-    let htmlMovil = ''; let htmlPC = '';
+    let htmlPC = '';
     let currentDayGroup = ""; 
     let now = new Date(); now.setHours(0,0,0,0);
     let yesterday = new Date(now); yesterday.setDate(yesterday.getDate() - 1);
@@ -288,64 +282,35 @@ function renderizarListas(sueldoBase, filtroBuscador) {
         let dClean = new Date(d); dClean.setHours(0,0,0,0);
         const dateStr = d.toLocaleDateString('es-CL');
         const timeStr = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-        
-        if (currentSort.column === 'fechaISO' && currentSort.direction === 'desc' && dateStr !== currentDayGroup) {
-            let labelText = dateStr;
-            if (dClean.getTime() === now.getTime()) labelText = "HOY";
-            else if (dClean.getTime() === yesterday.getTime()) labelText = "AYER";
-            else {
-                const meses = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"];
-                labelText = `${d.getDate()} ${meses[d.getMonth()]}`;
-            }
-            if (contenedorMovil) htmlMovil += `<div class="date-header">${labelText}</div>`;
-            currentDayGroup = dateStr;
-        }
 
         const em = catEmojis[x.catV] || "❓";
         const colorMonto = x.esIn ? "var(--color-ingresos)" : x.esNeutro ? "#ff9800" : "var(--text-main)";
-        const iconoVisual = obtenerIconoVisual(x.nombre, em);
         const nombreSeguro = x.nombre || "Dato no identificado";
         const montoSeguro = (typeof x.monto === 'number' && !isNaN(x.monto)) ? x.monto : 0;
         const colorSaldo = x.saldoCalculadoVista < 0 ? 'var(--color-fuga)' : 'var(--text-muted)';
         let iconImpacto = x.esIn ? `<span class="impact-icon impact-pos">(+)</span>` : x.esNeutro ? `<span class="impact-icon impact-neu">(=)</span>` : `<span class="impact-icon impact-neg">(-)</span>`;
-        let statusBadge = x.catV === 'Sin Categoría' ? `<span class="status-badge status-warn">REVISAR</span>` : `<span class="status-badge status-ok">OK</span>`;
-        let editIdVal = document.getElementById('editId') ? document.getElementById('editId').value : '';
-        let bgEdicion = (editIdVal === x.firestoreId) ? 'background-color: rgba(210, 153, 34, 0.15); border-left: 3px solid var(--color-edit);' : '';
-
-        if (contenedorMovil) {
-            const clickAction = typeof openBottomSheet === 'function' ? `openBottomSheet('${x.firestoreId}', '${nombreSeguro.replace(/'/g, "\\'")}', ${montoSeguro})` : `editarMovimiento('${x.firestoreId}')`;
-            htmlMovil += `
-            <div class="mobile-card" onclick="${clickAction}">
-                <div style="width: 42px; height: 42px; margin-right: 15px; background: rgba(255,255,255,0.03); border-radius: 50%; display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0; box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);">
-                    ${iconoVisual}
-                </div>
-                <div style="flex: 1; min-width: 0;">
-                    <div style="font-weight:bold; font-size:0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text-main);">${nombreSeguro}</div>
-                    <div style="font-size:0.7rem; color:var(--text-dim); margin-top:2px;">${timeStr} • ${x.catV}</div>
-                </div>
-                <div style="font-weight:900; color:${colorMonto}; flex-shrink: 0; font-size:1.05rem;">${x.esIn?'+':(x.esNeutro?'=':'-')}$${montoSeguro.toLocaleString('es-CL')}</div>
-            </div>`;
-        }
+        let pctFugaStr = x.innecesarioPct !== undefined ? x.innecesarioPct + '%' : (catEvitables.includes(x.catV) ? '100%' : '0%');
         
-        if (contenedorPC) {
-            let pctFugaStr = x.innecesarioPct !== undefined ? x.innecesarioPct + '%' : (catEvitables.includes(x.catV) ? '100%' : '0%');
-            htmlPC += `<tr style="${bgEdicion}" draggable="true" ondragstart="dragStart(event, '${x.firestoreId}')" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dropRow(event, '${x.firestoreId}')">
-                <td class="col-check hide-mobile"><input type="checkbox" class="row-check" value="${x.firestoreId}" onchange="updateMassActions()"></td>
-                <td class="col-drag hide-mobile" style="cursor: grab; text-align: center; color: var(--text-muted); font-size: 1.2rem;">☰</td>
-                <td class="hide-mobile" style="text-align:center; font-size:0.75rem; font-weight:800; color:var(--text-muted);">${x.indiceVista}</td>
-                <td style="font-size:0.75rem; color:var(--text-muted);">${dateStr} <span class="col-hora">${timeStr}</span></td>
-                <td class="col-desc" style="font-weight:700;" title="${nombreSeguro}">${nombreSeguro}</td>
-                <td class="hide-mobile" style="font-size:0.75rem;"><span class="cat-badge">${em} ${x.catV}</span></td>
-                <td class="col-monto" style="color:${colorMonto};">${iconImpacto}$${montoSeguro.toLocaleString('es-CL')}</td>
-                <td class="col-monto hide-mobile" style="color:${colorSaldo};">$${x.saldoCalculadoVista.toLocaleString('es-CL')}</td>
-                <td class="hide-mobile" style="text-align:center; font-size:0.7rem; color:var(--text-muted);">${pctFugaStr}</td>
-                <td class="hide-mobile" style="text-align:center;">${statusBadge}</td>
-                <td style="text-align:center; padding: 2px;"><button class="btn-sys" style="padding:4px; border-color:var(--color-edit); color:var(--color-edit);" onclick="editarMovimiento('${x.firestoreId}')">✏️<span class="btn-edit-text"> EDIT</span></button></td>
-            </tr>`;
-        }
+        let editIdVal = document.getElementById('editId') ? document.getElementById('editId').value : '';
+        let esEditando = (editIdVal === x.firestoreId);
+        
+        // 🟢 SENSOR DE FUGA VIVO (Degradado Rojo para "Dopamina")
+        let cssFuga = x.catV === 'Dopamina & Antojos' && !esEditando ? 'background: linear-gradient(90deg, rgba(255,255,255,0.02) 40%, rgba(218,54,51,0.2) 100%); border-right: 2px solid #ff5252;' : '';
+        let bgEdicion = esEditando ? 'background-color: rgba(210, 153, 34, 0.15); border-left: 3px solid var(--color-edit);' : cssFuga;
+
+        htmlPC += `<tr style="${bgEdicion}" draggable="true" ondragstart="dragStart(event, '${x.firestoreId}')" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dropRow(event, '${x.firestoreId}')">
+            <td class="col-check hide-mobile"><input type="checkbox" class="row-check" value="${x.firestoreId}" onchange="updateMassActions()"></td>
+            <td class="col-drag hide-mobile" style="cursor: grab; text-align: center; color: var(--text-muted); font-size: 1.2rem;">☰</td>
+            <td style="font-size:0.75rem; color:var(--text-muted);">${dateStr} <span class="col-hora">${timeStr}</span></td>
+            <td class="col-desc" title="${nombreSeguro}">${nombreSeguro}</td>
+            <td class="hide-mobile" style="font-size:0.75rem;"><span class="cat-badge">${em} ${x.catV}</span></td>
+            <td class="col-monto" style="color:${colorMonto};">${iconImpacto}$${montoSeguro.toLocaleString('es-CL')}</td>
+            <td class="col-monto hide-mobile" style="color:${colorSaldo};">$${x.saldoCalculadoVista.toLocaleString('es-CL')}</td>
+            <td class="hide-mobile" style="text-align:center; font-size:0.7rem; color:var(--text-muted);">${pctFugaStr}</td>
+            <td style="text-align:center; padding: 2px;"><button class="btn-sys" style="padding:4px 6px; border-color:var(--border-color); color:var(--text-muted); background:transparent;" onclick="editarMovimiento('${x.firestoreId}')">✏️</button></td>
+        </tr>`;
     });
 
-    if (contenedorMovil) contenedorMovil.innerHTML = htmlMovil;
     if (contenedorPC) contenedorPC.innerHTML = htmlPC;
 }
 
@@ -384,8 +349,6 @@ function editarMovimiento(id) {
     const btn = document.getElementById('btnGuardar');
     if(btn) { btn.innerHTML = "💾 ACTUALIZAR REGISTRO"; btn.style.backgroundColor = "var(--color-edit)"; }
     modoEdicionActivo = true;
-    if (window.innerWidth <= 1024 && typeof switchTab === "function") switchTab('add');
-    if (window.innerWidth <= 1024) window.scrollTo({ top: 0, behavior: 'smooth' });
     actualizarDashboard(); 
 }
 
@@ -411,7 +374,6 @@ function agregarMovimiento() {
         document.getElementById('editId').value = ''; document.getElementById('inputNombre').value = ''; document.getElementById('inputMonto').value = '';
         btn.innerHTML = "GUARDAR EN BÚNKER"; btn.style.backgroundColor = "var(--color-guardar)"; btn.disabled = false; modoEdicionActivo = false;
         if (typeof mostrarToast === "function") mostrarToast("REGISTRO GUARDADO EN EL BÚNKER");
-        if (typeof switchTab === "function") switchTab('list');
     }).catch(err => { alert("❌ Error: " + err.message); btn.innerHTML = "ERROR"; btn.disabled = false; });
 }
 
@@ -424,10 +386,7 @@ function massDelete() { const ids = Array.from(document.querySelectorAll('.row-c
 function massCategorize() { const ids = Array.from(document.querySelectorAll('.row-check:not(#checkAll):checked')).map(cb => cb.value); const cat = document.getElementById('massCategorySelect').value; if(ids.length === 0 || !cat || !confirm(`¿Categorizar como "${cat}"?`)) return; const btn = document.querySelector('button[onclick="massCategorize()"]'); const orig = btn.innerHTML; btn.innerHTML = '⏳'; Promise.all(ids.map(id => db.collection("movimientos").doc(id).update({categoria: cat}))).then(() => { document.getElementById('massActionsBar').style.display = 'none'; document.getElementById('checkAll').checked = false; document.getElementById('massCategorySelect').value = ''; btn.innerHTML = orig; }); }
 
 // =====================================================================
-// LÓGICA DE GRÁFICOS (CON SCADA TWEAKS: LÍNEA NARANJA, CERO ROJO, ALPHA)
-// =====================================================================
-// =====================================================================
-// LÓGICA DE GRÁFICOS (CON SCADA TWEAKS Y PROYECCIÓN 6 MESES TC)
+// 🟢 LÓGICA DE GRÁFICOS (CON SCADA TWEAKS PRO Y DEADBAND TC) 🟢
 // =====================================================================
 function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0) {
     if(chartBD) chartBD.destroy(); if(chartP) chartP.destroy(); 
@@ -544,7 +503,36 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0) {
         });
     }
 
-    // --- NUEVO: GRÁFICO PROYECCIÓN 6 MESES (Reemplaza al Radar) ---
+    // 🟢 NUEVO: PLUGIN DE "DEADBAND" (SETPOINT 15%) PARA TC 🟢
+    const setpointTCPlugin = {
+        id: 'setpointTCPlugin',
+        afterDatasetsDraw: (chart) => {
+            const ctx = chart.ctx;
+            const xAxis = chart.scales.x;
+            const yAxis = chart.scales.y;
+            const umbralSeguridad = sueldo * 0.15; // Límite rojo al 15% del sueldo
+            
+            // Solo dibujar si el umbral está dentro de la gráfica visible
+            if(yAxis.max > umbralSeguridad) {
+                const yPos = yAxis.getPixelForValue(umbralSeguridad);
+                ctx.save();
+                ctx.beginPath();
+                ctx.moveTo(xAxis.left, yPos);
+                ctx.lineTo(xAxis.right, yPos);
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = 'rgba(218, 54, 51, 0.8)'; // Rojo alarma
+                ctx.setLineDash([5, 5]); // Línea punteada SCADA
+                ctx.stroke();
+                
+                // Etiqueta flotante
+                ctx.fillStyle = 'rgba(218, 54, 51, 0.9)';
+                ctx.font = 'bold 9px sans-serif';
+                ctx.fillText('⚡ LÍMITE (15%)', xAxis.left + 5, yPos - 5);
+                ctx.restore();
+            }
+        }
+    };
+
     const ctxProyeccion = document.getElementById('chartRadar');
     if(ctxProyeccion) {
         let mesesLabels = [];
@@ -573,7 +561,7 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0) {
                 datasets: [{
                     label: 'Deuda Proyectada',
                     data: montosProyectados,
-                    backgroundColor: montosProyectados.map(m => m > 500000 ? 'rgba(218, 54, 51, 0.8)' : 'rgba(31, 111, 235, 0.8)'),
+                    backgroundColor: montosProyectados.map(m => m > (sueldo * 0.15) ? 'rgba(218, 54, 51, 0.8)' : 'rgba(31, 111, 235, 0.8)'),
                     borderRadius: 4
                 }]
             },
@@ -584,7 +572,8 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0) {
                     y: { beginAtZero: true, ticks: { color: cT, callback: v => '$' + Math.round(v/1000) + 'k' }, grid: { color: cG } },
                     x: { ticks: { color: cT }, grid: { display: false } }
                 }
-            }
+            },
+            plugins: [setpointTCPlugin] // Inyección del Setpoint
         });
     }
 }
@@ -685,9 +674,6 @@ window.enviarReporteTelegram = function() {
     .catch(e => alert("Error de red: " + e));
 };
 
-// ==========================================
-// MÓDULO DE EXPORTACIÓN CSV PRO (SCADA V8.5)
-// ==========================================
 window.exportarTablaBunker = function(idTabla, nombreArchivo) {
     console.log("📡 Iniciando exportación CSV para:", idTabla);
     const tabla = document.getElementById(idTabla);
@@ -724,8 +710,6 @@ window.exportarTablaBunker = function(idTabla, nombreArchivo) {
 // ==========================================================
 let datosTCGlobal = [];
 
-// --- FUNCIÓN 2: ESCUCHADOR TC (CON SONDAS DE DIAGNÓSTICO) ---
-// --- FUNCIÓN 2: ESCUCHADOR TC (CON SONDAS DE DIAGNÓSTICO) ---
 function inicializarListenerTC() {
     if (!db) return console.error("Firebase no está inicializado.");
     console.log("📡 Conectando antena TC con Firebase...");
@@ -762,12 +746,15 @@ function renderizarTablaTC() {
     
     if (datosTCGlobal.length === 0) {
         tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:20px; color:#666;">No hay deuda proyectada. Ingesta un CSV.</td></tr>`;
+        
+        // Apagar el sensor de impacto si no hay deuda
+        let boxImpacto = document.getElementById('boxImpactoTC');
+        if(boxImpacto) boxImpacto.style.display = 'none';
         return;
     }
 
     let sumaProximoMes = 0;
     let fechaHoy = new Date();
-    // Calculamos cuál es el mes siguiente (con manejo de cambio de año)
     let proximoMes = fechaHoy.getMonth() + 1;
     let proximoAnio = fechaHoy.getFullYear();
     if (proximoMes > 11) { proximoMes = 0; proximoAnio++; }
@@ -776,7 +763,6 @@ function renderizarTablaTC() {
         let fechaObj = new Date(doc.mesCobro);
         let mesTxt = fechaObj.toLocaleString('es-CL', { month: 'short', year: 'numeric' }).toUpperCase();
         
-        // SENSOR: Si la cuota corresponde al próximo mes, la sumamos al total de advertencia
         if (fechaObj.getMonth() === proximoMes && fechaObj.getFullYear() === proximoAnio) {
             sumaProximoMes += doc.monto;
         }
@@ -794,20 +780,18 @@ function renderizarTablaTC() {
         tbody.appendChild(tr);
     });
 
-    // INYECCIÓN VISUAL DEL SENSOR DE PRÓXIMO PAGO
+    // 🟢 INYECCIÓN DEL SENSOR DE IMPACTO AL HEADER 🟢
     let mesNombreStr = new Date(proximoAnio, proximoMes, 1).toLocaleString('es-CL', { month: 'long' }).toUpperCase();
-    let trTotal = document.createElement("tr");
-    trTotal.style.backgroundColor = "rgba(255, 152, 0, 0.1)"; // Fondo naranja suave de advertencia
-    trTotal.style.borderTop = "2px solid #ff9800";
-    trTotal.innerHTML = `
-        <td colspan="3" style="font-size: 0.8rem; font-weight: 900; color: #ff9800; padding: 10px; text-align: right;">
-            ⚠️ IMPACTO EN ${mesNombreStr}:
-        </td>
-        <td style="text-align: right; font-family: monospace; font-weight: 900; font-size: 0.9rem; color: #ff9800; padding: 10px;">
-            $${sumaProximoMes.toLocaleString('es-CL')}
-        </td>
-    `;
-    tbody.prepend(trTotal); // Lo pone arriba de todo para que sea lo primero que veas
+    let boxImpacto = document.getElementById('boxImpactoTC');
+    if (boxImpacto) {
+        if (sumaProximoMes > 0) {
+            boxImpacto.style.display = 'flex';
+            document.getElementById('lblImpactoMes').innerText = `⚠️ IMPACTO EN ${mesNombreStr}`;
+            document.getElementById('txtImpactoMonto').innerText = `$${sumaProximoMes.toLocaleString('es-CL')}`;
+        } else {
+            boxImpacto.style.display = 'none';
+        }
+    }
 
     actualizarBarraTC(); 
 }
@@ -820,8 +804,8 @@ function cargarCSV_TC() {
     fileInputTC.onchange = e => {
         let file = e.target.files[0];
         
-        // INTERFAZ HMI: Confirmación de tipo de datos (Control de Tiempo)
-        let esFacturado = confirm("💳 ANÁLISIS DE INGESTA\n\n¿Este archivo corresponde a Movimientos FACTURADOS?\n\n[OK] = Sí, ya están facturados (Se cobran en este ciclo).\n[Cancelar] = No, son NO facturados (Proyección futura).");
+        // INTERFAZ HMI: Confirmación de tipo de datos
+        let esFacturado = confirm("💳 ANÁLISIS DE INGESTA\n\n¿Este archivo corresponde a Movimientos FACTURADOS?\n\n[OK] = Sí, ya están facturados.\n[Cancelar] = No, son NO facturados.");
         
         let reader = new FileReader();
         reader.onload = async ev => {
@@ -834,7 +818,6 @@ function cargarCSV_TC() {
                 for(let i = 1; i < lineas.length; i++) {
                     if(lineas[i].trim() === '') continue; 
                     
-                    // Todoterreno: Identifica comas o punto y coma
                     let separador = lineas[i].includes(';') ? ';' : ',';
                     let cols = lineas[i].split(separador); 
                     if(cols.length < 4) continue; 
@@ -842,16 +825,13 @@ function cargarCSV_TC() {
                     let fecha = cols[0].trim();
                     let nombre = cols[1].trim().replace(/\s+/g, ' ').toUpperCase(); 
                     
-                    // Cazador de Cuotas: Busca el formato 01/03 sin importar dónde esté
                     let colCuotas = cols.find(c => c.includes('/') && c.length <= 5) || "01/01";
                     let cuotasInfo = colCuotas.trim().split('/'); 
                     
-                    // Cazador de Montos: Limpia la columna final
                     let montoStr = cols[cols.length - 1].replace(/[^0-9-]/g, '');
                     if(!montoStr && cols.length > 1) montoStr = cols[cols.length - 2].replace(/[^0-9-]/g, '');
                     let montoTotal = parseInt(montoStr);
 
-                    // 🛑 ESCUDO FIREWALL: Bloquea pagos a la TC y devoluciones
                     if(isNaN(montoTotal) || montoTotal <= 0) continue;
                     if(nombre.includes("REV.COMPRAS") || nombre.includes("PAGO PESOS") || nombre.includes("TEF") || nombre.includes("PAGO EN LINEA")) continue;
 
@@ -869,16 +849,13 @@ function cargarCSV_TC() {
                         let fechaCobro;
                         
                         if (esFacturado) {
-                            // FACTURADO: La cuota que dice el Excel corresponde al mes actual
                             fechaCobro = new Date(hoy.getFullYear(), hoy.getMonth() + (c - cuotaActual), 15);
                         } else {
-                            // NO FACTURADO: Aplica los meses de gracia del banco
                             let mesesDesfase = totalCuotas > 1 ? 2 : 1; 
                             fechaCobro = new Date(fechaCompra);
                             fechaCobro.setMonth(fechaCobro.getMonth() + mesesDesfase + (c - cuotaActual));
                         }
                         
-                        // ID Criptográfico para que Firebase no duplique registros
                         let docId = `${fecha.replace(/[^0-9]/g, '')}-${nombre.replace(/[^A-Z0-9]/g, '').substring(0,10)}-C${c}de${totalCuotas}`;
                         
                         let ref = db.collection("deuda_tc").doc(docId);
@@ -909,6 +886,7 @@ function cargarCSV_TC() {
     };
     fileInputTC.click();
 }
+
 function actualizarBarraTC() {
     const seleccionados = document.querySelectorAll('.checkItemTC:checked');
     const barra = document.getElementById('barraAccionesTC');
@@ -947,5 +925,4 @@ async function ejecutarPurgaMasivaTC() {
         alert("❌ Error de comunicación.");
     }
 }
-
 // ==========================================================
