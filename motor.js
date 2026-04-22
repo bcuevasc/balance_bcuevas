@@ -1,5 +1,5 @@
 // ==========================================================
-// 🧠 BÚNKER SCADA ORACLE - MOTOR LÓGICO COMPLETO V14.8
+// 🧠 BÚNKER SCADA ORACLE - MOTOR LÓGICO COMPLETO V15.0
 // ==========================================================
 const BYRON_EMAIL = "bvhcc94@gmail.com"; 
 const catEvitables = ["Dopamina & Antojos"]; 
@@ -10,6 +10,8 @@ let chartBD = null, chartP = null, chartDiario = null, chartRadar = null, chartT
 let currentSort = { column: 'fechaISO', direction: 'desc' }; 
 let modoEdicionActivo = false; 
 window.totalTC = 0; window.VALOR_USD = 950; 
+
+let datosPatrimonio = { inyectado: 0, tir: 8, auto: 0, otrosActivos: 0, cae: 0, hipotecario: 0, otrosPasivos: 0 };
 
 const diccAuto = [
     { keys: ["prestamo", "debe", "pagar dps", "por cobrar", "cuota de"], cat: "Cuentas por Cobrar (Activos)", tipo: "Por Cobrar", fuga: "0" },
@@ -36,11 +38,11 @@ const catMaestras = [
 ];
 const catEmojis = {}; const aliasMap = {}; catMaestras.forEach(c => { catEmojis[c.id] = c.em; aliasMap[c.id] = c.label; });
 
-// 1. INICIALIZACIÓN
+// 1. INICIALIZACIÓN Y EVENTOS GLOBALES
 document.addEventListener("DOMContentLoaded", async () => {
     try {
         let response = await fetch('https://mindicador.cl/api/dolar'); let data = await response.json();
-        if(data && data.serie && data.serie.length > 0) window.VALOR_USD = data.serie[0].valor;
+        if(data && data.serie && data.serie.length > 0) { window.VALOR_USD = data.serie[0].valor; let lbl = document.getElementById('lbl-dolar-actual'); if(lbl) lbl.innerText = `1 USD = $${Math.round(window.VALOR_USD)} CLP`; }
     } catch(e) { window.VALOR_USD = 950; }
     
     const optionsHTML = catMaestras.map(c => `<option value="${c.id}">${c.em} ${c.label}</option>`).join('');
@@ -95,23 +97,28 @@ window.logout = function() { auth.signOut().then(() => { localStorage.clear(); s
 auth.onAuthStateChanged(user => {
     if (user) {
         if (user.email.toLowerCase() === BYRON_EMAIL.toLowerCase()) {
-            console.log("%c[ORACLE V14.8] MATRIX ONLINE", "color: #2ea043; font-weight: bold; font-size: 14px;");
+            console.log("%c[ORACLE V15.0] MATRIX ONLINE", "color: #2ea043; font-weight: bold; font-size: 14px;");
             const loginScreen = document.getElementById('login-screen'), reportZone = document.getElementById('reportZone');
-            if(loginScreen) loginScreen.style.display = 'none'; if(reportZone) reportZone.classList.add('active-app');
+            if(loginScreen) loginScreen.style.display = 'none'; if(reportZone) reportZone.style.display = 'flex';
             const userDisplay = document.getElementById('user-display'); if(userDisplay) userDisplay.innerText = user.displayName.split(" ")[0];
             
             db.collection("parametros").doc("sueldos").onSnapshot(snap => { if(snap.exists) sueldosHistoricos = snap.data(); });
+            db.collection("parametros").doc("patrimonio").onSnapshot(snap => { 
+                if(snap.exists) { datosPatrimonio = snap.data(); if(typeof renderizarPatrimonioVisual === 'function') renderizarPatrimonioVisual(); }
+            });
+            
             db.collection("movimientos").onSnapshot(snap => {
                 listaMovimientos = [];
                 snap.forEach(doc => { let d = doc.data(); d.firestoreId = doc.id; d.fechaISO = d.fecha?.toDate ? d.fecha.toDate().toISOString() : (d.fecha || new Date().toISOString()); d.monto = Number(d.monto) || 0; listaMovimientos.push(d); });
                 window.aplicarCicloAlSistema();
             });
             window.inicializarListenerTC();
+            iniciarRelojRendimiento();
         } else { auth.signOut(); alert(`⛔ DENEGADO:\nEl correo ${user.email} no tiene permisos.`); }
     }
 });
 
-// 3. NÚCLEO LÓGICO V14.8 (ARRASTRE INCLUIDO)
+// 3. NÚCLEO LÓGICO
 window.calcularFechasCiclo = function(mesConceptual, anio) {
     let mesInicio = mesConceptual - 1; let anioInicio = anio; if (mesInicio < 0) { mesInicio = 11; anioInicio--; }
     let T0 = new Date(anioInicio, mesInicio, 30); if (T0.getMonth() !== mesInicio) T0 = new Date(anioInicio, mesInicio + 1, 0); 
@@ -148,7 +155,7 @@ window.guardarSueldoEnNube = function() {
     let m = parseInt(elSueldo.getAttribute('data-mes-ancla')), a = parseInt(elSueldo.getAttribute('data-anio-ancla')), s = parseInt(elSueldo.value.replace(/\./g, '')); 
     if (isNaN(m) || isNaN(a) || isNaN(s) || s <= 0) return;
     let llave = `${a}_${m}`; sueldosHistoricos[llave] = s;
-    db.collection("parametros").doc("sueldos").set({ [llave]: s }, {merge: true}).then(() => { mostrarToast(`SUELDO GUARDADO`); window.actualizarDashboard(); });
+    db.collection("parametros").doc("sueldos").set({ [llave]: s }, {merge: true}).then(() => { window.mostrarToast(`SUELDO GUARDADO`); window.actualizarDashboard(); });
 };
 
 window.actualizarDashboard = function() {
@@ -221,15 +228,16 @@ window.renderizarListas = function(sueldoBase) {
             datos.forEach((x) => {
                 const d = new Date(x.fechaISO); const dateStr = d.toLocaleDateString('es-CL', {day:'2-digit', month:'2-digit'}); const timeStr = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
                 const colorMonto = x.esIn ? "var(--color-ingresos)" : x.esNeutro ? "#d29922" : "var(--text-main)"; const nombreSeguro = x.nombre || "Desc"; const montoSeguro = x.monto || 0;
-                let iconImpacto = x.esIn ? `<span class="impact-icon" style="color:var(--color-ingresos)">+</span>` : x.esNeutro ? `<span class="impact-icon" style="color:#d29922">=</span>` : `<span class="impact-icon" style="color:var(--color-fuga)">-</span>`;
+                let iconImpacto = x.esIn ? `<span style="font-weight:900; margin-right:5px; color:var(--color-ingresos)">+</span>` : x.esNeutro ? `<span style="font-weight:900; margin-right:5px; color:#d29922">=</span>` : `<span style="font-weight:900; margin-right:5px; color:var(--color-fuga)">-</span>`;
                 let bgEdicion = (document.getElementById('editId') && document.getElementById('editId').value === x.firestoreId) ? 'background-color: rgba(210, 153, 34, 0.15); border-left: 3px solid var(--color-edit);' : (x.catV === 'Dopamina & Antojos' ? 'background: linear-gradient(90deg, rgba(255,255,255,0.01) 60%, rgba(255,82,82,0.15) 100%);' : '');
                 htmlPC += `<tr style="${bgEdicion}">
                     <td style="text-align: center;"><input type="checkbox" class="row-check" value="${x.firestoreId}" onchange="window.updateMassActions()"></td>
-                    <td style="font-size:0.75rem; color:var(--text-muted);">${dateStr} <span class="col-hora">${timeStr}</span></td>
-                    <td class="col-desc">${nombreSeguro}</td><td style="font-size:0.7rem;"><span class="cat-badge">${x.catV.replace(' & ','&')}</span></td>
-                    <td class="col-monto" style="color:${colorMonto};">${iconImpacto}$${montoSeguro.toLocaleString('es-CL')}</td>
-                    <td class="col-monto hide-mobile" style="color:var(--text-muted); font-size:0.75rem;">$${x.saldoCalculadoVista.toLocaleString('es-CL')}</td>
-                    <td style="text-align:center;"><button class="btn-sys" style="padding:2px 6px; border:none; background:transparent; font-size:1rem;" onclick="window.editarMovimiento('${x.firestoreId}')">✏️</button></td>
+                    <td style="font-size:0.75rem; color:var(--text-muted);">${dateStr} <span style="font-size:0.65rem; color:var(--text-muted); margin-left:5px;">${timeStr}</span></td>
+                    <td style="color:var(--text-main); font-weight:600;" title="${nombreSeguro}">${nombreSeguro}</td>
+                    <td style="font-size:0.7rem;"><span style="font-size:0.65rem; padding:3px 8px; border-radius:4px; background:rgba(255,255,255,0.05); border:1px solid var(--border-color); color:var(--text-muted);">${x.catV.replace(' & ','&')}</span></td>
+                    <td style="text-align:right; font-family:monospace; font-weight:bold; font-size:0.9rem; color:${colorMonto};">${iconImpacto}$${montoSeguro.toLocaleString('es-CL')}</td>
+                    <td style="text-align:right; font-family:monospace; font-weight:bold; font-size:0.9rem; color:var(--text-muted); font-size:0.75rem;">$${x.saldoCalculadoVista.toLocaleString('es-CL')}</td>
+                    <td style="text-align:center;"><button style="padding:2px 6px; border:none; background:transparent; font-size:1rem; cursor:pointer;" onclick="window.editarMovimiento('${x.firestoreId}')">✏️</button></td>
                 </tr>`;
             });
             contenedorPC.innerHTML = htmlPC;
@@ -250,15 +258,18 @@ window.renderizarListas = function(sueldoBase) {
                 const em = catEmojis[x.catV] || "❓", colorMonto = x.esIn ? "var(--accent-green)" : x.esNeutro ? "#d29922" : "var(--text-main)", iconoVisual = obtenerIconoVisual(x.nombre, em);
                 const nombreSeguro = x.nombre || "Desc", montoSeguro = x.monto || 0;
                 let styleExtra = x.catV === 'Dopamina & Antojos' ? 'background: linear-gradient(90deg, rgba(255,255,255,0.01) 30%, rgba(255, 82, 82, 0.15) 100%) !important; border-right: 2px solid var(--accent-red) !important;' : '';
-                const clickAction = typeof openBottomSheet === 'function' ? `openBottomSheet('${x.firestoreId}', '${nombreSeguro.replace(/'/g, "\\'")}', ${montoSeguro})` : `window.editarMovimiento('${x.firestoreId}')`;
+                const clickAction = typeof openBottomSheet === 'function' ? `window.openBottomSheet('${x.firestoreId}', '${nombreSeguro.replace(/'/g, "\\'")}', ${montoSeguro})` : `window.editarMovimiento('${x.firestoreId}')`;
                 htmlMovil += `
                 <div class="mobile-card" onclick="${clickAction}" style="${styleExtra}">
-                    <div style="width: 46px; height: 46px; margin-right: 12px; background: var(--bg-elevated); border-radius: 50%; display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0; border: 1px solid var(--border-subtle); box-shadow: inset 0 2px 5px rgba(0,0,0,0.5);">${iconoVisual}</div>
-                    <div style="flex: 1; min-width: 0;">
-                        <div style="font-weight:bold; font-size:0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text-main); letter-spacing: 0.5px;">${nombreSeguro}</div>
-                        <div style="font-size:0.7rem; color:var(--text-dim); margin-top:3px;">${timeStr} • ${x.catV.replace(' & ','&')}</div>
+                    <div class="card-icon">${iconoVisual}</div>
+                    <div class="card-body">
+                        <div class="card-title">${nombreSeguro}</div>
+                        <div class="card-subtitle">${timeStr} • ${x.catV.replace(' & ','&')}</div>
                     </div>
-                    <div style="font-weight:900; color:${colorMonto}; flex-shrink: 0; font-size:1.15rem; font-family:monospace;">${x.esIn?'+':(x.esNeutro?'=':'-')}$${Math.round(montoSeguro/1000)}k</div>
+                    <div>
+                        <div class="card-amount" style="color:${colorMonto};">${x.esIn?'+':(x.esNeutro?'=':'-')}$${Math.round(montoSeguro/1000)}k</div>
+                        <div class="card-balance">$${Math.round(x.saldoCalculadoVista/1000)}k</div>
+                    </div>
                 </div>`;
             });
             contenedorMovil.innerHTML = htmlMovil;
@@ -280,15 +291,18 @@ window.renderizarTablaTC = function() {
     datosTCGlobal.forEach(doc => {
         let fechaObj = new Date(doc.mesCobro), mesTxt = fechaObj.toLocaleString('es-CL', { month: 'short', year: 'numeric' }).toUpperCase();
         if (fechaObj.getMonth() === proximoMes && fechaObj.getFullYear() === proximoAnio) sumaProximoMes += doc.monto;
+        
         htmlTC += `<tr>
             <td style="text-align: center;"><input type="checkbox" class="checkItemTC" value="${doc.id}" onclick="window.actualizarBarraTC()" style="accent-color: #ff5252;"></td>
-            <td style="font-size: 0.75rem; color: #79c0ff; font-weight: bold;">${mesTxt} (${doc.cuota})</td><td class="col-desc">${doc.nombre}</td><td class="col-monto">$${doc.monto.toLocaleString('es-CL')}</td>
+            <td style="font-size: 0.75rem; color: #79c0ff; font-weight: bold;">${mesTxt} (${doc.cuota})</td>
+            <td style="color:var(--text-main); font-weight:600;">${doc.nombre}</td>
+            <td style="text-align:right; font-family:monospace; font-weight:bold; font-size:0.9rem;">$${doc.monto.toLocaleString('es-CL')}</td>
         </tr>`;
-        const clickAction = typeof openBottomSheet === 'function' ? `openBottomSheet('${doc.id}', '${doc.nombre.replace(/'/g, "\\'")}', ${doc.monto})` : ``;
+        const clickAction = typeof openBottomSheet === 'function' ? `window.openBottomSheet('${doc.id}', '${doc.nombre.replace(/'/g, "\\'")}', ${doc.monto})` : ``;
         htmlMovil += `
         <div class="mobile-card" onclick="${clickAction}" style="margin-bottom:6px; background: var(--bg-card) !important;">
-            <div style="flex: 1; min-width: 0;"><div style="font-weight:bold; font-size:0.85rem; color: var(--text-main);">${doc.nombre}</div><div style="font-size:0.7rem; color:var(--accent-red); margin-top:3px; font-weight:800;">${mesTxt} (${doc.cuota})</div></div>
-            <div style="font-weight:900; color:var(--text-main); flex-shrink: 0; font-size:1.15rem; font-family:monospace;">$${doc.monto.toLocaleString('es-CL')}</div>
+            <div class="card-body"><div class="card-title">${doc.nombre}</div><div style="font-size:0.7rem; color:var(--accent-red); margin-top:3px; font-weight:800;">${mesTxt} (${doc.cuota})</div></div>
+            <div class="card-amount" style="color:var(--text-main);">$${doc.monto.toLocaleString('es-CL')}</div>
         </div>`;
     });
     if(tbody) tbody.innerHTML = htmlTC; if(tbodyMovil) tbodyMovil.innerHTML = htmlMovil;
@@ -322,21 +336,23 @@ window.agregarMovimiento = function() {
     const iFugaEl = document.getElementById('inputFuga'); const pctFuga = iFugaEl ? parseInt(iFugaEl.value) : (catEvitables.includes(c) ? 100 : 0);
     const cuotasEl = document.getElementById('inputCuotas'); const cantCuotas = (cuotasEl && c === "Gasto Tarjeta de Crédito") ? parseInt(cuotasEl.value) : 1;
 
-    if (!m || !n || !fInput) return alert("⚠️ Faltan parámetros en la consola.");
+    if (!m || !n || !fInput) return window.mostrarToast("⚠️ FALTAN PARÁMETROS");
     const btn = document.getElementById('btnGuardar'); btn.innerHTML = "INYECTANDO..."; btn.disabled = true;
     const dataPayload = { nombre: n, monto: m, categoria: c, tipo: t, fecha: new Date(fInput), status: 'Manual', innecesarioPct: pctFuga, cuotas: cantCuotas };
     
     let op = (modoEdicionActivo && editId) ? db.collection("movimientos").doc(editId).update(dataPayload) : db.collection("movimientos").add(dataPayload);
     op.then(() => {
-        document.getElementById('editId').value = ''; document.getElementById('inputNombre').value = ''; document.getElementById('inputMonto').value = '';
-        btn.innerHTML = "INYECTAR"; btn.style.backgroundColor = "var(--color-edit)"; btn.disabled = false; modoEdicionActivo = false; mostrarToast("REGISTRO CONFIRMADO");
+        if(document.getElementById('editId')) document.getElementById('editId').value = ''; 
+        if(document.getElementById('inputNombre')) document.getElementById('inputNombre').value = ''; 
+        if(document.getElementById('inputMonto')) document.getElementById('inputMonto').value = '';
+        btn.innerHTML = "INYECTAR"; btn.style.backgroundColor = "var(--accent-blue)"; btn.disabled = false; modoEdicionActivo = false; window.mostrarToast("REGISTRO CONFIRMADO");
     }).catch(err => { alert("❌ Error: " + err.message); btn.innerHTML = "ERROR"; btn.disabled = false; });
 };
 
-window.formatearEntradaNumerica = function(i) { let v = i.value.replace(/\D/g,''); i.value = v ? parseInt(v).toLocaleString('es-CL') : ''; };
 window.toggleAllChecks = function() { const checkEl = document.getElementById('checkAll'); if(!checkEl) return; const check = checkEl.checked; document.querySelectorAll('.row-check').forEach(cb => cb.checked = check); window.updateMassActions(); };
 window.updateMassActions = function() { const bar = document.getElementById('massActionsBar'); if(!bar) return; const cnt = document.querySelectorAll('.row-check:not(#checkAll):checked').length; bar.style.display = cnt > 0 ? 'flex' : 'none'; document.getElementById('massCount').innerText = `${cnt} SEL`; if(cnt === 0) document.getElementById('checkAll').checked = false; };
 window.massDelete = function() { const ids = Array.from(document.querySelectorAll('.row-check:not(#checkAll):checked')).map(cb => cb.value); if(ids.length === 0 || !confirm(`⚠️ ¿Eliminar ${ids.length} registro(s)?`)) return; Promise.all(ids.map(id => db.collection("movimientos").doc(id).delete())).then(() => { document.getElementById('massActionsBar').style.display = 'none'; document.getElementById('checkAll').checked = false; }); };
+window.massCategorize = function() { const ids = Array.from(document.querySelectorAll('.row-check:not(#checkAll):checked')).map(cb => cb.value); const cat = document.getElementById('massCategorySelect').value; if(ids.length === 0 || !cat || !confirm(`¿Categorizar como "${cat}"?`)) return; Promise.all(ids.map(id => db.collection("movimientos").doc(id).update({categoria: cat}))).then(() => { document.getElementById('massActionsBar').style.display = 'none'; document.getElementById('checkAll').checked = false; document.getElementById('massCategorySelect').value = ''; }); };
 
 // 6. TELEMETRÍA (GRÁFICOS)
 window.dibujarGraficosFlujo = function(sueldo, chronData, cats, diasCiclo, T0, totalFijosMes, tInfra, tFlota) {
@@ -389,7 +405,7 @@ window.dibujarGraficosTC = function(sueldo) {
         let mesesLabels = [], montosProyectados = [], fechaHoy = new Date();
         for(let i=1; i<=6; i++) { let f = new Date(fechaHoy.getFullYear(), fechaHoy.getMonth() + i, 1); mesesLabels.push(f.toLocaleString('es-CL', { month: 'short' }).toUpperCase()); montosProyectados.push(datosTCGlobal.filter(d => { let fCobro = new Date(d.mesCobro); return fCobro.getMonth() === f.getMonth() && fCobro.getFullYear() === f.getFullYear(); }).reduce((acc, curr) => acc + curr.monto, 0)); }
         let grad = ctxProyeccion.getContext('2d').createLinearGradient(0, 0, 0, 300); grad.addColorStop(0, 'rgba(255, 82, 82, 0.6)'); grad.addColorStop(1, 'rgba(255, 82, 82, 0.05)');
-        const tcEnhancementsPlugin = { id: 'tcEnhancementsPlugin', afterDraw: (chart) => { const ctx = chart.ctx; const xAxis = chart.scales.x; const yAxis = chart.scales.y; const umbralSeguridad = sueldo * 0.15; if(yAxis.max > umbralSeguridad) { const yPos = yAxis.getPixelForValue(umbralSeguridad); ctx.save(); ctx.beginPath(); ctx.moveTo(xAxis.left, yPos); ctx.lineTo(xAxis.right, yPos); ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(255, 82, 82, 0.8)'; ctx.setLineDash([5, 5]); ctx.stroke(); ctx.fillStyle = '#ff5252'; ctx.font = 'bold 10px monospace'; ctx.textAlign = 'left'; ctx.textBaseline='bottom'; ctx.fillText('MAX (15%)', xAxis.left + 5, yPos - 5); ctx.restore(); } ctx.save(); ctx.textAlign = 'center'; ctx.textBaseline = 'bottom'; ctx.font = 'bold 10px monospace'; ctx.fillStyle = '#ff5252'; const dataset = chart.data.datasets[0]; const meta = chart.getDatasetMeta(0); meta.data.forEach((point, index) => { let val = dataset.data[index]; if (val > 0) { ctx.fillText('$' + Math.round(val / 1000) + 'k', point.x, point.y - 8); } }); ctx.restore(); } };
+        const tcEnhancementsPlugin = { id: 'tcEnhancementsPlugin', afterDraw: (chart) => { const ctx = chart.ctx; const xAxis = chart.scales.x; const yAxis = chart.scales.y; const umbralSeguridad = sueldo * 0.15; if(yAxis.max > umbralSeguridad) { const yPos = yAxis.getPixelForValue(umbralSeguridad); ctx.save(); ctx.beginPath(); ctx.moveTo(xAxis.left, yPos); ctx.lineTo(xAxis.right, yPos); ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(255, 82, 82, 0.8)'; ctx.setLineDash([5, 5]); ctx.stroke(); ctx.fillStyle = '#ff5252'; ctx.font = 'bold 10px monospace'; ctx.textAlign = 'left'; ctx.textBaseline='bottom'; ctx.fillText('MAX (15%)', xAxis.left + 5, yPos - 5); ctx.restore(); } } };
         chartRadar = new Chart(ctxProyeccion, { type: 'line', data: { labels: mesesLabels, datasets: [{ label: 'Deuda TC', data: montosProyectados, backgroundColor: grad, borderColor: '#ff5252', borderWidth: 3, fill: true, tension: 0.4, pointRadius: 4, pointBackgroundColor: '#030508', pointBorderColor: '#ff5252' }] }, options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { color: cT, callback: v => '$' + Math.round(v/1000) + 'k' }, grid: { color: cG } }, x: { ticks: { color: cT, font: {size: 10, weight: 'bold'} }, grid: { display: false } } } }, plugins: [tcEnhancementsPlugin] });
     }
 
@@ -401,7 +417,43 @@ window.dibujarGraficosTC = function(sueldo) {
     }
 };
 
-// 7. DRAG & DROP Y EXPORTACIÓN
+// 7. PATRIMONIO
+window.renderizarPatrimonioVisual = function() {
+    const s = (id, val) => { const el = document.getElementById(id); if(el && document.activeElement !== el) el.value = (val||0).toLocaleString('es-CL'); };
+    s('ptr-inversion', datosPatrimonio.inyectado); s('ptr-tir', datosPatrimonio.tir); s('ptr-auto', datosPatrimonio.auto);
+    s('ptr-otros-act', datosPatrimonio.otrosActivos); s('ptr-cae', datosPatrimonio.cae); s('ptr-hipo', datosPatrimonio.hipotecario); s('ptr-otros-pas', datosPatrimonio.otrosPasivos);
+    window.calcularPatrimonioGlobal();
+};
+
+window.guardarPatrimonioEnNube = function() {
+    const g = (id) => parseInt((document.getElementById(id).value || "0").replace(/\./g, '')) || 0;
+    datosPatrimonio = { inyectado: g('ptr-inversion'), tir: g('ptr-tir'), auto: g('ptr-auto'), otrosActivos: g('ptr-otros-act'), cae: g('ptr-cae'), hipotecario: g('ptr-hipo'), otrosPasivos: g('ptr-otros-pas') };
+    db.collection("parametros").doc("patrimonio").set(datosPatrimonio).then(() => { window.mostrarToast("PATRIMONIO ACTUALIZADO"); window.calcularPatrimonioGlobal(); });
+};
+
+function iniciarRelojRendimiento() {
+    setInterval(() => {
+        let inv = datosPatrimonio.inyectado || 0; let tir = (datosPatrimonio.tir || 8) / 100;
+        tickerRendimiento += (inv * tir) / 31536000; 
+        const elTicker = document.getElementById('live-yield-counter'), elDiario = document.getElementById('live-yield-daily');
+        if(elTicker) elTicker.innerText = `+ $${tickerRendimiento.toFixed(4)}`;
+        if(elDiario && inv > 0) elDiario.innerText = `($${Math.round((inv * tir) / 365).toLocaleString('es-CL')} / día)`;
+    }, 1000);
+}
+
+window.calcularPatrimonioGlobal = function() {
+    const elSaldo = document.getElementById('txtSaldo'); let liquidezBanco = elSaldo ? (parseInt(elSaldo.innerText.replace(/\./g, '')) || 0) : 0;
+    let totalActivos = liquidezBanco + (datosPatrimonio.inyectado || 0) + (datosPatrimonio.auto || 0) + (datosPatrimonio.otrosActivos || 0);
+    let totalPasivos = (window.totalTC || 0) + (datosPatrimonio.cae || 0) + (datosPatrimonio.hipotecario || 0) + (datosPatrimonio.otrosPasivos || 0);
+    let patrimonioNeto = totalActivos - totalPasivos;
+    const setT = (id, val) => { const el = document.getElementById(id); if(el) el.innerText = val.toLocaleString('es-CL'); };
+    setT('hud-patrimonio-neto', patrimonioNeto); setT('hud-activos', totalActivos); setT('hud-pasivos', totalPasivos);
+    const elPN = document.getElementById('hud-patrimonio-neto'); if(elPN) elPN.style.color = patrimonioNeto < 0 ? "var(--color-fuga)" : "#79c0ff";
+    const barraA = document.getElementById('ptr-bar-activos'), barraP = document.getElementById('ptr-bar-pasivos');
+    if(barraA && barraP) { let max = totalActivos + totalPasivos; if (max > 0) { barraA.style.width = (totalActivos / max * 100) + "%"; barraP.style.width = (totalPasivos / max * 100) + "%"; } }
+};
+
+// 8. DRAG & DROP Y EXPORTACIÓN
 window.dragStart = function(e, id) { draggedRowId = id; e.dataTransfer.effectAllowed = 'move'; setTimeout(() => e.target.style.opacity = '0.4', 0); }
 window.dragOverPanel = function(e, tipo) { e.preventDefault(); const panel = e.currentTarget; panel.style.transition = "border-color 0.2s, box-shadow 0.2s"; if (tipo === 'tc') { panel.style.borderColor = "var(--color-fuga)"; panel.style.boxShadow = "inset 0 0 20px rgba(255, 82, 82, 0.15)"; } else { panel.style.borderColor = "var(--color-saldo)"; panel.style.boxShadow = "inset 0 0 20px rgba(46, 160, 67, 0.15)"; } }
 window.dragLeavePanel = function(e, tipo) { const panel = e.currentTarget; if (tipo === 'tc') { panel.style.borderColor = "rgba(255, 82, 82, 0.2)"; } else { panel.style.borderColor = "var(--border-color)"; } panel.style.boxShadow = "none"; }
@@ -413,8 +465,10 @@ document.addEventListener('dragend', (e) => { if(e.target.tagName === 'TR') e.ta
 
 window.exportarDataLink = function() { let csv = "ISO_DATE,YEAR,MONTH,DAY,CATEGORY,TYPE,AMOUNT_CLP,DETAIL,ML_FLAG\n"; datosMesGlobal.forEach(x => { let d = new Date(x.fechaISO); let flag = catEvitables.includes(x.catV) ? 'DOPAMINA_LEAK' : (x.tipo === 'Gasto Fijo' ? 'STRUCTURAL' : 'STANDARD'); let detailSafe = (x.nombre || "Unknown").replace(/(\r\n|\n|\r)/gm, " ").replace(/"/g, '""').trim(); csv += `${x.fechaISO},${d.getFullYear()},${d.getMonth()+1},${d.getDate()},"${x.catV}","${x.tipo}",${x.monto},"${detailSafe}",${flag}\n`; }); try { const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' }); const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = `Bunker_DataLink_${new Date().toISOString().slice(0,10)}.csv`; document.body.appendChild(link); link.click(); document.body.removeChild(link); } catch (e) { console.error(e); } };
 window.exportarTablaBunker = function(idTabla, nombreArchivo) { const tabla = document.getElementById(idTabla); if (!tabla) return; let csv = ''; const filas = tabla.querySelectorAll("tr"); filas.forEach(fila => { let celdas = Array.from(fila.querySelectorAll("th, td")).filter(c => !c.classList.contains('col-check') && !c.classList.contains('col-drag') && !c.querySelector('button')); const datosFila = celdas.map(celda => `"${celda.innerText.replace(/(\r\n|\n|\r)/gm, " - ").replace(/"/g, '""').trim()}"`); if (datosFila.length > 0) csv += datosFila.join(";") + "\n"; }); try { const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' }); const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = `${nombreArchivo}_${new Date().toISOString().slice(0,10)}.csv`; document.body.appendChild(link); link.click(); document.body.removeChild(link); } catch (e) { console.error(e); } };
+window.triggerSync = function() { fetch("https://script.google.com/macros/s/AKfycbwKlub0qrv8_d24ZuyKKNryqOw1E68xv1_JvPOoEUc6W8TICllFfodNcwkigQE_7AuoNg/exec", {mode:'no-cors'}).then(()=>window.mostrarToast("SYNC COMPLETADA")).catch(e => alert("Error Net: " + e)); };
+window.abrirHistorian = function() { document.getElementById('historian-content').innerHTML = "<div style='color:var(--color-saldo); font-weight:bold; text-align:center; padding:20px;'>SYSTEM NOMINAL.</div>"; document.getElementById('modal-historian').style.display = 'flex'; };
 
-// 8. LÓGICA DE DÍA CERO (SIMULADOR)
+// 9. LÓGICA DE DÍA CERO (SIMULADOR)
 window.inicializarListenerTC = function() {
     db.collection("deuda_tc").orderBy("mesCobro", "asc").onSnapshot(snapshot => {
         datosTCGlobal = []; let totalDeuda = 0;
@@ -504,7 +558,7 @@ window.calcularDiaCero = function() {
 };
 
 window.ejecutarArranque = function() {
-    if(!confirm("⚠️ INYECCIÓN CRÍTICA V14.8\n\n¿Inyectar Planilla Operativa en la Matriz?")) return;
+    if(!confirm("⚠️ INYECCIÓN CRÍTICA V15.0\n\n¿Inyectar Planilla Operativa en la Matriz?")) return;
     const elMes = document.getElementById('navMesConceptual'), elAnio = document.getElementById('navAnio'); let fechaDestino = new Date(parseInt(elAnio.value), parseInt(elMes.value), 1, 10, 0, 0);
     const batch = db.batch(); let inyectados = 0;
     
@@ -519,7 +573,33 @@ window.ejecutarArranque = function() {
     if (inyectados > 0) { batch.commit().then(() => { window.cerrarPreVuelo(); window.mostrarToast(`ARRANQUE COMPLETADO: ${inyectados} INYECTADOS.`); window.actualizarDashboard(); }); } else { alert("No se inyectaron registros."); window.cerrarPreVuelo(); }
 };
 
-// 9. LISTENER DE EVASIÓN GLOBAL
+// 10. ENLACE TELEGRAM (ESTRUCTURA INYECTADA)
+window.enviarReporteTelegram = async function() {
+    // ⚠️ ATENCIÓN BYRON: Debes reemplazar estos dos valores con los de tu bot
+    const botToken = "8614679709:AAEJGy9yAlKnhjVmJ0VUZpT-YmZQ6J5IOps"; 
+    const chatId = "1484213465"; 
+    
+    if(botToken === "TU_TOKEN_TELEGRAM_AQUI") return alert("⚠️ Alerta de Sistema:\nFalta configurar el 'botToken' y 'chatId' en el archivo motor.js (Línea 390 aprox).");
+
+    let saldo = document.getElementById('txtSaldo') ? document.getElementById('txtSaldo').innerText : "0";
+    let proyectado = document.getElementById('txtProyectado') ? document.getElementById('txtProyectado').innerText : "0";
+    let fugas = document.getElementById('txtTotalEvitable') ? document.getElementById('txtTotalEvitable').innerText : "0";
+    
+    let msj = `🤖 *REPORTE BÚNKER SCADA*\n\n💰 Saldo de Maniobra: $${saldo}\n💳 Proyectado Cierre: $${proyectado}\n🍔 Fugas Acumuladas: $${fugas}\n\n✅ Transmisión exitosa.`;
+
+    try {
+        await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({chat_id: chatId, text: msj, parse_mode: 'Markdown'})
+        });
+        window.mostrarToast("TRANSMISIÓN TELEGRAM ENVIADA");
+    } catch(e) {
+        alert("Error de Conexión Telegram: " + e);
+    }
+};
+
+// 11. LISTENER DE EVASIÓN GLOBAL
 document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
         if(typeof window.cerrarPreVuelo === 'function') window.cerrarPreVuelo();
