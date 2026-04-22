@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Bunker Digital SCADA v14.0 (Maradona Edition)</title>
+    <title>Bunker Digital SCADA v14.1 (Contextual Telemetry)</title>
     
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -50,11 +50,15 @@ h2 { color: var(--text-main); margin: 0; font-size: 1.3rem; font-weight: 900; le
 .kpi-proyectado { background: rgba(121, 192, 255, 0.05); border-color: rgba(121, 192, 255, 0.4); border-top: 3px solid #79c0ff;}
 .kpi-proyectado h4 { color: #79c0ff; }
 
-.charts-panorama { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; flex-shrink: 0; height: 280px; }
-.chart-box { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px 12px 6px 12px; display: flex; flex-direction: column; position: relative; box-shadow: 0 4px 15px rgba(0,0,0,0.2);}
+/* 🟢 TELEMETRÍA CONTEXTUAL (V14.1) 🟢 */
+.context-charts { display: grid; gap: 15px; padding: 15px; border-bottom: 1px solid var(--border-color); flex-shrink: 0;}
+.context-charts.flujo { grid-template-columns: repeat(3, 1fr); background: rgba(31, 111, 235, 0.03); }
+.context-charts.tc { grid-template-columns: repeat(2, 1fr); background: rgba(255, 82, 82, 0.03); }
+
+.chart-box { background: var(--bg-subpanel); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; position: relative; box-shadow: inset 0 0 20px rgba(0,0,0,0.5);}
 .chart-box h5 { margin: 0 0 8px 0; font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; font-weight: 900; z-index: 10; text-align: center;}
-.canvas-container { position: relative; flex-grow: 1; min-height: 0; width: 100%; }
-.bd-overlay-kpis { position: absolute; top: 12px; width: calc(100% - 24px); display: flex; justify-content: space-between; z-index: 20; pointer-events: none;}
+.canvas-container { position: relative; flex-grow: 1; height: 190px; width: 100%; }
+.bd-overlay-kpis { position: absolute; top: 10px; width: calc(100% - 24px); display: flex; justify-content: space-between; z-index: 20; pointer-events: none;}
 .bd-badge { padding: 2px 8px; font-size: 0.65rem; font-weight: 900; color: var(--text-main); background: rgba(0,0,0,0.6); border-radius: 4px; border: 1px solid var(--border-color); backdrop-filter: blur(2px);}
 
 .command-ribbon { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; background: linear-gradient(90deg, var(--bg-panel) 0%, rgba(31, 111, 235, 0.08) 100%); border: 1px solid var(--border-color); border-left: 4px solid var(--color-edit); padding: 10px 15px; border-radius: 8px; flex-shrink: 0; box-shadow: 0 5px 20px rgba(0,0,0,0.3);}
@@ -74,11 +78,11 @@ h2 { color: var(--text-main); margin: 0; font-size: 1.3rem; font-weight: 900; le
 .core-panel.hidden { display: none; }
 .core-header { padding: 12px 15px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.3); flex-shrink: 0;}
 .core-title { font-size: 0.95rem; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; gap: 8px;}
-.core-body { flex: 1 1 0px; overflow-y: auto; overflow-x: hidden; padding: 0; scrollbar-width: thin; scrollbar-color: var(--border-color) var(--bg-body); }
+.core-body { flex: 1 1 0px; overflow-y: auto; overflow-x: hidden; padding: 0; scrollbar-width: thin; scrollbar-color: var(--border-color) var(--bg-body); display: flex; flex-direction: column;}
 
 /* V14: ESTILOS PATRIMONIO */
 .ptr-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; padding: 20px; }
-.ptr-box { background: var(--bg-subpanel); border: 1px solid var(--border-color); border-radius: 8px; padding: 15px; }
+.ptr-box { background: var(--bg-subpanel); border: 1px solid var(--border-color); border-radius: 8px; padding: 15px; box-shadow: inset 0 0 20px rgba(0,0,0,0.5); }
 .ptr-box-title { font-size: 0.85rem; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 5px; }
 .ptr-input-group { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
 .ptr-input-group label { font-size: 0.75rem; font-weight: bold; color: var(--text-main); }
@@ -161,7 +165,7 @@ h2 { color: var(--text-main); margin: 0; font-size: 1.3rem; font-weight: 900; le
 <div id="login-screen">
     <div class="login-box">
         <h2 style="color:var(--color-proyectado); margin-bottom:10px; font-size: 2rem;">BÚNKER SCADA</h2>
-        <p style="color:var(--text-muted); font-size:0.85rem; letter-spacing: 2px;">VERSIÓN 14.0 (MARADONA EDITION)</p>
+        <p style="color:var(--text-muted); font-size:0.85rem; letter-spacing: 2px;">VERSIÓN 14.1 (CONTEXTUAL EDITION)</p>
         <button class="btn-google" onclick="loginWithGoogle()">INICIAR ENLACE NEURAL</button>
     </div>
 </div>
@@ -169,7 +173,7 @@ h2 { color: var(--text-main); margin: 0; font-size: 1.3rem; font-weight: 900; le
 <div class="app-container" id="reportZone">
     <div class="header-titles">
         <div style="display:flex; align-items:center;">
-            <h2>BUNKER SCADA <span class="scada-badge">V14.0</span></h2>
+            <h2>BUNKER SCADA <span class="scada-badge">V14.1</span></h2>
             <div id="user-display" style="margin-left: 15px; font-size: 0.75rem; color: var(--color-saldo); font-weight:800; text-transform:uppercase;"></div>
         </div>
         <div class="system-btns">
@@ -227,20 +231,6 @@ h2 { color: var(--text-main); margin: 0; font-size: 1.3rem; font-weight: 900; le
         </div>
     </div>
 
-    <div class="charts-panorama">
-        <div class="chart-box">
-            <div class="bd-overlay-kpis">
-                <div class="bd-badge">G: <span id="txtGastoTramo" style="color:var(--color-fuga)">$0</span></div>
-                <div class="bd-badge">P: <span id="txtPromedioZoom" style="color:#d29922">$0</span></div>
-            </div>
-            <h5 data-en="BURN-RATE TRAJECTORY">TRAYECTORIA (BURN-RATE)</h5>
-            <div class="canvas-container"><canvas id="chartBurnDown"></canvas></div>
-        </div>
-        <div class="chart-box"><h5 data-en="VITAL PULSE (BASE VS LEAK)">PULSO VITAL (BASE VS FUGA)</h5><div class="canvas-container"><canvas id="chartDiario"></canvas></div></div>
-        <div class="chart-box"><h5 data-en="CATEGORICAL SPECTRUM">ESPECTRO CATEGÓRICO</h5><div class="canvas-container"><canvas id="chartPareto"></canvas></div></div>
-        <div class="chart-box" style="border-color: rgba(255, 82, 82, 0.3); box-shadow: 0 0 20px rgba(255, 82, 82, 0.05);"><h5 data-en="TC LIABILITY HORIZON">HORIZONTE DE DEUDA TC</h5><div class="canvas-container"><canvas id="chartRadar"></canvas></div></div>
-    </div>
-
     <div class="command-ribbon">
         <div class="ribbon-title">CMD</div>
         <input type="hidden" id="editId">
@@ -277,10 +267,25 @@ h2 { color: var(--text-main); margin: 0; font-size: 1.3rem; font-weight: 900; le
                     <button class="btn-sys" onclick="let b=this; b.innerHTML='⏳...'; b.style.opacity='0.7'; exportarDataLink(); setTimeout(()=>{b.innerHTML='📥 DATA-LINK'; b.style.opacity='1';}, 2000)" style="background:var(--accent-blue); color:#fff; border:none; transition:all 0.2s;">📥 DATA-LINK</button>
                 </div>
             </div>
-            <div style="padding: 6px 12px; background: rgba(0,0,0,0.3); border-bottom: 1px solid var(--border-color);">
-                <input type="text" id="inputBuscador" class="form-control" placeholder="🔍 Buscar en la matriz diaria..." oninput="actualizarDashboard()" style="width: 100%; max-width: 350px; height: 28px; background: var(--bg-panel);">
-            </div>
+            
             <div class="core-body">
+                <div class="context-charts flujo">
+                    <div class="chart-box">
+                        <div class="bd-overlay-kpis">
+                            <div class="bd-badge">G: <span id="txtGastoTramo" style="color:var(--color-fuga)">$0</span></div>
+                            <div class="bd-badge">P: <span id="txtPromedioZoom" style="color:#d29922">$0</span></div>
+                        </div>
+                        <h5 data-en="BURN-RATE TRAJECTORY">TRAYECTORIA (BURN-RATE)</h5>
+                        <div class="canvas-container"><canvas id="chartBurnDown"></canvas></div>
+                    </div>
+                    <div class="chart-box"><h5 data-en="VITAL PULSE (BASE VS LEAK)">PULSO VITAL (BASE VS FUGA)</h5><div class="canvas-container"><canvas id="chartDiario"></canvas></div></div>
+                    <div class="chart-box"><h5 data-en="CATEGORICAL SPECTRUM">ESPECTRO CATEGÓRICO</h5><div class="canvas-container"><canvas id="chartPareto"></canvas></div></div>
+                </div>
+
+                <div style="padding: 6px 12px; background: rgba(0,0,0,0.3); border-bottom: 1px solid var(--border-color); border-top: 1px solid var(--border-color); position: sticky; top: 0; z-index: 30;">
+                    <input type="text" id="inputBuscador" class="form-control" placeholder="🔍 Buscar en la matriz diaria..." oninput="actualizarDashboard()" style="width: 100%; max-width: 350px; height: 28px; background: var(--bg-panel);">
+                </div>
+                
                 <table id="tablaGastos" class="data-grid">
                     <thead>
                         <tr>
@@ -306,19 +311,26 @@ h2 { color: var(--text-main); margin: 0; font-size: 1.3rem; font-weight: 900; le
                     <button class="btn-sys" onclick="cargarCSV_TC()" style="background-color: var(--color-fuga); color: white; border: none; box-shadow: 0 0 10px rgba(255, 82, 82, 0.4);">💳 INGESTAR</button>
                 </div>
             </div>
-            <div style="padding: 12px; border-bottom: 1px solid rgba(255, 82, 82, 0.2); background: rgba(0,0,0,0.2);">
-                <div id="boxImpactoTC" class="tc-impact-box" style="display:none;">
-                    <span id="lblImpactoMes">⚠️ ALARMA DE IMPACTO PRÓX. MES</span>
-                    <strong id="txtImpactoMonto">$0</strong>
-                    <div style="flex:1;"></div>
-                    <button class="btn-sys" onclick="exportarTablaBunker('tablaCuotas', 'Bunker_Proyeccion_TC')" style="border-color: var(--color-fuga); color: var(--color-fuga); background: transparent; padding: 4px 10px;">📥 EXPORTAR</button>
-                </div>
-                <div id="barraAccionesTC" style="display:none; background: #b71c1c; color: white; padding: 8px 15px; border-radius: 6px; justify-content: space-between; align-items: center; margin-top: 8px; box-shadow: 0 4px 15px rgba(183, 28, 28, 0.4);">
-                    <span id="txtSeleccionadosTC" style="font-weight: 900; font-size: 0.8rem; letter-spacing: 1px;">0 SELECCIONADAS</span>
-                    <button onclick="ejecutarPurgaMasivaTC()" style="background: white; color: #b71c1c; border: none; padding: 6px 15px; border-radius: 4px; font-weight: 900; cursor: pointer; font-size: 0.75rem; text-transform: uppercase;">🗑️ PURGAR MATRIZ</button>
-                </div>
-            </div>
+            
             <div class="core-body">
+                <div class="context-charts tc">
+                    <div class="chart-box" style="border-color: rgba(255, 82, 82, 0.3);"><h5 style="color:var(--color-fuga);">HORIZONTE DE DEUDA TC (6M)</h5><div class="canvas-container"><canvas id="chartRadar"></canvas></div></div>
+                    <div class="chart-box" style="border-color: rgba(255, 82, 82, 0.3);"><h5 style="color:var(--color-fuga);">COMPOSICIÓN POR COMERCIO</h5><div class="canvas-container"><canvas id="chartTCDist"></canvas></div></div>
+                </div>
+
+                <div style="padding: 12px; border-bottom: 1px solid rgba(255, 82, 82, 0.2); border-top: 1px solid rgba(255, 82, 82, 0.2); background: rgba(0,0,0,0.2); position: sticky; top: 0; z-index: 30;">
+                    <div id="boxImpactoTC" class="tc-impact-box" style="display:none;">
+                        <span id="lblImpactoMes">⚠️ ALARMA DE IMPACTO PRÓX. MES</span>
+                        <strong id="txtImpactoMonto">$0</strong>
+                        <div style="flex:1;"></div>
+                        <button class="btn-sys" onclick="exportarTablaBunker('tablaCuotas', 'Bunker_Proyeccion_TC')" style="border-color: var(--color-fuga); color: var(--color-fuga); background: transparent; padding: 4px 10px;">📥 EXPORTAR</button>
+                    </div>
+                    <div id="barraAccionesTC" style="display:none; background: #b71c1c; color: white; padding: 8px 15px; border-radius: 6px; justify-content: space-between; align-items: center; margin-top: 8px; box-shadow: 0 4px 15px rgba(183, 28, 28, 0.4);">
+                        <span id="txtSeleccionadosTC" style="font-weight: 900; font-size: 0.8rem; letter-spacing: 1px;">0 SELECCIONADAS</span>
+                        <button onclick="ejecutarPurgaMasivaTC()" style="background: white; color: #b71c1c; border: none; padding: 6px 15px; border-radius: 4px; font-weight: 900; cursor: pointer; font-size: 0.75rem; text-transform: uppercase;">🗑️ PURGAR MATRIZ</button>
+                    </div>
+                </div>
+
                 <table id="tablaCuotas" class="data-grid">
                     <thead style="background: rgba(255, 82, 82, 0.05);">
                         <tr>
@@ -482,30 +494,21 @@ h2 { color: var(--text-main); margin: 0; font-size: 1.3rem; font-weight: 900; le
 </div>
 
 <script>
-    // 🟢 V14.0 LÓGICA DE TRI-CORE (PESTAÑAS)
     function switchPCPanel(viewId) {
         document.querySelectorAll('.core-panel').forEach(p => p.classList.add('hidden'));
         document.querySelectorAll('.btn-sys').forEach(b => {
-            if(b.id && b.id.startsWith('tabBtn')) {
-                b.style.background = 'transparent'; b.style.color = 'var(--text-main)'; b.style.borderColor = 'var(--border-color)';
-            }
+            if(b.id && b.id.startsWith('tabBtn')) { b.style.background = 'transparent'; b.style.color = 'var(--text-main)'; b.style.borderColor = 'var(--border-color)'; }
         });
         
         if(viewId === 'main') {
             document.getElementById('panelMain').classList.remove('hidden');
-            document.getElementById('tabBtnFlujo').style.background = 'rgba(31, 111, 235, 0.1)';
-            document.getElementById('tabBtnFlujo').style.color = 'white';
-            document.getElementById('tabBtnFlujo').style.borderColor = 'var(--color-guardar)';
+            document.getElementById('tabBtnFlujo').style.background = 'rgba(31, 111, 235, 0.1)'; document.getElementById('tabBtnFlujo').style.color = 'white'; document.getElementById('tabBtnFlujo').style.borderColor = 'var(--color-guardar)';
         } else if(viewId === 'tc') {
             document.getElementById('panelTC').classList.remove('hidden');
-            document.getElementById('tabBtnTC').style.background = 'rgba(255, 82, 82, 0.1)';
-            document.getElementById('tabBtnTC').style.color = 'white';
-            document.getElementById('tabBtnTC').style.borderColor = 'var(--color-fuga)';
+            document.getElementById('tabBtnTC').style.background = 'rgba(255, 82, 82, 0.1)'; document.getElementById('tabBtnTC').style.color = 'white'; document.getElementById('tabBtnTC').style.borderColor = 'var(--color-fuga)';
         } else if(viewId === 'patrimonio') {
             document.getElementById('panelPatrimonio').classList.remove('hidden');
-            document.getElementById('tabBtnPat').style.background = 'rgba(121, 192, 255, 0.1)';
-            document.getElementById('tabBtnPat').style.color = 'white';
-            document.getElementById('tabBtnPat').style.borderColor = '#79c0ff';
+            document.getElementById('tabBtnPat').style.background = 'rgba(121, 192, 255, 0.1)'; document.getElementById('tabBtnPat').style.color = 'white'; document.getElementById('tabBtnPat').style.borderColor = '#79c0ff';
         }
     }
 </script>
