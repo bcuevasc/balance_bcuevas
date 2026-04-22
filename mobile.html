@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Bunker Móvil HUD V14.0 (Maradona Edition)</title>
+    <title>Bunker Móvil HUD V14.1 (Contextual Edition)</title>
     <link rel="apple-touch-icon" href="bunker-icon.png">
     <meta name="theme-color" content="#030508">
 
@@ -44,10 +44,8 @@
         .date-header::before { content: '●'; font-size: 0.5rem; text-shadow: 0 0 5px #79c0ff;}
 
         .tab-content { display: none; padding: 10px 15px; animation: fadeSlideUp 0.3s cubic-bezier(0.165, 0.84, 0.44, 1); }
-        .v-chart { animation: fadeSlideUp 0.4s cubic-bezier(0.165, 0.84, 0.44, 1); }
         @keyframes fadeSlideUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
         
-        /* 🟢 V14.0: TABS TRI-CORE 🟢 */
         .core-tabs { display: flex; background: var(--bg-card); padding: 4px; border-radius: 12px; border: 1px solid var(--border-subtle); margin: 0 15px 15px 15px; position: relative; box-shadow: 0 4px 10px rgba(0,0,0,0.3);}
         .core-btn { flex: 1; border: none; padding: 12px 0; border-radius: 10px; font-size: 0.6rem; font-weight: 900; color: var(--text-dim); background: transparent; transition: all 0.3s ease; text-transform: uppercase; z-index: 2; letter-spacing: 0.5px; }
         .core-btn.active { color: #fff; }
@@ -55,6 +53,13 @@
         .core-btn.active.red { text-shadow: 0 0 10px rgba(255,82,82,0.8); }
         .core-btn.active.purple { text-shadow: 0 0 10px rgba(163, 113, 247, 0.8); }
         #core-highlighter { position: absolute; top: 4px; bottom: 4px; left: 4px; width: calc(33.3% - 4px); background: var(--accent-blue); border-radius: 10px; transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), background 0.3s; z-index: 1; }
+
+        /* 🟢 MÓDULO ERGO-SWIPE PARA GRÁFICOS (V14.1) 🟢 */
+        .swipe-container { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 15px; padding: 10px 15px 20px 15px; margin: 0 -15px; scrollbar-width: none; }
+        .swipe-container::-webkit-scrollbar { display: none; }
+        .swipe-card { flex: 0 0 85%; scroll-snap-align: center; background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 16px; padding: 15px; box-shadow: inset 0 0 15px rgba(0,0,0,0.4); position: relative; display: flex; flex-direction: column;}
+        .swipe-title { font-size: 0.7rem; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; color: var(--text-dim); text-align: center; margin-bottom: 10px; }
+        .swipe-indicator { text-align: center; font-size: 0.6rem; color: var(--text-dim); margin-top: -10px; margin-bottom: 15px; letter-spacing: 3px; }
 
         .injection-hud { background: transparent; padding: 20px 0; text-align: center; }
         .monto-gigante { background: transparent; border: none; color: #79c0ff; font-size: 5rem; font-weight: 900; text-align: center; width: 100%; outline: none; padding: 0; font-family: monospace; text-shadow: 0 0 30px rgba(121, 192, 255, 0.4); transition: transform 0.2s;}
@@ -78,7 +83,7 @@
         .mini-kpi-fugas { display: flex; align-items: center; justify-content: space-between; padding: 12px 20px; background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 12px; margin: 0 15px 10px 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.2);}
         
         #modal-historian { position: fixed; inset: 0; background: rgba(3, 5, 8, 0.95); z-index: 25000; display: none; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(10px); padding: 20px; }
-        .hist-box { background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 12px; width: 100%; box-shadow: 0 0 40px rgba(255, 82, 82, 0.2); overflow: hidden; border-top: 4px solid #ff5252;}
+        .hist-box { background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 12px; width: 100%; box-shadow: 0 0 40px rgba(255, 82, 82, 0.2); overflow: hidden; border-top: 4px solid #ff5252; display: flex; flex-direction: column; max-height: 85vh;}
         .hist-header { padding: 15px; background: rgba(0,0,0,0.3); border-bottom: 1px solid var(--border-subtle); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;}
         .hist-body { padding: 15px; overflow-y: auto; flex-grow: 1;}
         
@@ -93,7 +98,6 @@
         .log-item.warning { border-color: rgba(255,152,0,0.4); background: linear-gradient(90deg, rgba(255,152,0,0.1), transparent); }
         .log-item.warning strong, .log-item.warning span { color: #ff9800; }
 
-        /* V14.0 ESTILOS PATRIMONIALES MÓVIL */
         .ptr-box { background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 15px; margin: 0 15px 15px 15px;}
         .ptr-box-title { font-size: 0.8rem; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; border-bottom: 1px solid var(--border-subtle); padding-bottom: 5px; }
         .ptr-input-group { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; gap:10px;}
@@ -131,13 +135,13 @@
 
 <div id="login-screen">
     <h2 style="color:var(--color-proyectado); margin: 20px 0; font-weight:900; font-size:2.5rem; letter-spacing: 2px;">BÚNKER SCADA</h2>
-    <p style="color:var(--text-dim); font-size:0.9rem; margin-bottom:40px; font-family: monospace; letter-spacing: 1px;">[ HUD MÓVIL V14.0 MARADONA ]</p>
+    <p style="color:var(--text-dim); font-size:0.9rem; margin-bottom:40px; font-family: monospace; letter-spacing: 1px;">[ HUD MÓVIL V14.1 CONTEXTUAL ]</p>
     <button onclick="loginWithGoogle()" style="padding:18px 40px; border-radius:12px; font-weight:900; color:black; background:white; border:none; font-size:1.1rem; box-shadow: 0 0 30px rgba(255,255,255,0.3);">INICIAR ENLACE</button>
 </div>
 
 <div class="app-container" id="reportZone">
     <div class="top-bar">
-        <div class="brand">BÚNKER <span class="brand-badge">V14.0</span></div>
+        <div class="brand">BÚNKER <span class="brand-badge">V14.1</span></div>
         <div style="display:flex; gap:8px;">
             <button onclick="toggleLanguage()" style="background:rgba(121,192,255,0.1); border:1px solid rgba(121,192,255,0.4); color:#79c0ff; border-radius:6px; font-weight:bold; font-size:0.7rem; padding:4px 8px;">ENG</button>
             <div id="user-display" class="user-tag">OPERATOR</div>
@@ -154,34 +158,54 @@
 
         <div id="vista-efectivo" style="display: block; animation: fadeSlideUp 0.3s;">
             <div class="master-hud">
-                <div style="font-size:0.7rem; color:var(--text-dim); font-weight:900; text-transform:uppercase; margin-bottom:5px; letter-spacing: 3px;" data-en="NET BALANCE">Maniobra Base</div>
+                <div style="font-size:0.7rem; color:var(--text-dim); font-weight:900; text-transform:uppercase; margin-bottom:5px; letter-spacing: 3px;">Maniobra Base</div>
                 <div class="hud-value">$<span id="txtSaldo">0</span></div>
             </div>
             
             <div class="slave-kpis">
                 <div class="slave-pill purple">
-                    <div style="font-size:0.6rem; font-weight:800; color:var(--text-dim); text-transform:uppercase;" data-en="Real Estate">Infraestructura</div>
+                    <div style="font-size:0.6rem; font-weight:800; color:var(--text-dim); text-transform:uppercase;">Infraestructura</div>
                     <div style="color:var(--text-main); font-size:1.1rem; font-weight:900; margin-top:5px; font-family:monospace;">$<span id="txtTotalInfra">0</span></div>
                 </div>
                 <div class="slave-pill cyan">
-                    <div style="font-size:0.6rem; font-weight:800; color:var(--text-dim); text-transform:uppercase;" data-en="Fleet & Mob.">Flota / Auto</div>
+                    <div style="font-size:0.6rem; font-weight:800; color:var(--text-dim); text-transform:uppercase;">Flota / Auto</div>
                     <div style="color:var(--text-main); font-size:1.1rem; font-weight:900; margin-top:5px; font-family:monospace;">$<span id="txtTotalFlota">0</span></div>
                 </div>
                 <div class="slave-pill red">
-                    <div style="font-size:0.6rem; font-weight:800; color:var(--text-dim); text-transform:uppercase;" data-en="Fixed Overhead">Carga Fija</div>
+                    <div style="font-size:0.6rem; font-weight:800; color:var(--text-dim); text-transform:uppercase;">Carga Fija</div>
                     <div style="color:var(--text-main); font-size:1.1rem; font-weight:900; margin-top:5px; font-family:monospace;">$<span id="txtTotalFijos">0</span></div>
                 </div>
                 <div class="slave-pill orange">
-                    <div style="font-size:0.6rem; font-weight:800; color:var(--text-dim); text-transform:uppercase;" data-en="Variable Burn">Carga Variable</div>
+                    <div style="font-size:0.6rem; font-weight:800; color:var(--text-dim); text-transform:uppercase;">Carga Variable</div>
                     <div style="color:var(--text-main); font-size:1.1rem; font-weight:900; margin-top:5px; font-family:monospace;">$<span id="txtTotalOtros">0</span></div>
                 </div>
             </div>
             
+            <div class="swipe-indicator">⟸ DESLIZA PARA MÁS GRÁFICOS ⟹</div>
+            <div class="swipe-container">
+                <div class="swipe-card">
+                    <div class="swipe-title">Trayectoria (Burn-Rate)</div>
+                    <div style="height:180px; position:relative; width:100%;"><canvas id="chartBurnDown"></canvas></div>
+                    <div style="display:flex; justify-content:space-between; margin-top:10px; font-size:0.7rem; font-family:monospace; color:var(--text-dim);">
+                        <span>Gasto: <strong style="color:#ff5252" id="txtGastoTramo">$0</strong></span>
+                        <span>Promedio: <strong style="color:#d29922" id="txtPromedioZoom">$0</strong></span>
+                    </div>
+                </div>
+                <div class="swipe-card">
+                    <div class="swipe-title">Pulso Vital Diario</div>
+                    <div style="height:180px; position:relative; width:100%;"><canvas id="chartDiario"></canvas></div>
+                </div>
+                <div class="swipe-card">
+                    <div class="swipe-title">Espectro Categórico</div>
+                    <div style="height:180px; position:relative; width:100%;"><canvas id="chartPareto"></canvas></div>
+                </div>
+            </div>
+
             <div class="mini-kpi-fugas">
-                <span style="font-size:0.75rem; color:var(--text-dim); font-weight:800; text-transform:uppercase;" data-en="SYSTEM LEAKS:">Fugas de Dopamina:</span>
+                <span style="font-size:0.75rem; color:var(--text-dim); font-weight:800; text-transform:uppercase;">Fugas de Dopamina:</span>
                 <div>
                     <span id="txtTotalEvitable" style="font-family: monospace; font-weight: 900; color: var(--text-main); margin-right: 8px;">$0</span>
-                    <span id="txtPorcentajeFugas" style="font-size:0.9rem; font-weight:900; color:var(--accent-red); background: rgba(255,82,82,0.1); padding: 4px 8px; border-radius: 6px; box-shadow: 0 0 10px rgba(255,82,82,0.2);">0%</span>
+                    <span id="txtPorcentajeFugas" style="font-size:0.9rem; font-weight:900; color:var(--accent-red); background: rgba(255,82,82,0.1); padding: 4px 8px; border-radius: 6px;">0%</span>
                 </div>
             </div>
             <div id="listaMovilDetalle" class="lista-contenedor"></div>
@@ -189,12 +213,25 @@
 
         <div id="vista-tc" style="display: none; animation: fadeSlideUp 0.3s;">
             <div class="master-hud" style="padding-bottom:15px;">
-                <div style="font-size:0.7rem; color:var(--text-dim); font-weight:900; text-transform:uppercase; margin-bottom:5px; letter-spacing: 3px;" data-en="GLOBAL TC LIABILITIES">Carga TC Global</div>
+                <div style="font-size:0.7rem; color:var(--text-dim); font-weight:900; text-transform:uppercase; margin-bottom:5px; letter-spacing: 3px;">Carga TC Global</div>
                 <div class="hud-value danger">$<span id="txtTotalTC">0</span></div>
             </div>
+            
+            <div class="swipe-indicator">⟸ DESLIZA PARA MÁS GRÁFICOS ⟹</div>
+            <div class="swipe-container" style="background:rgba(255,82,82,0.03); border-top:1px solid rgba(255,82,82,0.2); border-bottom:1px solid rgba(255,82,82,0.2); margin-bottom:15px; padding-top:15px;">
+                <div class="swipe-card" style="border-color:rgba(255,82,82,0.4);">
+                    <div class="swipe-title" style="color:var(--color-fuga);">Horizonte de Deuda (6M)</div>
+                    <div style="height:180px; position:relative; width:100%;"><canvas id="chartRadar"></canvas></div>
+                </div>
+                <div class="swipe-card" style="border-color:rgba(255,82,82,0.4);">
+                    <div class="swipe-title" style="color:var(--color-fuga);">Composición por Comercio</div>
+                    <div style="height:180px; position:relative; width:100%;"><canvas id="chartTCDist"></canvas></div>
+                </div>
+            </div>
+
             <div id="boxImpactoTC" class="impact-pill" style="display:none;">
                 <div style="display:flex; flex-direction:column; gap:4px;">
-                    <span style="font-size: 0.7rem; font-weight: 900; color: var(--accent-red); text-transform:uppercase; letter-spacing: 1px;" data-en="NEXT MONTH IMPACT">Alarma de Impacto</span>
+                    <span style="font-size: 0.7rem; font-weight: 900; color: var(--accent-red); text-transform:uppercase; letter-spacing: 1px;">Alarma de Impacto</span>
                     <span id="lblImpactoMes" style="font-size: 0.9rem; font-weight: bold; color: var(--text-main);">Mayo 2026</span>
                 </div>
                 <strong id="txtImpactoMonto" style="font-size: 1.5rem; font-family: monospace; font-weight: 900; color: var(--accent-red); text-shadow: 0 0 15px rgba(255,82,82,0.5);">$0</strong>
@@ -243,59 +280,10 @@
         </div>
     </div>
 
-    <div id="tab-trend" class="tab-content">
-        <div class="core-tabs" style="margin: 0 0 15px 0; background:var(--bg-card);">
-            <div id="trend-highlighter" style="position: absolute; top: 4px; bottom: 4px; left: 4px; width: calc(25% - 2px); background: var(--border-subtle); border-radius: 10px; transition: transform 0.3s ease; z-index: 1;"></div>
-            <button class="core-btn active" onclick="switchSubChart('vBD', this, 0)" style="color:#fff;">Burn</button>
-            <button class="core-btn" onclick="switchSubChart('vDI', this, 1)">Pulso</button>
-            <button class="core-btn" onclick="switchSubChart('vPA', this, 2)">Polar</button>
-            <button class="core-btn" onclick="switchSubChart('vRA', this, 3)">TC 6M</button>
-        </div>
-        
-        <div style="margin-bottom: 15px;">
-            <button id="btnToggleFechasMovil" style="width: 100%; padding: 12px; border-radius: 10px; border: 1px dashed var(--border-subtle); background: transparent; color: var(--text-dim); text-transform: uppercase; font-weight: 900;" onclick="document.getElementById('cajaFechasCustomMovil').style.display='flex'; this.style.display='none';" data-en="📅 CUSTOM RANGE">📅 DEFINIR RANGO CUSTOM</button>
-            <div id="cajaFechasCustomMovil" style="display:none; gap:5px; animation: fadeSlideUp 0.3s;">
-                <input type="date" id="filtroDesde" style="flex:1; margin:0; padding:12px; font-size:0.8rem; background:var(--bg-elevated); color:white; border:1px solid var(--border-subtle); border-radius:10px;" onchange="actualizarDashboard()">
-                <input type="date" id="filtroHasta" style="flex:1; margin:0; padding:12px; font-size:0.8rem; background:var(--bg-elevated); color:white; border:1px solid var(--border-subtle); border-radius:10px;" onchange="actualizarDashboard()">
-                <button onclick="document.getElementById('filtroDesde').value=''; document.getElementById('filtroHasta').value=''; document.getElementById('cajaFechasCustomMovil').style.display='none'; document.getElementById('btnToggleFechasMovil').style.display='block'; actualizarDashboard();" style="background:rgba(255,82,82,0.1); color:var(--accent-red); border:1px solid rgba(255,82,82,0.3); border-radius:10px; padding:0 15px; font-weight:900;">✖</button>
-            </div>
-        </div>
-
-        <div id="vBD" class="v-chart" style="display:block; padding:15px; background:var(--bg-card); border-radius: 16px; border:1px solid var(--border-subtle); box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
-            <div style="text-align:center; font-size:0.75rem; font-weight:900; color:var(--text-dim); margin-bottom:10px; letter-spacing:1px;" data-en="BURN-RATE TRAJECTORY">TRAYECTORIA (BURN-RATE)</div>
-            <div style="height:250px;"><canvas id="chartBurnDown"></canvas></div>
-            <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border-subtle);">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                    <div style="background: var(--bg-elevated); padding: 12px; border-radius: 10px; text-align: center;">
-                        <div style="font-size: 0.65rem; color: var(--text-dim); font-weight: 800; text-transform: uppercase;">Gasto Tramo</div>
-                        <div style="font-size: 1.25rem; font-weight: 900; color: var(--accent-red); font-family:monospace;" id="txtGastoTramo">$0</div>
-                    </div>
-                    <div style="background: var(--bg-elevated); padding: 12px; border-radius: 10px; text-align: center;">
-                        <div style="font-size: 0.65rem; color: var(--text-dim); font-weight: 800; text-transform: uppercase;">Promedio Día</div>
-                        <div style="font-size: 1.25rem; font-weight: 900; color: var(--accent-orange); font-family:monospace;" id="txtPromedioZoom">$0</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div id="vDI" class="v-chart" style="display:none; padding:15px; background:var(--bg-card); border-radius: 16px; border:1px solid var(--border-subtle); box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
-            <div style="text-align:center; font-size:0.75rem; font-weight:900; color:var(--text-dim); margin-bottom:10px; letter-spacing:1px;" data-en="VITAL PULSE (BASE VS LEAK)">PULSO VITAL (BASE VS FUGA)</div>
-            <div style="height:350px;"><canvas id="chartDiario"></canvas></div>
-        </div>
-        <div id="vPA" class="v-chart" style="display:none; padding:15px; background:var(--bg-card); border-radius: 16px; border:1px solid var(--border-subtle); box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
-            <div style="text-align:center; font-size:0.75rem; font-weight:900; color:var(--text-dim); margin-bottom:10px; letter-spacing:1px;" data-en="CATEGORICAL SPECTRUM">ESPECTRO CATEGÓRICO</div>
-            <div style="height:350px;"><canvas id="chartPareto"></canvas></div>
-        </div>
-        <div id="vRA" class="v-chart" style="display:none; padding:15px; background:var(--bg-card); border-radius: 16px; border:1px solid rgba(255,82,82,0.2); box-shadow: 0 10px 30px rgba(255,82,82,0.1);">
-            <div style="text-align:center; font-size:0.75rem; font-weight:900; color:var(--accent-red); margin-bottom:10px; letter-spacing:1px;" data-en="TC LIABILITY HORIZON">HORIZONTE DE DEUDA (6M)</div>
-            <div style="height:350px;"><canvas id="chartRadar"></canvas></div>
-        </div>
-    </div>
-
     <div id="tab-add" class="tab-content" style="padding: 10px;">
         <input type="hidden" id="editId">
         <div class="injection-hud">
-            <div style="font-size:0.75rem; color:var(--text-dim); font-weight:900; text-transform:uppercase; letter-spacing: 3px;" data-en="Injection Protocol">Protocolo de Inyección</div>
+            <div style="font-size:0.75rem; color:var(--text-dim); font-weight:900; text-transform:uppercase; letter-spacing: 3px;">Protocolo de Inyección</div>
             <input type="text" id="inputMonto" class="monto-gigante" inputmode="numeric" pattern="[0-9]*" placeholder="$0" oninput="formatearEntradaNumerica(this)">
         </div>
         
@@ -322,47 +310,44 @@
                 </select>
             </div>
             
-            <button id="btnGuardar" class="btn-inyectar" onclick="agregarMovimiento()" data-en="INJECT DATA">INYECTAR DATOS</button>
+            <button id="btnGuardar" class="btn-inyectar" onclick="agregarMovimiento()">INYECTAR DATOS</button>
         </div>
     </div>
 
     <div id="tab-cloud" class="tab-content">
-        <h3 style="font-weight:900; text-align:center; letter-spacing:2px; margin-bottom:25px; color:var(--text-dim);" data-en="[ SATELLITE LINK ]">[ ENLACE SATELITAL ]</h3>
+        <h3 style="font-weight:900; text-align:center; letter-spacing:2px; margin-bottom:25px; color:var(--text-dim);">[ ENLACE SATELITAL ]</h3>
         
-        <button onclick="abrirPreVuelo()" style="width:100%; padding:22px; border-radius:16px; background:rgba(255, 152, 0, 0.1); color:#ff9800; border:1px solid rgba(255, 152, 0, 0.4); font-weight:900; margin-bottom:15px; box-shadow: 0 10px 25px rgba(255, 152, 0, 0.2); letter-spacing: 1px;" data-en="🚀 PRE-FLIGHT (DAY ZERO)">🚀 PRE-VUELO (DÍA CERO)</button>
+        <button onclick="abrirPreVuelo()" style="width:100%; padding:22px; border-radius:16px; background:rgba(255, 152, 0, 0.1); color:#ff9800; border:1px solid rgba(255, 152, 0, 0.4); font-weight:900; margin-bottom:15px; box-shadow: 0 10px 25px rgba(255, 152, 0, 0.2); letter-spacing: 1px;">🚀 PRE-VUELO (DÍA CERO)</button>
         
-        <button onclick="let b=this; b.innerHTML='⏳ EXPORTANDO...'; b.style.opacity='0.7'; exportarDataLink(); setTimeout(()=>{b.innerHTML='📥 DATA-LINK PRO'; b.style.opacity='1';}, 2000)" style="width:100%; padding:22px; border-radius:16px; background:rgba(121, 192, 255, 0.1); color:#79c0ff; border:1px solid rgba(121, 192, 255, 0.4); font-weight:900; margin-bottom:15px; box-shadow: 0 10px 25px rgba(121, 192, 255, 0.2); letter-spacing: 1px; transition: all 0.2s;" data-en="📥 DATA-LINK EXPORT">📥 DATA-LINK PRO</button>
+        <button onclick="let b=this; b.innerHTML='⏳ EXPORTANDO...'; b.style.opacity='0.7'; exportarDataLink(); setTimeout(()=>{b.innerHTML='📥 DATA-LINK PRO'; b.style.opacity='1';}, 2000)" style="width:100%; padding:22px; border-radius:16px; background:rgba(121, 192, 255, 0.1); color:#79c0ff; border:1px solid rgba(121, 192, 255, 0.4); font-weight:900; margin-bottom:15px; box-shadow: 0 10px 25px rgba(121, 192, 255, 0.2); letter-spacing: 1px; transition: all 0.2s;">📥 DATA-LINK PRO</button>
         
-        <button onclick="abrirHistorian()" style="width:100%; padding:22px; border-radius:16px; background:rgba(255, 82, 82, 0.1); color:#ff5252; border:1px solid rgba(255, 82, 82, 0.4); font-weight:900; margin-bottom:15px; box-shadow: 0 10px 25px rgba(255, 82, 82, 0.2); letter-spacing: 1px;" data-en="⚠️ HISTORIAN ALARMS">⚠️ LOG DE ALARMAS</button>
+        <button onclick="abrirHistorian()" style="width:100%; padding:22px; border-radius:16px; background:rgba(255, 82, 82, 0.1); color:#ff5252; border:1px solid rgba(255, 82, 82, 0.4); font-weight:900; margin-bottom:15px; box-shadow: 0 10px 25px rgba(255, 82, 82, 0.2); letter-spacing: 1px;">⚠️ LOG DE ALARMAS</button>
         
         <button onclick="let b=this; b.innerHTML='⏳ SINCRONIZANDO...'; b.style.opacity='0.7'; triggerSync(); setTimeout(()=>{b.innerHTML='🔄 FORZAR SYNC'; b.style.opacity='1';}, 2500)" style="width:100%; padding:22px; border-radius:16px; background:var(--bg-card); color:white; border:1px solid var(--border-subtle); font-weight:900; margin-bottom:15px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); letter-spacing: 1px; transition: all 0.2s;">🔄 FORZAR SYNC</button>
-        
-        <button onclick="let b=this; b.innerHTML='🚀 TRANSMITIENDO...'; b.style.opacity='0.7'; enviarReporteTelegram(); setTimeout(()=>{b.innerHTML='🚀 TRANSMITIR TELEGRAM'; b.style.opacity='1';}, 2500)" style="width:100%; padding:22px; border-radius:16px; background:rgba(0,136,204,0.1); color:#0088cc; border:1px solid rgba(0,136,204,0.3); font-weight:900; margin-bottom:15px; box-shadow: 0 10px 25px rgba(0,136,204,0.15); letter-spacing: 1px; transition: all 0.2s;">🚀 TRANSMITIR TELEGRAM</button>
     </div>
 
     <div id="tab-settings" class="tab-content">
-        <h3 style="font-weight:900; text-align:center; letter-spacing:2px; color:var(--text-dim);" data-en="[ SYSTEM CONFIG ]">[ SISTEMA ]</h3>
+        <h3 style="font-weight:900; text-align:center; letter-spacing:2px; color:var(--text-dim);">[ SISTEMA ]</h3>
         <div style="background:var(--bg-card); border-radius: 16px; padding:20px; border:1px solid var(--border-subtle); margin-bottom:15px; box-shadow: 0 8px 20px rgba(0,0,0,0.3);">
-            <label style="font-size:0.75rem; font-weight:800; color:var(--text-dim); margin-bottom:10px; display:block; text-transform:uppercase;" data-en="Base Operative Salary">Sueldo Base Operativo</label>
+            <label style="font-size:0.75rem; font-weight:800; color:var(--text-dim); margin-bottom:10px; display:block; text-transform:uppercase;">Sueldo Base Operativo</label>
             <input type="text" id="inputSueldo" style="width:100%; padding:5px 0; background:transparent; border:none; border-bottom:2px solid var(--accent-green); color:var(--text-main); font-size:2.2rem; font-weight:900; outline:none; font-family:monospace;" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); actualizarDashboard();" onchange="guardarSueldoEnNube()">
         </div>
         <div style="margin-top:15px; background:var(--bg-card); border-radius: 16px; padding:20px; border:1px solid var(--border-subtle); margin-bottom:20px; box-shadow: 0 8px 20px rgba(0,0,0,0.3);">
-            <label style="font-size:0.75rem; font-weight:800; color:var(--text-dim); margin-bottom:10px; display:block; text-transform:uppercase;" data-en="Time Navigator">Navegador de Tiempo</label>
+            <label style="font-size:0.75rem; font-weight:800; color:var(--text-dim); margin-bottom:10px; display:block; text-transform:uppercase;">Navegador de Tiempo</label>
             <div style="display:flex; gap:10px;">
                 <select id="navMesConceptual" onchange="aplicarCicloAlSistema()" style="width:100%; padding:14px; background:var(--bg-elevated); color:white; border:1px solid var(--border-subtle); border-radius:10px; outline:none; font-weight:bold;"><option value="0">Enero</option><option value="1">Febrero</option><option value="2">Marzo</option><option value="3" selected>Abril</option><option value="4">Mayo</option><option value="5">Junio</option><option value="6">Julio</option><option value="7">Agosto</option><option value="8">Septiembre</option><option value="9">Octubre</option><option value="10">Noviembre</option><option value="11">Diciembre</option></select>
                 <select id="navAnio" onchange="aplicarCicloAlSistema()" style="width:100%; padding:14px; background:var(--bg-elevated); color:white; border:1px solid var(--border-subtle); border-radius:10px; outline:none; font-weight:bold;"><option value="2025">2025</option><option value="2026" selected>2026</option></select>
             </div>
             <div id="navRangoBadge" style="text-align:center; font-size:0.8rem; color:#79c0ff; margin-top:15px; font-weight:bold; text-transform:uppercase; font-family:monospace; background: rgba(31, 111, 235, 0.1); padding: 8px; border-radius: 8px; border: 1px solid rgba(121, 192, 255, 0.2);"></div>
         </div>
-        <button onclick="logout()" style="width:100%; padding:20px; border-radius:16px; background:rgba(255,82,82,0.1); color:var(--accent-red); border:1px solid rgba(255,82,82,0.3); font-weight:900; text-transform:uppercase; box-shadow: 0 4px 15px rgba(255,82,82,0.15); letter-spacing: 1px;" data-en="🚪 LOGOUT">🚪 DESCONECTAR MATRIZ</button>
+        <button onclick="logout()" style="width:100%; padding:20px; border-radius:16px; background:rgba(255,82,82,0.1); color:var(--accent-red); border:1px solid rgba(255,82,82,0.3); font-weight:900; text-transform:uppercase; box-shadow: 0 4px 15px rgba(255,82,82,0.15); letter-spacing: 1px;">🚪 DESCONECTAR MATRIZ</button>
     </div>
 
     <div class="bottom-nav">
-        <div class="nav-item active" onclick="switchTabApp('dash', this)"><i>📡</i><span data-en="Radar">Radar</span></div>
-        <div class="nav-item" onclick="switchTabApp('trend', this)"><i>📈</i><span data-en="Oracle">Oráculo</span></div>
+        <div class="nav-item active" onclick="switchTabApp('dash', this)"><i>📡</i><span>Radar</span></div>
         <div class="nav-fab" onclick="switchTabApp('add', null)">+</div>
-        <div class="nav-item" onclick="switchTabApp('cloud', this)"><i>☁️</i><span data-en="Cloud">Nube</span></div>
-        <div class="nav-item" onclick="switchTabApp('settings', this)"><i>⚙️</i><span data-en="Set">Set</span></div>
+        <div class="nav-item" onclick="switchTabApp('cloud', this)"><i>☁️</i><span>Nube</span></div>
+        <div class="nav-item" onclick="switchTabApp('settings', this)"><i>⚙️</i><span>Set</span></div>
     </div>
 </div>
 
@@ -373,22 +358,12 @@
     <div id="sheet-title" style="font-weight:900; text-align:center; font-size:1.3rem; margin-bottom:5px; color:var(--text-main); letter-spacing:0.5px;">Operación</div>
     <div id="sheet-subtitle" style="text-align:center; color:var(--text-dim); margin-bottom:25px; font-size:1.5rem; font-family:monospace; font-weight:bold;">$0</div>
     <input type="hidden" id="sheet-id-target">
-    <button onclick="const id=document.getElementById('sheet-id-target').value; closeBottomSheet(); editarMovimiento(id);" style="width:100%; padding:18px; border-radius:15px; background:rgba(31,111,235,0.1); color:var(--accent-blue); border:1px solid rgba(31,111,235,0.2); font-weight:900; font-size:1rem; margin-bottom:12px; transition:transform 0.1s; letter-spacing: 1px; box-shadow: 0 4px 15px rgba(31,111,235,0.15);" data-en="✏️ RECALIBRATE">✏️ RECALIBRAR</button>
-    <button onclick="const id=document.getElementById('sheet-id-target').value; if(confirm('¿ELIMINAR DEL BÚNKER?')) { db.collection('movimientos').doc(id).delete().then(()=> { closeBottomSheet(); if(typeof mostrarToast === 'function') mostrarToast('REGISTRO DESTRUIDO'); }); }" style="width:100%; padding:18px; border-radius:15px; background:rgba(255,82,82,0.1); color:var(--accent-red); border:1px solid rgba(255,82,82,0.2); font-weight:900; font-size:1rem; margin-bottom:12px; transition:transform 0.1s; letter-spacing: 1px; box-shadow: 0 4px 15px rgba(255,82,82,0.15);" data-en="🗑️ DESTROY">🗑️ DESTRUIR</button>
-    <button onclick="closeBottomSheet()" style="width:100%; padding:15px; border-radius:15px; background:transparent; color:var(--text-dim); border:none; font-weight:800; text-transform:uppercase;" data-en="Cancel">Cancelar</button>
+    <button onclick="const id=document.getElementById('sheet-id-target').value; closeBottomSheet(); editarMovimiento(id);" style="width:100%; padding:18px; border-radius:15px; background:rgba(31,111,235,0.1); color:var(--accent-blue); border:1px solid rgba(31,111,235,0.2); font-weight:900; font-size:1rem; margin-bottom:12px; transition:transform 0.1s; letter-spacing: 1px; box-shadow: 0 4px 15px rgba(31,111,235,0.15);">✏️ RECALIBRAR</button>
+    <button onclick="const id=document.getElementById('sheet-id-target').value; if(confirm('¿ELIMINAR DEL BÚNKER?')) { db.collection('movimientos').doc(id).delete().then(()=> { closeBottomSheet(); if(typeof mostrarToast === 'function') mostrarToast('REGISTRO DESTRUIDO'); }); }" style="width:100%; padding:18px; border-radius:15px; background:rgba(255,82,82,0.1); color:var(--accent-red); border:1px solid rgba(255,82,82,0.2); font-weight:900; font-size:1rem; margin-bottom:12px; transition:transform 0.1s; letter-spacing: 1px; box-shadow: 0 4px 15px rgba(255,82,82,0.15);">🗑️ DESTRUIR</button>
+    <button onclick="closeBottomSheet()" style="width:100%; padding:15px; border-radius:15px; background:transparent; color:var(--text-dim); border:none; font-weight:800; text-transform:uppercase;">Cancelar</button>
 </div>
 
-<div id="modal-historian" style="display:none; position:fixed; inset:0; background:rgba(3, 5, 8, 0.95); z-index:25000; flex-direction:column; align-items:center; justify-content:center; backdrop-filter:blur(10px); padding:20px;">
-    <div style="background:var(--bg-card); border:1px solid var(--border-subtle); border-radius:12px; width:100%; max-width:600px; box-shadow:0 0 40px rgba(255,82,82,0.2); border-top:4px solid #ff5252; display:flex; flex-direction:column; max-height:85vh;">
-        <div style="padding:15px; background:rgba(0,0,0,0.3); border-bottom:1px solid var(--border-subtle); display:flex; justify-content:space-between; align-items:center; flex-shrink:0;">
-            <h3 style="color:#ff5252; margin:0; display:flex; align-items:center; gap:10px;"><span style="font-size:1.5rem;">⚠️</span> HISTORIAN LOG</h3>
-            <button onclick="document.getElementById('modal-historian').style.display='none'" style="background:transparent; border:1px solid var(--text-muted); color:var(--text-muted); border-radius:6px; padding:6px 12px; font-weight:bold;">✖ CLOSE</button>
-        </div>
-        <div id="historian-content" style="padding:15px; overflow-y:auto; flex-grow:1;"></div>
-    </div>
-</div>
-
-<div id="modal-dia-cero" style="display:none; position:fixed; inset:0; background:rgba(3, 5, 8, 0.98); z-index:20000; flex-direction:column; overflow-y:auto; padding:20px 15px 100px 15px;">
+<div id="modal-dia-cero" style="display:none; position:fixed; inset:0; background: rgba(3, 5, 8, 0.98); z-index: 20000; flex-direction: column; overflow-y: auto; padding: 20px 15px 100px 15px;">
     <h2 class="pv-title" style="font-size:1.3rem; font-weight:900; color:#ff9800; letter-spacing:2px; margin:20px 0 5px 0; text-transform:uppercase; text-align:center;">SIMULADOR DÍA CERO</h2>
     <div class="pv-subtitle" style="font-size:0.75rem; color:var(--text-muted); font-family:monospace; text-align:center; margin-bottom:20px;">MES DE <span id="pv-mes-label" style="color:#fff; font-weight:bold;">--</span></div>
     
@@ -400,7 +375,7 @@
             <div id="pv-barra-verde" style="background:linear-gradient(90deg, #1b5e20, #2ea043); height:100%; transition:width 0.4s ease; width:100%;"></div>
         </div>
         <div style="text-align:center; font-size:2.8rem; font-weight:900; color:var(--color-saldo); font-family:monospace; margin-top:15px; text-shadow:0 0 20px rgba(46, 160, 67, 0.4);">$<span id="pv-txt-liquidez">0</span></div>
-        <div class="pv-certeza" style="font-size:0.7rem; font-weight:bold; color:var(--text-muted); text-align:center; margin-top:10px; text-transform:uppercase; letter-spacing:1px;">CERTEZA DEL CÁLCULO: <span id="pv-certeza-pct" style="color:#ff5252;">0%</span></div>
+        <div class="pv-certeza" id="pv-certeza-container">CERTEZA DEL CÁLCULO: <span id="pv-certeza-pct" style="color:#ff5252;">0%</span></div>
     </div>
 
     <div style="font-size:0.75rem; font-weight:900; color:#ff5252; text-transform:uppercase; margin:20px 0 10px 0; border-bottom:1px solid var(--border-subtle); padding-bottom:5px; display:flex; align-items:center; gap:5px;"><span>💳</span> Deducciones Críticas</div>
@@ -443,7 +418,6 @@
 </div>
 
 <script>
-    // 🟢 V14.0 LÓGICA DE TRI-CORE (PESTAÑAS)
     function switchDualCore(viewId, el) {
         document.querySelectorAll('.core-btn').forEach(b => { b.classList.remove('active'); b.classList.remove('blue'); b.classList.remove('red'); b.classList.remove('purple'); });
         el.classList.add('active');
@@ -478,7 +452,6 @@
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
             element.classList.add('active');
         }
-        if(tabId === 'trend') { setTimeout(() => { if(typeof chartBD !== 'undefined' && chartBD) chartBD.resize(); if(typeof chartDiario !== 'undefined' && chartDiario) chartDiario.resize(); if(typeof chartP !== 'undefined' && chartP) chartP.resize(); if(typeof chartRadar !== 'undefined' && chartRadar) chartRadar.resize(); }, 10); }
         if (tabId === 'add' && !document.getElementById('editId').value) {
             let now = new Date(); now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
             document.getElementById('inputFecha').value = now.toISOString().slice(0,16);
@@ -488,20 +461,6 @@
         }
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
-    
-    window.switchTab = function(t) { switchTabApp(t === 'list' ? 'dash' : 'add', document.querySelectorAll('.nav-item')[t === 'list' ? 0 : 2]); };
-    
-    function switchSubChart(id, el, index) {
-        document.querySelectorAll('.v-chart').forEach(v => v.style.display='none');
-        document.getElementById(id).style.display='block';
-        document.querySelectorAll('#tab-trend .core-btn').forEach(b => b.classList.remove('active'));
-        el.classList.add('active');
-        const highlighter = document.getElementById('trend-highlighter');
-        highlighter.style.transform = `translateX(${index * 100}%)`;
-    }
-    
-    function openBottomSheet(id, n, m) { document.getElementById('sheet-title').innerText = n; document.getElementById('sheet-subtitle').innerText = "$" + m.toLocaleString('es-CL'); document.getElementById('sheet-id-target').value = id; const overlay = document.getElementById('bottom-sheet-overlay'); const sheet = document.getElementById('bottom-sheet'); overlay.style.display = 'block'; setTimeout(() => { overlay.style.opacity = '1'; sheet.style.bottom = '0'; }, 10); }
-    function closeBottomSheet() { const overlay = document.getElementById('bottom-sheet-overlay'); const sheet = document.getElementById('bottom-sheet'); sheet.style.bottom = '-100%'; overlay.style.opacity = '0'; setTimeout(()=> overlay.style.display = 'none', 300); }
 </script>
 <script src="motor.js"></script>
 </body>
