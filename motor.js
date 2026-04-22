@@ -23,7 +23,7 @@ async function inicializarSensorDolar() {
 document.addEventListener("DOMContentLoaded", inicializarSensorDolar);
 
 // ==========================================================
-// 🧠 BÚNKER SCADA ORACLE - MOTOR LÓGICO V14.0 (MARADONA EDITION)
+// 🧠 BÚNKER SCADA ORACLE - MOTOR LÓGICO V14.1 
 // ==========================================================
 const BYRON_EMAIL = "bvhcc94@gmail.com"; 
 const catEvitables = ["Dopamina & Antojos"]; 
@@ -136,7 +136,7 @@ firebase.initializeApp({ apiKey: "AIzaSyBiYETN_JipXWhMq9gKz-2Pap-Ce4ZJNAI", auth
 const db = firebase.firestore(), auth = firebase.auth();
 
 let listaMovimientos = [], datosMesGlobal = []; 
-let chartBD = null, chartP = null, chartDiario = null, chartRadar = null;
+let chartBD = null, chartP = null, chartDiario = null, chartRadar = null, chartTCDist = null;
 let currentSort = { column: 'fechaISO', direction: 'desc' }; 
 let modoEdicionActivo = false, sueldosHistoricos = {}; 
 let datosPatrimonio = { inyectado: 0, tir: 8, auto: 0, otrosActivos: 0, cae: 0, hipotecario: 0, otrosPasivos: 0 };
@@ -176,7 +176,7 @@ window.logout = function() {
 auth.onAuthStateChanged(user => {
     if (user) {
         if (user.email.toLowerCase() === BYRON_EMAIL.toLowerCase()) {
-            console.log("%c[ORACLE V14.0] MATRIX ONLINE", "color: #2ea043; font-weight: bold; font-size: 14px;");
+            console.log("%c[ORACLE V14.1] MATRIX ONLINE", "color: #2ea043; font-weight: bold; font-size: 14px;");
             const loginScreen = document.getElementById('login-screen'), reportZone = document.getElementById('reportZone');
             if(loginScreen) loginScreen.style.display = 'none';
             if(reportZone) reportZone.classList.add('active-app');
@@ -186,7 +186,6 @@ auth.onAuthStateChanged(user => {
             
             db.collection("parametros").doc("sueldos").onSnapshot(snap => { if(snap.exists) sueldosHistoricos = snap.data(); });
             
-            // 🟢 V14.0 Carga de Patrimonio 🟢
             db.collection("parametros").doc("patrimonio").onSnapshot(snap => { 
                 if(snap.exists) {
                     datosPatrimonio = snap.data();
@@ -205,7 +204,7 @@ auth.onAuthStateChanged(user => {
                 aplicarCicloAlSistema();
             });
             inicializarListenerTC();
-            iniciarRelojRendimiento(); // 🟢 V14.0 Inicia el Motor de Dopamina
+            iniciarRelojRendimiento(); 
         } else {
             auth.signOut(); alert(`⛔ DENEGADO:\nEl correo ${user.email} no tiene permisos.`);
         }
@@ -244,86 +243,56 @@ window.guardarSueldoEnNube = function() {
     });
 };
 
-// ==========================================================
-// 🟢 V14.0: MOTOR PATRIMONIAL Y RELOJ DE RENDIMIENTO 🟢
-// ==========================================================
 function renderizarPatrimonioVisual() {
     const s = (id, val) => { const el = document.getElementById(id); if(el && document.activeElement !== el) el.value = (val||0).toLocaleString('es-CL'); };
-    s('ptr-inversion', datosPatrimonio.inyectado);
-    s('ptr-tir', datosPatrimonio.tir);
-    s('ptr-auto', datosPatrimonio.auto);
-    s('ptr-otros-act', datosPatrimonio.otrosActivos);
-    s('ptr-cae', datosPatrimonio.cae);
-    s('ptr-hipo', datosPatrimonio.hipotecario);
-    s('ptr-otros-pas', datosPatrimonio.otrosPasivos);
+    s('ptr-inversion', datosPatrimonio.inyectado); s('ptr-tir', datosPatrimonio.tir); s('ptr-auto', datosPatrimonio.auto);
+    s('ptr-otros-act', datosPatrimonio.otrosActivos); s('ptr-cae', datosPatrimonio.cae); s('ptr-hipo', datosPatrimonio.hipotecario); s('ptr-otros-pas', datosPatrimonio.otrosPasivos);
     calcularPatrimonioGlobal();
 }
 
 window.guardarPatrimonioEnNube = function() {
     const g = (id) => parseInt((document.getElementById(id).value || "0").replace(/\./g, '')) || 0;
-    datosPatrimonio = {
-        inyectado: g('ptr-inversion'), tir: g('ptr-tir'), auto: g('ptr-auto'), otrosActivos: g('ptr-otros-act'),
-        cae: g('ptr-cae'), hipotecario: g('ptr-hipo'), otrosPasivos: g('ptr-otros-pas')
-    };
-    db.collection("parametros").doc("patrimonio").set(datosPatrimonio).then(() => {
-        mostrarToast("ESTADO PATRIMONIAL ACTUALIZADO");
-        calcularPatrimonioGlobal();
-    });
+    datosPatrimonio = { inyectado: g('ptr-inversion'), tir: g('ptr-tir'), auto: g('ptr-auto'), otrosActivos: g('ptr-otros-act'), cae: g('ptr-cae'), hipotecario: g('ptr-hipo'), otrosPasivos: g('ptr-otros-pas') };
+    db.collection("parametros").doc("patrimonio").set(datosPatrimonio).then(() => { mostrarToast("ESTADO PATRIMONIAL ACTUALIZADO"); calcularPatrimonioGlobal(); });
 }
 
 let tickerRendimiento = 0;
 function iniciarRelojRendimiento() {
     setInterval(() => {
-        let inv = datosPatrimonio.inyectado || 0;
-        let tir = (datosPatrimonio.tir || 8) / 100;
-        // Ganancia por segundo = (Inversion * TIR) / Segundos en un año
+        let inv = datosPatrimonio.inyectado || 0; let tir = (datosPatrimonio.tir || 8) / 100;
         let gananciaPorSegundo = (inv * tir) / 31536000; 
         tickerRendimiento += gananciaPorSegundo;
         
         const elTicker = document.getElementById('live-yield-counter');
         const elDiario = document.getElementById('live-yield-daily');
-        if(elTicker) {
-            elTicker.innerText = `+ $${tickerRendimiento.toFixed(4)}`;
-        }
-        if(elDiario && inv > 0) {
-            let diario = (inv * tir) / 365;
-            elDiario.innerText = `($${Math.round(diario).toLocaleString('es-CL')} / día en Automático)`;
-        }
+        if(elTicker) { elTicker.innerText = `+ $${tickerRendimiento.toFixed(4)}`; }
+        if(elDiario && inv > 0) { let diario = (inv * tir) / 365; elDiario.innerText = `($${Math.round(diario).toLocaleString('es-CL')} / día en Automático)`; }
     }, 1000);
 }
 
 function calcularPatrimonioGlobal() {
-    let liquidezBanco = 0; // Se obtiene del balance del mes actual
+    let liquidezBanco = 0; 
     const elSaldo = document.getElementById('txtSaldo');
     if(elSaldo) liquidezBanco = parseInt(elSaldo.innerText.replace(/\./g, '')) || 0;
     
     let totalActivos = liquidezBanco + (datosPatrimonio.inyectado || 0) + (datosPatrimonio.auto || 0) + (datosPatrimonio.otrosActivos || 0);
-    
     let totalDeudaTC = window.totalTC || 0;
     let totalPasivos = totalDeudaTC + (datosPatrimonio.cae || 0) + (datosPatrimonio.hipotecario || 0) + (datosPatrimonio.otrosPasivos || 0);
-    
     let patrimonioNeto = totalActivos - totalPasivos;
     
     const setT = (id, val) => { const el = document.getElementById(id); if(el) el.innerText = val.toLocaleString('es-CL'); };
-    setT('hud-patrimonio-neto', patrimonioNeto);
-    setT('hud-activos', totalActivos);
-    setT('hud-pasivos', totalPasivos);
+    setT('hud-patrimonio-neto', patrimonioNeto); setT('hud-activos', totalActivos); setT('hud-pasivos', totalPasivos);
     
     const elPN = document.getElementById('hud-patrimonio-neto');
     if(elPN) elPN.style.color = patrimonioNeto < 0 ? "var(--color-fuga)" : "#79c0ff";
     
-    // Dibujar barrita visual de balance
     const barraA = document.getElementById('ptr-bar-activos');
     const barraP = document.getElementById('ptr-bar-pasivos');
     if(barraA && barraP) {
         let max = totalActivos + totalPasivos;
-        if (max > 0) {
-            barraA.style.width = (totalActivos / max * 100) + "%";
-            barraP.style.width = (totalPasivos / max * 100) + "%";
-        }
+        if (max > 0) { barraA.style.width = (totalActivos / max * 100) + "%"; barraP.style.width = (totalPasivos / max * 100) + "%"; }
     }
 }
-// ==========================================================
 
 let alarmLogCache = "";
 window.abrirHistorian = function() {
@@ -357,23 +326,19 @@ function actualizarDashboard() {
 
     datosMesGlobal = [...dataMes];
     let saldoAcc = sueldo, tI = 0, tF = 0, tO = 0, tC = 0, tEvitable = 0, tInfra = 0, tFlota = 0, gCat = {};
-    let totalTC_legacy = 0; 
     
     [...dataMes].sort((x,y) => x.fechaISO < y.fechaISO ? -1 : 1).forEach(x => {
-        if (x.catV === 'Gasto Tarjeta de Crédito') totalTC_legacy += x.monto;
-        else { 
+        if (x.catV !== 'Gasto Tarjeta de Crédito') { 
             if (x.esIn) { tI += x.monto; saldoAcc += x.monto; }
             else if (x.tipo === 'Por Cobrar' || x.categoria === 'Cuentas por Cobrar (Activos)') tC += x.monto;
             else if (!x.esNeutro) {
                 saldoAcc -= x.monto;
-                
                 if (x.catV === 'Infraestructura (Depto)') { tInfra += x.monto; }
                 else if (x.catV === 'Flota & Movilidad') { tFlota += x.monto; }
                 else if (x.tipo === 'Gasto Fijo') { tF += x.monto; } 
                 else { tO += x.monto; }
                 
                 gCat[x.catV] = (gCat[x.catV] || 0) + x.monto;
-                
                 let pctFuga = x.innecesarioPct !== undefined ? x.innecesarioPct : (catEvitables.includes(x.catV) ? 100 : 0);
                 tEvitable += (x.monto * (pctFuga / 100));
             }
@@ -383,8 +348,7 @@ function actualizarDashboard() {
     const setTxt = (id, val) => { const el = document.getElementById(id); if(el) el.innerText = val.toLocaleString('es-CL'); };
     setTxt('txtTotalFijos', tF); setTxt('txtTotalOtros', tO); setTxt('txtTotalIngresos', tI);
     setTxt('txtCxC', tC); setTxt('txtSaldo', saldoAcc);
-    setTxt('txtTotalInfra', tInfra); 
-    setTxt('txtTotalFlota', tFlota); 
+    setTxt('txtTotalInfra', tInfra); setTxt('txtTotalFlota', tFlota); 
     
     const diasCiclo = Math.max(1, Math.round((TFinal - T0) / 86400000));
     const hoy = new Date();
@@ -407,7 +371,7 @@ function actualizarDashboard() {
         else txtPctFugas.style.color = "var(--color-fuga)";
     }
 
-    let deudaAprox = typeof window.totalTC !== 'undefined' ? window.totalTC : (typeof totalTC_legacy !== 'undefined' ? totalTC_legacy : 0); 
+    let deudaAprox = window.totalTC || 0; 
     const txtProyectado = document.getElementById('txtProyectado');
     if(txtProyectado) {
         let proyVal = saldoAcc - deudaAprox;
@@ -417,12 +381,12 @@ function actualizarDashboard() {
 
     let dataGraficos = dataMes.filter(x => x.catV !== 'Gasto Tarjeta de Crédito');
     if (typeof renderizarListas === 'function') renderizarListas(sueldo, b);
-    if (typeof dibujarGraficos === 'function') dibujarGraficos(sueldo, [...dataGraficos].sort((x,y) => x.fechaISO < y.fechaISO ? -1 : 1), gCat, diasCiclo, T0, tF, tInfra, tFlota, deudaAprox);
+    if (typeof dibujarGraficosFlujo === 'function') dibujarGraficosFlujo(sueldo, [...dataGraficos].sort((x,y) => x.fechaISO < y.fechaISO ? -1 : 1), gCat, diasCiclo, T0, tF, tInfra, tFlota);
     
     setTxt('txtGastoTramo', tO + tF);
     setTxt('txtPromedioZoom', Math.round((tO + tF) / diasCiclo));
     
-    calcularPatrimonioGlobal(); // 🟢 Refrescar Patrimonio con liquidez actual
+    calcularPatrimonioGlobal(); 
 }
 
 if (typeof window.renderizarListas === 'undefined') {
@@ -484,7 +448,6 @@ if (typeof window.renderizarListas === 'undefined') {
                 <td style="text-align:center;"><button class="btn-sys" style="padding:2px 6px; border:none; background:transparent; font-size:1rem;" onclick="editarMovimiento('${x.firestoreId}')">✏️</button></td>
             </tr>`;
         });
-
         contenedorPC.innerHTML = htmlPC;
     }
 }
@@ -562,19 +525,14 @@ function massDelete() { const ids = Array.from(document.querySelectorAll('.row-c
 function massCategorize() { const ids = Array.from(document.querySelectorAll('.row-check:not(#checkAll):checked')).map(cb => cb.value); const cat = document.getElementById('massCategorySelect').value; if(ids.length === 0 || !cat || !confirm(`¿Categorizar como "${cat}"?`)) return; const btn = document.querySelector('button[onclick="massCategorize()"]'); const orig = btn.innerHTML; btn.innerHTML = '⏳'; Promise.all(ids.map(id => db.collection("movimientos").doc(id).update({categoria: cat}))).then(() => { document.getElementById('massActionsBar').style.display = 'none'; document.getElementById('checkAll').checked = false; document.getElementById('massCategorySelect').value = ''; btn.innerHTML = orig; }); }
 
 // =====================================================================
-// 🔮 PROYECTO ORÁCULO: TELEMETRÍA V12.0
+// 🟢 V14.1: TELEMETRÍA CONTEXTUAL SEPARADA (FLUJO) 🟢
 // =====================================================================
-function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0, totalFijosMes, tInfra, tFlota, deudaAprox) {
-    if(chartBD) chartBD.destroy(); if(chartP) chartP.destroy(); 
-    if(chartDiario) chartDiario.destroy(); if(chartRadar) chartRadar.destroy();
-    
+function dibujarGraficosFlujo(sueldo, chronData, cats, diasCiclo, T0, totalFijosMes, tInfra, tFlota) {
+    if(chartBD) chartBD.destroy(); if(chartP) chartP.destroy(); if(chartDiario) chartDiario.destroy(); 
     const cT = getComputedStyle(document.body).getPropertyValue('--text-main').trim() || "#f0f6fc"; 
     const cG = getComputedStyle(document.body).getPropertyValue('--border-color').trim() || "#21262d"; 
     
-    let daily = Array(diasCiclo + 1).fill(0);
-    let dailyNecesario = Array(diasCiclo + 1).fill(0); 
-    let dailyFugas = Array(diasCiclo + 1).fill(0); 
-    let msT0 = T0.getTime();
+    let daily = Array(diasCiclo + 1).fill(0), dailyNecesario = Array(diasCiclo + 1).fill(0), dailyFugas = Array(diasCiclo + 1).fill(0), msT0 = T0.getTime();
 
     chronData.forEach(m => {
         let d = new Date(m.fechaISO);
@@ -592,36 +550,27 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0, totalFijosMes, 
     });
 
     let actual = [sueldo], ideal = [sueldo], proyeccion = Array(diasCiclo + 1).fill(null);
-    let labelsX = ["INI"]; let labelsFechas = ["INI"]; 
-    
+    let labelsX = ["INI"], labelsFechas = ["INI"]; 
     let acc = sueldo, limit = Math.floor((Date.now() - msT0) / 86400000) + 1;
     const nombresMes = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"];
 
     for(let i=1; i<=diasCiclo; i++) {
-        ideal.push(sueldo - (sueldo/diasCiclo)*i); 
-        acc += daily[i]; 
-        actual.push(i > limit ? null : acc);
-        
-        let f = new Date(msT0 + (i-1)*86400000); let dia = String(f.getDate()).padStart(2, '0');
-        let mesStr = nombresMes[f.getMonth()];
-        labelsFechas.push(`${dia} ${mesStr}`); 
-        labelsX.push(f.getDate() === 1 ? `${dia} ${mesStr}` : dia); 
+        ideal.push(sueldo - (sueldo/diasCiclo)*i); acc += daily[i]; actual.push(i > limit ? null : acc);
+        let f = new Date(msT0 + (i-1)*86400000), dia = String(f.getDate()).padStart(2, '0'), mesStr = nombresMes[f.getMonth()];
+        labelsFechas.push(`${dia} ${mesStr}`); labelsX.push(f.getDate() === 1 ? `${dia} ${mesStr}` : dia); 
     }
 
     if(limit > 1 && limit <= diasCiclo) {
         let gastoAcumulado = sueldo - actual[limit];
         let promedioGastoDiario = gastoAcumulado / limit;
         proyeccion[limit] = actual[limit];
-        for(let i = limit + 1; i <= diasCiclo; i++) {
-            proyeccion[i] = proyeccion[i-1] - promedioGastoDiario;
-        }
+        for(let i = limit + 1; i <= diasCiclo; i++) proyeccion[i] = proyeccion[i-1] - promedioGastoDiario;
     }
 
     const ctxBD = document.getElementById('chartBurnDown');
     if(ctxBD) {
         let grad = ctxBD.getContext('2d').createLinearGradient(0, 0, 0, 400);
         grad.addColorStop(0, 'rgba(31, 111, 235, 0.4)'); grad.addColorStop(1, 'rgba(31, 111, 235, 0)');
-        
         chartBD = new Chart(ctxBD, {
             type: 'line', 
             data: { labels: labelsX, datasets: [
@@ -637,18 +586,21 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0, totalFijosMes, 
     const bgColors = ['rgba(31, 111, 235, 0.7)', 'rgba(46, 160, 67, 0.7)', 'rgba(210, 153, 34, 0.7)', 'rgba(255, 82, 82, 0.7)', 'rgba(163, 113, 247, 0.7)', 'rgba(0, 188, 212, 0.7)'];
     const borderColors = ['#1f6feb', '#2ea043', '#d29922', '#ff5252', '#a371f7', '#00bcd4'];
     
-    chartP = new Chart(document.getElementById('chartPareto'), {
-        type: 'polarArea', 
-        data: { labels: sorted.map(c => aliasMap[c[0]] || c[0].split(' ')[0]), datasets: [{ data: sorted.map(c => c[1]), backgroundColor: bgColors, borderColor: borderColors, borderWidth: 2 }] },
-        options: { maintainAspectRatio:false, plugins:{legend:{position: 'right', labels:{color:cT, font:{size:10, family:'monospace'}}}}, scales:{ r:{ticks:{display:false}, grid:{color:cG}, angleLines:{color:cG}} } }
-    });
+    const ctxPareto = document.getElementById('chartPareto');
+    if(ctxPareto) {
+        chartP = new Chart(ctxPareto, {
+            type: 'polarArea', 
+            data: { labels: sorted.map(c => aliasMap[c[0]] || c[0].split(' ')[0]), datasets: [{ data: sorted.map(c => c[1]), backgroundColor: bgColors, borderColor: borderColors, borderWidth: 2 }] },
+            options: { maintainAspectRatio:false, plugins:{legend:{position: 'right', labels:{color:cT, font:{size:10, family:'monospace'}}}}, scales:{ r:{ticks:{display:false}, grid:{color:cG}, angleLines:{color:cG}} } }
+        });
+    }
 
     const ctxDiario = document.getElementById('chartDiario');
     let limiteDiarioIdeal = Math.max((sueldo - totalFijosMes - tInfra - tFlota) / diasCiclo, 0);
     
     alarmLogCache = "";
-    if (deudaAprox > sueldo * 0.15) {
-        alarmLogCache += `<div class='log-item critical'><div class='log-icon'>🛑</div><div class='log-content'><strong>SOBRECARGA TC</strong><div class='log-date'>Riesgo Pasivos > 15%</div><span>$${deudaAprox.toLocaleString('es-CL')}</span></div></div>`;
+    if ((window.totalTC || 0) > sueldo * 0.15) {
+        alarmLogCache += `<div class='log-item critical'><div class='log-icon'>🛑</div><div class='log-content'><strong>SOBRECARGA TC</strong><div class='log-date'>Riesgo Pasivos > 15%</div><span>$${(window.totalTC||0).toLocaleString('es-CL')}</span></div></div>`;
     }
 
     if(ctxDiario) {
@@ -660,12 +612,8 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0, totalFijosMes, 
         let barFugas = dailyFugas.slice(startDayForBars, lastDayWithData + 1);
         
         for(let i=startDayForBars; i<=lastDayWithData; i++) {
-            if (dailyFugas[i] > 0) {
-                alarmLogCache += `<div class='log-item warning'><div class='log-icon'>🍔</div><div class='log-content'><strong>FUGA DOPAMINA</strong><div class='log-date'>${labelsFechas[i]}</div><span>$${dailyFugas[i].toLocaleString('es-CL')}</span></div></div>`;
-            }
-            if ((dailyNecesario[i] + dailyFugas[i]) > limiteDiarioIdeal) {
-                alarmLogCache += `<div class='log-item critical'><div class='log-icon'>🔥</div><div class='log-content'><strong>LÍMITE ROTO</strong><div class='log-date'>${labelsFechas[i]}</div><span>$${(dailyNecesario[i]+dailyFugas[i]).toLocaleString('es-CL')}</span></div></div>`;
-            }
+            if (dailyFugas[i] > 0) alarmLogCache += `<div class='log-item warning'><div class='log-icon'>🍔</div><div class='log-content'><strong>FUGA DOPAMINA</strong><div class='log-date'>${labelsFechas[i]}</div><span>$${dailyFugas[i].toLocaleString('es-CL')}</span></div></div>`;
+            if ((dailyNecesario[i] + dailyFugas[i]) > limiteDiarioIdeal) alarmLogCache += `<div class='log-item critical'><div class='log-icon'>🔥</div><div class='log-content'><strong>LÍMITE ROTO</strong><div class='log-date'>${labelsFechas[i]}</div><span>$${(dailyNecesario[i]+dailyFugas[i]).toLocaleString('es-CL')}</span></div></div>`;
         }
 
         const limiteDiarioPlugin = {
@@ -683,29 +631,23 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0, totalFijosMes, 
 
         chartDiario = new Chart(ctxDiario, {
             type: 'bar',
-            data: { labels: barLabels, datasets: [
-                { label: 'Gasto Base', data: barNecesario, backgroundColor: 'rgba(31, 111, 235, 0.6)', borderRadius: 2 },
-                { label: 'Fuga (Dopamina)', data: barFugas, backgroundColor: 'rgba(255, 82, 82, 0.9)', borderRadius: 2 }
-            ]},
+            data: { labels: barLabels, datasets: [{ label: 'Gasto Base', data: barNecesario, backgroundColor: 'rgba(31, 111, 235, 0.6)', borderRadius: 2 }, { label: 'Fuga (Dopamina)', data: barFugas, backgroundColor: 'rgba(255, 82, 82, 0.9)', borderRadius: 2 }] },
             options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { stacked: true, ticks: { color: cT, font:{size:8} }, grid: { display:false } }, y: { stacked: true, ticks: { color: cT, callback: v => '$' + Math.round(v / 1000) + 'k' }, grid: { color: cG } } } },
             plugins: [limiteDiarioPlugin]
         });
     }
+}
 
-    const setpointTCPlugin = {
-        id: 'setpointTCPlugin',
-        afterDraw: (chart) => {
-            const ctx = chart.ctx; const xAxis = chart.scales.x; const yAxis = chart.scales.y;
-            const umbralSeguridad = sueldo * 0.15;
-            if(yAxis.max > umbralSeguridad) {
-                const yPos = yAxis.getPixelForValue(umbralSeguridad);
-                ctx.save(); ctx.beginPath(); ctx.moveTo(xAxis.left, yPos); ctx.lineTo(xAxis.right, yPos);
-                ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(255, 82, 82, 0.8)'; ctx.setLineDash([5, 5]); ctx.stroke();
-                ctx.fillStyle = '#ff5252'; ctx.font = 'bold 10px monospace'; ctx.fillText('MAX (15%)', xAxis.left + 5, yPos - 5); ctx.restore();
-            }
-        }
-    };
-
+// =====================================================================
+// 🟢 V14.1: TELEMETRÍA CONTEXTUAL SEPARADA (MATRIZ TC) 🟢
+// =====================================================================
+function dibujarGraficosTC(sueldo) {
+    if(chartRadar) chartRadar.destroy(); 
+    if(chartTCDist) chartTCDist.destroy();
+    const cT = getComputedStyle(document.body).getPropertyValue('--text-main').trim() || "#f0f6fc"; 
+    const cG = getComputedStyle(document.body).getPropertyValue('--border-color').trim() || "#21262d"; 
+    
+    // 1. Horizonte TC (6 Meses)
     const ctxProyeccion = document.getElementById('chartRadar');
     if(ctxProyeccion) {
         let mesesLabels = []; let montosProyectados = []; let fechaHoy = new Date();
@@ -719,6 +661,20 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0, totalFijosMes, 
         let grad = ctxProyeccion.getContext('2d').createLinearGradient(0, 0, 0, 300);
         grad.addColorStop(0, 'rgba(255, 82, 82, 0.6)'); grad.addColorStop(1, 'rgba(255, 82, 82, 0.05)');
 
+        const setpointTCPlugin = {
+            id: 'setpointTCPlugin',
+            afterDraw: (chart) => {
+                const ctx = chart.ctx; const xAxis = chart.scales.x; const yAxis = chart.scales.y;
+                const umbralSeguridad = sueldo * 0.15;
+                if(yAxis.max > umbralSeguridad) {
+                    const yPos = yAxis.getPixelForValue(umbralSeguridad);
+                    ctx.save(); ctx.beginPath(); ctx.moveTo(xAxis.left, yPos); ctx.lineTo(xAxis.right, yPos);
+                    ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(255, 82, 82, 0.8)'; ctx.setLineDash([5, 5]); ctx.stroke();
+                    ctx.fillStyle = '#ff5252'; ctx.font = 'bold 10px monospace'; ctx.fillText('MAX (15%)', xAxis.left + 5, yPos - 5); ctx.restore();
+                }
+            }
+        };
+
         chartRadar = new Chart(ctxProyeccion, {
             type: 'line',
             data: { labels: mesesLabels, datasets: [{ label: 'Deuda TC', data: montosProyectados, backgroundColor: grad, borderColor: '#ff5252', borderWidth: 3, fill: true, tension: 0.4, pointRadius: 4, pointBackgroundColor: '#030508', pointBorderColor: '#ff5252' }] },
@@ -726,8 +682,26 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0, totalFijosMes, 
             plugins: [setpointTCPlugin]
         });
     }
+
+    // 2. Composición de Deuda (Gráfico Nuevo)
+    const ctxDist = document.getElementById('chartTCDist');
+    if(ctxDist) {
+        let tcComercios = {};
+        datosTCGlobal.forEach(d => {
+            let n = d.nombre.split(' ')[0]; // Agrupamos por la primera palabra del comercio
+            tcComercios[n] = (tcComercios[n] || 0) + d.monto;
+        });
+        
+        let sortedTC = Object.entries(tcComercios).sort((a,b)=>b[1]-a[1]).slice(0,5); 
+        const bgColorsTC = ['rgba(255, 82, 82, 0.8)', 'rgba(255, 152, 0, 0.8)', 'rgba(210, 153, 34, 0.8)', 'rgba(163, 113, 247, 0.8)', 'rgba(31, 111, 235, 0.8)'];
+        
+        chartTCDist = new Chart(ctxDist, {
+            type: 'doughnut',
+            data: { labels: sortedTC.map(c => c[0]), datasets: [{ data: sortedTC.map(c => c[1]), backgroundColor: bgColorsTC, borderWidth: 1, borderColor: '#030508' }] },
+            options: { maintainAspectRatio: false, cutout: '60%', plugins: { legend: { position: 'right', labels: { color: cT, font: { size: 9, family: 'monospace' } } } } }
+        });
+    }
 }
-// =====================================================================
 
 function calcularFechasCiclo(mesConceptual, anio) {
     let mesInicio = mesConceptual - 1; let anioInicio = anio; if (mesInicio < 0) { mesInicio = 11; anioInicio--; }
@@ -850,7 +824,7 @@ window.exportarTablaBunker = function(idTabla, nombreArchivo) {
 };
 
 // ==========================================================
-// 💳 MATRIZ TC
+// 💳 MATRIZ TC CONTELEMETRÍA
 // ==========================================================
 let datosTCGlobal = [];
 
@@ -861,6 +835,13 @@ function inicializarListenerTC() {
         const txtTotalTC = document.getElementById("txtTotalTC");
         if(txtTotalTC) txtTotalTC.innerText = totalDeuda.toLocaleString('es-CL');
         if(typeof renderizarTablaTC === 'function') renderizarTablaTC();
+        
+        const elAnio = document.getElementById('navAnio');
+        const elMes = document.getElementById('navMesConceptual');
+        let sueldo = 3602505;
+        if(elAnio && elMes) sueldo = obtenerSueldoMes(parseInt(elAnio.value), parseInt(elMes.value));
+        if(typeof dibujarGraficosTC === 'function') dibujarGraficosTC(sueldo); // 🟢 Dibuja gráficos TC
+        
         window.totalTC = totalDeuda; 
         if(typeof actualizarDashboard === 'function') actualizarDashboard();
     }, error => { console.error("🛑 FIREWALL TC:", error); });
