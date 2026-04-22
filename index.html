@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Bunker Digital SCADA v12.4.5 (PC Fix)</title>
+    <title>Bunker Digital SCADA v13.0 (Global Edition)</title>
     
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -39,8 +39,6 @@ h2 { color: var(--text-main); margin: 0; font-size: 1.3rem; font-weight: 900; le
 .kpi-row { display: grid; grid-template-columns: repeat(8, 1fr); gap: 10px; flex-shrink: 0; }
 .kpi-card { padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-panel); border-top: 3px solid var(--border-color); position: relative; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.2);}
 .kpi-card h4 { margin: 0 0 4px 0; font-size: 0.6rem; text-transform: uppercase; color: var(--text-muted); font-weight: 800; letter-spacing: 0.5px;}
-
-/* 🟢 SOLUCIÓN FLEXBOX: Contenedor con Alineación Perfecta 🟢 */
 .kpi-card .value { margin: 0; font-size: 1.15rem; font-weight: 900; color: var(--text-main); font-family: monospace; display: flex; align-items: center; white-space: nowrap; overflow: hidden;}
 .kpi-card .value span { color: var(--text-muted); font-size: 0.95rem; margin-right: 2px;}
 
@@ -52,7 +50,6 @@ h2 { color: var(--text-main); margin: 0; font-size: 1.3rem; font-weight: 900; le
 .kpi-proyectado { background: rgba(121, 192, 255, 0.05); border-color: rgba(121, 192, 255, 0.4); border-top: 3px solid #79c0ff;}
 .kpi-proyectado h4 { color: #79c0ff; }
 
-/* 🟢 SOLUCIÓN RESPIRACIÓN GRÁFICOS: Aumento a 280px 🟢 */
 .charts-panorama { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; flex-shrink: 0; height: 280px; }
 .chart-box { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px 12px 6px 12px; display: flex; flex-direction: column; position: relative; box-shadow: 0 4px 15px rgba(0,0,0,0.2);}
 .chart-box h5 { margin: 0 0 8px 0; font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; font-weight: 900; z-index: 10; text-align: center;}
@@ -61,8 +58,6 @@ h2 { color: var(--text-main); margin: 0; font-size: 1.3rem; font-weight: 900; le
 .bd-badge { padding: 2px 8px; font-size: 0.65rem; font-weight: 900; color: var(--text-main); background: rgba(0,0,0,0.6); border-radius: 4px; border: 1px solid var(--border-color); backdrop-filter: blur(2px);}
 
 .command-ribbon { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; background: linear-gradient(90deg, var(--bg-panel) 0%, rgba(31, 111, 235, 0.08) 100%); border: 1px solid var(--border-color); border-left: 4px solid var(--color-edit); padding: 10px 15px; border-radius: 8px; flex-shrink: 0; box-shadow: 0 5px 20px rgba(0,0,0,0.3);}
-
-/* 🟢 SOLUCIÓN CMD COLISIÓN: Nuevo eje de rotación (vertical-lr) 🟢 */
 .ribbon-title { font-size: 0.7rem; font-weight: 900; color: var(--color-edit); text-transform: uppercase; letter-spacing: 1px; writing-mode: vertical-lr; transform: rotate(180deg); margin: 0 5px 0 0; text-align: center; text-shadow: 0 0 10px rgba(210, 153, 34, 0.5); display: flex; align-items: center; justify-content: center; }
 
 .form-group { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 120px; }
@@ -117,6 +112,7 @@ h2 { color: var(--text-main); margin: 0; font-size: 1.3rem; font-weight: 900; le
 .log-item.warning { border-color: rgba(255,152,0,0.4); background: linear-gradient(90deg, rgba(255,152,0,0.05), transparent); }
 .log-item.warning strong, .log-item.warning span { color: #ff9800; }
 
+/* MÓDULO PRE-VUELO V13.0 */
 #modal-dia-cero { position: fixed; inset: 0; background: rgba(3, 5, 8, 0.95); z-index: 20000; display: none; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(10px); padding: 10px; }
 .pv-container { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 16px; width: 100%; max-width: 900px; max-height: 95vh; box-shadow: 0 0 50px rgba(255, 152, 0, 0.2); display: flex; flex-direction: column; border-top: 4px solid #ff9800; }
 .pv-header { padding: 15px 20px; text-align: center; border-bottom: 1px solid var(--border-color); background: rgba(0,0,0,0.3); flex-shrink:0;}
@@ -156,7 +152,7 @@ h2 { color: var(--text-main); margin: 0; font-size: 1.3rem; font-weight: 900; le
 <div id="login-screen">
     <div class="login-box">
         <h2 style="color:var(--color-proyectado); margin-bottom:10px; font-size: 2rem;">BÚNKER SCADA</h2>
-        <p style="color:var(--text-muted); font-size:0.85rem; letter-spacing: 2px;">VERSIÓN 12.4.5 (ERGO-PC FIX)</p>
+        <p style="color:var(--text-muted); font-size:0.85rem; letter-spacing: 2px;">VERSIÓN 13.0 (GLOBAL EDITION)</p>
         <button class="btn-google" onclick="loginWithGoogle()">INICIAR ENLACE NEURAL</button>
     </div>
 </div>
@@ -164,7 +160,7 @@ h2 { color: var(--text-main); margin: 0; font-size: 1.3rem; font-weight: 900; le
 <div class="app-container" id="reportZone">
     <div class="header-titles">
         <div style="display:flex; align-items:center;">
-            <h2>BUNKER SCADA <span class="scada-badge">V12.4</span></h2>
+            <h2>BUNKER SCADA <span class="scada-badge">V13.0</span></h2>
             <div id="user-display" style="margin-left: 15px; font-size: 0.75rem; color: var(--color-saldo); font-weight:800; text-transform:uppercase;"></div>
         </div>
         <div class="system-btns">
@@ -249,7 +245,7 @@ h2 { color: var(--text-main); margin: 0; font-size: 1.3rem; font-weight: 900; le
             <select id="inputCuotas" class="form-control" style="border-color:var(--color-ingresos);"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="6">6</option><option value="12">12</option></select>
         </div>
         <div class="form-group lg"><label data-en="Description">Descripción</label><input type="text" id="inputNombre" class="form-control" placeholder="[ AUTO-PILOTO M/L ] Ingresa gasto..."></div>
-        <div class="form-group sm"><label data-en="Amount ($)">Monto ($)</label><input type="text" id="inputMonto" class="form-control" oninput="formatearEntradaNumerica(this)" style="color:var(--color-edit); font-weight:bold; font-size:1rem;"></div>
+        <div class="form-group sm"><label data-en="Amount ($)">Monto ($)</label><input type="text" id="inputMonto" class="form-control" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this)" style="color:var(--color-edit); font-weight:bold; font-size:1rem;"></div>
         <button id="btnGuardar" class="btn-ribbon" onclick="agregarMovimiento()" data-en="INJECT">INYECTAR</button>
     </div>
 
@@ -333,7 +329,7 @@ h2 { color: var(--text-main); margin: 0; font-size: 1.3rem; font-weight: 900; le
     </div>
 </div>
 
-<div id="modal-historian">
+<div id="modal-historian" style="display:none; position:fixed; inset:0; background:rgba(3, 5, 8, 0.95); z-index:25000; flex-direction:column; align-items:center; justify-content:center; backdrop-filter:blur(10px); padding:20px;">
     <div class="hist-box">
         <div class="hist-header">
             <h3 style="color:#ff5252; margin:0; display:flex; align-items:center; gap:10px;"><span style="font-size:1.5rem;">⚠️</span> HISTORIAN LOG</h3>
@@ -370,46 +366,51 @@ h2 { color: var(--text-main); margin: 0; font-size: 1.3rem; font-weight: 900; le
                     <div class="pv-section-title" style="color:#ff5252;"><span style="font-size:1rem;">💳</span> Deducciones Críticas</div>
                     <div class="pv-input-group" style="background:rgba(46,160,67,0.1); border-color:var(--color-saldo);">
                         <label style="color:var(--color-saldo);">Sueldo (Ingreso)</label>
-                        <input type="text" id="pv-sueldo" class="pv-input" style="color:var(--color-saldo); border-color:var(--color-saldo);" oninput="formatearEntradaNumerica(this); calcularDiaCero();">
+                        <input type="text" id="pv-sueldo" class="pv-input" style="color:var(--color-saldo); border-color:var(--color-saldo);" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();">
                     </div>
                     <div class="pv-input-group">
                         <label>TC Nacional</label>
                         <button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-tc-nac')">EST</button>
-                        <input type="text" id="pv-tc-nac" class="pv-input" style="color:#ff5252;" placeholder="0" data-estado="est" oninput="formatearEntradaNumerica(this); calcularDiaCero();">
+                        <input type="text" id="pv-tc-nac" class="pv-input" style="color:#ff5252;" placeholder="0" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();">
                     </div>
-                    <div class="pv-input-group">
-                        <label>TC Internacional</label>
-                        <button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-tc-int')">EST</button>
-                        <input type="text" id="pv-tc-int" class="pv-input" style="color:#ff5252;" placeholder="0" data-estado="est" oninput="formatearEntradaNumerica(this); calcularDiaCero();">
+                    
+                    <div style="display:flex; flex-direction:column; width:100%;">
+                        <div class="pv-input-group" style="margin-bottom: 2px; border-color: rgba(255,82,82,0.3);">
+                            <label>TC Inter. <span id="lbl-dolar-actual" style="display:block; font-size:0.55rem; color:var(--text-muted); font-family:monospace; margin-top:2px;">Consultando USD...</span></label>
+                            <button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-tc-int')">EST</button>
+                            <input type="text" id="pv-tc-int" class="pv-input" style="color:#ff5252; width:75px;" placeholder="US$ 0" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();">
+                        </div>
+                        <div id="pv-tc-int-clp" style="text-align:right; font-size:0.7rem; color:#ff5252; font-family:monospace; font-weight:bold; margin-bottom:8px; padding-right:5px;">~ $0 CLP</div>
                     </div>
+
                     <div class="pv-input-group">
                         <label>Línea de Crédito</label>
                         <button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-linea')">EST</button>
-                        <input type="text" id="pv-linea" class="pv-input" style="color:#ff5252;" placeholder="0" data-estado="est" oninput="formatearEntradaNumerica(this); calcularDiaCero();">
+                        <input type="text" id="pv-linea" class="pv-input" style="color:#ff5252;" placeholder="0" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();">
                     </div>
                 </div>
 
                 <div class="pv-section">
                     <div class="pv-section-title" style="color:var(--color-infra);"><span style="font-size:1rem;">🏢</span> Carga Estructural</div>
-                    <div class="pv-input-group"><label>Arriendo</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-arriendo')">EST</button><input type="text" id="pv-arriendo" class="pv-input" value="330.000" data-estado="est" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
-                    <div class="pv-input-group"><label>UDEC 2024</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-udec')">EST</button><input type="text" id="pv-udec" class="pv-input" value="48.000" data-estado="est" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
-                    <div class="pv-input-group"><label>CAE</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-cae')">EST</button><input type="text" id="pv-cae" class="pv-input" value="38.742" data-estado="est" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
+                    <div class="pv-input-group"><label>Arriendo</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-arriendo')">EST</button><input type="text" id="pv-arriendo" class="pv-input" value="330.000" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
+                    <div class="pv-input-group"><label>UDEC 2024</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-udec')">EST</button><input type="text" id="pv-udec" class="pv-input" value="48.000" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
+                    <div class="pv-input-group"><label>CAE</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-cae')">EST</button><input type="text" id="pv-cae" class="pv-input" value="38.742" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
                 </div>
 
                 <div class="pv-section">
                     <div class="pv-section-title" style="color:#d29922;"><span style="font-size:1rem;">⚡</span> Serv. Básicos Hogar</div>
-                    <div class="pv-input-group"><label>Gastos Comunes</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-ggcc')">EST</button><input type="text" id="pv-ggcc" class="pv-input" value="63.220" data-estado="est" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
-                    <div class="pv-input-group"><label>Luz</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-luz')">EST</button><input type="text" id="pv-luz" class="pv-input" value="20.000" data-estado="est" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
-                    <div class="pv-input-group"><label>Agua</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-agua')">EST</button><input type="text" id="pv-agua" class="pv-input" value="8.000" data-estado="est" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
-                    <div class="pv-input-group"><label>Gas</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-gas')">EST</button><input type="text" id="pv-gas" class="pv-input" value="0" data-estado="est" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
+                    <div class="pv-input-group"><label>Gastos Comunes</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-ggcc')">EST</button><input type="text" id="pv-ggcc" class="pv-input" value="63.220" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
+                    <div class="pv-input-group"><label>Luz</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-luz')">EST</button><input type="text" id="pv-luz" class="pv-input" value="20.000" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
+                    <div class="pv-input-group"><label>Agua</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-agua')">EST</button><input type="text" id="pv-agua" class="pv-input" value="8.000" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
+                    <div class="pv-input-group"><label>Gas</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-gas')">EST</button><input type="text" id="pv-gas" class="pv-input" value="0" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
                 </div>
 
                 <div class="pv-section">
                     <div class="pv-section-title" style="color:#79c0ff;"><span style="font-size:1rem;">📱</span> Op. Complementaria</div>
-                    <div class="pv-input-group"><label>Celu Mio</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-celu')">EST</button><input type="text" id="pv-celu" class="pv-input" value="13.990" data-estado="est" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
-                    <div class="pv-input-group"><label>Movistar Madre</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-madre')">EST</button><input type="text" id="pv-madre" class="pv-input" value="19.290" data-estado="est" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
-                    <div class="pv-input-group" title="YT Premium, Disney, Icloud, Google, Spotify, HBO"><label>Pack Subs</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-subs')">EST</button><input type="text" id="pv-subs" class="pv-input" value="20.540" data-estado="est" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
-                    <div class="pv-input-group"><label>Seguro Auto</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-seguro')">EST</button><input type="text" id="pv-seguro" class="pv-input" value="38.300" data-estado="est" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
+                    <div class="pv-input-group"><label>Celu Mio</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-celu')">EST</button><input type="text" id="pv-celu" class="pv-input" value="13.990" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
+                    <div class="pv-input-group"><label>Movistar Madre</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-madre')">EST</button><input type="text" id="pv-madre" class="pv-input" value="19.290" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
+                    <div class="pv-input-group" title="YT Premium, Disney, Icloud, Google, Spotify, HBO"><label>Pack Subs</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-subs')">EST</button><input type="text" id="pv-subs" class="pv-input" value="20.540" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
+                    <div class="pv-input-group"><label>Seguro Auto</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-seguro')">EST</button><input type="text" id="pv-seguro" class="pv-input" value="38.300" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
                 </div>
             </div>
         </div>
