@@ -1,4 +1,30 @@
 // ==========================================================
+// 🌐 V13.1: SENSOR DE DIVISAS BLINDADO (API MINDICADOR)
+// ==========================================================
+window.VALOR_USD = 950; // Fallback instantáneo
+
+async function inicializarSensorDolar() {
+    let lbl = document.getElementById('lbl-dolar-actual');
+    try {
+        let response = await fetch('https://mindicador.cl/api/dolar');
+        let data = await response.json();
+        if(data && data.serie && data.serie.length > 0) {
+            window.VALOR_USD = data.serie[0].valor;
+            console.log("[SYS] DÓLAR SINCRONIZADO: $" + window.VALOR_USD);
+            if(lbl) lbl.innerText = `1 USD = $${Math.round(window.VALOR_USD)} CLP`;
+        } else {
+            throw new Error("Estructura API inválida");
+        }
+    } catch(e) {
+        console.warn("[SYS] Fallo API Dólar, usando fallback estructural: $950");
+        window.VALOR_USD = 950; // Forzamos fallback de seguridad
+        if(lbl) lbl.innerText = `Offline (Ref: $950)`;
+    }
+    if (typeof calcularDiaCero === 'function') calcularDiaCero();
+}
+document.addEventListener("DOMContentLoaded", inicializarSensorDolar);
+
+// ==========================================================
 // 🧠 BÚNKER SCADA ORACLE - MOTOR LÓGICO V12.4.3 (LOGIN FIX)
 // ==========================================================
 const BYRON_EMAIL = "bvhcc94@gmail.com"; 
@@ -945,6 +971,7 @@ function abrirPreVuelo() {
     });
     
     let elTcNac = document.getElementById('pv-tc-nac');
+    
     if(elTcNac && elTcNac.getAttribute('data-estado') === 'est') {
         elTcNac.value = sumaTCMes > 0 ? sumaTCMes.toLocaleString('es-CL') : "";
     }
@@ -1005,14 +1032,20 @@ function calcularDiaCero() {
     
     let tcNac = valSiNoPagado('pv-tc-nac');
     
-    // --- LÓGICA TC INTERNACIONAL (USD a CLP) ---
+// --- LÓGICA TC INTERNACIONAL (USD a CLP) V13.1 ---
     let elTcInt = document.getElementById('pv-tc-int');
-    let tcIntUSD = elTcInt && elTcInt.getAttribute('data-estado') !== 'pag' ? parseInt(elTcInt.value.replace(/\./g, '')) || 0 : 0;
-    let tcIntCLP = Math.round(tcIntUSD * window.VALOR_USD); // Conversión a pesos
+    let tcIntUSD = 0;
+    if (elTcInt && elTcInt.getAttribute('data-estado') !== 'pag') {
+        tcIntUSD = parseInt(elTcInt.value.replace(/\./g, '')) || 0;
+    }
+    
+    // Escudo anti-NaN
+    let valorDolarSeguro = isNaN(window.VALOR_USD) ? 950 : window.VALOR_USD;
+    let tcIntCLP = Math.round(tcIntUSD * valorDolarSeguro); 
     
     let elTcIntCLP = document.getElementById('pv-tc-int-clp');
     if (elTcIntCLP) {
-        if (elTcInt.getAttribute('data-estado') === 'pag') {
+        if (elTcInt && elTcInt.getAttribute('data-estado') === 'pag') {
             elTcIntCLP.innerText = "✔️ PAGADO";
             elTcIntCLP.style.color = "var(--color-saldo)";
         } else {
@@ -1021,7 +1054,7 @@ function calcularDiaCero() {
         }
     }
     let tcInt = tcIntCLP; // Asignamos los pesos al cálculo final
-    // -------------------------------------------
+    // -------------------------------------------------    // -------------------------------------------
 
     let linea = valSiNoPagado('pv-linea');
     let arr = valSiNoPagado('pv-arriendo');
