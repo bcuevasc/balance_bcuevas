@@ -1,469 +1,6 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Bunker Móvil HUD V14.2 (Contextual Edition)</title>
-    <link rel="apple-touch-icon" href="bunker-icon.png">
-    <meta name="theme-color" content="#030508">
-
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
-    
-    <style>
-        :root { --bg-base: #030508; --bg-card: #0d1117; --bg-elevated: #161b22; --text-main: #e6edf3; --text-dim: #7d8590; --accent-blue: #1f6feb; --accent-green: #2ea043; --accent-red: #ff5252; --accent-orange: #d29922; --border-subtle: #21262d; --color-infra: #a371f7; --color-flota: #00bcd4; color-scheme: dark; }
-        * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
-        
-        body { background-color: var(--bg-base); background-image: radial-gradient(rgba(255,255,255,0.02) 1px, transparent 1px); background-size: 25px 25px; color: var(--text-main); margin: 0; padding-bottom: calc(90px + env(safe-area-inset-bottom)); overscroll-behavior-y: none; }
-
-        #login-screen { position: fixed; inset: 0; background: var(--bg-base); display: flex; align-items: center; justify-content: center; z-index: 10000; flex-direction: column; }
-        .top-bar { padding: max(20px, env(safe-area-inset-top)) 20px 10px 20px; display: flex; justify-content: space-between; align-items: center; }
-        .brand { font-weight: 900; font-size: 1.2rem; letter-spacing: 2px; display: flex; align-items: center; gap: 6px;}
-        .brand-badge { background: linear-gradient(90deg, #1f6feb, #79c0ff); color: #fff; font-size: 0.65rem; padding: 2px 8px; border-radius: 4px; font-family: monospace; text-shadow: 0 1px 2px rgba(0,0,0,0.8);}
-        .user-tag { color: var(--accent-green); background: rgba(46, 160, 67, 0.1); border: 1px solid rgba(46, 160, 67, 0.3); font-weight: 800; padding: 4px 10px; border-radius: 6px; font-size: 0.7rem; letter-spacing: 1px; box-shadow: 0 0 10px rgba(46, 160, 67, 0.2); }
-
-        .master-hud { text-align: center; padding: 10px 20px 25px 20px; width: 100%; overflow: hidden;}
-        .hud-value { font-size: clamp(2.5rem, 12vw, 4.5rem); font-weight: 900; letter-spacing: -2px; font-family: monospace; text-shadow: 0 0 30px rgba(31, 111, 235, 0.3); transition: transform 0.3s; word-break: break-all; line-height: 1.1;}
-        .hud-value.danger { color: var(--accent-red); text-shadow: 0 0 30px rgba(255, 82, 82, 0.3); }
-        
-        .slave-kpis { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 15px; margin-bottom: 20px; }
-        .slave-pill { background: var(--bg-card); border: 1px solid var(--border-subtle); padding: 10px; border-radius: 12px; display: flex; flex-direction: column; align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.3); position: relative; overflow: hidden;}
-        .slave-pill::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--border-subtle); }
-        .slave-pill.red::before { background: var(--accent-red); box-shadow: 0 0 10px var(--accent-red); }
-        .slave-pill.orange::before { background: var(--accent-orange); box-shadow: 0 0 10px var(--accent-orange); }
-        .slave-pill.purple::before { background: var(--color-infra); box-shadow: 0 0 10px var(--color-infra); }
-        .slave-pill.cyan::before { background: var(--color-flota); box-shadow: 0 0 10px var(--color-flota); }
-
-        .lista-contenedor { padding: 0 10px; display: flex; flex-direction: column; gap: 6px; margin-top: 5px; padding-bottom: calc(120px + env(safe-area-inset-bottom)); }
-        
-        .mobile-card { background: var(--bg-card) !important; border: 1px solid var(--border-subtle) !important; border-radius: 14px !important; padding: 14px 12px !important; display: flex; align-items: center; transition: transform 0.1s ease; box-shadow: 0 4px 10px rgba(0,0,0,0.2) !important; }
-        .mobile-card:active { transform: scale(0.97); }
-        .date-header { padding-left: 5px; font-size: 0.65rem; font-weight: 900; color: #79c0ff; text-transform: uppercase; margin: 15px 0 5px 5px; letter-spacing: 1px; display: flex; align-items: center; gap: 5px; }
-        .date-header::before { content: '●'; font-size: 0.5rem; text-shadow: 0 0 5px #79c0ff;}
-
-        .tab-content { display: none; padding: 10px 15px; animation: fadeSlideUp 0.3s cubic-bezier(0.165, 0.84, 0.44, 1); }
-        @keyframes fadeSlideUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
-        
-        .core-tabs { display: flex; background: var(--bg-card); padding: 4px; border-radius: 12px; border: 1px solid var(--border-subtle); margin: 0 15px 15px 15px; position: relative; box-shadow: 0 4px 10px rgba(0,0,0,0.3);}
-        .core-btn { flex: 1; border: none; padding: 12px 0; border-radius: 10px; font-size: 0.6rem; font-weight: 900; color: var(--text-dim); background: transparent; transition: all 0.3s ease; text-transform: uppercase; z-index: 2; letter-spacing: 0.5px; }
-        .core-btn.active { color: #fff; }
-        .core-btn.active.blue { text-shadow: 0 0 10px rgba(121, 192, 255, 0.8); }
-        .core-btn.active.red { text-shadow: 0 0 10px rgba(255,82,82,0.8); }
-        .core-btn.active.purple { text-shadow: 0 0 10px rgba(163, 113, 247, 0.8); }
-        #core-highlighter { position: absolute; top: 4px; bottom: 4px; left: 4px; width: calc(33.3% - 4px); background: var(--accent-blue); border-radius: 10px; transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), background 0.3s; z-index: 1; }
-
-        .swipe-container { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 15px; padding: 10px 15px 20px 15px; margin: 0 -15px; scrollbar-width: none; }
-        .swipe-container::-webkit-scrollbar { display: none; }
-        .swipe-card { flex: 0 0 85%; scroll-snap-align: center; background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 16px; padding: 15px; box-shadow: inset 0 0 15px rgba(0,0,0,0.4); position: relative; display: flex; flex-direction: column;}
-        .swipe-title { font-size: 0.7rem; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; color: var(--text-dim); text-align: center; margin-bottom: 10px; }
-        .swipe-indicator { text-align: center; font-size: 0.6rem; color: var(--text-dim); margin-top: -10px; margin-bottom: 15px; letter-spacing: 3px; }
-
-        .injection-hud { background: transparent; padding: 20px 0; text-align: center; }
-        .monto-gigante { background: transparent; border: none; color: #79c0ff; font-size: 5rem; font-weight: 900; text-align: center; width: 100%; outline: none; padding: 0; font-family: monospace; text-shadow: 0 0 30px rgba(121, 192, 255, 0.4); transition: transform 0.2s;}
-        .monto-gigante:focus { transform: scale(1.05); color: #fff; text-shadow: 0 0 30px rgba(255,255,255,0.4); }
-        .terminal-form { background: var(--bg-card); border-radius: 20px; padding: 20px; border: 1px solid var(--border-subtle); box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
-        /* 🟢 V14.2: MEJORA DE CONTRASTE EN PLACEHOLDER 🟢 */
-        .terminal-form input::placeholder { color: #a3adc2; }
-        .terminal-form input[type="text"]:not(.monto-gigante), .terminal-form select, .terminal-form input[type="datetime-local"] { width: 100%; padding: 16px 14px; margin-bottom: 12px; background: var(--bg-elevated); color: white; border: 1px solid var(--border-subtle); border-radius: 10px; font-size: 0.95rem; font-weight: 600; outline: none; -webkit-appearance: none; transition: border-color 0.3s; }
-        .terminal-form input:focus, .terminal-form select:focus { border-color: var(--accent-blue); box-shadow: 0 0 0 1px var(--accent-blue); }
-        
-        .btn-inyectar { width: 100%; padding: 20px; background: var(--accent-blue); color: white; border: none; font-weight: 900; border-radius: 12px; font-size: 1.1rem; text-transform: uppercase; letter-spacing: 2px; margin-top: 10px; box-shadow: 0 8px 20px rgba(31, 111, 235, 0.3); transition: transform 0.1s;}
-        .btn-inyectar:active { transform: scale(0.96); }
-
-        .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(3, 5, 8, 0.9); backdrop-filter: blur(20px); border-top: 1px solid var(--border-subtle); display: flex; justify-content: space-around; align-items: center; padding: 10px 5px calc(15px + env(safe-area-inset-bottom)) 5px; z-index: 1000; }
-        .nav-item { color: var(--text-dim); text-align: center; font-size: 0.65rem; font-weight: 800; padding: 10px 0; flex: 1; text-transform: uppercase; transition: color 0.3s ease, transform 0.2s ease; cursor: pointer; letter-spacing: 0.5px;}
-        .nav-item.active { color: var(--text-main); transform: translateY(-3px); }
-        .nav-item i { display: block; font-size: 1.6rem; margin-bottom: 4px; font-style: normal; transition: transform 0.3s ease; }
-        .nav-item.active i { transform: scale(1.2); color: #79c0ff; text-shadow: 0 0 15px rgba(121, 192, 255, 0.6); }
-        .nav-fab { background: linear-gradient(135deg, #1f6feb, #0b4abf); color: #fff; width: 68px; height: 68px; border-radius: 34px; display: flex; justify-content: center; align-items: center; font-size: 2.5rem; font-weight: 300; margin: -35px 10px 0 10px; box-shadow: 0 10px 30px rgba(31, 111, 235, 0.6); flex-shrink: 0; border: 5px solid var(--bg-base); transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-        .nav-fab:active { transform: scale(0.85); }
-
-        .impact-pill { background: rgba(255, 82, 82, 0.08); border: 1px solid rgba(255,82,82,0.3); border-radius: 12px; padding: 15px; display: flex; justify-content: space-between; align-items: center; margin: 0 15px 15px 15px; box-shadow: 0 0 25px rgba(255,82,82,0.15); border-left: 5px solid var(--accent-red); }
-        .mini-kpi-fugas { display: flex; align-items: center; justify-content: space-between; padding: 12px 20px; background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 12px; margin: 0 15px 10px 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.2);}
-        
-        #modal-historian { position: fixed; inset: 0; background: rgba(3, 5, 8, 0.95); z-index: 25000; display: none; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(10px); padding: 20px; }
-        .hist-box { position: relative; background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 12px; width: 100%; box-shadow: 0 0 40px rgba(255, 82, 82, 0.2); overflow: hidden; border-top: 4px solid #ff5252; display: flex; flex-direction: column; max-height: 85vh;}
-        .hist-header { padding: 15px; background: rgba(0,0,0,0.3); border-bottom: 1px solid var(--border-subtle); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;}
-        .hist-body { padding: 15px; overflow-y: auto; flex-grow: 1;}
-        
-        .log-item { display: flex; gap: 15px; padding: 15px; border-radius: 12px; margin-bottom: 12px; background: var(--bg-elevated); border: 1px solid transparent; align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.2);}
-        .log-icon { font-size: 1.8rem; background: rgba(0,0,0,0.2); width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; border-radius: 50%; flex-shrink: 0;}
-        .log-content { flex: 1; line-height: 1.3; }
-        .log-content strong { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; }
-        .log-content div.log-date { font-size: 0.75rem; color: var(--text-dim); margin-bottom: 4px; }
-        .log-content span { font-family: monospace; font-size: 1.2rem; font-weight: 900; }
-        .log-item.critical { border-color: rgba(255,82,82,0.4); background: linear-gradient(90deg, rgba(255,82,82,0.1), transparent); }
-        .log-item.critical strong, .log-item.critical span { color: #ff5252; }
-        .log-item.warning { border-color: rgba(255,152,0,0.4); background: linear-gradient(90deg, rgba(255,152,0,0.1), transparent); }
-        .log-item.warning strong, .log-item.warning span { color: #ff9800; }
-
-        .ptr-box { background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 15px; margin: 0 15px 15px 15px;}
-        .ptr-box-title { font-size: 0.8rem; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; border-bottom: 1px solid var(--border-subtle); padding-bottom: 5px; }
-        .ptr-input-group { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; gap:10px;}
-        .ptr-input-group label { font-size: 0.75rem; font-weight: bold; color: var(--text-main); flex:1;}
-        .ptr-input { background: var(--bg-elevated); border: 1px solid var(--border-subtle); color: var(--text-main); padding: 8px; border-radius: 6px; font-family: monospace; font-size: 1rem; width: 100px; text-align: right; outline: none; }
-
-        #modal-dia-cero { position: fixed; inset: 0; background: rgba(3, 5, 8, 0.98); z-index: 20000; display: none; flex-direction: column; overflow-y: auto; padding: 20px 15px 100px 15px; }
-        .pv-title { font-size: 1.3rem; font-weight: 900; color: #ff9800; letter-spacing: 2px; margin: 20px 0 5px 0; text-transform: uppercase; text-align: center; }
-        .pv-subtitle { font-size: 0.75rem; color: var(--text-muted); font-family: monospace; text-align: center; margin-bottom: 20px;}
-        .pv-tank-wrapper { background: var(--bg-card); padding: 20px; border-radius: 16px; border: 1px solid var(--border-subtle); margin-bottom: 20px; box-shadow: 0 10px 30px rgba(255, 152, 0, 0.1); border-top: 3px solid #ff9800;}
-        .pv-tank-label { display: flex; justify-content: space-between; font-weight: 900; font-size: 0.7rem; text-transform: uppercase; color: var(--text-muted); margin-bottom: 10px; }
-        .pv-tank { width: 100%; height: 30px; background: rgba(255,255,255,0.05); border-radius: 15px; overflow: hidden; display: flex; border: 1px solid var(--border-subtle); }
-        .pv-fill-rojo { background: linear-gradient(90deg, #b71c1c, #ff5252); height: 100%; transition: width 0.4s ease; }
-        .pv-fill-naranja { background: linear-gradient(90deg, #e65100, #ff9800); height: 100%; transition: width 0.4s ease; }
-        .pv-fill-verde { background: linear-gradient(90deg, #1b5e20, #2ea043); height: 100%; transition: width 0.4s ease; }
-        .pv-liquidez-text { text-align: center; font-size: 2.8rem; font-weight: 900; color: var(--color-saldo); font-family: monospace; margin-top: 15px; text-shadow: 0 0 20px rgba(46, 160, 67, 0.4); }
-        .pv-certeza { font-size: 0.7rem; font-weight: bold; color: var(--text-muted); text-align: center; margin-top: 10px; text-transform: uppercase; letter-spacing: 1px;}
-        .pv-section-title { font-size: 0.75rem; font-weight: 900; text-transform: uppercase; margin: 15px 0 10px 0; border-bottom: 1px solid var(--border-subtle); padding-bottom: 5px; display:flex; align-items:center; gap:5px;}
-        
-        .pv-input-group { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; background: var(--bg-card); padding: 12px 14px; border-radius: 12px; border: 1px solid var(--border-subtle); gap:10px;}
-        .pv-input-group label { font-size: 0.8rem; font-weight: 800; color: var(--text-main); flex:1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
-        .pv-input { background: var(--bg-elevated); border: 1px solid var(--border-subtle); color: white; padding: 10px; border-radius: 8px; font-family: monospace; font-size: 1.1rem; width: 135px; text-align: right; outline: none; font-weight: bold; transition: all 0.3s;}
-        .btn-estado { width: 48px; height: 48px; border-radius: 10px; border: 1px solid var(--border-color); background: var(--bg-panel); color: var(--text-muted); font-size: 0.85rem; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; font-weight: 900; flex-shrink: 0;}
-        
-        .btn-estado.est { border-color: rgba(255, 152, 0, 0.4); color: #ff9800; background: rgba(255, 152, 0, 0.1); }
-        .btn-estado.real { border-color: rgba(31, 111, 235, 0.6); color: #79c0ff; background: rgba(31, 111, 235, 0.2); box-shadow: 0 0 8px rgba(31, 111, 235, 0.3);}
-        .btn-estado.pag { border-color: rgba(46, 160, 67, 0.6); color: #2ea043; background: rgba(46, 160, 67, 0.2); box-shadow: 0 0 8px rgba(46, 160, 67, 0.3);}
-        .pv-input.pagado { text-decoration: line-through; color: var(--text-muted); background: transparent; border-color: transparent;}
-        
-        .btn-pv-launch { width: 100%; padding: 18px; background: #ff9800; color: #000; border: none; border-radius: 12px; font-weight: 900; font-size: 1rem; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; margin-top: 20px; box-shadow: 0 10px 20px rgba(255, 152, 0, 0.3); }
-        .btn-pv-close { width: 100%; padding: 15px; background: transparent; color: var(--text-muted); border: none; font-weight: 900; margin-top: 10px; text-transform: uppercase; }
-    </style>
-</head>
-<body>
-
-<div id="login-screen">
-    <h2 style="color:var(--color-proyectado); margin: 20px 0; font-weight:900; font-size:2.5rem; letter-spacing: 2px;">BÚNKER SCADA</h2>
-    <p style="color:var(--text-dim); font-size:0.9rem; margin-bottom:40px; font-family: monospace; letter-spacing: 1px;">[ HUD MÓVIL V14.2 ERGO-SWIPE ]</p>
-    <button onclick="loginWithGoogle()" style="padding:18px 40px; border-radius:12px; font-weight:900; color:black; background:white; border:none; font-size:1.1rem; box-shadow: 0 0 30px rgba(255,255,255,0.3);">INICIAR ENLACE</button>
-</div>
-
-<div class="app-container" id="reportZone">
-    <div class="top-bar">
-        <div class="brand">BÚNKER <span class="brand-badge">V14.2</span></div>
-        <div style="display:flex; gap:8px;">
-            <button onclick="toggleLanguage()" style="background:rgba(121,192,255,0.1); border:1px solid rgba(121,192,255,0.4); color:#79c0ff; border-radius:6px; font-weight:bold; font-size:0.7rem; padding:4px 8px;">ENG</button>
-            <div id="user-display" class="user-tag">OPERATOR</div>
-        </div>
-    </div>
-
-    <div id="tab-dash" class="tab-content" style="display:block; padding:0;">
-        <div class="core-tabs">
-            <div id="core-highlighter"></div>
-            <button class="core-btn active blue" onclick="switchDualCore('efectivo', this)">Flujo</button>
-            <button class="core-btn" onclick="switchDualCore('tc', this)">Deuda</button>
-            <button class="core-btn" onclick="switchDualCore('patrimonio', this)">Radar</button>
-        </div>
-
-        <div id="vista-efectivo" style="display: block; animation: fadeSlideUp 0.3s;">
-            <div class="master-hud">
-                <div style="font-size:0.7rem; color:var(--text-dim); font-weight:900; text-transform:uppercase; margin-bottom:5px; letter-spacing: 3px;">Maniobra Base</div>
-                <div class="hud-value">$<span id="txtSaldo">0</span></div>
-            </div>
-            
-            <div class="slave-kpis">
-                <div class="slave-pill purple">
-                    <div style="font-size:0.6rem; font-weight:800; color:var(--text-dim); text-transform:uppercase;">Infraestructura</div>
-                    <div style="color:var(--text-main); font-size:1.1rem; font-weight:900; margin-top:5px; font-family:monospace;">$<span id="txtTotalInfra">0</span></div>
-                </div>
-                <div class="slave-pill cyan">
-                    <div style="font-size:0.6rem; font-weight:800; color:var(--text-dim); text-transform:uppercase;">Flota / Auto</div>
-                    <div style="color:var(--text-main); font-size:1.1rem; font-weight:900; margin-top:5px; font-family:monospace;">$<span id="txtTotalFlota">0</span></div>
-                </div>
-                <div class="slave-pill red">
-                    <div style="font-size:0.6rem; font-weight:800; color:var(--text-dim); text-transform:uppercase;">Carga Fija</div>
-                    <div style="color:var(--text-main); font-size:1.1rem; font-weight:900; margin-top:5px; font-family:monospace;">$<span id="txtTotalFijos">0</span></div>
-                </div>
-                <div class="slave-pill orange">
-                    <div style="font-size:0.6rem; font-weight:800; color:var(--text-dim); text-transform:uppercase;">Carga Variable</div>
-                    <div style="color:var(--text-main); font-size:1.1rem; font-weight:900; margin-top:5px; font-family:monospace;">$<span id="txtTotalOtros">0</span></div>
-                </div>
-            </div>
-            
-            <div class="mini-kpi-fugas" style="margin-bottom: 20px;">
-                <span style="font-size:0.75rem; color:var(--text-dim); font-weight:800; text-transform:uppercase;">Fugas de Dopamina:</span>
-                <div>
-                    <span id="txtTotalEvitable" style="font-family: monospace; font-weight: 900; color: var(--text-main); margin-right: 8px;">$0</span>
-                    <span id="txtPorcentajeFugas" style="font-size:0.9rem; font-weight:900; color:var(--accent-red); background: rgba(255,82,82,0.1); padding: 4px 8px; border-radius: 6px;">0%</span>
-                </div>
-            </div>
-
-            <div style="padding: 0 15px; font-size: 0.65rem; font-weight: 900; color: var(--accent-blue); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 10px;">> MOVIMIENTOS RECIENTES</div>
-            <div id="listaMovilDetalle" class="lista-contenedor" style="padding-bottom: 20px;"></div>
-
-            <div style="padding: 20px 15px 0 15px; border-top: 1px solid var(--border-subtle); margin-top: 10px; margin-bottom: 30px;">
-                <div class="swipe-indicator">⟸ TELEMETRÍA ANALÍTICA ⟹</div>
-                <div class="swipe-container">
-                    <div class="swipe-card">
-                        <div class="swipe-title">Trayectoria (Burn-Rate)</div>
-                        <div style="height:180px; position:relative; width:100%;"><canvas id="chartBurnDown"></canvas></div>
-                        <div style="display:flex; justify-content:space-between; margin-top:10px; font-size:0.7rem; font-family:monospace; color:var(--text-dim);">
-                            <span>Gasto: <strong style="color:#ff5252" id="txtGastoTramo">$0</strong></span>
-                            <span>Promedio: <strong style="color:#d29922" id="txtPromedioZoom">$0</strong></span>
-                        </div>
-                    </div>
-                    <div class="swipe-card">
-                        <div class="swipe-title">Pulso Vital Diario</div>
-                        <div style="height:180px; position:relative; width:100%;"><canvas id="chartDiario"></canvas></div>
-                    </div>
-                    <div class="swipe-card">
-                        <div class="swipe-title">Espectro Categórico</div>
-                        <div style="height:180px; position:relative; width:100%;"><canvas id="chartPareto"></canvas></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div id="vista-tc" style="display: none; animation: fadeSlideUp 0.3s;">
-            <div class="master-hud" style="padding-bottom:15px;">
-                <div style="font-size:0.7rem; color:var(--text-dim); font-weight:900; text-transform:uppercase; margin-bottom:5px; letter-spacing: 3px;">Carga TC Global</div>
-                <div class="hud-value danger">$<span id="txtTotalTC">0</span></div>
-            </div>
-            
-            <div class="swipe-indicator">⟸ DESLIZA PARA MÁS GRÁFICOS ⟹</div>
-            <div class="swipe-container" style="background:rgba(255,82,82,0.03); border-top:1px solid rgba(255,82,82,0.2); border-bottom:1px solid rgba(255,82,82,0.2); margin-bottom:15px; padding-top:15px;">
-                <div class="swipe-card" style="border-color:rgba(255,82,82,0.4);">
-                    <div class="swipe-title" style="color:var(--color-fuga);">Horizonte de Deuda (6M)</div>
-                    <div style="height:180px; position:relative; width:100%;"><canvas id="chartRadar"></canvas></div>
-                </div>
-                <div class="swipe-card" style="border-color:rgba(255,82,82,0.4);">
-                    <div class="swipe-title" style="color:var(--color-fuga);">Composición por Comercio</div>
-                    <div style="height:180px; position:relative; width:100%;"><canvas id="chartTCDist"></canvas></div>
-                </div>
-            </div>
-
-            <div id="boxImpactoTC" class="impact-pill" style="display:none;">
-                <div style="display:flex; flex-direction:column; gap:4px;">
-                    <span style="font-size: 0.7rem; font-weight: 900; color: var(--accent-red); text-transform:uppercase; letter-spacing: 1px;">Alarma de Impacto</span>
-                    <span id="lblImpactoMes" style="font-size: 0.9rem; font-weight: bold; color: var(--text-main);">Mayo 2026</span>
-                </div>
-                <strong id="txtImpactoMonto" style="font-size: 1.5rem; font-family: monospace; font-weight: 900; color: var(--accent-red); text-shadow: 0 0 15px rgba(255,82,82,0.5);">$0</strong>
-            </div>
-            <div id="listaMovilTC" class="lista-contenedor"></div>
-        </div>
-
-        <div id="vista-patrimonio" style="display: none; animation: fadeSlideUp 0.3s;">
-            <div class="master-hud" style="padding-bottom:15px;">
-                <div style="font-size:0.7rem; color:var(--text-dim); font-weight:900; text-transform:uppercase; margin-bottom:5px; letter-spacing: 3px;">Patrimonio Neto</div>
-                <div class="hud-value" style="color:#79c0ff; text-shadow: 0 0 20px rgba(121, 192, 255, 0.4);">$<span id="hud-patrimonio-neto">0</span></div>
-                
-                <div style="width:100%; height:6px; background:rgba(255,255,255,0.05); margin-top:15px; border-radius:3px; display:flex; overflow:hidden;">
-                    <div id="ptr-bar-activos" style="height:100%; background:var(--color-saldo); transition:width 0.5s;"></div>
-                    <div id="ptr-bar-pasivos" style="height:100%; background:var(--color-fuga); transition:width 0.5s;"></div>
-                </div>
-                <div style="display:flex; justify-content:space-between; margin-top:8px; font-size:0.65rem; font-family:monospace; font-weight:bold;">
-                    <span style="color:var(--color-saldo);">ACTIVOS: $<span id="hud-activos">0</span></span>
-                    <span style="color:var(--color-fuga);">PASIVOS: $<span id="hud-pasivos">0</span></span>
-                </div>
-            </div>
-
-            <div style="background: rgba(46, 160, 67, 0.05); border: 1px solid rgba(46, 160, 67, 0.3); border-radius: 12px; padding: 15px; text-align: center; margin: 0 15px 20px 15px; box-shadow: 0 0 20px rgba(46, 160, 67, 0.1);">
-                <div style="font-size:0.65rem; color:var(--color-saldo); text-transform:uppercase; font-weight:900; letter-spacing:1px; margin-bottom:5px;">Rendimiento Automático</div>
-                <div id="live-yield-counter" style="font-size:1.8rem; font-weight:900; color:#2ea043; font-family:monospace; text-shadow: 0 0 15px rgba(46, 160, 67, 0.6);">+ $0.0000</div>
-                <div id="live-yield-daily" style="font-size:0.7rem; color:var(--text-muted); font-family:monospace; margin-top:4px;">($0 / día en Automático)</div>
-            </div>
-
-            <div class="ptr-box">
-                <div class="ptr-box-title" style="color:var(--color-saldo);">🟢 Activos Físicos e Inversión</div>
-                <div class="ptr-input-group"><label>Inversión Activa</label><input type="text" id="ptr-inversion" class="ptr-input" inputmode="numeric" oninput="formatearEntradaNumerica(this)"></div>
-                <div class="ptr-input-group"><label>Rendimiento (TIR %)</label><input type="text" id="ptr-tir" class="ptr-input" style="color:var(--color-saldo);" inputmode="numeric" oninput="formatearEntradaNumerica(this)"></div>
-                <div class="ptr-input-group"><label>Vehículo (Tasación)</label><input type="text" id="ptr-auto" class="ptr-input" inputmode="numeric" oninput="formatearEntradaNumerica(this)"></div>
-                <div class="ptr-input-group"><label>Otros Activos</label><input type="text" id="ptr-otros-act" class="ptr-input" inputmode="numeric" oninput="formatearEntradaNumerica(this)"></div>
-            </div>
-            <div class="ptr-box">
-                <div class="ptr-box-title" style="color:var(--color-fuga);">🔴 Pasivos a Largo Plazo</div>
-                <div class="ptr-input-group"><label>Deuda CAE</label><input type="text" id="ptr-cae" class="ptr-input" inputmode="numeric" oninput="formatearEntradaNumerica(this)"></div>
-                <div class="ptr-input-group"><label>Crédito Hipotecario</label><input type="text" id="ptr-hipo" class="ptr-input" inputmode="numeric" oninput="formatearEntradaNumerica(this)"></div>
-                <div class="ptr-input-group"><label>Otros Pasivos</label><input type="text" id="ptr-otros-pas" class="ptr-input" inputmode="numeric" oninput="formatearEntradaNumerica(this)"></div>
-            </div>
-            
-            <div style="padding: 0 15px 40px 15px;">
-                <button onclick="guardarPatrimonioEnNube()" style="width:100%; padding:15px; border-radius:12px; background:#1f6feb; color:white; font-weight:900; border:none; box-shadow:0 5px 15px rgba(31, 111, 235, 0.3); text-transform:uppercase; letter-spacing:1px;">💾 GUARDAR PATRIMONIO</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="tab-add" class="tab-content" style="padding: 10px;">
-        <input type="hidden" id="editId">
-        <div class="injection-hud">
-            <div style="font-size:0.75rem; color:var(--text-dim); font-weight:900; text-transform:uppercase; letter-spacing: 3px;">Protocolo de Inyección</div>
-            <input type="text" id="inputMonto" class="monto-gigante" inputmode="numeric" pattern="[0-9]*" placeholder="$0" oninput="formatearEntradaNumerica(this)">
-        </div>
-        
-        <div class="terminal-form">
-            <input type="text" id="inputNombre" placeholder="[ AUTO-PILOTO ] Descripción..." style="text-align: center; font-weight:bold; letter-spacing:0.5px; border-bottom: 2px solid var(--accent-blue);">
-            
-            <div style="display: flex; gap: 10px;">
-                <select id="inputTipo" style="flex:1;">
-                    <option value="Gasto">Gasto Var.</option><option value="Gasto Fijo">Fijo</option><option value="Ingreso">Ingreso</option><option value="Por Cobrar">Préstamo</option><option value="Ahorro">Ahorro</option>
-                </select>
-                <input type="datetime-local" id="inputFecha" style="flex:1.2; font-size:0.8rem;">
-            </div>
-            
-            <div style="display: flex; gap: 10px;">
-                <select id="inputCategoria" style="flex:1.5;"></select>
-                <select id="inputFuga" style="flex:1; text-align:center;">
-                    <option value="100">100% Fuga</option><option value="50">50% Fuga</option><option value="0" selected>0% Fuga</option>
-                </select>
-            </div>
-            
-            <div id="boxCuotas" style="display:none; animation: fadeSlideUp 0.2s;">
-                <select id="inputCuotas" style="width:100%; text-align:center; border-color:var(--accent-blue); color:var(--accent-blue); font-weight:bold; background: rgba(31, 111, 235, 0.05);">
-                    <option value="1">1 Cuota</option><option value="2">2 Cuotas</option><option value="3">3 Cuotas</option><option value="6">6 Cuotas</option><option value="12">12 Cuotas</option>
-                </select>
-            </div>
-            
-            <button id="btnGuardar" class="btn-inyectar" onclick="agregarMovimiento()">INYECTAR DATOS</button>
-        </div>
-    </div>
-
-    <div id="tab-cloud" class="tab-content">
-        <h3 style="font-weight:900; text-align:center; letter-spacing:2px; margin-bottom:25px; color:var(--text-dim);">[ ENLACE SATELITAL ]</h3>
-        
-        <button onclick="abrirPreVuelo()" style="width:100%; padding:22px; border-radius:16px; background:rgba(255, 152, 0, 0.1); color:#ff9800; border:1px solid rgba(255, 152, 0, 0.4); font-weight:900; margin-bottom:15px; box-shadow: 0 10px 25px rgba(255, 152, 0, 0.2); letter-spacing: 1px;">🚀 PRE-VUELO (DÍA CERO)</button>
-        <button onclick="let b=this; b.innerHTML='⏳ EXPORTANDO...'; b.style.opacity='0.7'; exportarDataLink(); setTimeout(()=>{b.innerHTML='📥 DATA-LINK PRO'; b.style.opacity='1';}, 2000)" style="width:100%; padding:22px; border-radius:16px; background:rgba(121, 192, 255, 0.1); color:#79c0ff; border:1px solid rgba(121, 192, 255, 0.4); font-weight:900; margin-bottom:15px; box-shadow: 0 10px 25px rgba(121, 192, 255, 0.2); letter-spacing: 1px; transition: all 0.2s;">📥 DATA-LINK PRO</button>
-        <button onclick="abrirHistorian()" style="width:100%; padding:22px; border-radius:16px; background:rgba(255, 82, 82, 0.1); color:#ff5252; border:1px solid rgba(255, 82, 82, 0.4); font-weight:900; margin-bottom:15px; box-shadow: 0 10px 25px rgba(255, 82, 82, 0.2); letter-spacing: 1px;">⚠️ LOG DE ALARMAS</button>
-        <button onclick="let b=this; b.innerHTML='⏳ SINCRONIZANDO...'; b.style.opacity='0.7'; triggerSync(); setTimeout(()=>{b.innerHTML='🔄 FORZAR SYNC'; b.style.opacity='1';}, 2500)" style="width:100%; padding:22px; border-radius:16px; background:var(--bg-card); color:white; border:1px solid var(--border-subtle); font-weight:900; margin-bottom:15px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); letter-spacing: 1px; transition: all 0.2s;">🔄 FORZAR SYNC</button>
-    </div>
-
-    <div id="tab-settings" class="tab-content">
-        <h3 style="font-weight:900; text-align:center; letter-spacing:2px; color:var(--text-dim);">[ SISTEMA ]</h3>
-        <div style="background:var(--bg-card); border-radius: 16px; padding:20px; border:1px solid var(--border-subtle); margin-bottom:15px; box-shadow: 0 8px 20px rgba(0,0,0,0.3);">
-            <label style="font-size:0.75rem; font-weight:800; color:var(--text-dim); margin-bottom:10px; display:block; text-transform:uppercase;">Sueldo Base Operativo</label>
-            <input type="text" id="inputSueldo" style="width:100%; padding:5px 0; background:transparent; border:none; border-bottom:2px solid var(--accent-green); color:var(--text-main); font-size:2.2rem; font-weight:900; outline:none; font-family:monospace;" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); actualizarDashboard();" onchange="guardarSueldoEnNube()">
-        </div>
-        <div style="margin-top:15px; background:var(--bg-card); border-radius: 16px; padding:20px; border:1px solid var(--border-subtle); margin-bottom:20px; box-shadow: 0 8px 20px rgba(0,0,0,0.3);">
-            <label style="font-size:0.75rem; font-weight:800; color:var(--text-dim); margin-bottom:10px; display:block; text-transform:uppercase;">Navegador de Tiempo</label>
-            <div style="display:flex; gap:10px;">
-                <select id="navMesConceptual" onchange="aplicarCicloAlSistema()" style="width:100%; padding:14px; background:var(--bg-elevated); color:white; border:1px solid var(--border-subtle); border-radius:10px; outline:none; font-weight:bold;"><option value="0">Enero</option><option value="1">Febrero</option><option value="2">Marzo</option><option value="3" selected>Abril</option><option value="4">Mayo</option><option value="5">Junio</option><option value="6">Julio</option><option value="7">Agosto</option><option value="8">Septiembre</option><option value="9">Octubre</option><option value="10">Noviembre</option><option value="11">Diciembre</option></select>
-                <select id="navAnio" onchange="aplicarCicloAlSistema()" style="width:100%; padding:14px; background:var(--bg-elevated); color:white; border:1px solid var(--border-subtle); border-radius:10px; outline:none; font-weight:bold;"><option value="2025">2025</option><option value="2026" selected>2026</option></select>
-            </div>
-            <div id="navRangoBadge" style="text-align:center; font-size:0.8rem; color:#79c0ff; margin-top:15px; font-weight:bold; text-transform:uppercase; font-family:monospace; background: rgba(31, 111, 235, 0.1); padding: 8px; border-radius: 8px; border: 1px solid rgba(121, 192, 255, 0.2);"></div>
-        </div>
-        <button onclick="logout()" style="width:100%; padding:20px; border-radius:16px; background:rgba(255,82,82,0.1); color:var(--accent-red); border:1px solid rgba(255,82,82,0.3); font-weight:900; text-transform:uppercase; box-shadow: 0 4px 15px rgba(255,82,82,0.15); letter-spacing: 1px;">🚪 DESCONECTAR MATRIZ</button>
-    </div>
-
-    <div class="bottom-nav">
-        <div class="nav-item active" onclick="switchTabApp('dash', this)"><i>📡</i><span>Radar</span></div>
-        <div class="nav-fab" onclick="switchTabApp('add', null)">+</div>
-        <div class="nav-item" onclick="switchTabApp('cloud', this)"><i>☁️</i><span>Nube</span></div>
-        <div class="nav-item" onclick="switchTabApp('settings', this)"><i>⚙️</i><span>Set</span></div>
-    </div>
-</div>
-
-<div id="bottom-sheet-overlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:9999; backdrop-filter:blur(6px); opacity:0; transition:opacity 0.3s;" onclick="closeBottomSheet()"></div>
-
-<div id="bottom-sheet" style="position:fixed; bottom:-100%; left:0; width:100%; background:var(--bg-card); border-radius:30px 30px 0 0; padding:25px 20px 40px; z-index:10000; transition:bottom 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 -20px 50px rgba(0,0,0,0.8); border-top: 1px solid var(--border-subtle);">
-    <div style="width:40px; height:5px; background:var(--border-subtle); border-radius:10px; margin:0 auto 20px;"></div>
-    <div id="sheet-title" style="font-weight:900; text-align:center; font-size:1.3rem; margin-bottom:5px; color:var(--text-main); letter-spacing:0.5px;">Operación</div>
-    <div id="sheet-subtitle" style="text-align:center; color:var(--text-dim); margin-bottom:25px; font-size:1.5rem; font-family:monospace; font-weight:bold;">$0</div>
-    <input type="hidden" id="sheet-id-target">
-    <button onclick="const id=document.getElementById('sheet-id-target').value; closeBottomSheet(); editarMovimiento(id);" style="width:100%; padding:18px; border-radius:15px; background:rgba(31,111,235,0.1); color:var(--accent-blue); border:1px solid rgba(31,111,235,0.2); font-weight:900; font-size:1rem; margin-bottom:12px; transition:transform 0.1s; letter-spacing: 1px; box-shadow: 0 4px 15px rgba(31,111,235,0.15);">✏️ RECALIBRAR</button>
-    <button onclick="const id=document.getElementById('sheet-id-target').value; if(confirm('¿ELIMINAR DEL BÚNKER?')) { db.collection('movimientos').doc(id).delete().then(()=> { closeBottomSheet(); if(typeof mostrarToast === 'function') mostrarToast('REGISTRO DESTRUIDO'); }); }" style="width:100%; padding:18px; border-radius:15px; background:rgba(255,82,82,0.1); color:var(--accent-red); border:1px solid rgba(255,82,82,0.2); font-weight:900; font-size:1rem; margin-bottom:12px; transition:transform 0.1s; letter-spacing: 1px; box-shadow: 0 4px 15px rgba(255,82,82,0.15);">🗑️ DESTRUIR</button>
-    <button onclick="closeBottomSheet()" style="width:100%; padding:15px; border-radius:15px; background:transparent; color:var(--text-dim); border:none; font-weight:800; text-transform:uppercase;">Cancelar</button>
-</div>
-
-<div id="modal-historian" style="display:none; position:fixed; inset:0; background:rgba(3, 5, 8, 0.95); z-index:25000; flex-direction:column; align-items:center; justify-content:center; backdrop-filter:blur(10px); padding:20px;">
-    <div class="hist-box" style="position: relative;">
-        <button onclick="document.getElementById('modal-historian').style.display='none'" style="position:absolute; top:12px; right:15px; background:var(--bg-panel); border:1px solid var(--border-color); color:var(--text-muted); border-radius:50%; width:32px; height:32px; cursor:pointer; font-weight:bold; z-index:100; display:flex; align-items:center; justify-content:center; box-shadow: 0 4px 10px rgba(0,0,0,0.3); transition: color 0.2s, border-color 0.2s;">✕</button>
-        <div class="hist-header">
-            <h3 style="color:#ff5252; margin:0; display:flex; align-items:center; gap:10px;"><span style="font-size:1.5rem;">⚠️</span> HISTORIAN LOG</h3>
-        </div>
-        <div class="hist-body" id="historian-content"></div>
-    </div>
-</div>
-
-<div id="modal-dia-cero" style="display:none; position:fixed; inset:0; background: rgba(3, 5, 8, 0.95); z-index: 20000; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(10px); padding: 10px;">
-    <div class="pv-container">
-        <button onclick="cerrarPreVuelo()" style="position:absolute; top:15px; right:15px; background:var(--bg-panel); border:1px solid var(--border-color); color:var(--text-muted); border-radius:50%; width:32px; height:32px; cursor:pointer; font-weight:bold; z-index:100; display:flex; align-items:center; justify-content:center; box-shadow: 0 4px 10px rgba(0,0,0,0.3); transition: color 0.2s, border-color 0.2s;">✕</button>
-        
-        <div class="pv-header">
-            <h2 class="pv-title" data-en="DAY ZERO SIMULATOR">SIMULADOR DÍA CERO</h2>
-            <div class="pv-subtitle" data-en="FEEDFORWARD CONTROL FOR">CONTROL PREALIMENTADO DE LIQUIDEZ MES DE <span id="pv-mes-label" style="color:#fff; font-weight:bold;">--</span></div>
-        </div>
-        
-        <div class="pv-tank-wrapper">
-            <div class="pv-tank-label">
-                <span data-en="Hard Deductions">Deducciones Duras</span>
-                <span data-en="Net Maneuver Liquidity">Liquidez Neta de Maniobra</span>
-            </div>
-            <div class="pv-tank">
-                <div id="pv-barra-roja" class="pv-fill-rojo" style="width: 0%;"></div>
-                <div id="pv-barra-naranja" class="pv-fill-naranja" style="width: 0%;"></div>
-                <div id="pv-barra-verde" class="pv-fill-verde" style="width: 100%;"></div>
-            </div>
-            <div class="pv-liquidez-text">$<span id="pv-txt-liquidez">0</span></div>
-            <div class="pv-certeza" id="pv-certeza-container">CERTEZA DEL CÁLCULO: <span id="pv-certeza-pct" style="color:#ff5252;">0%</span></div>
-        </div>
-
-        <div class="pv-body">
-            <div class="pv-grid">
-                <div class="pv-section">
-                    <div class="pv-section-title" style="color:#ff5252;"><span style="font-size:1rem;">💳</span> Deducciones Críticas</div>
-                    <div class="pv-input-group" style="background:rgba(46,160,67,0.1); border-color:var(--color-saldo);">
-                        <label style="color:var(--color-saldo);">Sueldo (Ingreso)</label>
-                        <input type="text" id="pv-sueldo" class="pv-input" style="color:var(--color-saldo); border-color:var(--color-saldo);" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();">
-                    </div>
-                    <div class="pv-input-group">
-                        <label>TC Nacional</label>
-                        <button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-tc-nac')">EST</button>
-                        <input type="text" id="pv-tc-nac" class="pv-input" style="color:#ff5252;" placeholder="0" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();">
-                    </div>
-                    
-                    <div style="display:flex; flex-direction:column; width:100%; background: var(--bg-card); border-radius: 12px; border: 1px solid rgba(255,82,82,0.3); margin-bottom: 10px; padding: 12px 14px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
-                        <div style="display: flex; align-items: center; justify-content: space-between; gap:10px;">
-                            <div style="flex:1;">
-                                <label style="font-size: 0.8rem; font-weight: 900; color: var(--text-main); text-transform: uppercase;">TC Internacional</label>
-                                <span id="lbl-dolar-actual" style="display:block; font-size:0.65rem; color:var(--text-muted); font-family:monospace; margin-top:4px;">Consultando USD...</span>
-                            </div>
-                            <button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-tc-int')">EST</button>
-                            <input type="text" id="pv-tc-int" class="pv-input" style="color:#ff5252; width:100px;" placeholder="US$ 0" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();">
-                        </div>
-                        <div id="pv-tc-int-clp" style="text-align:right; font-size:0.85rem; color:#ff5252; font-family:monospace; font-weight:900; margin-top:10px; border-top: 1px dashed rgba(255,82,82,0.3); padding-top: 10px;">~ $0 CLP</div>
-                    </div>
-
-                    <div class="pv-input-group">
-                        <label>Línea de Crédito</label>
-                        <button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-linea')">EST</button>
-                        <input type="text" id="pv-linea" class="pv-input" style="color:#ff5252;" placeholder="0" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();">
-                    </div>
-                </div>
-
-                <div class="pv-section">
-                    <div class="pv-section-title" style="color:var(--color-infra);"><span style="font-size:1rem;">🏢</span> Carga Estructural</div>
-                    <div class="pv-input-group"><label>Arriendo</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-arriendo')">EST</button><input type="text" id="pv-arriendo" class="pv-input" value="330.000" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
-                    <div class="pv-input-group"><label>UDEC 2024</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-udec')">EST</button><input type="text" id="pv-udec" class="pv-input" value="48.000" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
-                    <div class="pv-input-group"><label>CAE</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-cae')">EST</button><input type="text" id="pv-cae" class="pv-input" value="38.742" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
-                </div>
-
-                <div class="pv-section">
-                    <div class="pv-section-title" style="color:#d29922;"><span style="font-size:1rem;">⚡</span> Serv. Básicos Hogar</div>
-                    <div class="pv-input-group"><label>Gastos Comunes</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-ggcc')">EST</button><input type="text" id="pv-ggcc" class="pv-input" value="63.220" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
-                    <div class="pv-input-group"><label>Luz</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-luz')">EST</button><input type="text" id="pv-luz" class="pv-input" value="20.000" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
-                    <div class="pv-input-group"><label>Agua</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-agua')">EST</button><input type="text" id="pv-agua" class="pv-input" value="8.000" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
-                    <div class="pv-input-group"><label>Gas</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-gas')">EST</button><input type="text" id="pv-gas" class="pv-input" value="0" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
-                </div>
-
-                <div class="pv-section">
-                    <div class="pv-section-title" style="color:#79c0ff;"><span style="font-size:1rem;">📱</span> Op. Complementaria</div>
-                    <div class="pv-input-group"><label>Celu Mio</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-celu')">EST</button><input type="text" id="pv-celu" class="pv-input" value="13.990" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
-                    <div class="pv-input-group"><label>Movistar Madre</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-madre')">EST</button><input type="text" id="pv-madre" class="pv-input" value="19.290" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
-                    <div class="pv-input-group" title="YT Premium, Disney, Icloud, Google, Spotify, HBO"><label>Pack Subs</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-subs')">EST</button><input type="text" id="pv-subs" class="pv-input" value="20.540" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
-                    <div class="pv-input-group"><label>Seguro Auto</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-seguro')">EST</button><input type="text" id="pv-seguro" class="pv-input" value="38.300" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="pv-footer">
-            <button class="btn-pv-close" onclick="cerrarPreVuelo()" data-en="ABORT">ABORTAR</button>
-            <button class="btn-pv-launch" onclick="ejecutarArranque()" data-en="EXECUTE LAUNCH (INJECT MATRIX)">EFECTUAR ARRANQUE</button>
-        </div>
-    </div>
-</div>
-
 <script>
+    // 🟢 V14.3: LÓGICA DE TRI-CORE Y MOTOR DE RENDERIZADO MÓVIL 🟢
+    
     function switchDualCore(viewId, el) {
         document.querySelectorAll('.core-btn').forEach(b => { b.classList.remove('active'); b.classList.remove('blue'); b.classList.remove('red'); b.classList.remove('purple'); });
         el.classList.add('active');
@@ -474,20 +11,11 @@
         document.getElementById('vista-patrimonio').style.display = 'none';
 
         if (viewId === 'efectivo') {
-            el.classList.add('blue');
-            highlighter.style.transform = 'translateX(0)';
-            highlighter.style.background = 'var(--accent-blue)';
-            document.getElementById('vista-efectivo').style.display = 'block';
+            el.classList.add('blue'); highlighter.style.transform = 'translateX(0)'; highlighter.style.background = 'var(--accent-blue)'; document.getElementById('vista-efectivo').style.display = 'block';
         } else if (viewId === 'tc') {
-            el.classList.add('red');
-            highlighter.style.transform = 'translateX(100%)';
-            highlighter.style.background = 'var(--accent-red)';
-            document.getElementById('vista-tc').style.display = 'block';
+            el.classList.add('red'); highlighter.style.transform = 'translateX(100%)'; highlighter.style.background = 'var(--accent-red)'; document.getElementById('vista-tc').style.display = 'block';
         } else if (viewId === 'patrimonio') {
-            el.classList.add('purple');
-            highlighter.style.transform = 'translateX(200%)';
-            highlighter.style.background = '#79c0ff';
-            document.getElementById('vista-patrimonio').style.display = 'block';
+            el.classList.add('purple'); highlighter.style.transform = 'translateX(200%)'; highlighter.style.background = '#79c0ff'; document.getElementById('vista-patrimonio').style.display = 'block';
         }
     }
 
@@ -507,7 +35,75 @@
         }
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
+
+    // 🟢 EL MOTOR MÓVIL RECUPERADO 🟢
+    document.addEventListener("DOMContentLoaded", () => {
+        window.renderizarListas = function(sueldoBase, filtroBuscador) {
+            let datos = [...datosMesGlobal].filter(x => x.catV !== 'Gasto Tarjeta de Crédito'); 
+            if (filtroBuscador) datos = datos.filter(x => x.nombre?.toLowerCase().includes(filtroBuscador) || x.catV.toLowerCase().includes(filtroBuscador));
+            datos.sort((a, b) => { let vA = a[currentSort.column], vB = b[currentSort.column]; if (vA < vB) return currentSort.direction === 'asc' ? -1 : 1; if (vA > vB) return currentSort.direction === 'asc' ? 1 : -1; return 0; });
+            const contenedorMovil = document.getElementById('listaMovilDetalle');
+            if (!contenedorMovil) return;
+            if(datos.length === 0) { contenedorMovil.innerHTML = `<div style="text-align:center; padding: 40px 20px; color: var(--text-dim);"><i>📡</i><br>MATRIZ SIN DATOS</div>`; return; }
+
+            let htmlMovil = ''; let currentDayGroup = ""; let now = new Date(); now.setHours(0,0,0,0); let yesterday = new Date(now); yesterday.setDate(yesterday.getDate() - 1);
+            datos.forEach((x) => {
+                const d = new Date(x.fechaISO); let dClean = new Date(d); dClean.setHours(0,0,0,0);
+                const dateStr = d.toLocaleDateString('es-CL'), timeStr = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+                
+                if (currentSort.column === 'fechaISO' && currentSort.direction === 'desc' && dateStr !== currentDayGroup) {
+                    let labelText = dateStr;
+                    if (dClean.getTime() === now.getTime()) labelText = "HOY"; else if (dClean.getTime() === yesterday.getTime()) labelText = "AYER"; else { const meses = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"]; labelText = `${d.getDate()} ${meses[d.getMonth()]}`; }
+                    htmlMovil += `<div class="date-header">${labelText}</div>`; currentDayGroup = dateStr;
+                }
+
+                const em = catEmojis[x.catV] || "❓", colorMonto = x.esIn ? "var(--accent-green)" : x.esNeutro ? "#d29922" : "var(--text-main)", iconoVisual = obtenerIconoVisual(x.nombre, em);
+                const nombreSeguro = x.nombre || "Dato no identificado", montoSeguro = (typeof x.monto === 'number' && !isNaN(x.monto)) ? x.monto : 0;
+                let styleExtra = x.catV === 'Dopamina & Antojos' ? 'background: linear-gradient(90deg, rgba(255,255,255,0.01) 30%, rgba(255, 82, 82, 0.15) 100%) !important; border-right: 2px solid var(--accent-red) !important;' : '';
+                const clickAction = typeof openBottomSheet === 'function' ? `openBottomSheet('${x.firestoreId}', '${nombreSeguro.replace(/'/g, "\\'")}', ${montoSeguro})` : `editarMovimiento('${x.firestoreId}')`;
+                
+                htmlMovil += `
+                <div class="mobile-card" onclick="${clickAction}" style="${styleExtra}">
+                    <div style="width: 46px; height: 46px; margin-right: 12px; background: var(--bg-elevated); border-radius: 50%; display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0; border: 1px solid var(--border-subtle); box-shadow: inset 0 2px 5px rgba(0,0,0,0.5);">${iconoVisual}</div>
+                    <div style="flex: 1; min-width: 0;">
+                        <div style="font-weight:bold; font-size:0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text-main); letter-spacing: 0.5px;">${nombreSeguro}</div>
+                        <div style="font-size:0.7rem; color:var(--text-dim); margin-top:3px;">${timeStr} • ${x.catV.replace(' & ','&')}</div>
+                    </div>
+                    <div style="font-weight:900; color:${colorMonto}; flex-shrink: 0; font-size:1.15rem; font-family:monospace;">${x.esIn?'+':(x.esNeutro?'=':'-')}$${Math.round(montoSeguro/1000)}k</div>
+                </div>`;
+            });
+            contenedorMovil.innerHTML = htmlMovil;
+        };
+
+        window.renderizarTablaTC = function() {
+            const tbody = document.getElementById("listaMovilTC"); if (!tbody) return;
+            if (datosTCGlobal.length === 0) { tbody.innerHTML = `<div style="text-align:center; padding: 40px 20px; color: var(--text-dim);"><i>📡</i><br>MATRIZ TC SIN DATOS</div>`; let boxImpacto = document.getElementById('boxImpactoTC'); if(boxImpacto) boxImpacto.style.display = 'none'; return; }
+
+            let htmlMovil = '', sumaProximoMes = 0, fechaHoy = new Date(), proximoMes = fechaHoy.getMonth() + 1, proximoAnio = fechaHoy.getFullYear();
+            if (proximoMes > 11) { proximoMes = 0; proximoAnio++; }
+
+            datosTCGlobal.forEach(doc => {
+                let fechaObj = new Date(doc.mesCobro), mesTxt = fechaObj.toLocaleString('es-CL', { month: 'short', year: 'numeric' }).toUpperCase();
+                if (fechaObj.getMonth() === proximoMes && fechaObj.getFullYear() === proximoAnio) sumaProximoMes += doc.monto;
+                htmlMovil += `
+                <div class="mobile-card" style="margin-bottom:6px; border-radius:12px !important; background: var(--bg-card) !important; padding: 14px 15px !important; border: 1px solid rgba(255,82,82,0.1) !important;">
+                    <div style="flex: 1; min-width: 0;">
+                        <div style="font-weight:bold; font-size:0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text-main);">${doc.nombre}</div>
+                        <div style="font-size:0.7rem; color:var(--accent-red); margin-top:3px; font-weight:800; letter-spacing: 0.5px;">${mesTxt} (${doc.cuota})</div>
+                    </div>
+                    <div style="font-weight:900; color:var(--text-main); flex-shrink: 0; font-size:1.15rem; font-family:monospace;">$${doc.monto.toLocaleString('es-CL')}</div>
+                </div>`;
+            });
+            tbody.innerHTML = htmlMovil;
+
+            let mesNombreStr = new Date(proximoAnio, proximoMes, 1).toLocaleString('es-CL', { month: 'long' }).toUpperCase();
+            let boxImpacto = document.getElementById('boxImpactoTC');
+            if (boxImpacto) {
+                if (sumaProximoMes > 0) { boxImpacto.style.display = 'flex'; document.getElementById('lblImpactoMes').innerText = `${mesNombreStr}`; document.getElementById('txtImpactoMonto').innerText = `$${sumaProximoMes.toLocaleString('es-CL')}`; } else { boxImpacto.style.display = 'none'; }
+            }
+        };
+    });
+
+    function openBottomSheet(id, n, m) { document.getElementById('sheet-title').innerText = n; document.getElementById('sheet-subtitle').innerText = "$" + m.toLocaleString('es-CL'); document.getElementById('sheet-id-target').value = id; const overlay = document.getElementById('bottom-sheet-overlay'); const sheet = document.getElementById('bottom-sheet'); overlay.style.display = 'block'; setTimeout(() => { overlay.style.opacity = '1'; sheet.style.bottom = '0'; }, 10); }
+    function closeBottomSheet() { const overlay = document.getElementById('bottom-sheet-overlay'); const sheet = document.getElementById('bottom-sheet'); sheet.style.bottom = '-100%'; overlay.style.opacity = '0'; setTimeout(()=> overlay.style.display = 'none', 300); }
 </script>
-<script src="motor.js"></script>
-</body>
-</html>
