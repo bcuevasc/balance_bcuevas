@@ -524,6 +524,9 @@ function updateMassActions() { const bar = document.getElementById('massActionsB
 function massDelete() { const ids = Array.from(document.querySelectorAll('.row-check:not(#checkAll):checked')).map(cb => cb.value); if(ids.length === 0 || !confirm(`⚠️ ¿Eliminar ${ids.length} registro(s)?`)) return; const btn = document.querySelector('button[onclick="massDelete()"]'); const orig = btn.innerHTML; btn.innerHTML = '⏳'; Promise.all(ids.map(id => db.collection("movimientos").doc(id).delete())).then(() => { document.getElementById('massActionsBar').style.display = 'none'; document.getElementById('checkAll').checked = false; btn.innerHTML = orig; }); }
 function massCategorize() { const ids = Array.from(document.querySelectorAll('.row-check:not(#checkAll):checked')).map(cb => cb.value); const cat = document.getElementById('massCategorySelect').value; if(ids.length === 0 || !cat || !confirm(`¿Categorizar como "${cat}"?`)) return; const btn = document.querySelector('button[onclick="massCategorize()"]'); const orig = btn.innerHTML; btn.innerHTML = '⏳'; Promise.all(ids.map(id => db.collection("movimientos").doc(id).update({categoria: cat}))).then(() => { document.getElementById('massActionsBar').style.display = 'none'; document.getElementById('checkAll').checked = false; document.getElementById('massCategorySelect').value = ''; btn.innerHTML = orig; }); }
 
+// =====================================================================
+// 🟢 V14.3: TELEMETRÍA CONTEXTUAL SEPARADA Y EXPLÍCITA (FLUJO) 🟢
+// =====================================================================
 function dibujarGraficosFlujo(sueldo, chronData, cats, diasCiclo, T0, totalFijosMes, tInfra, tFlota) {
     if(chartBD) chartBD.destroy(); if(chartP) chartP.destroy(); if(chartDiario) chartDiario.destroy(); 
     const cT = getComputedStyle(document.body).getPropertyValue('--text-main').trim() || "#f0f6fc"; 
@@ -545,6 +548,119 @@ function dibujarGraficosFlujo(sueldo, chronData, cats, diasCiclo, T0, totalFijos
             } 
         }
     });
+
+    let actual = [sueldo], ideal = [sueldo], proyeccion = Array(diasCiclo + 1).fill(null);
+    let labelsX = ["INI"], labelsFechas = ["INI"]; 
+    let acc = sueldo, limit = Math.floor((Date.now() - msT0) / 86400000) + 1;
+    const nombresMes = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"];
+
+    for(let i=1; i<=diasCiclo; i++) {
+        ideal.push(sueldo - (sueldo/diasCiclo)*i); acc += daily[i]; actual.push(i > limit ? null : acc);
+        let f = new Date(msT0 + (i-1)*86400000), dia = String(f.getDate()).padStart(2, '0'), mesStr = nombresMes[f.getMonth()];
+        labelsFechas.push(`${dia} ${mesStr}`); labelsX.push(f.getDate() === 1 ? `${dia} ${mesStr}` : dia); 
+    }
+
+    if(limit > 1 && limit <= diasCiclo) {
+        let gastoAcumulado = sueldo - actual[limit];
+        let promedioGastoDiario = gastoAcumulado / limit;
+        proyeccion[limit] = actual[limit];
+        for(let i = limit + 1; i <= diasCiclo; i++) proyeccion[i] = proyeccion[i-1] - promedioGastoDiario;
+    }
+
+    const ctxBD = document.getElementById('chartBurnDown');
+    if(ctxBD) {
+        let grad = ctxBD.getContext('2d').createLinearGradient(0, 0, 0, 400);
+        grad.addColorStop(0, 'rgba(31, 111, 235, 0.4)'); grad.addColorStop(1, 'rgba(31, 111, 235, 0)');
+        chartBD = new Chart(ctxBD, {
+            type: 'line', 
+            data: { labels: labelsX, datasets: [
+                { label: 'Consumo Real', data: actual, borderColor: '#1f6feb', backgroundColor: grad, borderWidth: 3, fill: true, pointRadius: 0, tension: 0.2 },
+                { label: 'Proyección (Oráculo)', data: proyeccion, borderColor: '#d29922', borderDash: [5, 5], borderWidth: 2, fill: false, pointRadius: 0, tension: 0.2 },
+                { label: 'Ideal', data: ideal, borderColor: 'rgba(46, 160, 67, 0.4)', borderDash: [5, 5], borderWidth: 2, fill: false, pointRadius: 0 }
+            ]},
+            options: { maintainAspectRatio:false, plugins:{legend:{display:false}}, scales: { x: { ticks: { color: cT, font: {size: 9} }, grid:{color:cG} }, y: { grid: { color: cG }, ticks: { color: cT, callback: v => '$' + Math.round(v/1000) + 'k' } } }, layout: { padding: 0 } }
+        });
+    }
+
+    const sorted = Object.entries(cats).sort((a,b)=>b[1]-a[1]).slice(0,6);
+    const bgColors = ['rgba(31, 111, 235, 0.7)', 'rgba(46, 160, 67, 0.7)', 'rgba(210, 153, 34, 0.7)', 'rgba(255, 82, 82, 0.7)', 'rgba(163, 113, 247, 0.7)', 'rgba(0, 188, 212, 0.7)'];
+    const borderColors = ['#1f6feb', '#2ea043', '#d29922', '#ff5252', '#a371f7', '#00bcd4'];
+    
+    const ctxPareto = document.getElementById('chartPareto');
+    if(ctxPareto) {
+        chartP = new Chart(ctxPareto, {
+            type: 'polarArea', 
+            data: { labels: sorted.map(c => aliasMap[c[0]] || c[0].split(' ')[0]), datasets: [{ data: sorted.map(c => c[1]), backgroundColor: bgColors, borderColor: borderColors, borderWidth: 2 }] },
+            options: { maintainAspectRatio:false, plugins:{legend:{position: 'right', labels:{color:cT, font:{size:10, family:'monospace'}}}}, scales:{ r:{ticks:{display:false}, grid:{color:cG}, angleLines:{color:cG}} } }
+        });
+    }
+
+    const ctxDiario = document.getElementById('chartDiario');
+    let limiteDiarioIdeal = Math.max((sueldo - totalFijosMes - tInfra - tFlota) / diasCiclo, 0);
+    
+    alarmLogCache = "";
+    if ((window.totalTC || 0) > sueldo * 0.15) {
+        alarmLogCache += `<div class='log-item critical'><div class='log-icon'>🛑</div><div class='log-content'><strong>SOBRECARGA TC</strong><div class='log-date'>Riesgo Pasivos > 15%</div><span>$${(window.totalTC||0).toLocaleString('es-CL')}</span></div></div>`;
+    }
+
+    if(ctxDiario) {
+        let lastDayWithData = diasCiclo;
+        while(lastDayWithData > 0 && (dailyNecesario[lastDayWithData] === 0 && dailyFugas[lastDayWithData] === 0)) lastDayWithData--;
+        let startDayForBars = Math.max(1, lastDayWithData - 14); 
+        let barLabels = labelsFechas.slice(startDayForBars, lastDayWithData + 1); 
+        let barNecesario = dailyNecesario.slice(startDayForBars, lastDayWithData + 1);
+        let barFugas = dailyFugas.slice(startDayForBars, lastDayWithData + 1);
+        
+        for(let i=startDayForBars; i<=lastDayWithData; i++) {
+            if (dailyFugas[i] > 0) alarmLogCache += `<div class='log-item warning'><div class='log-icon'>🍔</div><div class='log-content'><strong>FUGA DOPAMINA</strong><div class='log-date'>${labelsFechas[i]}</div><span>$${dailyFugas[i].toLocaleString('es-CL')}</span></div></div>`;
+            if ((dailyNecesario[i] + dailyFugas[i]) > limiteDiarioIdeal) alarmLogCache += `<div class='log-item critical'><div class='log-icon'>🔥</div><div class='log-content'><strong>LÍMITE ROTO</strong><div class='log-date'>${labelsFechas[i]}</div><span>$${(dailyNecesario[i]+dailyFugas[i]).toLocaleString('es-CL')}</span></div></div>`;
+        }
+
+        // 🟢 PLUGIN MEJORADO: Dibuja Línea y Valores sobre las Barras 🟢
+        const diarioEnhancementsPlugin = {
+            id: 'diarioEnhancementsPlugin',
+            afterDraw: (chart) => {
+                const ctx = chart.ctx; const xAxis = chart.scales.x; const yAxis = chart.scales.y;
+                
+                // Línea Límite
+                if(limiteDiarioIdeal > 0) {
+                    const yPos = yAxis.getPixelForValue(limiteDiarioIdeal);
+                    if(yPos >= yAxis.top && yPos <= yAxis.bottom) {
+                        ctx.save(); ctx.beginPath(); ctx.moveTo(xAxis.left, yPos); ctx.lineTo(xAxis.right, yPos);
+                        ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(210, 153, 34, 0.8)'; ctx.setLineDash([4, 4]); ctx.stroke(); ctx.restore();
+                    }
+                }
+                
+                // Inyección de Números Arriba de las Barras
+                ctx.save();
+                ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+                ctx.font = 'bold 9px monospace'; ctx.fillStyle = '#e6edf3';
+                
+                const metaBase = chart.getDatasetMeta(0);
+                for (let i = 0; i < chart.data.labels.length; i++) {
+                    let valBase = chart.data.datasets[0].data[i] || 0;
+                    let valFuga = chart.data.datasets[1].data[i] || 0;
+                    let total = valBase + valFuga;
+
+                    if (total > 0 && !metaBase.hidden) {
+                        let xPos = metaBase.data[i].x;
+                        let yPos = chart.scales.y.getPixelForValue(total);
+                        let text = (total >= 1000) ? Math.round(total / 1000) + 'k' : total;
+                        ctx.fillText(text, xPos, yPos - 3);
+                    }
+                }
+                ctx.restore();
+            }
+        };
+
+        chartDiario = new Chart(ctxDiario, {
+            type: 'bar',
+            data: { labels: barLabels, datasets: [{ label: 'Gasto Base', data: barNecesario, backgroundColor: 'rgba(31, 111, 235, 0.6)', borderRadius: 2 }, { label: 'Fuga (Dopamina)', data: barFugas, backgroundColor: 'rgba(255, 82, 82, 0.9)', borderRadius: 2 }] },
+            options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { stacked: true, ticks: { color: cT, font:{size:8} }, grid: { display:false } }, y: { stacked: true, ticks: { color: cT, callback: v => '$' + Math.round(v / 1000) + 'k' }, grid: { color: cG } } } },
+            plugins: [diarioEnhancementsPlugin]
+        });
+    }
+}
 
     let actual = [sueldo], ideal = [sueldo], proyeccion = Array(diasCiclo + 1).fill(null);
     let labelsX = ["INI"], labelsFechas = ["INI"]; 
@@ -654,17 +770,37 @@ function dibujarGraficosTC(sueldo) {
         let grad = ctxProyeccion.getContext('2d').createLinearGradient(0, 0, 0, 300);
         grad.addColorStop(0, 'rgba(255, 82, 82, 0.6)'); grad.addColorStop(1, 'rgba(255, 82, 82, 0.05)');
 
-        const setpointTCPlugin = {
-            id: 'setpointTCPlugin',
+        // 🟢 PLUGIN MEJORADO: Dibuja Línea y Valores sobre Puntos TC 🟢
+        const tcEnhancementsPlugin = {
+            id: 'tcEnhancementsPlugin',
             afterDraw: (chart) => {
                 const ctx = chart.ctx; const xAxis = chart.scales.x; const yAxis = chart.scales.y;
                 const umbralSeguridad = sueldo * 0.15;
+                
+                // Línea Max
                 if(yAxis.max > umbralSeguridad) {
                     const yPos = yAxis.getPixelForValue(umbralSeguridad);
                     ctx.save(); ctx.beginPath(); ctx.moveTo(xAxis.left, yPos); ctx.lineTo(xAxis.right, yPos);
                     ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(255, 82, 82, 0.8)'; ctx.setLineDash([5, 5]); ctx.stroke();
-                    ctx.fillStyle = '#ff5252'; ctx.font = 'bold 10px monospace'; ctx.fillText('MAX (15%)', xAxis.left + 5, yPos - 5); ctx.restore();
+                    ctx.fillStyle = '#ff5252'; ctx.font = 'bold 10px monospace'; ctx.textAlign = 'left'; ctx.textBaseline='bottom'; ctx.fillText('MAX (15%)', xAxis.left + 5, yPos - 5); ctx.restore();
                 }
+
+                // Inyección de Números sobre los puntos
+                ctx.save();
+                ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+                ctx.font = 'bold 10px monospace'; ctx.fillStyle = '#ff5252';
+
+                const dataset = chart.data.datasets[0];
+                const meta = chart.getDatasetMeta(0);
+
+                meta.data.forEach((point, index) => {
+                    let val = dataset.data[index];
+                    if (val > 0) {
+                        let text = '$' + Math.round(val / 1000) + 'k';
+                        ctx.fillText(text, point.x, point.y - 8);
+                    }
+                });
+                ctx.restore();
             }
         };
 
@@ -672,7 +808,7 @@ function dibujarGraficosTC(sueldo) {
             type: 'line',
             data: { labels: mesesLabels, datasets: [{ label: 'Deuda TC', data: montosProyectados, backgroundColor: grad, borderColor: '#ff5252', borderWidth: 3, fill: true, tension: 0.4, pointRadius: 4, pointBackgroundColor: '#030508', pointBorderColor: '#ff5252' }] },
             options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { color: cT, callback: v => '$' + Math.round(v/1000) + 'k' }, grid: { color: cG } }, x: { ticks: { color: cT, font: {size: 10, weight: 'bold'} }, grid: { display: false } } } },
-            plugins: [setpointTCPlugin]
+            plugins: [tcEnhancementsPlugin]
         });
     }
 
@@ -694,7 +830,6 @@ function dibujarGraficosTC(sueldo) {
         });
     }
 }
-
 function calcularFechasCiclo(mesConceptual, anio) {
     let mesInicio = mesConceptual - 1; let anioInicio = anio; if (mesInicio < 0) { mesInicio = 11; anioInicio--; }
     let T0 = new Date(anioInicio, mesInicio, 30); if (T0.getMonth() !== mesInicio) T0 = new Date(anioInicio, mesInicio + 1, 0); 
