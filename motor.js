@@ -23,7 +23,7 @@ async function inicializarSensorDolar() {
 document.addEventListener("DOMContentLoaded", inicializarSensorDolar);
 
 // ==========================================================
-// 🧠 BÚNKER SCADA ORACLE - MOTOR LÓGICO V14.1 
+// 🧠 BÚNKER SCADA ORACLE - MOTOR LÓGICO V14.2
 // ==========================================================
 const BYRON_EMAIL = "bvhcc94@gmail.com"; 
 const catEvitables = ["Dopamina & Antojos"]; 
@@ -176,7 +176,7 @@ window.logout = function() {
 auth.onAuthStateChanged(user => {
     if (user) {
         if (user.email.toLowerCase() === BYRON_EMAIL.toLowerCase()) {
-            console.log("%c[ORACLE V14.1] MATRIX ONLINE", "color: #2ea043; font-weight: bold; font-size: 14px;");
+            console.log("%c[ORACLE V14.2] MATRIX ONLINE", "color: #2ea043; font-weight: bold; font-size: 14px;");
             const loginScreen = document.getElementById('login-screen'), reportZone = document.getElementById('reportZone');
             if(loginScreen) loginScreen.style.display = 'none';
             if(reportZone) reportZone.classList.add('active-app');
@@ -524,9 +524,6 @@ function updateMassActions() { const bar = document.getElementById('massActionsB
 function massDelete() { const ids = Array.from(document.querySelectorAll('.row-check:not(#checkAll):checked')).map(cb => cb.value); if(ids.length === 0 || !confirm(`⚠️ ¿Eliminar ${ids.length} registro(s)?`)) return; const btn = document.querySelector('button[onclick="massDelete()"]'); const orig = btn.innerHTML; btn.innerHTML = '⏳'; Promise.all(ids.map(id => db.collection("movimientos").doc(id).delete())).then(() => { document.getElementById('massActionsBar').style.display = 'none'; document.getElementById('checkAll').checked = false; btn.innerHTML = orig; }); }
 function massCategorize() { const ids = Array.from(document.querySelectorAll('.row-check:not(#checkAll):checked')).map(cb => cb.value); const cat = document.getElementById('massCategorySelect').value; if(ids.length === 0 || !cat || !confirm(`¿Categorizar como "${cat}"?`)) return; const btn = document.querySelector('button[onclick="massCategorize()"]'); const orig = btn.innerHTML; btn.innerHTML = '⏳'; Promise.all(ids.map(id => db.collection("movimientos").doc(id).update({categoria: cat}))).then(() => { document.getElementById('massActionsBar').style.display = 'none'; document.getElementById('checkAll').checked = false; document.getElementById('massCategorySelect').value = ''; btn.innerHTML = orig; }); }
 
-// =====================================================================
-// 🟢 V14.1: TELEMETRÍA CONTEXTUAL SEPARADA (FLUJO) 🟢
-// =====================================================================
 function dibujarGraficosFlujo(sueldo, chronData, cats, diasCiclo, T0, totalFijosMes, tInfra, tFlota) {
     if(chartBD) chartBD.destroy(); if(chartP) chartP.destroy(); if(chartDiario) chartDiario.destroy(); 
     const cT = getComputedStyle(document.body).getPropertyValue('--text-main').trim() || "#f0f6fc"; 
@@ -638,16 +635,12 @@ function dibujarGraficosFlujo(sueldo, chronData, cats, diasCiclo, T0, totalFijos
     }
 }
 
-// =====================================================================
-// 🟢 V14.1: TELEMETRÍA CONTEXTUAL SEPARADA (MATRIZ TC) 🟢
-// =====================================================================
 function dibujarGraficosTC(sueldo) {
     if(chartRadar) chartRadar.destroy(); 
     if(chartTCDist) chartTCDist.destroy();
     const cT = getComputedStyle(document.body).getPropertyValue('--text-main').trim() || "#f0f6fc"; 
     const cG = getComputedStyle(document.body).getPropertyValue('--border-color').trim() || "#21262d"; 
     
-    // 1. Horizonte TC (6 Meses)
     const ctxProyeccion = document.getElementById('chartRadar');
     if(ctxProyeccion) {
         let mesesLabels = []; let montosProyectados = []; let fechaHoy = new Date();
@@ -683,12 +676,11 @@ function dibujarGraficosTC(sueldo) {
         });
     }
 
-    // 2. Composición de Deuda (Gráfico Nuevo)
     const ctxDist = document.getElementById('chartTCDist');
     if(ctxDist) {
         let tcComercios = {};
         datosTCGlobal.forEach(d => {
-            let n = d.nombre.split(' ')[0]; // Agrupamos por la primera palabra del comercio
+            let n = d.nombre.split(' ')[0];
             tcComercios[n] = (tcComercios[n] || 0) + d.monto;
         });
         
@@ -823,11 +815,6 @@ window.exportarTablaBunker = function(idTabla, nombreArchivo) {
     } catch (e) { console.error("Error Export:", e); }
 };
 
-// ==========================================================
-// 💳 MATRIZ TC CONTELEMETRÍA
-// ==========================================================
-let datosTCGlobal = [];
-
 function inicializarListenerTC() {
     db.collection("deuda_tc").orderBy("mesCobro", "asc").onSnapshot(snapshot => {
         datosTCGlobal = []; let totalDeuda = 0;
@@ -840,7 +827,7 @@ function inicializarListenerTC() {
         const elMes = document.getElementById('navMesConceptual');
         let sueldo = 3602505;
         if(elAnio && elMes) sueldo = obtenerSueldoMes(parseInt(elAnio.value), parseInt(elMes.value));
-        if(typeof dibujarGraficosTC === 'function') dibujarGraficosTC(sueldo); // 🟢 Dibuja gráficos TC
+        if(typeof dibujarGraficosTC === 'function') dibujarGraficosTC(sueldo); 
         
         window.totalTC = totalDeuda; 
         if(typeof actualizarDashboard === 'function') actualizarDashboard();
@@ -949,9 +936,6 @@ async function ejecutarPurgaMasivaTC() {
     try { await batch.commit(); mostrarToast("PURGA COMPLETADA"); } catch (error) { alert("❌ Error Net."); }
 }
 
-// ==========================================================
-// 🚀 MÓDULO DÍA CERO 
-// ==========================================================
 function abrirPreVuelo() {
     const modal = document.getElementById('modal-dia-cero');
     if(!modal) return;
@@ -1102,19 +1086,16 @@ function ejecutarArranque() {
         alert("No se inyectaron registros."); cerrarPreVuelo();
     }
 }
+
 // ==========================================================
 // 🟢 V14.2: LISTENER GLOBAL DE EVASIÓN (TECLA ESC)
 // ==========================================================
 document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
-        // Cerramos Pre-Vuelo
         if(typeof cerrarPreVuelo === 'function') cerrarPreVuelo();
-        // Cerramos Historian
         const hist = document.getElementById('modal-historian');
         if(hist) hist.style.display = 'none';
-        // Cerramos Bottom Sheet (Móvil)
         if(typeof closeBottomSheet === 'function') closeBottomSheet();
-        
         console.log("%c[SYS] COMANDO ESCAPE DETECTADO: CERRANDO VENTANAS", "color: #ff5252;");
     }
 });
