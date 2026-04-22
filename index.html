@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Bunker Digital SCADA v14.1 (Contextual Telemetry)</title>
+    <title>Bunker Digital SCADA v14.2 (Contextual + Ergo PC)</title>
     
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -15,6 +15,12 @@
 :root { --bg-body: #030508; --bg-panel: #0d1117; --bg-subpanel: #161b22; --text-main: #e6edf3; --text-muted: #7d8590; --border-color: #21262d; --input-bg: #010409; --item-hover: #1c2128; --color-guardar: #1f6feb; --color-ingresos: #238636; --color-gastos: #da3633;  --color-saldo: #2ea043; --color-edit: #d29922; --color-fuga: #ff5252; --color-proyectado: #79c0ff; --color-telegram: #0088cc; --color-infra: #a371f7; --color-flota: #00bcd4; }
 body.light-theme { --bg-body: #f0f2f5; --bg-panel: #ffffff; --bg-subpanel: #f8f9fa; --text-main: #24292e; --text-muted: #57606a; --border-color: #d0d7de; --input-bg: #ffffff; --item-hover: #e1e4e8; }
 * { box-sizing: border-box; transition: background-color 0.3s, border-color 0.3s; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
+
+/* 🟢 V14.2: SCROLLBARS CIBERPUNK 🟢 */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: var(--bg-body); }
+::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 10px; border: 2px solid var(--bg-body); }
+::-webkit-scrollbar-thumb:hover { background: var(--color-guardar); }
 
 body { background-color: var(--bg-body); background-image: radial-gradient(rgba(255,255,255,0.015) 1px, transparent 1px); background-size: 25px 25px; margin: 0; padding: 0; color: var(--text-main); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
 .app-container { display: none; width: 100%; height: 100vh; padding: 10px; flex-direction: column; gap: 10px; margin: 0 auto; max-width: 2560px; overflow: hidden;}
@@ -50,7 +56,7 @@ h2 { color: var(--text-main); margin: 0; font-size: 1.3rem; font-weight: 900; le
 .kpi-proyectado { background: rgba(121, 192, 255, 0.05); border-color: rgba(121, 192, 255, 0.4); border-top: 3px solid #79c0ff;}
 .kpi-proyectado h4 { color: #79c0ff; }
 
-/* 🟢 TELEMETRÍA CONTEXTUAL (V14.1) 🟢 */
+/* TELEMETRÍA CONTEXTUAL */
 .context-charts { display: grid; gap: 15px; padding: 15px; border-bottom: 1px solid var(--border-color); flex-shrink: 0;}
 .context-charts.flujo { grid-template-columns: repeat(3, 1fr); background: rgba(31, 111, 235, 0.03); }
 .context-charts.tc { grid-template-columns: repeat(2, 1fr); background: rgba(255, 82, 82, 0.03); }
@@ -80,7 +86,7 @@ h2 { color: var(--text-main); margin: 0; font-size: 1.3rem; font-weight: 900; le
 .core-title { font-size: 0.95rem; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; gap: 8px;}
 .core-body { flex: 1 1 0px; overflow-y: auto; overflow-x: hidden; padding: 0; scrollbar-width: thin; scrollbar-color: var(--border-color) var(--bg-body); display: flex; flex-direction: column;}
 
-/* V14: ESTILOS PATRIMONIO */
+/* ESTILOS PATRIMONIO */
 .ptr-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; padding: 20px; }
 .ptr-box { background: var(--bg-subpanel); border: 1px solid var(--border-color); border-radius: 8px; padding: 15px; box-shadow: inset 0 0 20px rgba(0,0,0,0.5); }
 .ptr-box-title { font-size: 0.85rem; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 5px; }
@@ -110,8 +116,9 @@ h2 { color: var(--text-main); margin: 0; font-size: 1.3rem; font-weight: 900; le
 
 .floating-mass-actions { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #1c2128; border: 1px solid var(--color-edit); border-radius: 50px; padding: 8px 20px; display: flex; align-items: center; gap: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); z-index: 9999; }
 
+/* 🟢 V14.2: MODALES REDISEÑADOS 🟢 */
 #modal-historian { position: fixed; inset: 0; background: rgba(3, 5, 8, 0.95); z-index: 25000; display: none; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(10px); padding: 20px; }
-.hist-box { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 12px; width: 100%; max-width: 600px; box-shadow: 0 0 40px rgba(255, 82, 82, 0.2); overflow: hidden; border-top: 4px solid #ff5252; display: flex; flex-direction: column; max-height: 85vh;}
+.hist-box { position: relative; background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 12px; width: 100%; max-width: 600px; box-shadow: 0 0 40px rgba(255, 82, 82, 0.2); overflow: hidden; border-top: 4px solid #ff5252; display: flex; flex-direction: column; max-height: 85vh;}
 .hist-header { padding: 15px 20px; background: rgba(0,0,0,0.3); border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;}
 .hist-body { padding: 20px; overflow-y: auto; flex-grow: 1;}
 
@@ -127,7 +134,7 @@ h2 { color: var(--text-main); margin: 0; font-size: 1.3rem; font-weight: 900; le
 .log-item.warning strong, .log-item.warning span { color: #ff9800; }
 
 #modal-dia-cero { position: fixed; inset: 0; background: rgba(3, 5, 8, 0.95); z-index: 20000; display: none; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(10px); padding: 10px; }
-.pv-container { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 16px; width: 100%; max-width: 900px; max-height: 95vh; box-shadow: 0 0 50px rgba(255, 152, 0, 0.2); display: flex; flex-direction: column; border-top: 4px solid #ff9800; }
+.pv-container { position: relative; background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 16px; width: 100%; max-width: 1150px; max-height: 95vh; box-shadow: 0 0 50px rgba(255, 152, 0, 0.2); display: flex; flex-direction: column; border-top: 4px solid #ff9800; }
 .pv-header { padding: 15px 20px; text-align: center; border-bottom: 1px solid var(--border-color); background: rgba(0,0,0,0.3); flex-shrink:0;}
 .pv-title { font-size: 1.3rem; font-weight: 900; color: #ff9800; letter-spacing: 2px; margin: 0; text-transform: uppercase; }
 .pv-subtitle { font-size: 0.75rem; color: var(--text-muted); font-family: monospace; margin-top: 4px; }
@@ -165,7 +172,7 @@ h2 { color: var(--text-main); margin: 0; font-size: 1.3rem; font-weight: 900; le
 <div id="login-screen">
     <div class="login-box">
         <h2 style="color:var(--color-proyectado); margin-bottom:10px; font-size: 2rem;">BÚNKER SCADA</h2>
-        <p style="color:var(--text-muted); font-size:0.85rem; letter-spacing: 2px;">VERSIÓN 14.1 (CONTEXTUAL EDITION)</p>
+        <p style="color:var(--text-muted); font-size:0.85rem; letter-spacing: 2px;">VERSIÓN 14.2 (ERGO-PC)</p>
         <button class="btn-google" onclick="loginWithGoogle()">INICIAR ENLACE NEURAL</button>
     </div>
 </div>
@@ -173,7 +180,7 @@ h2 { color: var(--text-main); margin: 0; font-size: 1.3rem; font-weight: 900; le
 <div class="app-container" id="reportZone">
     <div class="header-titles">
         <div style="display:flex; align-items:center;">
-            <h2>BUNKER SCADA <span class="scada-badge">V14.1</span></h2>
+            <h2>BUNKER SCADA <span class="scada-badge">V14.2</span></h2>
             <div id="user-display" style="margin-left: 15px; font-size: 0.75rem; color: var(--color-saldo); font-weight:800; text-transform:uppercase;"></div>
         </div>
         <div class="system-btns">
@@ -398,17 +405,20 @@ h2 { color: var(--text-main); margin: 0; font-size: 1.3rem; font-weight: 900; le
 </div>
 
 <div id="modal-historian" style="display:none; position:fixed; inset:0; background:rgba(3, 5, 8, 0.95); z-index:25000; flex-direction:column; align-items:center; justify-content:center; backdrop-filter:blur(10px); padding:20px;">
-    <div class="hist-box">
+    <div class="hist-box" style="position: relative;">
+        <button onclick="document.getElementById('modal-historian').style.display='none'" style="position:absolute; top:12px; right:15px; background:var(--bg-panel); border:1px solid var(--border-color); color:var(--text-muted); border-radius:50%; width:32px; height:32px; cursor:pointer; font-weight:bold; z-index:100; display:flex; align-items:center; justify-content:center; box-shadow: 0 4px 10px rgba(0,0,0,0.3); transition: color 0.2s, border-color 0.2s;" onmouseover="this.style.color='#ff5252'; this.style.borderColor='#ff5252';" onmouseout="this.style.color='var(--text-muted)'; this.style.borderColor='var(--border-color)';">✕</button>
+        
         <div class="hist-header">
             <h3 style="color:#ff5252; margin:0; display:flex; align-items:center; gap:10px;"><span style="font-size:1.5rem;">⚠️</span> HISTORIAN LOG</h3>
-            <button class="btn-sys" onclick="document.getElementById('modal-historian').style.display='none'" style="border-color:var(--text-muted);">✖ CLOSE</button>
         </div>
         <div class="hist-body" id="historian-content"></div>
     </div>
 </div>
 
-<div id="modal-dia-cero">
+<div id="modal-dia-cero" style="display:none; position:fixed; inset:0; background: rgba(3, 5, 8, 0.95); z-index: 20000; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(10px); padding: 10px;">
     <div class="pv-container">
+        <button onclick="cerrarPreVuelo()" style="position:absolute; top:15px; right:15px; background:var(--bg-panel); border:1px solid var(--border-color); color:var(--text-muted); border-radius:50%; width:32px; height:32px; cursor:pointer; font-weight:bold; z-index:100; display:flex; align-items:center; justify-content:center; box-shadow: 0 4px 10px rgba(0,0,0,0.3); transition: color 0.2s, border-color 0.2s;" onmouseover="this.style.color='#ff5252'; this.style.borderColor='#ff5252';" onmouseout="this.style.color='var(--text-muted)'; this.style.borderColor='var(--border-color)';">✕</button>
+
         <div class="pv-header">
             <h2 class="pv-title" data-en="DAY ZERO SIMULATOR">SIMULADOR DÍA CERO</h2>
             <div class="pv-subtitle" data-en="FEEDFORWARD CONTROL FOR">CONTROL PREALIMENTADO DE LIQUIDEZ MES DE <span id="pv-mes-label" style="color:#fff; font-weight:bold;">--</span></div>
