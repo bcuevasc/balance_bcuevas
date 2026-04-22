@@ -1140,3 +1140,92 @@ document.addEventListener('keydown', (e) => {
         console.log("%c[SYS] COMANDO ESCAPE DETECTADO: CERRANDO VENTANAS", "color: #ff5252;");
     }
 });
+
+// ==========================================================
+// 🧠 BÚNKER SCADA ORACLE - MOTOR LÓGICO V14.5
+// ==========================================================
+const BYRON_EMAIL = "bvhcc94@gmail.com"; 
+const SUELDO_BASE_DEFAULT = 3602505;
+
+// Variables de Estado Global
+let listaMovimientos = [], datosMesGlobal = [], sueldosHistoricos = {}; 
+let chartBD = null, chartP = null, chartDiario = null;
+let currentSort = { column: 'fechaISO', direction: 'desc' };
+
+// 🟢 V14.5: FUNCIÓN DE CÁLCULO DE ARRASTRE (LÍNEA DE CRÉDITO) 🟢
+function calcularArrastreMesAnterior(anioActual, mesActual) {
+    let mesPrev = mesActual - 1; let anioPrev = anioActual;
+    if (mesPrev < 0) { mesPrev = 11; anioPrev--; }
+    
+    const { T0, TFinal } = calcularFechasCiclo(mesPrev, anioPrev);
+    const sueldoPrev = obtenerSueldoMes(anioPrev, mesPrev);
+    
+    let balancePrev = sueldoPrev;
+    listaMovimientos.forEach(x => {
+        let d = new Date(x.fechaISO);
+        if (d >= T0 && d <= TFinal && x.categoria !== 'Gasto Tarjeta de Crédito') {
+            const esIn = x.tipo === 'Ingreso' || x.categoria === 'Transferencia Recibida';
+            const esNeutro = x.tipo === 'Por Cobrar' || x.tipo === 'Ahorro';
+            if (esIn) balancePrev += x.monto;
+            else if (!esNeutro) balancePrev -= x.monto;
+        }
+    });
+    
+    return balancePrev < 0 ? Math.abs(balancePrev) : 0;
+}
+
+function actualizarDashboard() {
+    const elMes = document.getElementById('navMesConceptual'), elAnio = document.getElementById('navAnio');
+    const mesVal = parseInt(elMes.value), anioVal = parseInt(elAnio.value);
+    
+    const sueldo = obtenerSueldoMes(anioVal, mesVal);
+    let { T0, TFinal } = calcularFechasCiclo(mesVal, anioVal);
+    
+    // 🟢 V14.5: CALCULAR ARRASTRE AUTOMÁTICO
+    const montoArrastre = calcularArrastreMesAnterior(anioVal, mesVal);
+    const elArrastre = document.getElementById('txtArrastreLinea');
+    if(elArrastre) elArrastre.innerText = montoArrastre.toLocaleString('es-CL');
+    const cardArrastre = document.getElementById('cardArrastre');
+    if(cardArrastre) cardArrastre.style.display = montoArrastre > 0 ? 'block' : 'none';
+
+    let dataMes = listaMovimientos.filter(x => { let d = new Date(x.fechaISO); return d >= T0 && d <= TFinal; });
+    
+    let saldoAcc = sueldo - montoArrastre; // La deuda del mes pasado se resta del saldo inicial
+    let tF = 0, tO = 0, gCat = {};
+
+    dataMes.forEach(x => {
+        if (x.categoria !== 'Gasto Tarjeta de Crédito') {
+            const esIn = x.tipo === 'Ingreso' || x.categoria === 'Transferencia Recibida';
+            const esNeutro = x.tipo === 'Por Cobrar' || x.tipo === 'Ahorro';
+            if (esIn) saldoAcc += x.monto;
+            else if (!esNeutro) {
+                saldoAcc -= x.monto;
+                if (x.tipo === 'Gasto Fijo') tF += x.monto; else tO += x.monto;
+                gCat[x.categoria] = (gCat[x.categoria] || 0) + x.monto;
+            }
+        }
+    });
+
+    // Actualizar UI
+    document.getElementById('txtSaldo').innerText = saldoAcc.toLocaleString('es-CL');
+    document.getElementById('txtTotalFijos').innerText = tF.toLocaleString('es-CL');
+    document.getElementById('txtTotalOtros').innerText = tO.toLocaleString('es-CL');
+    
+    const elProy = document.getElementById('txtProyectado');
+    if(elProy) {
+        let valProy = saldoAcc - (window.totalTC || 0);
+        elProy.innerText = valProy.toLocaleString('es-CL');
+        elProy.style.color = valProy < 0 ? 'var(--accent-red)' : '#79c0ff';
+    }
+
+    if (typeof renderizarListas === 'function') renderizarListas(sueldo, '');
+    if (typeof dibujarGraficosFlujo === 'function') dibujarGraficosFlujo(sueldo, dataMes, gCat, 30, T0, tF, 0, 0);
+}
+
+// Re-vincular funciones necesarias
+window.obtenerSueldoMes = (a, m) => sueldosHistoricos[`${a}_${m}`] || SUELDO_BASE_DEFAULT;
+window.calcularFechasCiclo = (m, a) => {
+    let mI = m - 1, aI = a; if (mI < 0) { mI = 11; aI--; }
+    let t0 = new Date(aI, mI, 30); let tf = new Date(a, m, 30);
+    return { T0: t0, TFinal: tf };
+};
