@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Bunker Digital SCADA v13.1 (Global Edition)</title>
+    <title>Bunker Digital SCADA v14.0 (Maradona Edition)</title>
     
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -50,7 +50,6 @@ h2 { color: var(--text-main); margin: 0; font-size: 1.3rem; font-weight: 900; le
 .kpi-proyectado { background: rgba(121, 192, 255, 0.05); border-color: rgba(121, 192, 255, 0.4); border-top: 3px solid #79c0ff;}
 .kpi-proyectado h4 { color: #79c0ff; }
 
-/* 🟢 PARCHE GRÁFICOS: Altura 280px para que respiren las fechas 🟢 */
 .charts-panorama { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; flex-shrink: 0; height: 280px; }
 .chart-box { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px 12px 6px 12px; display: flex; flex-direction: column; position: relative; box-shadow: 0 4px 15px rgba(0,0,0,0.2);}
 .chart-box h5 { margin: 0 0 8px 0; font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; font-weight: 900; z-index: 10; text-align: center;}
@@ -59,8 +58,6 @@ h2 { color: var(--text-main); margin: 0; font-size: 1.3rem; font-weight: 900; le
 .bd-badge { padding: 2px 8px; font-size: 0.65rem; font-weight: 900; color: var(--text-main); background: rgba(0,0,0,0.6); border-radius: 4px; border: 1px solid var(--border-color); backdrop-filter: blur(2px);}
 
 .command-ribbon { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; background: linear-gradient(90deg, var(--bg-panel) 0%, rgba(31, 111, 235, 0.08) 100%); border: 1px solid var(--border-color); border-left: 4px solid var(--color-edit); padding: 10px 15px; border-radius: 8px; flex-shrink: 0; box-shadow: 0 5px 20px rgba(0,0,0,0.3);}
-
-/* 🟢 PARCHE CMD: writing-mode vertical-lr 🟢 */
 .ribbon-title { font-size: 0.7rem; font-weight: 900; color: var(--color-edit); text-transform: uppercase; letter-spacing: 1px; writing-mode: vertical-lr; transform: rotate(180deg); margin: 0 5px 0 0; text-align: center; text-shadow: 0 0 10px rgba(210, 153, 34, 0.5); display: flex; align-items: center; justify-content: center; }
 
 .form-group { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 120px; }
@@ -72,11 +69,21 @@ h2 { color: var(--text-main); margin: 0; font-size: 1.3rem; font-weight: 900; le
 .btn-ribbon { background: var(--color-edit); color: #000; border: none; border-radius: 6px; font-weight: 900; padding: 0 25px; height: 34px; cursor: pointer; text-transform: uppercase; font-size: 0.85rem; transition: transform 0.1s, box-shadow 0.2s; white-space: nowrap; box-shadow: 0 0 15px rgba(210, 153, 34, 0.4);}
 .btn-ribbon:active { transform: scale(0.95); }
 
-.dual-core { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; flex: 1 1 0px; min-height: 0; overflow: hidden; }
-.core-panel { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 10px; display: flex; flex-direction: column; overflow: hidden; position: relative; box-shadow: 0 5px 25px rgba(0,0,0,0.2);}
-.core-header { padding: 12px 15px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.3); }
+.dual-core { display: flex; gap: 15px; flex: 1 1 0px; min-height: 0; overflow: hidden; }
+.core-panel { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 10px; display: flex; flex-direction: column; overflow: hidden; position: relative; box-shadow: 0 5px 25px rgba(0,0,0,0.2); flex: 1; transition: flex 0.3s ease;}
+.core-panel.hidden { display: none; }
+.core-header { padding: 12px 15px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.3); flex-shrink: 0;}
 .core-title { font-size: 0.95rem; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; gap: 8px;}
 .core-body { flex: 1 1 0px; overflow-y: auto; overflow-x: hidden; padding: 0; scrollbar-width: thin; scrollbar-color: var(--border-color) var(--bg-body); }
+
+/* V14: ESTILOS PATRIMONIO */
+.ptr-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; padding: 20px; }
+.ptr-box { background: var(--bg-subpanel); border: 1px solid var(--border-color); border-radius: 8px; padding: 15px; }
+.ptr-box-title { font-size: 0.85rem; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 5px; }
+.ptr-input-group { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.ptr-input-group label { font-size: 0.75rem; font-weight: bold; color: var(--text-main); }
+.ptr-input { background: var(--input-bg); border: 1px solid var(--border-color); color: var(--text-main); padding: 8px; border-radius: 6px; font-family: monospace; font-size: 1rem; width: 140px; text-align: right; outline: none; }
+.ptr-input:focus { border-color: var(--color-proyectado); }
 
 .data-grid { width: 100%; border-collapse: collapse; text-align: left; }
 .data-grid th { position: sticky; top: 0; background: var(--bg-subpanel); padding: 10px 12px; font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; z-index: 10; border-bottom: 2px solid var(--border-color); letter-spacing: 0.5px; cursor: pointer; }
@@ -115,7 +122,6 @@ h2 { color: var(--text-main); margin: 0; font-size: 1.3rem; font-weight: 900; le
 .log-item.warning { border-color: rgba(255,152,0,0.4); background: linear-gradient(90deg, rgba(255,152,0,0.05), transparent); }
 .log-item.warning strong, .log-item.warning span { color: #ff9800; }
 
-/* MÓDULO PRE-VUELO V13.1 */
 #modal-dia-cero { position: fixed; inset: 0; background: rgba(3, 5, 8, 0.95); z-index: 20000; display: none; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(10px); padding: 10px; }
 .pv-container { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 16px; width: 100%; max-width: 900px; max-height: 95vh; box-shadow: 0 0 50px rgba(255, 152, 0, 0.2); display: flex; flex-direction: column; border-top: 4px solid #ff9800; }
 .pv-header { padding: 15px 20px; text-align: center; border-bottom: 1px solid var(--border-color); background: rgba(0,0,0,0.3); flex-shrink:0;}
@@ -135,7 +141,6 @@ h2 { color: var(--text-main); margin: 0; font-size: 1.3rem; font-weight: 900; le
 .pv-section-title { font-size: 0.7rem; font-weight: 900; text-transform: uppercase; margin-bottom: 10px; border-bottom: 1px solid var(--border-color); padding-bottom: 5px; color: var(--text-main); display:flex; align-items:center; gap:5px;}
 .pv-input-group { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; gap: 5px;}
 .pv-input-group label { font-size: 0.65rem; font-weight: 700; color: var(--text-muted); flex:1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
-/* 🟢 PARCHE CAJA CORTADA: width a 135px 🟢 */
 .pv-input { background: var(--input-bg); border: 1px solid var(--border-color); color: var(--text-main); padding: 4px 6px; border-radius: 4px; font-family: monospace; font-size: 0.85rem; width: 135px; text-align: right; outline: none; font-weight: bold; transition: all 0.3s;}
 .pv-input:focus { border-color: #ff9800; }
 .pv-input.pagado { text-decoration: line-through; color: var(--text-muted); background: transparent; border-color: transparent;}
@@ -156,7 +161,7 @@ h2 { color: var(--text-main); margin: 0; font-size: 1.3rem; font-weight: 900; le
 <div id="login-screen">
     <div class="login-box">
         <h2 style="color:var(--color-proyectado); margin-bottom:10px; font-size: 2rem;">BÚNKER SCADA</h2>
-        <p style="color:var(--text-muted); font-size:0.85rem; letter-spacing: 2px;">VERSIÓN 13.1 (GLOBAL EDITION)</p>
+        <p style="color:var(--text-muted); font-size:0.85rem; letter-spacing: 2px;">VERSIÓN 14.0 (MARADONA EDITION)</p>
         <button class="btn-google" onclick="loginWithGoogle()">INICIAR ENLACE NEURAL</button>
     </div>
 </div>
@@ -164,7 +169,7 @@ h2 { color: var(--text-main); margin: 0; font-size: 1.3rem; font-weight: 900; le
 <div class="app-container" id="reportZone">
     <div class="header-titles">
         <div style="display:flex; align-items:center;">
-            <h2>BUNKER SCADA <span class="scada-badge">V13.1</span></h2>
+            <h2>BUNKER SCADA <span class="scada-badge">V14.0</span></h2>
             <div id="user-display" style="margin-left: 15px; font-size: 0.75rem; color: var(--color-saldo); font-weight:800; text-transform:uppercase;"></div>
         </div>
         <div class="system-btns">
@@ -175,6 +180,12 @@ h2 { color: var(--text-main); margin: 0; font-size: 1.3rem; font-weight: 900; le
             <button class="btn-sys" onclick="toggleTheme()">☀️/🌙</button>
             <button class="btn-sys" onclick="logout()" style="color:var(--color-fuga); border-color:rgba(255,82,82,0.3);" data-en="🚪 LOGOUT">🚪 SALIR</button>
         </div>
+    </div>
+
+    <div style="display:flex; justify-content:center; gap:10px; margin-bottom:5px;">
+        <button class="btn-sys" id="tabBtnFlujo" onclick="switchPCPanel('main')" style="background:rgba(31, 111, 235, 0.1); border-color:var(--color-guardar); color:white; padding:8px 20px;">1. FLUJO PRESENTE</button>
+        <button class="btn-sys" id="tabBtnTC" onclick="switchPCPanel('tc')" style="padding:8px 20px;">2. MATRIZ TC</button>
+        <button class="btn-sys" id="tabBtnPat" onclick="switchPCPanel('patrimonio')" style="padding:8px 20px;">3. PATRIMONIO</button>
     </div>
 
     <div style="display: flex; gap: 10px; flex-shrink: 0;">
@@ -254,15 +265,16 @@ h2 { color: var(--text-main); margin: 0; font-size: 1.3rem; font-weight: 900; le
     </div>
 
     <div class="dual-core">
+        
         <div class="core-panel" id="panelMain" ondragover="dragOverPanel(event, 'main')" ondragleave="dragLeavePanel(event, 'main')" ondrop="dropOnPanel(event, 'main')">
             <div class="core-header">
-                <div class="core-title"><span style="color:var(--color-saldo); text-shadow: 0 0 8px var(--color-saldo);">●</span> <span data-en="PRESENT FLOW (LEDGER)">FLUJO PRESENTE (LIBRO DIARIO)</span></div>
+                <div class="core-title"><span style="color:var(--color-saldo); text-shadow: 0 0 8px var(--color-saldo);">●</span> <span>FLUJO PRESENTE (LIBRO DIARIO)</span></div>
                 <div style="display: flex; gap: 15px; align-items: center;">
                     <div class="fugas-mini-kpi" title="Eficiencia de Gasto">
-                        <span data-en="SYSTEM LEAKS:">FUGAS DE SISTEMA:</span><strong id="txtTotalEvitable">0</strong>
+                        <span>FUGAS DE SISTEMA:</span><strong id="txtTotalEvitable">0</strong>
                         <span style="margin-left: 5px;">(<span id="txtPorcentajeFugas" style="color:var(--color-fuga); font-weight:bold;">0%</span>)</span>
                     </div>
-                    <button class="btn-sys" onclick="let b=this; b.innerHTML='⏳...'; b.style.opacity='0.7'; exportarDataLink(); setTimeout(()=>{b.innerHTML='📥 DATA-LINK'; b.style.opacity='1';}, 2000)" style="background:var(--accent-blue); color:#fff; border:none; transition:all 0.2s;" data-en="📥 DATA-LINK">📥 DATA-LINK</button>
+                    <button class="btn-sys" onclick="let b=this; b.innerHTML='⏳...'; b.style.opacity='0.7'; exportarDataLink(); setTimeout(()=>{b.innerHTML='📥 DATA-LINK'; b.style.opacity='1';}, 2000)" style="background:var(--accent-blue); color:#fff; border:none; transition:all 0.2s;">📥 DATA-LINK</button>
                 </div>
             </div>
             <div style="padding: 6px 12px; background: rgba(0,0,0,0.3); border-bottom: 1px solid var(--border-color);">
@@ -273,11 +285,11 @@ h2 { color: var(--text-main); margin: 0; font-size: 1.3rem; font-weight: 900; le
                     <thead>
                         <tr>
                             <th style="width: 30px; text-align: center;"><input type="checkbox" id="checkAll" onchange="toggleAllChecks()"></th>
-                            <th onclick="sortTable('fechaISO')" data-en="Date">Fecha</th>
-                            <th onclick="sortTable('nombre')" data-en="Description">Descripción</th>
-                            <th onclick="sortTable('catV')" data-en="Category">Categoría</th>
-                            <th onclick="sortTable('monto')" style="text-align: right;" data-en="Amount ($)">Monto ($)</th>
-                            <th style="text-align: right;" data-en="Hist. Balance">Saldo Hist.</th>
+                            <th onclick="sortTable('fechaISO')">Fecha</th>
+                            <th onclick="sortTable('nombre')">Descripción</th>
+                            <th onclick="sortTable('catV')">Categoría</th>
+                            <th onclick="sortTable('monto')" style="text-align: right;">Monto ($)</th>
+                            <th style="text-align: right;">Saldo Hist.</th>
                             <th style="text-align: center; width: 40px;">CMD</th>
                         </tr>
                     </thead>
@@ -286,41 +298,81 @@ h2 { color: var(--text-main); margin: 0; font-size: 1.3rem; font-weight: 900; le
             </div>
         </div>
 
-        <div class="core-panel" id="panelTC" style="border-color: rgba(255, 82, 82, 0.2); box-shadow: inset 0 0 30px rgba(255, 82, 82, 0.02);" ondragover="dragOverPanel(event, 'tc')" ondragleave="dragLeavePanel(event, 'tc')" ondrop="dropOnPanel(event, 'tc')">
+        <div class="core-panel hidden" id="panelTC" style="border-color: rgba(255, 82, 82, 0.2); box-shadow: inset 0 0 30px rgba(255, 82, 82, 0.02);" ondragover="dragOverPanel(event, 'tc')" ondragleave="dragLeavePanel(event, 'tc')" ondrop="dropOnPanel(event, 'tc')">
             <div class="core-header" style="background: rgba(255, 82, 82, 0.08); border-bottom-color: rgba(255, 82, 82, 0.2);">
-                <div class="core-title"><span style="color:var(--color-fuga); text-shadow: 0 0 8px var(--color-fuga);">●</span> <span data-en="TC LIABILITIES MATRIX">MATRIZ DE DEUDA TC</span></div>
+                <div class="core-title"><span style="color:var(--color-fuga); text-shadow: 0 0 8px var(--color-fuga);">●</span> <span>MATRIZ DE DEUDA TC</span></div>
                 <div style="display: flex; gap: 12px; align-items: center;">
                     <div style="font-size:1.2rem; font-weight:900; color:var(--color-fuga); font-family: monospace; text-shadow: 0 0 10px rgba(255, 82, 82, 0.3);">$<span id="txtTotalTC">0</span></div>
-                    <button class="btn-sys" onclick="cargarCSV_TC()" style="background-color: var(--color-fuga); color: white; border: none; box-shadow: 0 0 10px rgba(255, 82, 82, 0.4);" data-en="💳 INGEST">💳 INGESTAR</button>
+                    <button class="btn-sys" onclick="cargarCSV_TC()" style="background-color: var(--color-fuga); color: white; border: none; box-shadow: 0 0 10px rgba(255, 82, 82, 0.4);">💳 INGESTAR</button>
                 </div>
             </div>
-            
             <div style="padding: 12px; border-bottom: 1px solid rgba(255, 82, 82, 0.2); background: rgba(0,0,0,0.2);">
                 <div id="boxImpactoTC" class="tc-impact-box" style="display:none;">
-                    <span id="lblImpactoMes" data-en="⚠️ NEXT MONTH IMPACT ALARM">⚠️ ALARMA DE IMPACTO PRÓX. MES</span>
+                    <span id="lblImpactoMes">⚠️ ALARMA DE IMPACTO PRÓX. MES</span>
                     <strong id="txtImpactoMonto">$0</strong>
                     <div style="flex:1;"></div>
-                    <button class="btn-sys" onclick="exportarTablaBunker('tablaCuotas', 'Bunker_Proyeccion_TC')" style="border-color: var(--color-fuga); color: var(--color-fuga); background: transparent; padding: 4px 10px;" data-en="📥 EXPORT">📥 EXPORTAR</button>
+                    <button class="btn-sys" onclick="exportarTablaBunker('tablaCuotas', 'Bunker_Proyeccion_TC')" style="border-color: var(--color-fuga); color: var(--color-fuga); background: transparent; padding: 4px 10px;">📥 EXPORTAR</button>
                 </div>
-                
                 <div id="barraAccionesTC" style="display:none; background: #b71c1c; color: white; padding: 8px 15px; border-radius: 6px; justify-content: space-between; align-items: center; margin-top: 8px; box-shadow: 0 4px 15px rgba(183, 28, 28, 0.4);">
                     <span id="txtSeleccionadosTC" style="font-weight: 900; font-size: 0.8rem; letter-spacing: 1px;">0 SELECCIONADAS</span>
                     <button onclick="ejecutarPurgaMasivaTC()" style="background: white; color: #b71c1c; border: none; padding: 6px 15px; border-radius: 4px; font-weight: 900; cursor: pointer; font-size: 0.75rem; text-transform: uppercase;">🗑️ PURGAR MATRIZ</button>
                 </div>
             </div>
-
             <div class="core-body">
                 <table id="tablaCuotas" class="data-grid">
                     <thead style="background: rgba(255, 82, 82, 0.05);">
                         <tr>
                             <th style="width: 30px; text-align: center;"><input type="checkbox" id="checkMaestroTC" onclick="toggleTodosTC(this)" style="accent-color: #ff5252;"></th>
-                            <th data-en="Cycle/Inst.">Ciclo/Cuota</th>
-                            <th data-en="Merchant">Comercio Asociado</th>
-                            <th style="text-align: right;" data-en="Amount ($)">Cuota ($)</th>
+                            <th>Ciclo/Cuota</th><th>Comercio Asociado</th><th style="text-align: right;">Cuota ($)</th>
                         </tr>
                     </thead>
                     <tbody id="listaDetalleTC"></tbody>
                 </table>
+            </div>
+        </div>
+
+        <div class="core-panel hidden" id="panelPatrimonio" style="border-color: rgba(121, 192, 255, 0.3); box-shadow: inset 0 0 30px rgba(121, 192, 255, 0.02);">
+            <div class="core-header" style="background: rgba(121, 192, 255, 0.08); border-bottom-color: rgba(121, 192, 255, 0.3);">
+                <div class="core-title"><span style="color:#79c0ff; text-shadow: 0 0 8px #79c0ff;">●</span> <span>RADAR PATRIMONIAL (NET WORTH)</span></div>
+                <button class="btn-sys" onclick="guardarPatrimonioEnNube()" style="background-color: #1f6feb; color: white; border: none; box-shadow: 0 0 10px rgba(31, 111, 235, 0.4);">💾 GUARDAR ESTADO</button>
+            </div>
+            <div class="core-body" style="padding: 20px;">
+                <div style="text-align:center; margin-bottom:20px;">
+                    <div style="font-size:0.8rem; color:var(--text-muted); text-transform:uppercase; font-weight:900; letter-spacing:2px;">Patrimonio Neto Total</div>
+                    <div style="font-size:3.5rem; font-weight:900; color:#79c0ff; font-family:monospace; text-shadow: 0 0 20px rgba(121, 192, 255, 0.3); line-height: 1;">$<span id="hud-patrimonio-neto">0</span></div>
+                    <div style="width:100%; height:8px; background:rgba(255,255,255,0.05); margin-top:15px; border-radius:4px; display:flex; overflow:hidden;">
+                        <div id="ptr-bar-activos" style="height:100%; background:var(--color-saldo); transition:width 0.5s;"></div>
+                        <div id="ptr-bar-pasivos" style="height:100%; background:var(--color-fuga); transition:width 0.5s;"></div>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; margin-top:5px; font-size:0.75rem; font-family:monospace; font-weight:bold;">
+                        <span style="color:var(--color-saldo);">ACTIVOS: $<span id="hud-activos">0</span></span>
+                        <span style="color:var(--color-fuga);">PASIVOS: $<span id="hud-pasivos">0</span></span>
+                    </div>
+                </div>
+
+                <div style="background: rgba(46, 160, 67, 0.05); border: 1px solid rgba(46, 160, 67, 0.3); border-radius: 12px; padding: 15px; text-align: center; margin-bottom: 25px; box-shadow: 0 0 20px rgba(46, 160, 67, 0.1);">
+                    <div style="font-size:0.7rem; color:var(--color-saldo); text-transform:uppercase; font-weight:900; letter-spacing:1px; margin-bottom:5px;">Rendimiento Automático (Tiempo Real)</div>
+                    <div id="live-yield-counter" style="font-size:2rem; font-weight:900; color:#2ea043; font-family:monospace; text-shadow: 0 0 15px rgba(46, 160, 67, 0.6);">+ $0.0000</div>
+                    <div id="live-yield-daily" style="font-size:0.75rem; color:var(--text-muted); font-family:monospace; margin-top:4px;">($0 / día en Automático)</div>
+                </div>
+
+                <div class="ptr-grid">
+                    <div class="ptr-box">
+                        <div class="ptr-box-title" style="color:var(--color-saldo);">🟢 Activos Físicos e Inversión</div>
+                        <div class="ptr-input-group"><label>Inversión Activa</label><input type="text" id="ptr-inversion" class="ptr-input" placeholder="0" oninput="formatearEntradaNumerica(this)"></div>
+                        <div class="ptr-input-group"><label>Rendimiento Anual (TIR %)</label><input type="text" id="ptr-tir" class="ptr-input" style="color:var(--color-saldo);" placeholder="8" oninput="formatearEntradaNumerica(this)"></div>
+                        <div class="ptr-input-group"><label>Vehículo (Tasación)</label><input type="text" id="ptr-auto" class="ptr-input" placeholder="0" oninput="formatearEntradaNumerica(this)"></div>
+                        <div class="ptr-input-group"><label>Otros Activos</label><input type="text" id="ptr-otros-act" class="ptr-input" placeholder="0" oninput="formatearEntradaNumerica(this)"></div>
+                        <div style="font-size:0.6rem; color:var(--text-muted); margin-top:10px;">* Liquidez (Saldo) se suma automáticamente del Flujo Presente.</div>
+                    </div>
+                    <div class="ptr-box">
+                        <div class="ptr-box-title" style="color:var(--color-fuga);">🔴 Pasivos a Largo Plazo</div>
+                        <div class="ptr-input-group"><label>Deuda CAE</label><input type="text" id="ptr-cae" class="ptr-input" placeholder="0" oninput="formatearEntradaNumerica(this)"></div>
+                        <div class="ptr-input-group"><label>Crédito Hipotecario</label><input type="text" id="ptr-hipo" class="ptr-input" placeholder="0" oninput="formatearEntradaNumerica(this)"></div>
+                        <div class="ptr-input-group"><label>Otros Pasivos</label><input type="text" id="ptr-otros-pas" class="ptr-input" placeholder="0" oninput="formatearEntradaNumerica(this)"></div>
+                        <div style="font-size:0.6rem; color:var(--text-muted); margin-top:10px;">* Deuda TC se suma automáticamente de la Matriz TC.</div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -429,6 +481,34 @@ h2 { color: var(--text-main); margin: 0; font-size: 1.3rem; font-weight: 900; le
     </div>
 </div>
 
+<script>
+    // 🟢 V14.0 LÓGICA DE TRI-CORE (PESTAÑAS)
+    function switchPCPanel(viewId) {
+        document.querySelectorAll('.core-panel').forEach(p => p.classList.add('hidden'));
+        document.querySelectorAll('.btn-sys').forEach(b => {
+            if(b.id && b.id.startsWith('tabBtn')) {
+                b.style.background = 'transparent'; b.style.color = 'var(--text-main)'; b.style.borderColor = 'var(--border-color)';
+            }
+        });
+        
+        if(viewId === 'main') {
+            document.getElementById('panelMain').classList.remove('hidden');
+            document.getElementById('tabBtnFlujo').style.background = 'rgba(31, 111, 235, 0.1)';
+            document.getElementById('tabBtnFlujo').style.color = 'white';
+            document.getElementById('tabBtnFlujo').style.borderColor = 'var(--color-guardar)';
+        } else if(viewId === 'tc') {
+            document.getElementById('panelTC').classList.remove('hidden');
+            document.getElementById('tabBtnTC').style.background = 'rgba(255, 82, 82, 0.1)';
+            document.getElementById('tabBtnTC').style.color = 'white';
+            document.getElementById('tabBtnTC').style.borderColor = 'var(--color-fuga)';
+        } else if(viewId === 'patrimonio') {
+            document.getElementById('panelPatrimonio').classList.remove('hidden');
+            document.getElementById('tabBtnPat').style.background = 'rgba(121, 192, 255, 0.1)';
+            document.getElementById('tabBtnPat').style.color = 'white';
+            document.getElementById('tabBtnPat').style.borderColor = '#79c0ff';
+        }
+    }
+</script>
 <script src="motor.js"></script>
 </body>
 </html>
