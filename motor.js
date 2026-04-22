@@ -1102,3 +1102,19 @@ function ejecutarArranque() {
         alert("No se inyectaron registros."); cerrarPreVuelo();
     }
 }
+// ==========================================================
+// 🟢 V14.2: LISTENER GLOBAL DE EVASIÓN (TECLA ESC)
+// ==========================================================
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        // Cerramos Pre-Vuelo
+        if(typeof cerrarPreVuelo === 'function') cerrarPreVuelo();
+        // Cerramos Historian
+        const hist = document.getElementById('modal-historian');
+        if(hist) hist.style.display = 'none';
+        // Cerramos Bottom Sheet (Móvil)
+        if(typeof closeBottomSheet === 'function') closeBottomSheet();
+        
+        console.log("%c[SYS] COMANDO ESCAPE DETECTADO: CERRANDO VENTANAS", "color: #ff5252;");
+    }
+});
