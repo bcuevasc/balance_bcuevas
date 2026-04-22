@@ -142,14 +142,25 @@ window.mostrarToast = function(mensaje) {
 // ==========================================================
 // 🟢 PARCHE V12.4.3: LOGIN CON PERSISTENCIA FORZADA 🟢
 // ==========================================================
+// ==========================================================
+// 🟢 PARCHE V12.4.7: BYPASS DE POPUP (ANTI-BLOQUEO MÓVIL) 🟢
+// ==========================================================
 window.loginWithGoogle = function() { 
-    auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
-    .then(() => {
-        return auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
-    })
-    .catch(err => {
-        console.error("Falla en Auth:", err);
-        alert("❌ ERROR DE CONEXIÓN:\n" + err.message);
+    const provider = new firebase.auth.GoogleAuthProvider();
+    
+    // 1. Ejecución inmediata (Síncrona) para evitar el bloqueo del celular
+    auth.signInWithPopup(provider).catch(err => {
+        // 2. PLAN B: Si el navegador caprichoso bloquea el Popup (o lo cancela), 
+        // forzamos una redirección directa. Esto nunca falla en móviles.
+        if (err.code === 'auth/popup-blocked' || err.code === 'auth/cancelled-popup-request') {
+            let btn = document.querySelector('.btn-google') || document.querySelector('button[onclick="loginWithGoogle()"]');
+            if(btn) btn.innerHTML = "⏳ REDIRECCIONANDO...";
+            
+            auth.signInWithRedirect(provider);
+        } else {
+            console.error("Falla en Auth:", err);
+            alert("❌ ERROR DE CONEXIÓN:\n" + err.message);
+        }
     }); 
 };
 
