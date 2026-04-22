@@ -958,9 +958,13 @@ function cerrarPreVuelo() {
     if(modal) modal.style.display = 'none';
 }
 
+// 🟢 V13.0: MOTOR HÁPTICO (Vibración) 🟢
 window.toggleEstadoPV = function(btn, inputId) {
     const input = document.getElementById(inputId);
     if(!input) return;
+    
+    // Dispara una micro-vibración de 15ms en el celular (como un clic físico)
+    if (navigator.vibrate) navigator.vibrate(15); 
     
     let estadoActual = input.getAttribute('data-estado') || 'est';
     
@@ -987,6 +991,7 @@ window.toggleEstadoPV = function(btn, inputId) {
     calcularDiaCero(); 
 }
 
+// 🟢 V13.0: MOTOR MATEMÁTICO MULTI-DIVISA 🟢
 function calcularDiaCero() {
     const valSiNoPagado = (id) => {
         let el = document.getElementById(id);
@@ -998,18 +1003,33 @@ function calcularDiaCero() {
     let sueldo = parseInt((document.getElementById('pv-sueldo').value || "0").replace(/\./g, '')) || 0;
     
     let tcNac = valSiNoPagado('pv-tc-nac');
-    let tcInt = valSiNoPagado('pv-tc-int');
-    let linea = valSiNoPagado('pv-linea');
     
+    // --- LÓGICA TC INTERNACIONAL (USD a CLP) ---
+    let elTcInt = document.getElementById('pv-tc-int');
+    let tcIntUSD = elTcInt && elTcInt.getAttribute('data-estado') !== 'pag' ? parseInt(elTcInt.value.replace(/\./g, '')) || 0 : 0;
+    let tcIntCLP = Math.round(tcIntUSD * window.VALOR_USD); // Conversión a pesos
+    
+    let elTcIntCLP = document.getElementById('pv-tc-int-clp');
+    if (elTcIntCLP) {
+        if (elTcInt.getAttribute('data-estado') === 'pag') {
+            elTcIntCLP.innerText = "✔️ PAGADO";
+            elTcIntCLP.style.color = "var(--color-saldo)";
+        } else {
+            elTcIntCLP.innerText = `~ $${tcIntCLP.toLocaleString('es-CL')} CLP`;
+            elTcIntCLP.style.color = "var(--accent-red)";
+        }
+    }
+    let tcInt = tcIntCLP; // Asignamos los pesos al cálculo final
+    // -------------------------------------------
+
+    let linea = valSiNoPagado('pv-linea');
     let arr = valSiNoPagado('pv-arriendo');
     let udec = valSiNoPagado('pv-udec');
     let cae = valSiNoPagado('pv-cae');
-    
     let ggcc = valSiNoPagado('pv-ggcc');
     let luz = valSiNoPagado('pv-luz');
     let agua = valSiNoPagado('pv-agua');
     let gas = valSiNoPagado('pv-gas');
-    
     let celu = valSiNoPagado('pv-celu');
     let madre = valSiNoPagado('pv-madre');
     let subs = valSiNoPagado('pv-subs');
@@ -1044,7 +1064,6 @@ function calcularDiaCero() {
         elCertezaPct.style.color = certeza < 40 ? '#ff5252' : (certeza < 80 ? '#ff9800' : '#2ea043');
     }
 }
-
 function ejecutarArranque() {
     if(!confirm("⚠️ INYECCIÓN CRÍTICA V12.4\n\n¿Estás seguro de inyectar toda tu Planilla Operativa en la Matriz del mes seleccionado?\n\nNota: Los gastos marcados como ✔️ PAGADO serán ignorados para evitar doble contabilización.")) return;
     
