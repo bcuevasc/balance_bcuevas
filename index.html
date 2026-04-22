@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Bunker SCADA v14.8</title>
+    <title>Bunker SCADA v15.0</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
@@ -21,56 +21,64 @@ body { background-color: var(--bg-body); background-image: radial-gradient(rgba(
 .time-navigator-panel { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 8px; padding: 6px 15px; display: flex; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.4); border-left: 4px solid var(--color-ingresos); flex-shrink: 0;} .nav-select { background: var(--input-bg); color: var(--text-main); border: 1px solid var(--border-color); padding: 4px 12px; border-radius: 4px; font-weight: 800; text-transform: uppercase; font-size: 0.8rem; outline: none; cursor: pointer;} .nav-badge { font-family: monospace; background: rgba(31, 111, 235, 0.1); color: #79c0ff; border: 1px solid rgba(31, 111, 235, 0.3); padding: 4px 10px; border-radius: 4px; font-size: 0.8rem; font-weight: 900; margin-left: 10px; }
 .kpi-row { display: grid; gap: 10px; flex-shrink: 0; } .kpi-card { padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-panel); border-top: 3px solid var(--border-color); position: relative; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.2);} .kpi-card h4 { margin: 0 0 4px 0; font-size: 0.6rem; text-transform: uppercase; color: var(--text-muted); font-weight: 800; letter-spacing: 0.5px;} .kpi-card .value { margin: 0; font-size: 1.15rem; font-weight: 900; color: var(--text-main); font-family: monospace; display: flex; align-items: center; } .kpi-saldo { border-top-width: 4px; border-color: rgba(46, 160, 67, 0.4); } .kpi-saldo h4 { color: var(--color-saldo); }
 .context-charts { display: grid; gap: 15px; padding: 15px; border-bottom: 1px solid var(--border-color); flex-shrink: 0;} .context-charts.flujo { grid-template-columns: repeat(3, 1fr); background: rgba(31, 111, 235, 0.03); } .context-charts.tc { grid-template-columns: repeat(2, 1fr); background: rgba(255, 82, 82, 0.03); } .chart-box { background: var(--bg-subpanel); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; position: relative; } .chart-box h5 { margin: 0 0 8px 0; font-size: 0.7rem; color: var(--text-muted); text-align: center;} .canvas-container { position: relative; flex-grow: 1; height: 190px; width: 100%; }
-.command-ribbon { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; background: linear-gradient(90deg, var(--bg-panel) 0%, rgba(31, 111, 235, 0.08) 100%); border: 1px solid var(--border-color); border-left: 4px solid var(--color-edit); padding: 10px 15px; border-radius: 8px; flex-shrink: 0; } .ribbon-title { font-size: 0.7rem; font-weight: 900; color: var(--color-edit); writing-mode: vertical-lr; transform: rotate(180deg); margin: 0 5px 0 0; text-align: center; } .form-group { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 120px; } .form-control { background: var(--input-bg); color: var(--text-main); border: 1px solid var(--border-color); padding: 8px 10px; border-radius: 6px; font-size: 0.85rem; outline: none; width: 100%; height: 34px; } .btn-ribbon { background: var(--color-edit); color: #000; border: none; border-radius: 6px; font-weight: 900; padding: 0 25px; height: 34px; cursor: pointer; text-transform: uppercase; font-size: 0.85rem; }
+.command-ribbon { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; background: linear-gradient(90deg, var(--bg-panel) 0%, rgba(31, 111, 235, 0.08) 100%); border: 1px solid var(--border-color); border-left: 4px solid var(--color-edit); padding: 10px 15px; border-radius: 8px; flex-shrink: 0; box-shadow: 0 5px 20px rgba(0,0,0,0.3);} .ribbon-title { font-size: 0.7rem; font-weight: 900; color: var(--color-edit); writing-mode: vertical-lr; transform: rotate(180deg); margin: 0 5px 0 0; text-align: center; } .form-group { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 120px; } .form-control { background: var(--input-bg); color: var(--text-main); border: 1px solid var(--border-color); padding: 8px 10px; border-radius: 6px; font-size: 0.85rem; outline: none; width: 100%; height: 34px; } .btn-ribbon { background: var(--color-edit); color: #000; border: none; border-radius: 6px; font-weight: 900; padding: 0 25px; height: 34px; cursor: pointer; text-transform: uppercase; font-size: 0.85rem; }
 .dual-core { display: flex; gap: 15px; flex: 1 1 0px; min-height: 0; overflow: hidden; } .core-panel { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 10px; display: flex; flex-direction: column; overflow: hidden; flex: 1; transition: flex 0.3s ease;} .core-panel.hidden { display: none; } .core-header { padding: 12px 15px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.3); flex-shrink: 0;} .core-title { font-size: 0.95rem; font-weight: 900; text-transform: uppercase; display: flex; align-items: center; gap: 8px;} .core-body { flex: 1 1 0px; overflow-y: auto; display: flex; flex-direction: column;}
-.data-grid { width: 100%; border-collapse: collapse; text-align: left; } .data-grid th { position: sticky; top: 0; background: var(--bg-subpanel); padding: 10px 12px; font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; z-index: 10; border-bottom: 2px solid var(--border-color); cursor: pointer; } .data-grid td { padding: 8px 12px; font-size: 0.8rem; border-bottom: 1px solid var(--border-color); vertical-align: middle; } .data-grid tbody tr:hover { background-color: var(--item-hover); } .col-monto { text-align: right; font-family: monospace; font-weight: bold; font-size: 0.9rem; } .cat-badge { font-size: 0.65rem; padding: 3px 8px; border-radius: 4px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: var(--text-muted); }
+.data-grid { width: 100%; border-collapse: collapse; text-align: left; } .data-grid th { position: sticky; top: 0; background: var(--bg-subpanel); padding: 10px 12px; font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; z-index: 10; border-bottom: 2px solid var(--border-color); cursor: pointer; } .data-grid td { padding: 8px 12px; font-size: 0.8rem; border-bottom: 1px solid var(--border-color); vertical-align: middle; } .data-grid tbody tr:hover { background-color: var(--item-hover); } .col-monto { text-align: right; font-family: monospace; font-weight: bold; font-size: 0.9rem; } .cat-badge { font-size: 0.65rem; padding: 3px 8px; border-radius: 4px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: var(--text-muted); font-weight: 600;} .impact-icon { font-weight: 900; margin-right: 5px; }
 .fugas-mini-kpi { display: flex; align-items: center; gap: 10px; background: var(--input-bg); border: 1px solid var(--border-color); padding: 6px 12px; border-radius: 20px;} .fugas-mini-kpi span { font-size: 0.7rem; font-weight: 800; color: var(--text-muted); } .fugas-mini-kpi strong { font-size: 0.85rem; font-weight: 900; color: var(--color-fuga); font-family: monospace; }
 .floating-mass-actions { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #1c2128; border: 1px solid var(--color-edit); border-radius: 50px; padding: 8px 20px; display: flex; align-items: center; gap: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); z-index: 9999; }
 #modal-historian { position: fixed; inset: 0; background: rgba(3, 5, 8, 0.95); z-index: 25000; display: none; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(10px); padding: 20px; } .hist-box { position: relative; background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 12px; width: 100%; max-width: 600px; overflow: hidden; border-top: 4px solid #ff5252; display: flex; flex-direction: column; max-height: 85vh;} .hist-header { padding: 15px 20px; background: rgba(0,0,0,0.3); border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; } .hist-body { padding: 20px; overflow-y: auto; flex-grow: 1;}
 #modal-dia-cero { position: fixed; inset: 0; background: rgba(3, 5, 8, 0.95); z-index: 20000; display: none; align-items: center; justify-content: center; backdrop-filter: blur(10px); padding: 10px; } .pv-container { position: relative; background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 16px; width: 100%; max-width: 1150px; max-height: 95vh; display: flex; flex-direction: column; border-top: 4px solid #ff9800; } .pv-header { padding: 15px 20px; text-align: center; border-bottom: 1px solid var(--border-color); background: rgba(0,0,0,0.3); flex-shrink:0;} .pv-body { padding: 15px 20px; overflow-y: auto; flex-grow:1;} .pv-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; } .pv-section { background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; } .pv-input-group { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; gap: 5px;} .pv-input { background: var(--input-bg); border: 1px solid var(--border-color); color: white; padding: 4px 6px; border-radius: 4px; font-family: monospace; width: 135px; text-align: right; outline: none; font-weight: bold; } .btn-estado { width: 28px; height: 28px; border-radius: 4px; border: 1px solid var(--border-color); background: var(--bg-panel); color: var(--text-muted); cursor: pointer; font-weight: bold; flex-shrink: 0;} .btn-estado.real { border-color: rgba(31, 111, 235, 0.6); color: #79c0ff; background: rgba(31, 111, 235, 0.2); } .btn-estado.pag { border-color: rgba(46, 160, 67, 0.6); color: #2ea043; background: rgba(46, 160, 67, 0.2); } .pv-footer { padding: 15px 20px; display: flex; gap: 15px; background: rgba(0,0,0,0.3); border-top: 1px solid var(--border-color); flex-shrink:0;} .btn-pv-launch { flex: 2; padding: 12px; background: #ff9800; color: #000; border: none; border-radius: 8px; font-weight: 900; cursor: pointer; text-transform: uppercase; }
+
+/* V15.0: ESTILOS DE PATRIMONIO */
+.ptr-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; padding: 20px; }
+.ptr-box { background: var(--bg-subpanel); border: 1px solid var(--border-color); border-radius: 8px; padding: 15px; box-shadow: inset 0 0 20px rgba(0,0,0,0.5); }
+.ptr-box-title { font-size: 0.85rem; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 5px; }
+.ptr-input-group { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.ptr-input { background: var(--input-bg); border: 1px solid var(--border-color); color: var(--text-main); padding: 8px; border-radius: 6px; font-family: monospace; font-size: 1rem; width: 140px; text-align: right; outline: none; }
     </style>
 </head>
 <body>
 <div id="login-screen">
     <div class="login-box">
         <h2 style="color:var(--color-proyectado); margin-bottom:10px; font-size: 2rem;">BÚNKER SCADA</h2>
-        <p style="color:var(--text-muted); font-size:0.85rem; letter-spacing: 2px;">VERSIÓN 14.8 (ULTIMATE EDITION)</p>
-        <button class="btn-google" onclick="loginWithGoogle()">INICIAR ENLACE NEURAL</button>
+        <p style="color:var(--text-muted); font-size:0.85rem; letter-spacing: 2px;">VERSIÓN 15.0 (THE SYNTHESIS)</p>
+        <button class="btn-google" onclick="window.loginWithGoogle()">INICIAR ENLACE NEURAL</button>
     </div>
 </div>
 
 <div class="app-container" id="reportZone">
     <div class="header-titles">
         <div style="display:flex; align-items:center;">
-            <h2>BUNKER SCADA <span class="scada-badge">V14.8</span></h2>
+            <h2>BUNKER SCADA <span class="scada-badge">V15.0</span></h2>
             <div id="user-display" style="margin-left: 15px; font-size: 0.75rem; color: var(--color-saldo); font-weight:800; text-transform:uppercase;"></div>
         </div>
         <div class="system-btns">
             <div id="cronos" class="cronos">--:--:--</div>
-            <button class="btn-sys" onclick="toggleLanguage()" style="color:#79c0ff; border-color:rgba(121,192,255,0.4);">🌐 ENG</button>
-            <button class="btn-sys" onclick="abrirHistorian()" style="color:#ff5252; border-color:rgba(255,82,82,0.4);">⚠️ LOG</button>
-            <button class="btn-sys" onclick="abrirPreVuelo()" style="color:#ff9800; border-color:rgba(255,152,0,0.4); background:rgba(255,152,0,0.1);">🚀 PRE-VUELO</button>
-            <button class="btn-sys" onclick="toggleTheme()">☀️/🌙</button>
-            <button class="btn-sys" onclick="logout()" style="color:var(--color-fuga); border-color:rgba(255,82,82,0.3);">🚪 SALIR</button>
+            <button class="btn-sys" onclick="window.enviarReporteTelegram()" style="color:#0088cc; border-color:rgba(0,136,204,0.4);">✈️ TELEGRAM</button>
+            <button class="btn-sys" onclick="window.abrirHistorian()" style="color:#ff5252; border-color:rgba(255,82,82,0.4);">⚠️ LOG</button>
+            <button class="btn-sys" onclick="window.abrirPreVuelo()" style="color:#ff9800; border-color:rgba(255,152,0,0.4); background:rgba(255,152,0,0.1);">🚀 PRE-VUELO</button>
+            <button class="btn-sys" onclick="window.toggleTheme()">☀️/🌙</button>
+            <button class="btn-sys" onclick="window.logout()" style="color:var(--color-fuga); border-color:rgba(255,82,82,0.3);">🚪 SALIR</button>
         </div>
     </div>
 
     <div style="display:flex; justify-content:center; gap:10px; margin-bottom:5px;">
         <button class="btn-sys" id="tabBtnFlujo" onclick="switchPCPanel('main')" style="background:rgba(31, 111, 235, 0.1); border-color:var(--color-guardar); color:white; padding:8px 20px;">1. FLUJO PRESENTE</button>
         <button class="btn-sys" id="tabBtnTC" onclick="switchPCPanel('tc')" style="padding:8px 20px;">2. MATRIZ TC</button>
+        <button class="btn-sys" id="tabBtnPat" onclick="switchPCPanel('patrimonio')" style="padding:8px 20px;">3. PATRIMONIO</button>
     </div>
 
     <div style="display: flex; gap: 10px; flex-shrink: 0;">
         <div class="time-navigator-panel">
             <div style="display: flex; gap: 8px;">
-                <select id="navAnio" class="nav-select" onchange="aplicarCicloAlSistema()"><option value="2025">2025</option><option value="2026" selected>2026</option></select>
-                <select id="navMesConceptual" class="nav-select" onchange="aplicarCicloAlSistema()" style="color: var(--color-ingresos);"><option value="0">Enero</option><option value="1">Febrero</option><option value="2">Marzo</option><option value="3" selected>Abril</option><option value="4">Mayo</option><option value="5">Junio</option><option value="6">Julio</option><option value="7">Agosto</option><option value="8">Septiembre</option><option value="9">Octubre</option><option value="10">Noviembre</option><option value="11">Diciembre</option></select>
+                <select id="navAnio" class="nav-select" onchange="window.aplicarCicloAlSistema()"><option value="2025">2025</option><option value="2026" selected>2026</option></select>
+                <select id="navMesConceptual" class="nav-select" onchange="window.aplicarCicloAlSistema()" style="color: var(--color-ingresos);"><option value="0">Enero</option><option value="1">Febrero</option><option value="2">Marzo</option><option value="3" selected>Abril</option><option value="4">Mayo</option><option value="5">Junio</option><option value="6">Julio</option><option value="7">Agosto</option><option value="8">Septiembre</option><option value="9">Octubre</option><option value="10">Noviembre</option><option value="11">Diciembre</option></select>
             </div>
             <div id="navRangoBadge" class="nav-badge">--/-- al --/--</div>
         </div>
 
         <div class="kpi-row" style="flex: 1; grid-template-columns: repeat(6, 1fr);">
-            <div class="kpi-card"><h4 data-en="Operating Base">Sueldo Base</h4><div class="value"><span>$</span><input type="text" id="inputSueldo" oninput="formatearEntradaNumerica(this); actualizarDashboard();" onchange="guardarSueldoEnNube()" style="background:transparent; border:none; color:var(--text-main); font-weight:900; width:100%; font-size:1.1rem; outline:none; font-family:monospace;"></div></div>
+            <div class="kpi-card"><h4 data-en="Operating Base">Sueldo Base</h4><div class="value"><span>$</span><input type="text" id="inputSueldo" oninput="window.formatearEntradaNumerica(this); window.actualizarDashboard();" onchange="window.guardarSueldoEnNube()" style="background:transparent; border:none; color:var(--text-main); font-weight:900; width:100%; font-size:1.1rem; outline:none; font-family:monospace;"></div></div>
             <div class="kpi-card" id="cardArrastre" style="border-top-color: var(--accent-red); display:none;"><h4 style="color:var(--accent-red);">Arrastre (Mes Ant)</h4><div class="value" style="color:var(--accent-red);">$<span id="txtArrastreLinea">0</span></div></div>
             <div class="kpi-card" style="border-top-color: var(--accent-red);"><h4>Carga Fija</h4><div class="value">$<span id="txtTotalFijos">0</span></div></div>
             <div class="kpi-card" style="border-top-color: var(--accent-orange);"><h4>Carga Variable</h4><div class="value">$<span id="txtTotalOtros">0</span></div></div>
@@ -88,17 +96,17 @@ body { background-color: var(--bg-body); background-image: radial-gradient(rgba(
         <div class="form-group sm" id="boxFuga"><label>% Fuga</label><select id="inputFuga" class="form-control"><option value="100">100%</option><option value="90">90%</option><option value="80">80%</option><option value="50">50%</option><option value="0" selected>0%</option></select></div>
         <div class="form-group sm" id="boxCuotas" style="display:none;"><label>Cuotas</label><select id="inputCuotas" class="form-control" style="border-color:var(--color-ingresos);"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="6">6</option><option value="12">12</option></select></div>
         <div class="form-group lg"><label>Descripción</label><input type="text" id="inputNombre" class="form-control" placeholder="[ AUTO-PILOTO ]" autocomplete="off" autocorrect="off" spellcheck="false"></div>
-        <div class="form-group sm"><label>Monto ($)</label><input type="text" id="inputMonto" class="form-control" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this)" style="color:var(--color-edit); font-weight:bold;" autocomplete="off"></div>
-        <button id="btnGuardar" class="btn-ribbon" onclick="agregarMovimiento()">INYECTAR</button>
+        <div class="form-group sm"><label>Monto ($)</label><input type="text" id="inputMonto" class="form-control" inputmode="numeric" pattern="[0-9]*" oninput="window.formatearEntradaNumerica(this)" style="color:var(--color-edit); font-weight:bold;" autocomplete="off"></div>
+        <button id="btnGuardar" class="btn-ribbon" onclick="window.agregarMovimiento()">INYECTAR</button>
     </div>
 
     <div class="dual-core">
-        <div class="core-panel" id="panelMain" ondragover="dragOverPanel(event, 'main')" ondragleave="dragLeavePanel(event, 'main')" ondrop="dropOnPanel(event, 'main')">
+        <div class="core-panel" id="panelMain" ondragover="window.dragOverPanel(event, 'main')" ondragleave="window.dragLeavePanel(event, 'main')" ondrop="window.dropOnPanel(event, 'main')">
             <div class="core-header">
                 <div class="core-title"><span style="color:var(--color-saldo);">●</span> FLUJO PRESENTE</div>
                 <div style="display: flex; gap: 15px; align-items: center;">
                     <div class="fugas-mini-kpi"><span>FUGAS:</span><strong id="txtTotalEvitable">0</strong><span style="margin-left:5px;">(<span id="txtPorcentajeFugas" style="color:var(--color-fuga);">0%</span>)</span></div>
-                    <button class="btn-sys" onclick="exportarDataLink()" style="background:var(--accent-blue); color:#fff; border:none;">📥 DATA-LINK</button>
+                    <button class="btn-sys" onclick="window.exportarDataLink()" style="background:var(--accent-blue); color:#fff; border:none;">📥 DATA-LINK</button>
                 </div>
             </div>
             <div class="core-body">
@@ -108,45 +116,76 @@ body { background-color: var(--bg-body); background-image: radial-gradient(rgba(
                     <div class="chart-box"><h5 style="margin-bottom:2px;">ESPECTRO CATEGÓRICO</h5><div class="canvas-container"><canvas id="chartPareto"></canvas></div></div>
                 </div>
                 <div style="padding: 6px 12px; background: rgba(0,0,0,0.3); border-bottom: 1px solid var(--border-color); border-top: 1px solid var(--border-color); position: sticky; top: 0; z-index: 30;">
-                    <input type="text" id="inputBuscador" class="form-control" placeholder="🔍 Buscar..." autocomplete="off" oninput="actualizarDashboard()" style="width: 100%; max-width: 350px; height: 28px; background: var(--bg-panel);">
+                    <input type="text" id="inputBuscador" class="form-control" placeholder="🔍 Buscar..." autocomplete="off" oninput="window.actualizarDashboard()" style="width: 100%; max-width: 350px; height: 28px; background: var(--bg-panel);">
                 </div>
                 <table id="tablaGastos" class="data-grid">
-                    <thead><tr>
-                        <th style="width:30px; text-align:center;"><input type="checkbox" id="checkAll" onchange="toggleAllChecks()"></th>
-                        <th onclick="sortTable('fechaISO')">Fecha</th><th onclick="sortTable('nombre')">Descripción</th><th onclick="sortTable('catV')">Categoría</th>
-                        <th onclick="sortTable('monto')" style="text-align:right;">Monto ($)</th><th style="text-align:right;">Saldo Hist.</th><th style="text-align:center;">CMD</th>
-                    </tr></thead>
+                    <thead><tr><th style="width:30px; text-align:center;"><input type="checkbox" id="checkAll" onchange="window.toggleAllChecks()"></th><th onclick="window.sortTable('fechaISO')">Fecha</th><th onclick="window.sortTable('nombre')">Descripción</th><th onclick="window.sortTable('catV')">Categoría</th><th onclick="window.sortTable('monto')" style="text-align:right;">Monto ($)</th><th style="text-align:right;">Saldo Hist.</th><th style="text-align:center;">CMD</th></tr></thead>
                     <tbody id="listaDetalle"></tbody>
                 </table>
             </div>
         </div>
 
-        <div class="core-panel hidden" id="panelTC" style="border-color: rgba(255, 82, 82, 0.2); box-shadow: inset 0 0 30px rgba(255, 82, 82, 0.02);" ondragover="dragOverPanel(event, 'tc')" ondragleave="dragLeavePanel(event, 'tc')" ondrop="dropOnPanel(event, 'tc')">
+        <div class="core-panel hidden" id="panelTC" style="border-color: rgba(255, 82, 82, 0.2); box-shadow: inset 0 0 30px rgba(255, 82, 82, 0.02);" ondragover="window.dragOverPanel(event, 'tc')" ondragleave="window.dragLeavePanel(event, 'tc')" ondrop="window.dropOnPanel(event, 'tc')">
             <div class="core-header" style="background: rgba(255, 82, 82, 0.08); border-bottom-color: rgba(255, 82, 82, 0.2);">
                 <div class="core-title"><span style="color:var(--color-fuga);">●</span> MATRIZ DE DEUDA TC</div>
-                <div style="display: flex; gap: 12px; align-items: center;">
-                    <div style="font-size:1.2rem; font-weight:900; color:var(--color-fuga); font-family: monospace;">$<span id="txtTotalTC">0</span></div>
-                    <button class="btn-sys" onclick="cargarCSV_TC()" style="background-color: var(--color-fuga); color: white; border: none;">💳 INGESTAR</button>
-                </div>
+                <div style="display: flex; gap: 12px; align-items: center;"><div style="font-size:1.2rem; font-weight:900; color:var(--color-fuga); font-family: monospace;">$<span id="txtTotalTC">0</span></div><button class="btn-sys" onclick="window.cargarCSV_TC()" style="background-color: var(--color-fuga); color: white; border: none;">💳 INGESTAR</button></div>
             </div>
             <div class="core-body">
                 <div class="context-charts tc">
                     <div class="chart-box" style="border-color: rgba(255, 82, 82, 0.3);"><h5 style="color:var(--color-fuga); margin-bottom:2px;">HORIZONTE DE DEUDA (6M)</h5><div class="canvas-container"><canvas id="chartRadar"></canvas></div></div>
-                    <div class="chart-box" style="border-color: rgba(255, 82, 82, 0.3);"><h5 style="color:var(--color-fuga); margin-bottom:2px;">COMPOSICIÓN POR COMERCIO</h5><div class="canvas-container"><canvas id="chartTCDist"></canvas></div></div>
+                    <div class="chart-box" style="border-color: rgba(255, 82, 82, 0.3);"><h5 style="color:var(--color-fuga); margin-bottom:2px;">COMPOSICIÓN POR COMERCIO</h5><div class="canvas-container" style="max-width: 400px; margin: 0 auto;"><canvas id="chartTCDist"></canvas></div></div>
                 </div>
                 <div style="padding: 12px; border-bottom: 1px solid rgba(255, 82, 82, 0.2); border-top: 1px solid rgba(255, 82, 82, 0.2); background: rgba(0,0,0,0.2); position: sticky; top: 0; z-index: 30;">
-                    <div id="boxImpactoTC" style="display:none; align-items:center; gap:15px; color:var(--color-fuga); font-weight:bold;">
-                        <span>⚠️ PRÓXIMO MES:</span><strong id="lblImpactoMes"></strong><strong id="txtImpactoMonto" style="font-size:1.1rem; font-family:monospace;">$0</strong>
-                    </div>
+                    <div id="boxImpactoTC" style="display:none; align-items:center; gap:15px; color:var(--color-fuga); font-weight:bold;"><span>⚠️ PRÓXIMO MES:</span><strong id="lblImpactoMes"></strong><strong id="txtImpactoMonto" style="font-size:1.1rem; font-family:monospace;">$0</strong></div>
                 </div>
                 <table id="tablaCuotas" class="data-grid">
-                    <thead style="background: rgba(255, 82, 82, 0.05);"><tr><th style="width:30px; text-align:center;"><input type="checkbox" id="checkMaestroTC" onclick="toggleTodosTC(this)"></th><th>Ciclo/Cuota</th><th>Comercio Asociado</th><th style="text-align:right;">Cuota ($)</th></tr></thead>
+                    <thead style="background: rgba(255, 82, 82, 0.05);"><tr><th style="width:30px; text-align:center;"><input type="checkbox" id="checkMaestroTC" onclick="window.toggleTodosTC(this)"></th><th>Ciclo/Cuota</th><th>Comercio Asociado</th><th style="text-align:right;">Cuota ($)</th></tr></thead>
                     <tbody id="listaDetalleTC"></tbody>
                 </table>
             </div>
         </div>
+
+        <div class="core-panel hidden" id="panelPatrimonio" style="border-color: rgba(121, 192, 255, 0.3); box-shadow: inset 0 0 30px rgba(121, 192, 255, 0.02);">
+            <div class="core-header" style="background: rgba(121, 192, 255, 0.08); border-bottom-color: rgba(121, 192, 255, 0.3);">
+                <div class="core-title"><span style="color:#79c0ff; text-shadow: 0 0 8px #79c0ff;">●</span> <span>RADAR PATRIMONIAL (NET WORTH)</span></div>
+                <button class="btn-sys" onclick="window.guardarPatrimonioEnNube()" style="background-color: #1f6feb; color: white; border: none;">💾 GUARDAR ESTADO</button>
+            </div>
+            <div class="core-body" style="padding: 20px;">
+                <div style="text-align:center; margin-bottom:20px;">
+                    <div style="font-size:0.8rem; color:var(--text-muted); text-transform:uppercase; font-weight:900; letter-spacing:2px;">Patrimonio Neto Total</div>
+                    <div style="font-size:3.5rem; font-weight:900; color:#79c0ff; font-family:monospace; line-height: 1;">$<span id="hud-patrimonio-neto">0</span></div>
+                    <div style="width:100%; height:8px; background:rgba(255,255,255,0.05); margin-top:15px; border-radius:4px; display:flex; overflow:hidden;">
+                        <div id="ptr-bar-activos" style="height:100%; background:var(--color-saldo); transition:width 0.5s;"></div>
+                        <div id="ptr-bar-pasivos" style="height:100%; background:var(--color-fuga); transition:width 0.5s;"></div>
+                    </div>
+                </div>
+
+                <div style="background: rgba(46, 160, 67, 0.05); border: 1px solid rgba(46, 160, 67, 0.3); border-radius: 12px; padding: 15px; text-align: center; margin-bottom: 25px;">
+                    <div style="font-size:0.7rem; color:var(--color-saldo); text-transform:uppercase; font-weight:900; letter-spacing:1px; margin-bottom:5px;">Rendimiento Automático (Tiempo Real)</div>
+                    <div id="live-yield-counter" style="font-size:2rem; font-weight:900; color:#2ea043; font-family:monospace;">+ $0.0000</div>
+                    <div id="live-yield-daily" style="font-size:0.75rem; color:var(--text-muted); font-family:monospace; margin-top:4px;">($0 / día)</div>
+                </div>
+
+                <div class="ptr-grid">
+                    <div class="ptr-box">
+                        <div class="ptr-box-title" style="color:var(--color-saldo);">🟢 Activos Físicos e Inversión</div>
+                        <div class="ptr-input-group"><label>Inversión Activa</label><input type="text" id="ptr-inversion" class="ptr-input" inputmode="numeric" oninput="window.formatearEntradaNumerica(this)"></div>
+                        <div class="ptr-input-group"><label>Rendimiento Anual (TIR %)</label><input type="text" id="ptr-tir" class="ptr-input" style="color:var(--color-saldo);" inputmode="numeric" oninput="window.formatearEntradaNumerica(this)"></div>
+                        <div class="ptr-input-group"><label>Vehículo (Tasación)</label><input type="text" id="ptr-auto" class="ptr-input" inputmode="numeric" oninput="window.formatearEntradaNumerica(this)"></div>
+                        <div class="ptr-input-group"><label>Otros Activos</label><input type="text" id="ptr-otros-act" class="ptr-input" inputmode="numeric" oninput="window.formatearEntradaNumerica(this)"></div>
+                    </div>
+                    <div class="ptr-box">
+                        <div class="ptr-box-title" style="color:var(--color-fuga);">🔴 Pasivos a Largo Plazo</div>
+                        <div class="ptr-input-group"><label>Deuda CAE</label><input type="text" id="ptr-cae" class="ptr-input" inputmode="numeric" oninput="window.formatearEntradaNumerica(this)"></div>
+                        <div class="ptr-input-group"><label>Crédito Hipotecario</label><input type="text" id="ptr-hipo" class="ptr-input" inputmode="numeric" oninput="window.formatearEntradaNumerica(this)"></div>
+                        <div class="ptr-input-group"><label>Otros Pasivos</label><input type="text" id="ptr-otros-pas" class="ptr-input" inputmode="numeric" oninput="window.formatearEntradaNumerica(this)"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
-    <div id="massActionsBar" class="floating-mass-actions" style="display: none;"><span id="massCount" style="font-weight:900; font-size:0.85rem;">0 SEL</span><select id="massCategorySelect" class="form-control" style="width:220px; height: 30px; border-color:var(--color-edit);"></select><button class="btn-sys" style="background:var(--color-edit); color:#000; font-weight:900;" onclick="massCategorize()">MUTE/CAT</button><button class="btn-sys" style="background:rgba(255,82,82,0.2); border-color:var(--color-fuga); font-size:1.1rem; color:var(--color-fuga);" onclick="massDelete()">🗑️</button></div>
+    <div id="massActionsBar" class="floating-mass-actions" style="display: none;"><span id="massCount" style="font-weight:900; font-size:0.85rem;">0 SEL</span><select id="massCategorySelect" class="form-control" style="width:220px; height: 30px; border-color:var(--color-edit);"></select><button class="btn-sys" style="background:var(--color-edit); color:#000; font-weight:900;" onclick="window.massCategorize()">MUTE/CAT</button><button class="btn-sys" style="background:rgba(255,82,82,0.2); border-color:var(--color-fuga); font-size:1.1rem; color:var(--color-fuga);" onclick="window.massDelete()">🗑️</button></div>
 </div>
 
 <div id="modal-historian" style="display:none; position:fixed; inset:0; background:rgba(3, 5, 8, 0.95); z-index:25000; flex-direction:column; align-items:center; justify-content:center; backdrop-filter:blur(10px); padding:20px;">
@@ -159,7 +198,7 @@ body { background-color: var(--bg-body); background-image: radial-gradient(rgba(
 
 <div id="modal-dia-cero" style="display:none; position:fixed; inset:0; background: rgba(3, 5, 8, 0.95); z-index: 20000; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(10px); padding: 10px;">
     <div class="pv-container">
-        <button onclick="cerrarPreVuelo()" style="position:absolute; top:15px; right:15px; background:var(--bg-panel); border:1px solid var(--border-color); color:var(--text-muted); border-radius:50%; width:32px; height:32px; cursor:pointer; font-weight:bold; z-index:100;">✕</button>
+        <button onclick="window.cerrarPreVuelo()" style="position:absolute; top:15px; right:15px; background:var(--bg-panel); border:1px solid var(--border-color); color:var(--text-muted); border-radius:50%; width:32px; height:32px; cursor:pointer; font-weight:bold; z-index:100;">✕</button>
         <div class="pv-header"><h2 class="pv-title">SIMULADOR DÍA CERO</h2><div class="pv-subtitle">MES DE <span id="pv-mes-label" style="color:#fff; font-weight:bold;">--</span></div></div>
         
         <div style="padding: 15px 20px; border-bottom: 1px solid var(--border-color);">
@@ -170,48 +209,43 @@ body { background-color: var(--bg-body); background-image: radial-gradient(rgba(
                 <div id="pv-barra-verde" style="background: linear-gradient(90deg, #1b5e20, #2ea043); height: 100%; width: 100%;"></div>
             </div>
             <div style="text-align: center; font-size: 2.5rem; font-weight: 900; color: var(--color-saldo); font-family: monospace; margin-top: 10px;">$<span id="pv-txt-liquidez">0</span></div>
-            <div style="font-size: 0.7rem; font-weight: bold; color: var(--text-muted); text-align: center; margin-top: 8px;">CERTEZA DEL CÁLCULO: <span id="pv-certeza-pct" style="color:#ff5252;">0%</span></div>
         </div>
 
         <div class="pv-body">
             <div class="pv-grid">
                 <div class="pv-section">
                     <div class="pv-section-title" style="color:#ff5252;">💳 Críticas</div>
-                    <div class="pv-input-group" style="background:rgba(46,160,67,0.1); border-color:var(--color-saldo);"><label style="color:var(--color-saldo);">Sueldo</label><input type="text" id="pv-sueldo" class="pv-input" style="color:var(--color-saldo); border-color:var(--color-saldo);" inputmode="numeric" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
-                    <div class="pv-input-group"><label>TC Nac</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-tc-nac')">EST</button><input type="text" id="pv-tc-nac" class="pv-input" style="color:#ff5252;" placeholder="0" data-estado="est" inputmode="numeric" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
+                    <div class="pv-input-group" style="background:rgba(46,160,67,0.1); border-color:var(--color-saldo);"><label style="color:var(--color-saldo);">Sueldo</label><input type="text" id="pv-sueldo" class="pv-input" style="color:var(--color-saldo); border-color:var(--color-saldo);" inputmode="numeric" oninput="window.formatearEntradaNumerica(this); window.calcularDiaCero();"></div>
+                    <div class="pv-input-group"><label>TC Nac</label><button class="btn-estado est" onclick="window.toggleEstadoPV(this, 'pv-tc-nac')">EST</button><input type="text" id="pv-tc-nac" class="pv-input" style="color:#ff5252;" placeholder="0" data-estado="est" inputmode="numeric" oninput="window.formatearEntradaNumerica(this); window.calcularDiaCero();"></div>
                     <div style="display:flex; flex-direction:column; width:100%; background: var(--bg-card); border-radius: 12px; border: 1px solid rgba(255,82,82,0.3); margin-bottom: 8px; padding: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
-                        <div style="display: flex; align-items: center; justify-content: space-between; gap:10px;">
-                            <div style="flex:1;"><label style="font-size: 0.75rem; font-weight: 900; color: var(--text-main);">TC Int</label><span id="lbl-dolar-actual" style="display:block; font-size:0.6rem; color:var(--text-muted); font-family:monospace; margin-top:2px;">USD...</span></div>
-                            <button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-tc-int')">EST</button>
-                            <input type="text" id="pv-tc-int" class="pv-input" style="color:#ff5252; width:90px;" placeholder="US$ 0" data-estado="est" inputmode="numeric" oninput="formatearEntradaNumerica(this); calcularDiaCero();">
-                        </div>
+                        <div style="display: flex; align-items: center; justify-content: space-between; gap:10px;"><div style="flex:1;"><label style="font-size: 0.75rem; font-weight: 900; color: var(--text-main);">TC Int</label><span id="lbl-dolar-actual" style="display:block; font-size:0.6rem; color:var(--text-muted); font-family:monospace; margin-top:2px;">USD...</span></div><button class="btn-estado est" onclick="window.toggleEstadoPV(this, 'pv-tc-int')">EST</button><input type="text" id="pv-tc-int" class="pv-input" style="color:#ff5252; width:90px;" placeholder="US$ 0" data-estado="est" inputmode="numeric" oninput="window.formatearEntradaNumerica(this); window.calcularDiaCero();"></div>
                         <div id="pv-tc-int-clp" style="text-align:right; font-size:0.8rem; color:#ff5252; font-family:monospace; font-weight:900; margin-top:8px; border-top: 1px dashed rgba(255,82,82,0.3); padding-top: 8px;">~ $0 CLP</div>
                     </div>
-                    <div class="pv-input-group"><label>Línea</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-linea')">EST</button><input type="text" id="pv-linea" class="pv-input" style="color:#ff5252;" placeholder="0" data-estado="est" inputmode="numeric" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
+                    <div class="pv-input-group"><label>Línea</label><button class="btn-estado est" onclick="window.toggleEstadoPV(this, 'pv-linea')">EST</button><input type="text" id="pv-linea" class="pv-input" style="color:#ff5252;" placeholder="0" data-estado="est" inputmode="numeric" oninput="window.formatearEntradaNumerica(this); window.calcularDiaCero();"></div>
                 </div>
                 <div class="pv-section">
                     <div class="pv-section-title" style="color:var(--color-infra);">🏢 Estructural</div>
-                    <div class="pv-input-group"><label>Arriendo</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-arriendo')">EST</button><input type="text" id="pv-arriendo" class="pv-input" value="330.000" data-estado="est" inputmode="numeric" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
-                    <div class="pv-input-group"><label>UDEC</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-udec')">EST</button><input type="text" id="pv-udec" class="pv-input" value="48.000" data-estado="est" inputmode="numeric" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
-                    <div class="pv-input-group"><label>CAE</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-cae')">EST</button><input type="text" id="pv-cae" class="pv-input" value="38.742" data-estado="est" inputmode="numeric" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
+                    <div class="pv-input-group"><label>Arriendo</label><button class="btn-estado est" onclick="window.toggleEstadoPV(this, 'pv-arriendo')">EST</button><input type="text" id="pv-arriendo" class="pv-input" value="330.000" data-estado="est" inputmode="numeric" oninput="window.formatearEntradaNumerica(this); window.calcularDiaCero();"></div>
+                    <div class="pv-input-group"><label>UDEC</label><button class="btn-estado est" onclick="window.toggleEstadoPV(this, 'pv-udec')">EST</button><input type="text" id="pv-udec" class="pv-input" value="48.000" data-estado="est" inputmode="numeric" oninput="window.formatearEntradaNumerica(this); window.calcularDiaCero();"></div>
+                    <div class="pv-input-group"><label>CAE</label><button class="btn-estado est" onclick="window.toggleEstadoPV(this, 'pv-cae')">EST</button><input type="text" id="pv-cae" class="pv-input" value="38.742" data-estado="est" inputmode="numeric" oninput="window.formatearEntradaNumerica(this); window.calcularDiaCero();"></div>
                 </div>
                 <div class="pv-section">
                     <div class="pv-section-title" style="color:#d29922;">⚡ Servicios</div>
-                    <div class="pv-input-group"><label>GGCC</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-ggcc')">EST</button><input type="text" id="pv-ggcc" class="pv-input" value="63.220" data-estado="est" inputmode="numeric" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
-                    <div class="pv-input-group"><label>Luz</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-luz')">EST</button><input type="text" id="pv-luz" class="pv-input" value="20.000" data-estado="est" inputmode="numeric" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
-                    <div class="pv-input-group"><label>Agua</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-agua')">EST</button><input type="text" id="pv-agua" class="pv-input" value="8.000" data-estado="est" inputmode="numeric" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
-                    <div class="pv-input-group"><label>Gas</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-gas')">EST</button><input type="text" id="pv-gas" class="pv-input" value="0" data-estado="est" inputmode="numeric" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
+                    <div class="pv-input-group"><label>GGCC</label><button class="btn-estado est" onclick="window.toggleEstadoPV(this, 'pv-ggcc')">EST</button><input type="text" id="pv-ggcc" class="pv-input" value="63.220" data-estado="est" inputmode="numeric" oninput="window.formatearEntradaNumerica(this); window.calcularDiaCero();"></div>
+                    <div class="pv-input-group"><label>Luz</label><button class="btn-estado est" onclick="window.toggleEstadoPV(this, 'pv-luz')">EST</button><input type="text" id="pv-luz" class="pv-input" value="20.000" data-estado="est" inputmode="numeric" oninput="window.formatearEntradaNumerica(this); window.calcularDiaCero();"></div>
+                    <div class="pv-input-group"><label>Agua</label><button class="btn-estado est" onclick="window.toggleEstadoPV(this, 'pv-agua')">EST</button><input type="text" id="pv-agua" class="pv-input" value="8.000" data-estado="est" inputmode="numeric" oninput="window.formatearEntradaNumerica(this); window.calcularDiaCero();"></div>
+                    <div class="pv-input-group"><label>Gas</label><button class="btn-estado est" onclick="window.toggleEstadoPV(this, 'pv-gas')">EST</button><input type="text" id="pv-gas" class="pv-input" value="0" data-estado="est" inputmode="numeric" oninput="window.formatearEntradaNumerica(this); window.calcularDiaCero();"></div>
                 </div>
                 <div class="pv-section">
                     <div class="pv-section-title" style="color:#79c0ff;">📱 Subs & Varios</div>
-                    <div class="pv-input-group"><label>Celu Mio</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-celu')">EST</button><input type="text" id="pv-celu" class="pv-input" value="13.990" data-estado="est" inputmode="numeric" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
-                    <div class="pv-input-group"><label>Celu Mamá</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-madre')">EST</button><input type="text" id="pv-madre" class="pv-input" value="19.290" data-estado="est" inputmode="numeric" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
-                    <div class="pv-input-group"><label>Pack Subs</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-subs')">EST</button><input type="text" id="pv-subs" class="pv-input" value="20.540" data-estado="est" inputmode="numeric" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
-                    <div class="pv-input-group"><label>Seguro Auto</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-seguro')">EST</button><input type="text" id="pv-seguro" class="pv-input" value="38.300" data-estado="est" inputmode="numeric" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
+                    <div class="pv-input-group"><label>Celu Mio</label><button class="btn-estado est" onclick="window.toggleEstadoPV(this, 'pv-celu')">EST</button><input type="text" id="pv-celu" class="pv-input" value="13.990" data-estado="est" inputmode="numeric" oninput="window.formatearEntradaNumerica(this); window.calcularDiaCero();"></div>
+                    <div class="pv-input-group"><label>Celu Mamá</label><button class="btn-estado est" onclick="window.toggleEstadoPV(this, 'pv-madre')">EST</button><input type="text" id="pv-madre" class="pv-input" value="19.290" data-estado="est" inputmode="numeric" oninput="window.formatearEntradaNumerica(this); window.calcularDiaCero();"></div>
+                    <div class="pv-input-group"><label>Pack Subs</label><button class="btn-estado est" onclick="window.toggleEstadoPV(this, 'pv-subs')">EST</button><input type="text" id="pv-subs" class="pv-input" value="20.540" data-estado="est" inputmode="numeric" oninput="window.formatearEntradaNumerica(this); window.calcularDiaCero();"></div>
+                    <div class="pv-input-group"><label>Seguro Auto</label><button class="btn-estado est" onclick="window.toggleEstadoPV(this, 'pv-seguro')">EST</button><input type="text" id="pv-seguro" class="pv-input" value="38.300" data-estado="est" inputmode="numeric" oninput="window.formatearEntradaNumerica(this); window.calcularDiaCero();"></div>
                 </div>
             </div>
         </div>
-        <div style="padding: 15px 20px; display: flex; width:100%; border-top: 1px solid var(--border-color);"><button onclick="ejecutarArranque()" style="width:100%; padding:15px; background:#ff9800; color:#000; border:none; border-radius:8px; font-weight:900; cursor:pointer;">INYECTAR MATRIZ</button></div>
+        <div style="padding: 15px 20px; display: flex; width:100%; border-top: 1px solid var(--border-color);"><button onclick="window.ejecutarArranque()" style="width:100%; padding:15px; background:#ff9800; color:#000; border:none; border-radius:8px; font-weight:900; cursor:pointer;">INYECTAR MATRIZ</button></div>
     </div>
 </div>
 <script>
@@ -220,6 +254,7 @@ body { background-color: var(--bg-body); background-image: radial-gradient(rgba(
         document.querySelectorAll('.btn-sys').forEach(b => { if(b.id && b.id.startsWith('tabBtn')) { b.style.background = 'transparent'; b.style.color = 'var(--text-main)'; b.style.borderColor = 'var(--border-color)'; } });
         if(viewId === 'main') { document.getElementById('panelMain').classList.remove('hidden'); document.getElementById('tabBtnFlujo').style.background = 'rgba(31, 111, 235, 0.1)'; document.getElementById('tabBtnFlujo').style.color = 'white'; document.getElementById('tabBtnFlujo').style.borderColor = 'var(--color-guardar)'; } 
         else if(viewId === 'tc') { document.getElementById('panelTC').classList.remove('hidden'); document.getElementById('tabBtnTC').style.background = 'rgba(255, 82, 82, 0.1)'; document.getElementById('tabBtnTC').style.color = 'white'; document.getElementById('tabBtnTC').style.borderColor = 'var(--color-fuga)'; }
+        else if(viewId === 'patrimonio') { document.getElementById('panelPatrimonio').classList.remove('hidden'); document.getElementById('tabBtnPat').style.background = 'rgba(121, 192, 255, 0.1)'; document.getElementById('tabBtnPat').style.color = 'white'; document.getElementById('tabBtnPat').style.borderColor = '#79c0ff'; }
     }
 </script>
 <script src="motor.js"></script>
