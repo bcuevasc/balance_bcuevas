@@ -1,7 +1,7 @@
 // ==========================================================
 // 🌐 V13.1: SENSOR DE DIVISAS BLINDADO (API MINDICADOR)
 // ==========================================================
-window.VALOR_USD = 950; // Fallback instantáneo
+window.VALOR_USD = 950; 
 
 async function inicializarSensorDolar() {
     let lbl = document.getElementById('lbl-dolar-actual');
@@ -12,12 +12,10 @@ async function inicializarSensorDolar() {
             window.VALOR_USD = data.serie[0].valor;
             console.log("[SYS] DÓLAR SINCRONIZADO: $" + window.VALOR_USD);
             if(lbl) lbl.innerText = `1 USD = $${Math.round(window.VALOR_USD)} CLP`;
-        } else {
-            throw new Error("Estructura API inválida");
-        }
+        } else { throw new Error("Estructura API inválida"); }
     } catch(e) {
-        console.warn("[SYS] Fallo API Dólar, usando fallback estructural: $950");
-        window.VALOR_USD = 950; // Forzamos fallback de seguridad
+        console.warn("[SYS] Fallo API Dólar, usando fallback: $950");
+        window.VALOR_USD = 950; 
         if(lbl) lbl.innerText = `Offline (Ref: $950)`;
     }
     if (typeof calcularDiaCero === 'function') calcularDiaCero();
@@ -25,10 +23,9 @@ async function inicializarSensorDolar() {
 document.addEventListener("DOMContentLoaded", inicializarSensorDolar);
 
 // ==========================================================
-// 🧠 BÚNKER SCADA ORACLE - MOTOR LÓGICO V13.1
+// 🧠 BÚNKER SCADA ORACLE - MOTOR LÓGICO V14.0 (MARADONA EDITION)
 // ==========================================================
 const BYRON_EMAIL = "bvhcc94@gmail.com"; 
-const CREDIT_SETPOINT = -300000; 
 const catEvitables = ["Dopamina & Antojos"]; 
 const SUELDO_BASE_DEFAULT = 3602505;
 
@@ -142,6 +139,7 @@ let listaMovimientos = [], datosMesGlobal = [];
 let chartBD = null, chartP = null, chartDiario = null, chartRadar = null;
 let currentSort = { column: 'fechaISO', direction: 'desc' }; 
 let modoEdicionActivo = false, sueldosHistoricos = {}; 
+let datosPatrimonio = { inyectado: 0, tir: 8, auto: 0, otrosActivos: 0, cae: 0, hipotecario: 0, otrosPasivos: 0 };
 
 window.mostrarToast = function(mensaje) {
     let toast = document.getElementById('toast-notif');
@@ -160,11 +158,10 @@ window.loginWithGoogle = function() {
     const provider = new firebase.auth.GoogleAuthProvider();
     auth.signInWithPopup(provider).catch(err => {
         if (err.code === 'auth/popup-blocked' || err.code === 'auth/cancelled-popup-request') {
-            let btn = document.querySelector('.btn-google') || document.querySelector('button[onclick="loginWithGoogle()"]');
+            let btn = document.querySelector('.btn-google');
             if(btn) btn.innerHTML = "⏳ REDIRECCIONANDO...";
             auth.signInWithRedirect(provider);
         } else {
-            console.error("Falla en Auth:", err);
             alert("❌ ERROR DE CONEXIÓN:\n" + err.message);
         }
     }); 
@@ -172,20 +169,15 @@ window.loginWithGoogle = function() {
 
 window.logout = function() { 
     auth.signOut().then(() => {
-        localStorage.clear();
-        sessionStorage.clear();
-        window.location.reload();
+        localStorage.clear(); sessionStorage.clear(); window.location.reload();
     }); 
 };
 
 auth.onAuthStateChanged(user => {
     if (user) {
         if (user.email.toLowerCase() === BYRON_EMAIL.toLowerCase()) {
-            console.log("%c[ORACLE V13.1] ACCESS GRANTED", "color: #2ea043; font-weight: bold; font-size: 14px;");
-            
-            const loginScreen = document.getElementById('login-screen');
-            const reportZone = document.getElementById('reportZone');
-            
+            console.log("%c[ORACLE V14.0] MATRIX ONLINE", "color: #2ea043; font-weight: bold; font-size: 14px;");
+            const loginScreen = document.getElementById('login-screen'), reportZone = document.getElementById('reportZone');
             if(loginScreen) loginScreen.style.display = 'none';
             if(reportZone) reportZone.classList.add('active-app');
             
@@ -193,6 +185,15 @@ auth.onAuthStateChanged(user => {
             if(userDisplay) userDisplay.innerText = user.displayName.split(" ")[0];
             
             db.collection("parametros").doc("sueldos").onSnapshot(snap => { if(snap.exists) sueldosHistoricos = snap.data(); });
+            
+            // 🟢 V14.0 Carga de Patrimonio 🟢
+            db.collection("parametros").doc("patrimonio").onSnapshot(snap => { 
+                if(snap.exists) {
+                    datosPatrimonio = snap.data();
+                    renderizarPatrimonioVisual();
+                }
+            });
+
             db.collection("movimientos").onSnapshot(snap => {
                 listaMovimientos = [];
                 snap.forEach(doc => {
@@ -201,39 +202,25 @@ auth.onAuthStateChanged(user => {
                     d.monto = Number(d.monto) || 0;
                     listaMovimientos.push(d);
                 });
-                console.log(`%c[SYS] ${listaMovimientos.length} registros cargados en núcleo.`, "color: #2ea043; font-weight:bold;");
                 aplicarCicloAlSistema();
             });
             inicializarListenerTC();
+            iniciarRelojRendimiento(); // 🟢 V14.0 Inicia el Motor de Dopamina
         } else {
-            auth.signOut();
-            alert(`⛔ ACCESO DENEGADO:\nEl correo ${user.email} no tiene permisos de operador.`);
+            auth.signOut(); alert(`⛔ DENEGADO:\nEl correo ${user.email} no tiene permisos.`);
         }
     }
 });
 
-// 🟢 PARCHE V12.4.6: AISLAMIENTO TOTAL DE MESES 🟢
+// Aislamiento de Meses
 window.cargarSueldoVisual = function() {
-    const elMes = document.getElementById('navMesConceptual');
-    const elAnio = document.getElementById('navAnio');
-    const elSueldo = document.getElementById('inputSueldo');
-    
+    const elMes = document.getElementById('navMesConceptual'), elAnio = document.getElementById('navAnio'), elSueldo = document.getElementById('inputSueldo');
     if(!elMes || !elAnio || !elSueldo) return;
-    
-    let m = elMes.value; 
-    let a = elAnio.value;
-    let llave = `${a}_${m}`;
-    
-    elSueldo.setAttribute('data-mes-ancla', m);
-    elSueldo.setAttribute('data-anio-ancla', a);
-    
+    let m = elMes.value, a = elAnio.value, llave = `${a}_${m}`;
+    elSueldo.setAttribute('data-mes-ancla', m); elSueldo.setAttribute('data-anio-ancla', a);
     if (document.activeElement !== elSueldo) {
-        if (sueldosHistoricos[llave]) {
-            elSueldo.value = sueldosHistoricos[llave].toLocaleString('es-CL');
-        } else {
-            elSueldo.value = '';
-            elSueldo.placeholder = 'PENDIENTE';
-        }
+        if (sueldosHistoricos[llave]) elSueldo.value = sueldosHistoricos[llave].toLocaleString('es-CL');
+        else { elSueldo.value = ''; elSueldo.placeholder = 'PENDIENTE'; }
     }
 };
 
@@ -246,28 +233,97 @@ window.obtenerSueldoMes = function(anio, mes) {
 window.guardarSueldoEnNube = function() {
     const elSueldo = document.getElementById('inputSueldo');
     if(!elSueldo) return;
-    
-    let m = parseInt(elSueldo.getAttribute('data-mes-ancla'));
-    let a = parseInt(elSueldo.getAttribute('data-anio-ancla'));
-    
+    let m = parseInt(elSueldo.getAttribute('data-mes-ancla')), a = parseInt(elSueldo.getAttribute('data-anio-ancla'));
     if (isNaN(m) || isNaN(a) || elSueldo.value.trim() === '') return; 
-
     let s = parseInt(elSueldo.value.replace(/\./g, '')); 
     if (isNaN(s) || s <= 0) return;
-    
     let llave = `${a}_${m}`;
     sueldosHistoricos[llave] = s;
-    
-    db.collection("parametros").doc("sueldos").set({
-        [llave]: s
-    }, {merge: true}).then(() => {
-        const nombresMes = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"];
-        mostrarToast(`SUELDO [${nombresMes[m]} ${a}] GUARDADO: $${s.toLocaleString('es-CL')}`);
-        actualizarDashboard();
-    }).catch(err => {
-        console.error("Error Nube:", err);
+    db.collection("parametros").doc("sueldos").set({ [llave]: s }, {merge: true}).then(() => {
+        mostrarToast(`SUELDO GUARDADO`); actualizarDashboard();
     });
 };
+
+// ==========================================================
+// 🟢 V14.0: MOTOR PATRIMONIAL Y RELOJ DE RENDIMIENTO 🟢
+// ==========================================================
+function renderizarPatrimonioVisual() {
+    const s = (id, val) => { const el = document.getElementById(id); if(el && document.activeElement !== el) el.value = (val||0).toLocaleString('es-CL'); };
+    s('ptr-inversion', datosPatrimonio.inyectado);
+    s('ptr-tir', datosPatrimonio.tir);
+    s('ptr-auto', datosPatrimonio.auto);
+    s('ptr-otros-act', datosPatrimonio.otrosActivos);
+    s('ptr-cae', datosPatrimonio.cae);
+    s('ptr-hipo', datosPatrimonio.hipotecario);
+    s('ptr-otros-pas', datosPatrimonio.otrosPasivos);
+    calcularPatrimonioGlobal();
+}
+
+window.guardarPatrimonioEnNube = function() {
+    const g = (id) => parseInt((document.getElementById(id).value || "0").replace(/\./g, '')) || 0;
+    datosPatrimonio = {
+        inyectado: g('ptr-inversion'), tir: g('ptr-tir'), auto: g('ptr-auto'), otrosActivos: g('ptr-otros-act'),
+        cae: g('ptr-cae'), hipotecario: g('ptr-hipo'), otrosPasivos: g('ptr-otros-pas')
+    };
+    db.collection("parametros").doc("patrimonio").set(datosPatrimonio).then(() => {
+        mostrarToast("ESTADO PATRIMONIAL ACTUALIZADO");
+        calcularPatrimonioGlobal();
+    });
+}
+
+let tickerRendimiento = 0;
+function iniciarRelojRendimiento() {
+    setInterval(() => {
+        let inv = datosPatrimonio.inyectado || 0;
+        let tir = (datosPatrimonio.tir || 8) / 100;
+        // Ganancia por segundo = (Inversion * TIR) / Segundos en un año
+        let gananciaPorSegundo = (inv * tir) / 31536000; 
+        tickerRendimiento += gananciaPorSegundo;
+        
+        const elTicker = document.getElementById('live-yield-counter');
+        const elDiario = document.getElementById('live-yield-daily');
+        if(elTicker) {
+            elTicker.innerText = `+ $${tickerRendimiento.toFixed(4)}`;
+        }
+        if(elDiario && inv > 0) {
+            let diario = (inv * tir) / 365;
+            elDiario.innerText = `($${Math.round(diario).toLocaleString('es-CL')} / día en Automático)`;
+        }
+    }, 1000);
+}
+
+function calcularPatrimonioGlobal() {
+    let liquidezBanco = 0; // Se obtiene del balance del mes actual
+    const elSaldo = document.getElementById('txtSaldo');
+    if(elSaldo) liquidezBanco = parseInt(elSaldo.innerText.replace(/\./g, '')) || 0;
+    
+    let totalActivos = liquidezBanco + (datosPatrimonio.inyectado || 0) + (datosPatrimonio.auto || 0) + (datosPatrimonio.otrosActivos || 0);
+    
+    let totalDeudaTC = window.totalTC || 0;
+    let totalPasivos = totalDeudaTC + (datosPatrimonio.cae || 0) + (datosPatrimonio.hipotecario || 0) + (datosPatrimonio.otrosPasivos || 0);
+    
+    let patrimonioNeto = totalActivos - totalPasivos;
+    
+    const setT = (id, val) => { const el = document.getElementById(id); if(el) el.innerText = val.toLocaleString('es-CL'); };
+    setT('hud-patrimonio-neto', patrimonioNeto);
+    setT('hud-activos', totalActivos);
+    setT('hud-pasivos', totalPasivos);
+    
+    const elPN = document.getElementById('hud-patrimonio-neto');
+    if(elPN) elPN.style.color = patrimonioNeto < 0 ? "var(--color-fuga)" : "#79c0ff";
+    
+    // Dibujar barrita visual de balance
+    const barraA = document.getElementById('ptr-bar-activos');
+    const barraP = document.getElementById('ptr-bar-pasivos');
+    if(barraA && barraP) {
+        let max = totalActivos + totalPasivos;
+        if (max > 0) {
+            barraA.style.width = (totalActivos / max * 100) + "%";
+            barraP.style.width = (totalPasivos / max * 100) + "%";
+        }
+    }
+}
+// ==========================================================
 
 let alarmLogCache = "";
 window.abrirHistorian = function() {
@@ -365,6 +421,8 @@ function actualizarDashboard() {
     
     setTxt('txtGastoTramo', tO + tF);
     setTxt('txtPromedioZoom', Math.round((tO + tF) / diasCiclo));
+    
+    calcularPatrimonioGlobal(); // 🟢 Refrescar Patrimonio con liquidez actual
 }
 
 if (typeof window.renderizarListas === 'undefined') {
@@ -808,7 +866,6 @@ function inicializarListenerTC() {
     }, error => { console.error("🛑 FIREWALL TC:", error); });
 }
 
-// Para PC
 if (typeof window.renderizarTablaTC === 'undefined') {
     window.renderizarTablaTC = function() {
         const tbody = document.getElementById("listaDetalleTC"); if (!tbody) return;
@@ -912,39 +969,27 @@ async function ejecutarPurgaMasivaTC() {
 }
 
 // ==========================================================
-// 🚀 MÓDULO DÍA CERO V13.1 (SINTONÍA FINA)
+// 🚀 MÓDULO DÍA CERO 
 // ==========================================================
 function abrirPreVuelo() {
     const modal = document.getElementById('modal-dia-cero');
     if(!modal) return;
-    
     const elMes = document.getElementById('navMesConceptual');
     const elAnio = document.getElementById('navAnio');
     const nombresMes = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
-    
     document.getElementById('pv-mes-label').innerText = `${nombresMes[parseInt(elMes.value)]} ${elAnio.value}`.toUpperCase();
-    
     const sueldoInput = document.getElementById('inputSueldo');
     document.getElementById('pv-sueldo').value = sueldoInput ? sueldoInput.value : "3.602.505";
     
-    let mesVal = parseInt(elMes.value);
-    let anioVal = parseInt(elAnio.value);
-    let sumaTCMes = 0;
-    
+    let mesVal = parseInt(elMes.value), anioVal = parseInt(elAnio.value), sumaTCMes = 0;
     datosTCGlobal.forEach(doc => {
         let fCobro = new Date(doc.mesCobro);
-        if (fCobro.getMonth() === mesVal && fCobro.getFullYear() === anioVal) {
-            sumaTCMes += doc.monto;
-        }
+        if (fCobro.getMonth() === mesVal && fCobro.getFullYear() === anioVal) sumaTCMes += doc.monto;
     });
     
     let elTcNac = document.getElementById('pv-tc-nac');
-    if(elTcNac && elTcNac.getAttribute('data-estado') === 'est') {
-        elTcNac.value = sumaTCMes > 0 ? sumaTCMes.toLocaleString('es-CL') : "";
-    }
-    
-    calcularDiaCero();
-    modal.style.display = 'flex';
+    if(elTcNac && elTcNac.getAttribute('data-estado') === 'est') elTcNac.value = sumaTCMes > 0 ? sumaTCMes.toLocaleString('es-CL') : "";
+    calcularDiaCero(); modal.style.display = 'flex';
 }
 
 function cerrarPreVuelo() {
@@ -955,31 +1000,16 @@ function cerrarPreVuelo() {
 window.toggleEstadoPV = function(btn, inputId) {
     const input = document.getElementById(inputId);
     if(!input) return;
-    
     if (navigator.vibrate) navigator.vibrate(15); 
     
     let estadoActual = input.getAttribute('data-estado') || 'est';
-    
     if (estadoActual === 'est') {
-        input.setAttribute('data-estado', 'real');
-        btn.className = "btn-estado real";
-        btn.innerText = "📄";
-        input.classList.remove('pagado');
-        input.readOnly = false;
+        input.setAttribute('data-estado', 'real'); btn.className = "btn-estado real"; btn.innerText = "📄"; input.classList.remove('pagado'); input.readOnly = false;
     } else if (estadoActual === 'real') {
-        input.setAttribute('data-estado', 'pag');
-        btn.className = "btn-estado pag";
-        btn.innerText = "✔️";
-        input.classList.add('pagado');
-        input.readOnly = true;
+        input.setAttribute('data-estado', 'pag'); btn.className = "btn-estado pag"; btn.innerText = "✔️"; input.classList.add('pagado'); input.readOnly = true;
     } else {
-        input.setAttribute('data-estado', 'est');
-        btn.className = "btn-estado est";
-        btn.innerText = "EST";
-        input.classList.remove('pagado');
-        input.readOnly = false;
+        input.setAttribute('data-estado', 'est'); btn.className = "btn-estado est"; btn.innerText = "EST"; input.classList.remove('pagado'); input.readOnly = false;
     }
-    
     calcularDiaCero(); 
 }
 
@@ -992,48 +1022,31 @@ function calcularDiaCero() {
     };
 
     let sueldo = parseInt((document.getElementById('pv-sueldo').value || "0").replace(/\./g, '')) || 0;
-    
     let tcNac = valSiNoPagado('pv-tc-nac');
     
-    // --- LÓGICA TC INTERNACIONAL (USD a CLP) V13.1 ---
     let elTcInt = document.getElementById('pv-tc-int');
     let tcIntUSD = 0;
     if (elTcInt && elTcInt.getAttribute('data-estado') !== 'pag') {
         tcIntUSD = parseInt(elTcInt.value.replace(/\./g, '')) || 0;
     }
-    
     let valorDolarSeguro = isNaN(window.VALOR_USD) ? 950 : window.VALOR_USD;
     let tcIntCLP = Math.round(tcIntUSD * valorDolarSeguro); 
-    
     let elTcIntCLP = document.getElementById('pv-tc-int-clp');
     if (elTcIntCLP) {
         if (elTcInt && elTcInt.getAttribute('data-estado') === 'pag') {
-            elTcIntCLP.innerText = "✔️ PAGADO";
-            elTcIntCLP.style.color = "var(--color-saldo)";
+            elTcIntCLP.innerText = "✔️ PAGADO"; elTcIntCLP.style.color = "var(--color-saldo)";
         } else {
-            elTcIntCLP.innerText = `~ $${tcIntCLP.toLocaleString('es-CL')} CLP`;
-            elTcIntCLP.style.color = "var(--accent-red)";
+            elTcIntCLP.innerText = `~ $${tcIntCLP.toLocaleString('es-CL')} CLP`; elTcIntCLP.style.color = "var(--accent-red)";
         }
     }
     let tcInt = tcIntCLP; 
-    // -------------------------------------------------
 
-    let linea = valSiNoPagado('pv-linea');
-    let arr = valSiNoPagado('pv-arriendo');
-    let udec = valSiNoPagado('pv-udec');
-    let cae = valSiNoPagado('pv-cae');
-    let ggcc = valSiNoPagado('pv-ggcc');
-    let luz = valSiNoPagado('pv-luz');
-    let agua = valSiNoPagado('pv-agua');
-    let gas = valSiNoPagado('pv-gas');
-    let celu = valSiNoPagado('pv-celu');
-    let madre = valSiNoPagado('pv-madre');
-    let subs = valSiNoPagado('pv-subs');
-    let seguro = valSiNoPagado('pv-seguro');
+    let linea = valSiNoPagado('pv-linea'), arr = valSiNoPagado('pv-arriendo'), udec = valSiNoPagado('pv-udec'), cae = valSiNoPagado('pv-cae');
+    let ggcc = valSiNoPagado('pv-ggcc'), luz = valSiNoPagado('pv-luz'), agua = valSiNoPagado('pv-agua'), gas = valSiNoPagado('pv-gas');
+    let celu = valSiNoPagado('pv-celu'), madre = valSiNoPagado('pv-madre'), subs = valSiNoPagado('pv-subs'), seguro = valSiNoPagado('pv-seguro');
     
     let deudasDuras = tcNac + tcInt + linea;
     let estructural = arr + udec + cae + ggcc + luz + agua + gas + celu + madre + subs + seguro;
-    
     let liquidez = sueldo - deudasDuras - estructural;
     
     document.getElementById('pv-txt-liquidez').innerText = liquidez.toLocaleString('es-CL');
@@ -1042,7 +1055,6 @@ function calcularDiaCero() {
         let pctRojo = Math.min((deudasDuras / sueldo) * 100, 100);
         let pctNaranja = Math.min((estructural / sueldo) * 100, 100 - pctRojo);
         let pctVerde = Math.max(100 - pctRojo - pctNaranja, 0);
-        
         document.getElementById('pv-barra-roja').style.width = pctRojo + '%';
         document.getElementById('pv-barra-naranja').style.width = pctNaranja + '%';
         document.getElementById('pv-barra-verde').style.width = pctVerde + '%';
@@ -1050,9 +1062,7 @@ function calcularDiaCero() {
 
     let toggles = document.querySelectorAll('.btn-estado');
     let confirmados = 0;
-    toggles.forEach(btn => {
-        if(btn.classList.contains('real') || btn.classList.contains('pag')) confirmados++;
-    });
+    toggles.forEach(btn => { if(btn.classList.contains('real') || btn.classList.contains('pag')) confirmados++; });
     let certeza = toggles.length > 0 ? Math.round((confirmados / toggles.length) * 100) : 0;
     let elCertezaPct = document.getElementById('pv-certeza-pct');
     if(elCertezaPct) {
@@ -1062,25 +1072,19 @@ function calcularDiaCero() {
 }
 
 function ejecutarArranque() {
-    if(!confirm("⚠️ INYECCIÓN CRÍTICA V13.1\n\n¿Estás seguro de inyectar toda tu Planilla Operativa en la Matriz del mes seleccionado?\n\nNota: Los gastos marcados como ✔️ PAGADO serán ignorados para evitar doble contabilización.")) return;
+    if(!confirm("⚠️ INYECCIÓN CRÍTICA V13.1\n\n¿Estás seguro de inyectar toda tu Planilla Operativa en la Matriz del mes seleccionado?")) return;
     
-    const elMes = document.getElementById('navMesConceptual');
-    const elAnio = document.getElementById('navAnio');
+    const elMes = document.getElementById('navMesConceptual'), elAnio = document.getElementById('navAnio');
     let fechaDestino = new Date(parseInt(elAnio.value), parseInt(elMes.value), 1, 10, 0, 0);
-    
-    const batch = db.batch();
-    let inyectados = 0;
+    const batch = db.batch(); let inyectados = 0;
     
     const procesarInyeccion = (idInput, nombre, cat) => {
         let el = document.getElementById(idInput);
         if (!el) return;
-        
         let estado = el.getAttribute('data-estado') || 'est';
         if (estado === 'pag') return; 
         
         let monto = 0;
-        
-        // Excepción para la lógica del Dólar (Capturamos los Pesos calculados, no los USD)
         if (idInput === 'pv-tc-int') {
             let tcIntUSD = parseInt(el.value.replace(/\./g, '')) || 0;
             let valorDolarSeguro = isNaN(window.VALOR_USD) ? 950 : window.VALOR_USD;
@@ -1091,16 +1095,7 @@ function ejecutarArranque() {
         
         if (monto > 0) {
             let ref = db.collection("movimientos").doc();
-            batch.set(ref, { 
-                monto: monto, 
-                nombre: nombre, 
-                categoria: cat, 
-                tipo: "Gasto Fijo", 
-                fecha: fechaDestino, 
-                status: estado === 'real' ? 'Real' : 'Estimado', 
-                innecesarioPct: 0, 
-                cuotas: 1 
-            });
+            batch.set(ref, { monto: monto, nombre: nombre, categoria: cat, tipo: "Gasto Fijo", fecha: fechaDestino, status: estado === 'real' ? 'Real' : 'Estimado', innecesarioPct: 0, cuotas: 1 });
             inyectados++;
         }
     };
@@ -1108,31 +1103,21 @@ function ejecutarArranque() {
     procesarInyeccion('pv-tc-nac', "PAGO TC NACIONAL (DÍA CERO)", "Gastos Fijos (Búnker)"); 
     procesarInyeccion('pv-tc-int', "PAGO TC INTERNACIONAL (DÍA CERO)", "Gastos Fijos (Búnker)"); 
     procesarInyeccion('pv-linea', "PAGO LÍNEA CRÉDITO (DÍA CERO)", "Gastos Fijos (Búnker)");
-    
     procesarInyeccion('pv-arriendo', "ARRIENDO / DIVIDENDO", "Infraestructura (Depto)");
     procesarInyeccion('pv-udec', "PAGO UDEC 2024", "Infraestructura (Depto)");
     procesarInyeccion('pv-cae', "PAGO CAE", "Infraestructura (Depto)");
-    
     procesarInyeccion('pv-ggcc', "GASTOS COMUNES", "Infraestructura (Depto)");
     procesarInyeccion('pv-luz', "LUZ / ELECTRICIDAD", "Infraestructura (Depto)");
     procesarInyeccion('pv-agua', "AGUA / SANEAMIENTO", "Infraestructura (Depto)");
     procesarInyeccion('pv-gas', "GAS", "Infraestructura (Depto)");
-    
     procesarInyeccion('pv-celu', "CELU MIO PLAN", "Suscripciones");
     procesarInyeccion('pv-madre', "MOVISTAR MADRE", "Red de Apoyo (Familia)");
     procesarInyeccion('pv-subs', "PACK SUSCRIPCIONES (YT, Disney, etc)", "Suscripciones");
     procesarInyeccion('pv-seguro', "SEGURO AUTO", "Flota & Movilidad");
     
     if (inyectados > 0) {
-        batch.commit().then(() => {
-            cerrarPreVuelo();
-            mostrarToast(`ARRANQUE COMPLETADO: ${inyectados} REGISTROS INYECTADOS.`);
-            actualizarDashboard();
-        }).catch(err => {
-            alert("❌ Error de Inyección: " + err.message);
-        });
+        batch.commit().then(() => { cerrarPreVuelo(); mostrarToast(`ARRANQUE COMPLETADO: ${inyectados} REG. INYECTADOS.`); actualizarDashboard(); }).catch(err => { alert("❌ Error: " + err.message); });
     } else {
-        alert("No se inyectaron registros (todos estaban marcados como pagados o con valor 0).");
-        cerrarPreVuelo();
+        alert("No se inyectaron registros."); cerrarPreVuelo();
     }
 }
