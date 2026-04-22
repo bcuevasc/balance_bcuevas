@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Bunker Móvil HUD V14.1 (Contextual Edition)</title>
+    <title>Bunker Móvil HUD V14.2 (Contextual Edition)</title>
     <link rel="apple-touch-icon" href="bunker-icon.png">
     <meta name="theme-color" content="#030508">
 
@@ -54,7 +54,6 @@
         .core-btn.active.purple { text-shadow: 0 0 10px rgba(163, 113, 247, 0.8); }
         #core-highlighter { position: absolute; top: 4px; bottom: 4px; left: 4px; width: calc(33.3% - 4px); background: var(--accent-blue); border-radius: 10px; transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), background 0.3s; z-index: 1; }
 
-        /* 🟢 MÓDULO ERGO-SWIPE PARA GRÁFICOS (V14.1) 🟢 */
         .swipe-container { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 15px; padding: 10px 15px 20px 15px; margin: 0 -15px; scrollbar-width: none; }
         .swipe-container::-webkit-scrollbar { display: none; }
         .swipe-card { flex: 0 0 85%; scroll-snap-align: center; background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 16px; padding: 15px; box-shadow: inset 0 0 15px rgba(0,0,0,0.4); position: relative; display: flex; flex-direction: column;}
@@ -65,6 +64,8 @@
         .monto-gigante { background: transparent; border: none; color: #79c0ff; font-size: 5rem; font-weight: 900; text-align: center; width: 100%; outline: none; padding: 0; font-family: monospace; text-shadow: 0 0 30px rgba(121, 192, 255, 0.4); transition: transform 0.2s;}
         .monto-gigante:focus { transform: scale(1.05); color: #fff; text-shadow: 0 0 30px rgba(255,255,255,0.4); }
         .terminal-form { background: var(--bg-card); border-radius: 20px; padding: 20px; border: 1px solid var(--border-subtle); box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
+        /* 🟢 V14.2: MEJORA DE CONTRASTE EN PLACEHOLDER 🟢 */
+        .terminal-form input::placeholder { color: #a3adc2; }
         .terminal-form input[type="text"]:not(.monto-gigante), .terminal-form select, .terminal-form input[type="datetime-local"] { width: 100%; padding: 16px 14px; margin-bottom: 12px; background: var(--bg-elevated); color: white; border: 1px solid var(--border-subtle); border-radius: 10px; font-size: 0.95rem; font-weight: 600; outline: none; -webkit-appearance: none; transition: border-color 0.3s; }
         .terminal-form input:focus, .terminal-form select:focus { border-color: var(--accent-blue); box-shadow: 0 0 0 1px var(--accent-blue); }
         
@@ -83,7 +84,7 @@
         .mini-kpi-fugas { display: flex; align-items: center; justify-content: space-between; padding: 12px 20px; background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 12px; margin: 0 15px 10px 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.2);}
         
         #modal-historian { position: fixed; inset: 0; background: rgba(3, 5, 8, 0.95); z-index: 25000; display: none; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(10px); padding: 20px; }
-        .hist-box { background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 12px; width: 100%; box-shadow: 0 0 40px rgba(255, 82, 82, 0.2); overflow: hidden; border-top: 4px solid #ff5252; display: flex; flex-direction: column; max-height: 85vh;}
+        .hist-box { position: relative; background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 12px; width: 100%; box-shadow: 0 0 40px rgba(255, 82, 82, 0.2); overflow: hidden; border-top: 4px solid #ff5252; display: flex; flex-direction: column; max-height: 85vh;}
         .hist-header { padding: 15px; background: rgba(0,0,0,0.3); border-bottom: 1px solid var(--border-subtle); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;}
         .hist-body { padding: 15px; overflow-y: auto; flex-grow: 1;}
         
@@ -135,13 +136,13 @@
 
 <div id="login-screen">
     <h2 style="color:var(--color-proyectado); margin: 20px 0; font-weight:900; font-size:2.5rem; letter-spacing: 2px;">BÚNKER SCADA</h2>
-    <p style="color:var(--text-dim); font-size:0.9rem; margin-bottom:40px; font-family: monospace; letter-spacing: 1px;">[ HUD MÓVIL V14.1 CONTEXTUAL ]</p>
+    <p style="color:var(--text-dim); font-size:0.9rem; margin-bottom:40px; font-family: monospace; letter-spacing: 1px;">[ HUD MÓVIL V14.2 ERGO-SWIPE ]</p>
     <button onclick="loginWithGoogle()" style="padding:18px 40px; border-radius:12px; font-weight:900; color:black; background:white; border:none; font-size:1.1rem; box-shadow: 0 0 30px rgba(255,255,255,0.3);">INICIAR ENLACE</button>
 </div>
 
 <div class="app-container" id="reportZone">
     <div class="top-bar">
-        <div class="brand">BÚNKER <span class="brand-badge">V14.1</span></div>
+        <div class="brand">BÚNKER <span class="brand-badge">V14.2</span></div>
         <div style="display:flex; gap:8px;">
             <button onclick="toggleLanguage()" style="background:rgba(121,192,255,0.1); border:1px solid rgba(121,192,255,0.4); color:#79c0ff; border-radius:6px; font-weight:bold; font-size:0.7rem; padding:4px 8px;">ENG</button>
             <div id="user-display" class="user-tag">OPERATOR</div>
@@ -181,34 +182,38 @@
                 </div>
             </div>
             
-            <div class="swipe-indicator">⟸ DESLIZA PARA MÁS GRÁFICOS ⟹</div>
-            <div class="swipe-container">
-                <div class="swipe-card">
-                    <div class="swipe-title">Trayectoria (Burn-Rate)</div>
-                    <div style="height:180px; position:relative; width:100%;"><canvas id="chartBurnDown"></canvas></div>
-                    <div style="display:flex; justify-content:space-between; margin-top:10px; font-size:0.7rem; font-family:monospace; color:var(--text-dim);">
-                        <span>Gasto: <strong style="color:#ff5252" id="txtGastoTramo">$0</strong></span>
-                        <span>Promedio: <strong style="color:#d29922" id="txtPromedioZoom">$0</strong></span>
-                    </div>
-                </div>
-                <div class="swipe-card">
-                    <div class="swipe-title">Pulso Vital Diario</div>
-                    <div style="height:180px; position:relative; width:100%;"><canvas id="chartDiario"></canvas></div>
-                </div>
-                <div class="swipe-card">
-                    <div class="swipe-title">Espectro Categórico</div>
-                    <div style="height:180px; position:relative; width:100%;"><canvas id="chartPareto"></canvas></div>
-                </div>
-            </div>
-
-            <div class="mini-kpi-fugas">
+            <div class="mini-kpi-fugas" style="margin-bottom: 20px;">
                 <span style="font-size:0.75rem; color:var(--text-dim); font-weight:800; text-transform:uppercase;">Fugas de Dopamina:</span>
                 <div>
                     <span id="txtTotalEvitable" style="font-family: monospace; font-weight: 900; color: var(--text-main); margin-right: 8px;">$0</span>
                     <span id="txtPorcentajeFugas" style="font-size:0.9rem; font-weight:900; color:var(--accent-red); background: rgba(255,82,82,0.1); padding: 4px 8px; border-radius: 6px;">0%</span>
                 </div>
             </div>
-            <div id="listaMovilDetalle" class="lista-contenedor"></div>
+
+            <div style="padding: 0 15px; font-size: 0.65rem; font-weight: 900; color: var(--accent-blue); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 10px;">> MOVIMIENTOS RECIENTES</div>
+            <div id="listaMovilDetalle" class="lista-contenedor" style="padding-bottom: 20px;"></div>
+
+            <div style="padding: 20px 15px 0 15px; border-top: 1px solid var(--border-subtle); margin-top: 10px; margin-bottom: 30px;">
+                <div class="swipe-indicator">⟸ TELEMETRÍA ANALÍTICA ⟹</div>
+                <div class="swipe-container">
+                    <div class="swipe-card">
+                        <div class="swipe-title">Trayectoria (Burn-Rate)</div>
+                        <div style="height:180px; position:relative; width:100%;"><canvas id="chartBurnDown"></canvas></div>
+                        <div style="display:flex; justify-content:space-between; margin-top:10px; font-size:0.7rem; font-family:monospace; color:var(--text-dim);">
+                            <span>Gasto: <strong style="color:#ff5252" id="txtGastoTramo">$0</strong></span>
+                            <span>Promedio: <strong style="color:#d29922" id="txtPromedioZoom">$0</strong></span>
+                        </div>
+                    </div>
+                    <div class="swipe-card">
+                        <div class="swipe-title">Pulso Vital Diario</div>
+                        <div style="height:180px; position:relative; width:100%;"><canvas id="chartDiario"></canvas></div>
+                    </div>
+                    <div class="swipe-card">
+                        <div class="swipe-title">Espectro Categórico</div>
+                        <div style="height:180px; position:relative; width:100%;"><canvas id="chartPareto"></canvas></div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div id="vista-tc" style="display: none; animation: fadeSlideUp 0.3s;">
@@ -318,11 +323,8 @@
         <h3 style="font-weight:900; text-align:center; letter-spacing:2px; margin-bottom:25px; color:var(--text-dim);">[ ENLACE SATELITAL ]</h3>
         
         <button onclick="abrirPreVuelo()" style="width:100%; padding:22px; border-radius:16px; background:rgba(255, 152, 0, 0.1); color:#ff9800; border:1px solid rgba(255, 152, 0, 0.4); font-weight:900; margin-bottom:15px; box-shadow: 0 10px 25px rgba(255, 152, 0, 0.2); letter-spacing: 1px;">🚀 PRE-VUELO (DÍA CERO)</button>
-        
         <button onclick="let b=this; b.innerHTML='⏳ EXPORTANDO...'; b.style.opacity='0.7'; exportarDataLink(); setTimeout(()=>{b.innerHTML='📥 DATA-LINK PRO'; b.style.opacity='1';}, 2000)" style="width:100%; padding:22px; border-radius:16px; background:rgba(121, 192, 255, 0.1); color:#79c0ff; border:1px solid rgba(121, 192, 255, 0.4); font-weight:900; margin-bottom:15px; box-shadow: 0 10px 25px rgba(121, 192, 255, 0.2); letter-spacing: 1px; transition: all 0.2s;">📥 DATA-LINK PRO</button>
-        
         <button onclick="abrirHistorian()" style="width:100%; padding:22px; border-radius:16px; background:rgba(255, 82, 82, 0.1); color:#ff5252; border:1px solid rgba(255, 82, 82, 0.4); font-weight:900; margin-bottom:15px; box-shadow: 0 10px 25px rgba(255, 82, 82, 0.2); letter-spacing: 1px;">⚠️ LOG DE ALARMAS</button>
-        
         <button onclick="let b=this; b.innerHTML='⏳ SINCRONIZANDO...'; b.style.opacity='0.7'; triggerSync(); setTimeout(()=>{b.innerHTML='🔄 FORZAR SYNC'; b.style.opacity='1';}, 2500)" style="width:100%; padding:22px; border-radius:16px; background:var(--bg-card); color:white; border:1px solid var(--border-subtle); font-weight:900; margin-bottom:15px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); letter-spacing: 1px; transition: all 0.2s;">🔄 FORZAR SYNC</button>
     </div>
 
@@ -363,58 +365,102 @@
     <button onclick="closeBottomSheet()" style="width:100%; padding:15px; border-radius:15px; background:transparent; color:var(--text-dim); border:none; font-weight:800; text-transform:uppercase;">Cancelar</button>
 </div>
 
-<div id="modal-dia-cero" style="display:none; position:fixed; inset:0; background: rgba(3, 5, 8, 0.98); z-index: 20000; flex-direction: column; overflow-y: auto; padding: 20px 15px 100px 15px;">
-    <h2 class="pv-title" style="font-size:1.3rem; font-weight:900; color:#ff9800; letter-spacing:2px; margin:20px 0 5px 0; text-transform:uppercase; text-align:center;">SIMULADOR DÍA CERO</h2>
-    <div class="pv-subtitle" style="font-size:0.75rem; color:var(--text-muted); font-family:monospace; text-align:center; margin-bottom:20px;">MES DE <span id="pv-mes-label" style="color:#fff; font-weight:bold;">--</span></div>
-    
-    <div style="background:var(--bg-card); padding:20px; border-radius:16px; border:1px solid var(--border-subtle); margin-bottom:20px; box-shadow:0 10px 30px rgba(255, 152, 0, 0.1); border-top:3px solid #ff9800;">
-        <div style="display:flex; justify-content:space-between; font-weight:900; font-size:0.7rem; text-transform:uppercase; color:var(--text-muted); margin-bottom:10px;"><span>Obligaciones</span><span>Liquidez Neta</span></div>
-        <div style="width:100%; height:30px; background:rgba(255,255,255,0.05); border-radius:15px; overflow:hidden; display:flex; border:1px solid var(--border-subtle);">
-            <div id="pv-barra-roja" style="background:linear-gradient(90deg, #b71c1c, #ff5252); height:100%; transition:width 0.4s ease; width:0%;"></div>
-            <div id="pv-barra-naranja" style="background:linear-gradient(90deg, #e65100, #ff9800); height:100%; transition:width 0.4s ease; width:0%;"></div>
-            <div id="pv-barra-verde" style="background:linear-gradient(90deg, #1b5e20, #2ea043); height:100%; transition:width 0.4s ease; width:100%;"></div>
+<div id="modal-historian" style="display:none; position:fixed; inset:0; background:rgba(3, 5, 8, 0.95); z-index:25000; flex-direction:column; align-items:center; justify-content:center; backdrop-filter:blur(10px); padding:20px;">
+    <div class="hist-box" style="position: relative;">
+        <button onclick="document.getElementById('modal-historian').style.display='none'" style="position:absolute; top:12px; right:15px; background:var(--bg-panel); border:1px solid var(--border-color); color:var(--text-muted); border-radius:50%; width:32px; height:32px; cursor:pointer; font-weight:bold; z-index:100; display:flex; align-items:center; justify-content:center; box-shadow: 0 4px 10px rgba(0,0,0,0.3); transition: color 0.2s, border-color 0.2s;">✕</button>
+        <div class="hist-header">
+            <h3 style="color:#ff5252; margin:0; display:flex; align-items:center; gap:10px;"><span style="font-size:1.5rem;">⚠️</span> HISTORIAN LOG</h3>
         </div>
-        <div style="text-align:center; font-size:2.8rem; font-weight:900; color:var(--color-saldo); font-family:monospace; margin-top:15px; text-shadow:0 0 20px rgba(46, 160, 67, 0.4);">$<span id="pv-txt-liquidez">0</span></div>
-        <div class="pv-certeza" id="pv-certeza-container">CERTEZA DEL CÁLCULO: <span id="pv-certeza-pct" style="color:#ff5252;">0%</span></div>
+        <div class="hist-body" id="historian-content"></div>
     </div>
+</div>
 
-    <div style="font-size:0.75rem; font-weight:900; color:#ff5252; text-transform:uppercase; margin:20px 0 10px 0; border-bottom:1px solid var(--border-subtle); padding-bottom:5px; display:flex; align-items:center; gap:5px;"><span>💳</span> Deducciones Críticas</div>
-    <div class="pv-input-group" style="background:rgba(46,160,67,0.1); border-color:var(--color-saldo);"><label style="color:var(--color-saldo);">Sueldo (Ingreso)</label><input type="text" id="pv-sueldo" class="pv-input" style="color:var(--color-saldo); border-color:var(--color-saldo);" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
-    <div class="pv-input-group"><label>TC Nacional</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-tc-nac')">EST</button><input type="text" id="pv-tc-nac" class="pv-input" style="color:#ff5252;" placeholder="0" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
-    
-    <div style="display:flex; flex-direction:column; width:100%; background: var(--bg-card); border-radius: 12px; border: 1px solid rgba(255,82,82,0.3); margin-bottom: 10px; padding: 12px 14px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
-        <div style="display: flex; align-items: center; justify-content: space-between; gap:10px;">
-            <div style="flex:1;">
-                <label style="font-size: 0.8rem; font-weight: 900; color: var(--text-main); text-transform: uppercase;">TC Internacional</label>
-                <span id="lbl-dolar-actual" style="display:block; font-size:0.65rem; color:var(--text-muted); font-family:monospace; margin-top:4px;">Consultando USD...</span>
+<div id="modal-dia-cero" style="display:none; position:fixed; inset:0; background: rgba(3, 5, 8, 0.95); z-index: 20000; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(10px); padding: 10px;">
+    <div class="pv-container">
+        <button onclick="cerrarPreVuelo()" style="position:absolute; top:15px; right:15px; background:var(--bg-panel); border:1px solid var(--border-color); color:var(--text-muted); border-radius:50%; width:32px; height:32px; cursor:pointer; font-weight:bold; z-index:100; display:flex; align-items:center; justify-content:center; box-shadow: 0 4px 10px rgba(0,0,0,0.3); transition: color 0.2s, border-color 0.2s;">✕</button>
+        
+        <div class="pv-header">
+            <h2 class="pv-title" data-en="DAY ZERO SIMULATOR">SIMULADOR DÍA CERO</h2>
+            <div class="pv-subtitle" data-en="FEEDFORWARD CONTROL FOR">CONTROL PREALIMENTADO DE LIQUIDEZ MES DE <span id="pv-mes-label" style="color:#fff; font-weight:bold;">--</span></div>
+        </div>
+        
+        <div class="pv-tank-wrapper">
+            <div class="pv-tank-label">
+                <span data-en="Hard Deductions">Deducciones Duras</span>
+                <span data-en="Net Maneuver Liquidity">Liquidez Neta de Maniobra</span>
             </div>
-            <button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-tc-int')">EST</button>
-            <input type="text" id="pv-tc-int" class="pv-input" style="color:#ff5252; width:100px;" placeholder="US$ 0" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();">
+            <div class="pv-tank">
+                <div id="pv-barra-roja" class="pv-fill-rojo" style="width: 0%;"></div>
+                <div id="pv-barra-naranja" class="pv-fill-naranja" style="width: 0%;"></div>
+                <div id="pv-barra-verde" class="pv-fill-verde" style="width: 100%;"></div>
+            </div>
+            <div class="pv-liquidez-text">$<span id="pv-txt-liquidez">0</span></div>
+            <div class="pv-certeza" id="pv-certeza-container">CERTEZA DEL CÁLCULO: <span id="pv-certeza-pct" style="color:#ff5252;">0%</span></div>
         </div>
-        <div id="pv-tc-int-clp" style="text-align:right; font-size:0.85rem; color:#ff5252; font-family:monospace; font-weight:900; margin-top:10px; border-top: 1px dashed rgba(255,82,82,0.3); padding-top: 10px;">~ $0 CLP</div>
+
+        <div class="pv-body">
+            <div class="pv-grid">
+                <div class="pv-section">
+                    <div class="pv-section-title" style="color:#ff5252;"><span style="font-size:1rem;">💳</span> Deducciones Críticas</div>
+                    <div class="pv-input-group" style="background:rgba(46,160,67,0.1); border-color:var(--color-saldo);">
+                        <label style="color:var(--color-saldo);">Sueldo (Ingreso)</label>
+                        <input type="text" id="pv-sueldo" class="pv-input" style="color:var(--color-saldo); border-color:var(--color-saldo);" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();">
+                    </div>
+                    <div class="pv-input-group">
+                        <label>TC Nacional</label>
+                        <button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-tc-nac')">EST</button>
+                        <input type="text" id="pv-tc-nac" class="pv-input" style="color:#ff5252;" placeholder="0" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();">
+                    </div>
+                    
+                    <div style="display:flex; flex-direction:column; width:100%; background: var(--bg-card); border-radius: 12px; border: 1px solid rgba(255,82,82,0.3); margin-bottom: 10px; padding: 12px 14px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+                        <div style="display: flex; align-items: center; justify-content: space-between; gap:10px;">
+                            <div style="flex:1;">
+                                <label style="font-size: 0.8rem; font-weight: 900; color: var(--text-main); text-transform: uppercase;">TC Internacional</label>
+                                <span id="lbl-dolar-actual" style="display:block; font-size:0.65rem; color:var(--text-muted); font-family:monospace; margin-top:4px;">Consultando USD...</span>
+                            </div>
+                            <button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-tc-int')">EST</button>
+                            <input type="text" id="pv-tc-int" class="pv-input" style="color:#ff5252; width:100px;" placeholder="US$ 0" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();">
+                        </div>
+                        <div id="pv-tc-int-clp" style="text-align:right; font-size:0.85rem; color:#ff5252; font-family:monospace; font-weight:900; margin-top:10px; border-top: 1px dashed rgba(255,82,82,0.3); padding-top: 10px;">~ $0 CLP</div>
+                    </div>
+
+                    <div class="pv-input-group">
+                        <label>Línea de Crédito</label>
+                        <button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-linea')">EST</button>
+                        <input type="text" id="pv-linea" class="pv-input" style="color:#ff5252;" placeholder="0" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();">
+                    </div>
+                </div>
+
+                <div class="pv-section">
+                    <div class="pv-section-title" style="color:var(--color-infra);"><span style="font-size:1rem;">🏢</span> Carga Estructural</div>
+                    <div class="pv-input-group"><label>Arriendo</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-arriendo')">EST</button><input type="text" id="pv-arriendo" class="pv-input" value="330.000" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
+                    <div class="pv-input-group"><label>UDEC 2024</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-udec')">EST</button><input type="text" id="pv-udec" class="pv-input" value="48.000" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
+                    <div class="pv-input-group"><label>CAE</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-cae')">EST</button><input type="text" id="pv-cae" class="pv-input" value="38.742" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
+                </div>
+
+                <div class="pv-section">
+                    <div class="pv-section-title" style="color:#d29922;"><span style="font-size:1rem;">⚡</span> Serv. Básicos Hogar</div>
+                    <div class="pv-input-group"><label>Gastos Comunes</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-ggcc')">EST</button><input type="text" id="pv-ggcc" class="pv-input" value="63.220" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
+                    <div class="pv-input-group"><label>Luz</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-luz')">EST</button><input type="text" id="pv-luz" class="pv-input" value="20.000" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
+                    <div class="pv-input-group"><label>Agua</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-agua')">EST</button><input type="text" id="pv-agua" class="pv-input" value="8.000" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
+                    <div class="pv-input-group"><label>Gas</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-gas')">EST</button><input type="text" id="pv-gas" class="pv-input" value="0" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
+                </div>
+
+                <div class="pv-section">
+                    <div class="pv-section-title" style="color:#79c0ff;"><span style="font-size:1rem;">📱</span> Op. Complementaria</div>
+                    <div class="pv-input-group"><label>Celu Mio</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-celu')">EST</button><input type="text" id="pv-celu" class="pv-input" value="13.990" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
+                    <div class="pv-input-group"><label>Movistar Madre</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-madre')">EST</button><input type="text" id="pv-madre" class="pv-input" value="19.290" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
+                    <div class="pv-input-group" title="YT Premium, Disney, Icloud, Google, Spotify, HBO"><label>Pack Subs</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-subs')">EST</button><input type="text" id="pv-subs" class="pv-input" value="20.540" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
+                    <div class="pv-input-group"><label>Seguro Auto</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-seguro')">EST</button><input type="text" id="pv-seguro" class="pv-input" value="38.300" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="pv-footer">
+            <button class="btn-pv-close" onclick="cerrarPreVuelo()" data-en="ABORT">ABORTAR</button>
+            <button class="btn-pv-launch" onclick="ejecutarArranque()" data-en="EXECUTE LAUNCH (INJECT MATRIX)">EFECTUAR ARRANQUE</button>
+        </div>
     </div>
-
-    <div class="pv-input-group"><label>Línea de Crédito</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-linea')">EST</button><input type="text" id="pv-linea" class="pv-input" style="color:#ff5252;" placeholder="0" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
-
-    <div style="font-size:0.75rem; font-weight:900; color:var(--color-infra); text-transform:uppercase; margin:25px 0 10px 0; border-bottom:1px solid var(--border-subtle); padding-bottom:5px; display:flex; align-items:center; gap:5px;"><span>🏢</span> Carga Estructural</div>
-    <div class="pv-input-group"><label>Arriendo</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-arriendo')">EST</button><input type="text" id="pv-arriendo" class="pv-input" value="330.000" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
-    <div class="pv-input-group"><label>UDEC 2024</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-udec')">EST</button><input type="text" id="pv-udec" class="pv-input" value="48.000" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
-    <div class="pv-input-group"><label>CAE</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-cae')">EST</button><input type="text" id="pv-cae" class="pv-input" value="38.742" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
-
-    <div style="font-size:0.75rem; font-weight:900; color:#d29922; text-transform:uppercase; margin:25px 0 10px 0; border-bottom:1px solid var(--border-subtle); padding-bottom:5px; display:flex; align-items:center; gap:5px;"><span>⚡</span> Serv. Básicos Hogar</div>
-    <div class="pv-input-group"><label>Gastos Comunes</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-ggcc')">EST</button><input type="text" id="pv-ggcc" class="pv-input" value="63.220" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
-    <div class="pv-input-group"><label>Luz</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-luz')">EST</button><input type="text" id="pv-luz" class="pv-input" value="20.000" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
-    <div class="pv-input-group"><label>Agua</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-agua')">EST</button><input type="text" id="pv-agua" class="pv-input" value="8.000" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
-    <div class="pv-input-group"><label>Gas</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-gas')">EST</button><input type="text" id="pv-gas" class="pv-input" value="0" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
-
-    <div style="font-size:0.75rem; font-weight:900; color:#79c0ff; text-transform:uppercase; margin:25px 0 10px 0; border-bottom:1px solid var(--border-subtle); padding-bottom:5px; display:flex; align-items:center; gap:5px;"><span>📱</span> Op. Complementaria</div>
-    <div class="pv-input-group"><label>Celu Mio</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-celu')">EST</button><input type="text" id="pv-celu" class="pv-input" value="13.990" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
-    <div class="pv-input-group"><label>Movistar Madre</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-madre')">EST</button><input type="text" id="pv-madre" class="pv-input" value="19.290" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
-    <div class="pv-input-group" title="YT Premium, Disney, Icloud, Google, Spotify, HBO"><label>Pack Subs</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-subs')">EST</button><input type="text" id="pv-subs" class="pv-input" value="20.540" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
-    <div class="pv-input-group"><label>Seguro Auto</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-seguro')">EST</button><input type="text" id="pv-seguro" class="pv-input" value="38.300" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
-
-    <button onclick="ejecutarArranque()" class="btn-pv-launch">EFECTUAR ARRANQUE</button>
-    <button onclick="cerrarPreVuelo()" class="btn-pv-close">ABORTAR</button>
 </div>
 
 <script>
