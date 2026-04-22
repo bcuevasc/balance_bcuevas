@@ -25,7 +25,7 @@ async function inicializarSensorDolar() {
 document.addEventListener("DOMContentLoaded", inicializarSensorDolar);
 
 // ==========================================================
-// 🧠 BÚNKER SCADA ORACLE - MOTOR LÓGICO V12.4.3 (LOGIN FIX)
+// 🧠 BÚNKER SCADA ORACLE - MOTOR LÓGICO V13.1
 // ==========================================================
 const BYRON_EMAIL = "bvhcc94@gmail.com"; 
 const CREDIT_SETPOINT = -300000; 
@@ -143,15 +143,6 @@ let chartBD = null, chartP = null, chartDiario = null, chartRadar = null;
 let currentSort = { column: 'fechaISO', direction: 'desc' }; 
 let modoEdicionActivo = false, sueldosHistoricos = {}; 
 
-function obtenerSueldoMes(anio, mes) {
-    let llave = `${anio}_${mes}`;
-    if (sueldosHistoricos[llave]) return sueldosHistoricos[llave];
-    let prevMes = mes - 1; let prevAnio = anio;
-    if(prevMes < 0) { prevMes = 11; prevAnio--; }
-    let llavePrev = `${prevAnio}_${prevMes}`;
-    return sueldosHistoricos[llavePrev] || SUELDO_BASE_DEFAULT;
-}
-
 window.mostrarToast = function(mensaje) {
     let toast = document.getElementById('toast-notif');
     if(!toast) {
@@ -165,23 +156,12 @@ window.mostrarToast = function(mensaje) {
     setTimeout(() => { toast.style.opacity = '0'; toast.style.bottom = '110px'; }, 3000);
 };
 
-// ==========================================================
-// 🟢 PARCHE V12.4.3: LOGIN CON PERSISTENCIA FORZADA 🟢
-// ==========================================================
-// ==========================================================
-// 🟢 PARCHE V12.4.7: BYPASS DE POPUP (ANTI-BLOQUEO MÓVIL) 🟢
-// ==========================================================
 window.loginWithGoogle = function() { 
     const provider = new firebase.auth.GoogleAuthProvider();
-    
-    // 1. Ejecución inmediata (Síncrona) para evitar el bloqueo del celular
     auth.signInWithPopup(provider).catch(err => {
-        // 2. PLAN B: Si el navegador caprichoso bloquea el Popup (o lo cancela), 
-        // forzamos una redirección directa. Esto nunca falla en móviles.
         if (err.code === 'auth/popup-blocked' || err.code === 'auth/cancelled-popup-request') {
             let btn = document.querySelector('.btn-google') || document.querySelector('button[onclick="loginWithGoogle()"]');
             if(btn) btn.innerHTML = "⏳ REDIRECCIONANDO...";
-            
             auth.signInWithRedirect(provider);
         } else {
             console.error("Falla en Auth:", err);
@@ -192,7 +172,6 @@ window.loginWithGoogle = function() {
 
 window.logout = function() { 
     auth.signOut().then(() => {
-        // Limpiamos caché local al salir
         localStorage.clear();
         sessionStorage.clear();
         window.location.reload();
@@ -201,9 +180,8 @@ window.logout = function() {
 
 auth.onAuthStateChanged(user => {
     if (user) {
-        // Verificamos el correo (pasando todo a minúsculas por si acaso)
         if (user.email.toLowerCase() === BYRON_EMAIL.toLowerCase()) {
-            console.log("%c[ORACLE V12.4.3] ACCESS GRANTED", "color: #2ea043; font-weight: bold; font-size: 14px;");
+            console.log("%c[ORACLE V13.1] ACCESS GRANTED", "color: #2ea043; font-weight: bold; font-size: 14px;");
             
             const loginScreen = document.getElementById('login-screen');
             const reportZone = document.getElementById('reportZone');
@@ -228,19 +206,13 @@ auth.onAuthStateChanged(user => {
             });
             inicializarListenerTC();
         } else {
-            // Si el correo no es el tuyo, cerramos sesión y mostramos alerta
             auth.signOut();
             alert(`⛔ ACCESO DENEGADO:\nEl correo ${user.email} no tiene permisos de operador.`);
         }
     }
 });
-// ==========================================================
 
-// 🟢 PARCHE V12.4.4: PRECISIÓN DE SUELDO MENSUAL AISLADO 🟢
-
-// ==========================================================
 // 🟢 PARCHE V12.4.6: AISLAMIENTO TOTAL DE MESES 🟢
-// ==========================================================
 window.cargarSueldoVisual = function() {
     const elMes = document.getElementById('navMesConceptual');
     const elAnio = document.getElementById('navAnio');
@@ -267,12 +239,7 @@ window.cargarSueldoVisual = function() {
 
 window.obtenerSueldoMes = function(anio, mes) {
     let llave = `${anio}_${mes}`;
-    
-    // Aislamiento total: Solo usa el sueldo si está guardado explícitamente en ese mes exacto.
     if (sueldosHistoricos[llave]) return sueldosHistoricos[llave];
-    
-    // Eliminamos la herencia hacia atrás. Si no hay dato, asume el base por defecto (3.6M) 
-    // SOLO para que la interfaz matemática no arroje errores, pero la caja te exigirá el valor exacto.
     return SUELDO_BASE_DEFAULT;
 };
 
@@ -301,6 +268,7 @@ window.guardarSueldoEnNube = function() {
         console.error("Error Nube:", err);
     });
 };
+
 let alarmLogCache = "";
 window.abrirHistorian = function() {
     document.getElementById('historian-content').innerHTML = alarmLogCache || "<div style='color:var(--color-saldo); font-weight:bold; text-align:center; padding:20px;'>SYSTEM NOMINAL.<br>NO BREACHES DETECTED.</div>";
@@ -944,7 +912,7 @@ async function ejecutarPurgaMasivaTC() {
 }
 
 // ==========================================================
-// 🚀 MÓDULO DÍA CERO V12.4 (SINTONÍA FINA)
+// 🚀 MÓDULO DÍA CERO V13.1 (SINTONÍA FINA)
 // ==========================================================
 function abrirPreVuelo() {
     const modal = document.getElementById('modal-dia-cero');
@@ -971,7 +939,6 @@ function abrirPreVuelo() {
     });
     
     let elTcNac = document.getElementById('pv-tc-nac');
-    
     if(elTcNac && elTcNac.getAttribute('data-estado') === 'est') {
         elTcNac.value = sumaTCMes > 0 ? sumaTCMes.toLocaleString('es-CL') : "";
     }
@@ -985,13 +952,10 @@ function cerrarPreVuelo() {
     if(modal) modal.style.display = 'none';
 }
 
-// 🟢 V13.0: MOTOR HÁPTICO (Vibración) 🟢
-// 🟢 V13.0: MOTOR HÁPTICO (Vibración) 🟢
 window.toggleEstadoPV = function(btn, inputId) {
     const input = document.getElementById(inputId);
     if(!input) return;
     
-    // Dispara una micro-vibración de 15ms en el celular (como un clic físico)
     if (navigator.vibrate) navigator.vibrate(15); 
     
     let estadoActual = input.getAttribute('data-estado') || 'est';
@@ -1019,7 +983,6 @@ window.toggleEstadoPV = function(btn, inputId) {
     calcularDiaCero(); 
 }
 
-// 🟢 V13.0: MOTOR MATEMÁTICO MULTI-DIVISA 🟢
 function calcularDiaCero() {
     const valSiNoPagado = (id) => {
         let el = document.getElementById(id);
@@ -1032,14 +995,13 @@ function calcularDiaCero() {
     
     let tcNac = valSiNoPagado('pv-tc-nac');
     
-// --- LÓGICA TC INTERNACIONAL (USD a CLP) V13.1 ---
+    // --- LÓGICA TC INTERNACIONAL (USD a CLP) V13.1 ---
     let elTcInt = document.getElementById('pv-tc-int');
     let tcIntUSD = 0;
     if (elTcInt && elTcInt.getAttribute('data-estado') !== 'pag') {
         tcIntUSD = parseInt(elTcInt.value.replace(/\./g, '')) || 0;
     }
     
-    // Escudo anti-NaN
     let valorDolarSeguro = isNaN(window.VALOR_USD) ? 950 : window.VALOR_USD;
     let tcIntCLP = Math.round(tcIntUSD * valorDolarSeguro); 
     
@@ -1053,8 +1015,8 @@ function calcularDiaCero() {
             elTcIntCLP.style.color = "var(--accent-red)";
         }
     }
-    let tcInt = tcIntCLP; // Asignamos los pesos al cálculo final
-    // -------------------------------------------------    // -------------------------------------------
+    let tcInt = tcIntCLP; 
+    // -------------------------------------------------
 
     let linea = valSiNoPagado('pv-linea');
     let arr = valSiNoPagado('pv-arriendo');
@@ -1098,8 +1060,9 @@ function calcularDiaCero() {
         elCertezaPct.style.color = certeza < 40 ? '#ff5252' : (certeza < 80 ? '#ff9800' : '#2ea043');
     }
 }
+
 function ejecutarArranque() {
-    if(!confirm("⚠️ INYECCIÓN CRÍTICA V12.4\n\n¿Estás seguro de inyectar toda tu Planilla Operativa en la Matriz del mes seleccionado?\n\nNota: Los gastos marcados como ✔️ PAGADO serán ignorados para evitar doble contabilización.")) return;
+    if(!confirm("⚠️ INYECCIÓN CRÍTICA V13.1\n\n¿Estás seguro de inyectar toda tu Planilla Operativa en la Matriz del mes seleccionado?\n\nNota: Los gastos marcados como ✔️ PAGADO serán ignorados para evitar doble contabilización.")) return;
     
     const elMes = document.getElementById('navMesConceptual');
     const elAnio = document.getElementById('navAnio');
@@ -1115,7 +1078,16 @@ function ejecutarArranque() {
         let estado = el.getAttribute('data-estado') || 'est';
         if (estado === 'pag') return; 
         
-        let monto = parseInt(el.value.replace(/\./g, '')) || 0;
+        let monto = 0;
+        
+        // Excepción para la lógica del Dólar (Capturamos los Pesos calculados, no los USD)
+        if (idInput === 'pv-tc-int') {
+            let tcIntUSD = parseInt(el.value.replace(/\./g, '')) || 0;
+            let valorDolarSeguro = isNaN(window.VALOR_USD) ? 950 : window.VALOR_USD;
+            monto = Math.round(tcIntUSD * valorDolarSeguro);
+        } else {
+            monto = parseInt(el.value.replace(/\./g, '')) || 0;
+        }
         
         if (monto > 0) {
             let ref = db.collection("movimientos").doc();
