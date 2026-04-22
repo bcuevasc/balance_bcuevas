@@ -149,72 +149,35 @@
     </div>
 
     <div id="tab-dash" class="tab-content" style="display:block; padding:0;">
-        <div class="core-tabs">
-            <div id="core-highlighter"></div>
-            <button class="core-btn active blue" onclick="switchDualCore('efectivo', this)">Flujo</button>
-            <button class="core-btn" onclick="switchDualCore('tc', this)">Deuda</button>
-            <button class="core-btn" onclick="switchDualCore('patrimonio', this)">Radar</button>
+    <div class="core-tabs">
+        <div id="core-highlighter" style="width: 50%;"></div>
+        <button class="core-btn active blue" onclick="switchDualCore('efectivo', this)">FLUJO DIARIO</button>
+        <button class="core-btn" onclick="switchDualCore('tc', this)">TARJETA CRÉDITO</button>
+    </div>
+
+    <div id="vista-efectivo" style="display: block;">
+        <div class="master-hud">
+            <div style="font-size:0.55rem; color:var(--text-dim); font-weight:900; text-transform:uppercase; letter-spacing: 2px;">Saldo de Maniobra</div>
+            <div class="hud-value">$<span id="txtSaldo">0</span></div>
         </div>
-
-        <div id="vista-efectivo" style="display: block; animation: fadeSlideUp 0.3s;">
-            <div class="master-hud">
-                <div style="font-size:0.7rem; color:var(--text-dim); font-weight:900; text-transform:uppercase; margin-bottom:5px; letter-spacing: 3px;">Maniobra Base</div>
-                <div class="hud-value">$<span id="txtSaldo">0</span></div>
+        
+        <div class="slave-kpis" style="margin-bottom:15px;">
+            <div class="slave-pill red">
+                <div style="font-size:0.5rem; font-weight:800; color:var(--text-dim); text-transform:uppercase;">Carga Fija</div>
+                <div style="color:var(--text-main); font-size:1rem; font-weight:900; font-family:monospace;">$<span id="txtTotalFijos">0</span></div>
             </div>
-            
-            <div class="slave-kpis">
-                <div class="slave-pill purple">
-                    <div style="font-size:0.6rem; font-weight:800; color:var(--text-dim); text-transform:uppercase;">Infraestructura</div>
-                    <div style="color:var(--text-main); font-size:1.1rem; font-weight:900; margin-top:5px; font-family:monospace;">$<span id="txtTotalInfra">0</span></div>
-                </div>
-                <div class="slave-pill cyan">
-                    <div style="font-size:0.6rem; font-weight:800; color:var(--text-dim); text-transform:uppercase;">Flota / Auto</div>
-                    <div style="color:var(--text-main); font-size:1.1rem; font-weight:900; margin-top:5px; font-family:monospace;">$<span id="txtTotalFlota">0</span></div>
-                </div>
-                <div class="slave-pill red">
-                    <div style="font-size:0.6rem; font-weight:800; color:var(--text-dim); text-transform:uppercase;">Carga Fija</div>
-                    <div style="color:var(--text-main); font-size:1.1rem; font-weight:900; margin-top:5px; font-family:monospace;">$<span id="txtTotalFijos">0</span></div>
-                </div>
-                <div class="slave-pill orange">
-                    <div style="font-size:0.6rem; font-weight:800; color:var(--text-dim); text-transform:uppercase;">Carga Variable</div>
-                    <div style="color:var(--text-main); font-size:1.1rem; font-weight:900; margin-top:5px; font-family:monospace;">$<span id="txtTotalOtros">0</span></div>
-                </div>
-            </div>
-            
-            <div class="mini-kpi-fugas" style="margin-bottom: 20px;">
-                <span style="font-size:0.75rem; color:var(--text-dim); font-weight:800; text-transform:uppercase;">Fugas de Dopamina:</span>
-                <div>
-                    <span id="txtTotalEvitable" style="font-family: monospace; font-weight: 900; color: var(--text-main); margin-right: 8px;">$0</span>
-                    <span id="txtPorcentajeFugas" style="font-size:0.9rem; font-weight:900; color:var(--accent-red); background: rgba(255,82,82,0.1); padding: 4px 8px; border-radius: 6px;">0%</span>
-                </div>
-            </div>
-
-            <div style="padding: 0 15px; font-size: 0.65rem; font-weight: 900; color: var(--accent-blue); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 10px;">> MOVIMIENTOS RECIENTES</div>
-            <div id="listaMovilDetalle" class="lista-contenedor" style="padding-bottom: 20px;"></div>
-
-            <div style="padding: 20px 15px 0 15px; border-top: 1px solid var(--border-subtle); margin-top: 10px; margin-bottom: 30px;">
-                <div class="swipe-indicator">⟸ TELEMETRÍA ANALÍTICA ⟹</div>
-                <div class="swipe-container">
-                    <div class="swipe-card">
-                        <div class="swipe-title">Trayectoria (Burn-Rate)</div>
-                        <div style="height:180px; position:relative; width:100%;"><canvas id="chartBurnDown"></canvas></div>
-                        <div style="display:flex; justify-content:space-between; margin-top:10px; font-size:0.7rem; font-family:monospace; color:var(--text-dim);">
-                            <span>Gasto: <strong style="color:#ff5252" id="txtGastoTramo">$0</strong></span>
-                            <span>Promedio: <strong style="color:#d29922" id="txtPromedioZoom">$0</strong></span>
-                        </div>
-                    </div>
-                    <div class="swipe-card">
-                        <div class="swipe-title">Pulso Vital Diario</div>
-                        <div style="height:180px; position:relative; width:100%;"><canvas id="chartDiario"></canvas></div>
-                    </div>
-                    <div class="swipe-card">
-                        <div class="swipe-title">Espectro Categórico</div>
-                        <div style="height:180px; position:relative; width:100%;"><canvas id="chartPareto"></canvas></div>
-                    </div>
-                </div>
+            <div class="slave-pill orange">
+                <div style="font-size:0.5rem; font-weight:800; color:var(--text-dim); text-transform:uppercase;">Variable</div>
+                <div style="color:var(--text-main); font-size:1rem; font-weight:900; font-family:monospace;">$<span id="txtTotalOtros">0</span></div>
             </div>
         </div>
 
+        <div id="listaMovilDetalle" class="lista-contenedor"></div>
+        
+        <div class="swipe-container" style="margin-top:20px; opacity: 0.8;">
+             </div>
+    </div>
+</div>
         <div id="vista-tc" style="display: none; animation: fadeSlideUp 0.3s;">
             <div class="master-hud" style="padding-bottom:15px;">
                 <div style="font-size:0.7rem; color:var(--text-dim); font-weight:900; text-transform:uppercase; margin-bottom:5px; letter-spacing: 3px;">Carga TC Global</div>
