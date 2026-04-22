@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Bunker Digital SCADA v14.2 (Contextual + Ergo PC)</title>
+    <title>Bunker Digital SCADA v14.7 (Clean Core)</title>
     
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -16,7 +16,6 @@
 body.light-theme { --bg-body: #f0f2f5; --bg-panel: #ffffff; --bg-subpanel: #f8f9fa; --text-main: #24292e; --text-muted: #57606a; --border-color: #d0d7de; --input-bg: #ffffff; --item-hover: #e1e4e8; }
 * { box-sizing: border-box; transition: background-color 0.3s, border-color 0.3s; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
 
-/* 🟢 V14.2: SCROLLBARS CIBERPUNK 🟢 */
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-track { background: var(--bg-body); }
 ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 10px; border: 2px solid var(--bg-body); }
@@ -42,21 +41,17 @@ h2 { color: var(--text-main); margin: 0; font-size: 1.3rem; font-weight: 900; le
 .nav-badge { font-family: monospace; background: rgba(31, 111, 235, 0.1); color: #79c0ff; border: 1px solid rgba(31, 111, 235, 0.3); padding: 4px 10px; border-radius: 4px; font-size: 0.8rem; font-weight: 900; letter-spacing: 0.5px; }
 @keyframes fadeSlideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-.kpi-row { display: grid; grid-template-columns: repeat(8, 1fr); gap: 10px; flex-shrink: 0; }
+.kpi-row { display: grid; gap: 10px; flex-shrink: 0; }
 .kpi-card { padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-panel); border-top: 3px solid var(--border-color); position: relative; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.2);}
 .kpi-card h4 { margin: 0 0 4px 0; font-size: 0.6rem; text-transform: uppercase; color: var(--text-muted); font-weight: 800; letter-spacing: 0.5px;}
 .kpi-card .value { margin: 0; font-size: 1.15rem; font-weight: 900; color: var(--text-main); font-family: monospace; display: flex; align-items: center; white-space: nowrap; overflow: hidden;}
 .kpi-card .value span { color: var(--text-muted); font-size: 0.95rem; margin-right: 2px;}
-
-.kpi-progress-container { width: 100%; height: 3px; background: rgba(255,255,255,0.05); margin-top: 6px; border-radius: 2px;}
-.kpi-progress-fill { height: 100%; width: 0%; transition: width 0.6s ease; border-radius: 2px;}
-.kpi-saldo { background: rgba(46, 160, 67, 0.05); border-color: rgba(46, 160, 67, 0.4); border-top: 3px solid var(--color-saldo);}
+.kpi-saldo { background: rgba(46, 160, 67, 0.05); border-color: rgba(46, 160, 67, 0.4); border-top: 4px solid var(--color-saldo);}
 .kpi-saldo h4 { color: var(--color-saldo); }
 .kpi-saldo .value { text-shadow: 0 0 15px rgba(46, 160, 67, 0.4); }
 .kpi-proyectado { background: rgba(121, 192, 255, 0.05); border-color: rgba(121, 192, 255, 0.4); border-top: 3px solid #79c0ff;}
 .kpi-proyectado h4 { color: #79c0ff; }
 
-/* TELEMETRÍA CONTEXTUAL */
 .context-charts { display: grid; gap: 15px; padding: 15px; border-bottom: 1px solid var(--border-color); flex-shrink: 0;}
 .context-charts.flujo { grid-template-columns: repeat(3, 1fr); background: rgba(31, 111, 235, 0.03); }
 .context-charts.tc { grid-template-columns: repeat(2, 1fr); background: rgba(255, 82, 82, 0.03); }
@@ -86,15 +81,6 @@ h2 { color: var(--text-main); margin: 0; font-size: 1.3rem; font-weight: 900; le
 .core-title { font-size: 0.95rem; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; gap: 8px;}
 .core-body { flex: 1 1 0px; overflow-y: auto; overflow-x: hidden; padding: 0; scrollbar-width: thin; scrollbar-color: var(--border-color) var(--bg-body); display: flex; flex-direction: column;}
 
-/* ESTILOS PATRIMONIO */
-.ptr-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; padding: 20px; }
-.ptr-box { background: var(--bg-subpanel); border: 1px solid var(--border-color); border-radius: 8px; padding: 15px; box-shadow: inset 0 0 20px rgba(0,0,0,0.5); }
-.ptr-box-title { font-size: 0.85rem; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 5px; }
-.ptr-input-group { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
-.ptr-input-group label { font-size: 0.75rem; font-weight: bold; color: var(--text-main); }
-.ptr-input { background: var(--input-bg); border: 1px solid var(--border-color); color: var(--text-main); padding: 8px; border-radius: 6px; font-family: monospace; font-size: 1rem; width: 140px; text-align: right; outline: none; }
-.ptr-input:focus { border-color: var(--color-proyectado); }
-
 .data-grid { width: 100%; border-collapse: collapse; text-align: left; }
 .data-grid th { position: sticky; top: 0; background: var(--bg-subpanel); padding: 10px 12px; font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; z-index: 10; border-bottom: 2px solid var(--border-color); letter-spacing: 0.5px; cursor: pointer; }
 .data-grid td { padding: 8px 12px; font-size: 0.8rem; border-bottom: 1px solid var(--border-color); vertical-align: middle; }
@@ -116,7 +102,6 @@ h2 { color: var(--text-main); margin: 0; font-size: 1.3rem; font-weight: 900; le
 
 .floating-mass-actions { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #1c2128; border: 1px solid var(--color-edit); border-radius: 50px; padding: 8px 20px; display: flex; align-items: center; gap: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); z-index: 9999; }
 
-/* 🟢 V14.2: MODALES REDISEÑADOS 🟢 */
 #modal-historian { position: fixed; inset: 0; background: rgba(3, 5, 8, 0.95); z-index: 25000; display: none; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(10px); padding: 20px; }
 .hist-box { position: relative; background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 12px; width: 100%; max-width: 600px; box-shadow: 0 0 40px rgba(255, 82, 82, 0.2); overflow: hidden; border-top: 4px solid #ff5252; display: flex; flex-direction: column; max-height: 85vh;}
 .hist-header { padding: 15px 20px; background: rgba(0,0,0,0.3); border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;}
@@ -172,7 +157,7 @@ h2 { color: var(--text-main); margin: 0; font-size: 1.3rem; font-weight: 900; le
 <div id="login-screen">
     <div class="login-box">
         <h2 style="color:var(--color-proyectado); margin-bottom:10px; font-size: 2rem;">BÚNKER SCADA</h2>
-        <p style="color:var(--text-muted); font-size:0.85rem; letter-spacing: 2px;">VERSIÓN 14.2 (ERGO-PC)</p>
+        <p style="color:var(--text-muted); font-size:0.85rem; letter-spacing: 2px;">VERSIÓN 14.7 (CLEAN CORE)</p>
         <button class="btn-google" onclick="loginWithGoogle()">INICIAR ENLACE NEURAL</button>
     </div>
 </div>
@@ -180,7 +165,7 @@ h2 { color: var(--text-main); margin: 0; font-size: 1.3rem; font-weight: 900; le
 <div class="app-container" id="reportZone">
     <div class="header-titles">
         <div style="display:flex; align-items:center;">
-            <h2>BUNKER SCADA <span class="scada-badge">V14.2</span></h2>
+            <h2>BUNKER SCADA <span class="scada-badge">V14.7</span></h2>
             <div id="user-display" style="margin-left: 15px; font-size: 0.75rem; color: var(--color-saldo); font-weight:800; text-transform:uppercase;"></div>
         </div>
         <div class="system-btns">
@@ -196,7 +181,6 @@ h2 { color: var(--text-main); margin: 0; font-size: 1.3rem; font-weight: 900; le
     <div style="display:flex; justify-content:center; gap:10px; margin-bottom:5px;">
         <button class="btn-sys" id="tabBtnFlujo" onclick="switchPCPanel('main')" style="background:rgba(31, 111, 235, 0.1); border-color:var(--color-guardar); color:white; padding:8px 20px;">1. FLUJO PRESENTE</button>
         <button class="btn-sys" id="tabBtnTC" onclick="switchPCPanel('tc')" style="padding:8px 20px;">2. MATRIZ TC</button>
-        <button class="btn-sys" id="tabBtnPat" onclick="switchPCPanel('patrimonio')" style="padding:8px 20px;">3. PATRIMONIO</button>
     </div>
 
     <div style="display: flex; gap: 10px; flex-shrink: 0;">
@@ -220,32 +204,35 @@ h2 { color: var(--text-main); margin: 0; font-size: 1.3rem; font-weight: 900; le
             </div>
         </div>
 
-       <div class="kpi-row" style="grid-template-columns: repeat(6, 1fr);">
-    <div class="kpi-card">
-        <h4 data-en="Operating Base">Sueldo Base</h4>
-        <div class="value"><span>$</span><input type="text" id="inputSueldo" oninput="formatearEntradaNumerica(this); actualizarDashboard();" onchange="guardarSueldoEnNube()" style="background:transparent; border:none; color:var(--text-main); font-weight:900; width:100%; font-size:1.1rem; outline:none; font-family:monospace;"></div>
-    </div>
-    <div class="kpi-card" id="cardArrastre" style="border-top-color: var(--accent-red); display:none;">
-        <h4 style="color:var(--accent-red);">Arrastre Línea (M-1)</h4>
-        <div class="value" style="color:var(--accent-red);">$<span id="txtArrastreLinea">0</span></div>
-    </div>
-    <div class="kpi-card" style="border-top-color: var(--accent-red);">
-        <h4>Carga Fija</h4>
-        <div class="value">$<span id="txtTotalFijos">0</span></div>
-    </div>
-    <div class="kpi-card" style="border-top-color: var(--accent-orange);">
-        <h4>Carga Variable</h4>
-        <div class="value">$<span id="txtTotalOtros">0</span></div>
-    </div>
-    <div class="kpi-card kpi-saldo" style="border-top-width: 4px;">
-        <h4 data-en="Net Balance">Balance Real</h4>
-        <div class="value">$<span id="txtSaldo">0</span></div>
-    </div>
-    <div class="kpi-card kpi-proyectado">
-        <h4 data-en="Projected Close">Saldo - TC</h4>
-        <div class="value">$<span id="txtProyectado">0</span></div>
-    </div>
-</div>
+        <div class="kpi-row" style="flex: 1; grid-template-columns: repeat(6, 1fr);">
+            <div class="kpi-card">
+                <h4 data-en="Operating Base">Sueldo Base</h4>
+                <div class="value"><span>$</span><input type="text" id="inputSueldo" oninput="formatearEntradaNumerica(this); actualizarDashboard();" onchange="guardarSueldoEnNube()" style="background:transparent; border:none; color:var(--text-main); font-weight:900; width:100%; font-size:1.1rem; outline:none; font-family:monospace;"></div>
+            </div>
+            <div class="kpi-card" id="cardArrastre" style="border-top-color: var(--accent-red); display:none;">
+                <h4 style="color:var(--accent-red);">Arrastre Línea (M-1)</h4>
+                <div class="value" style="color:var(--accent-red);">$<span id="txtArrastreLinea">0</span></div>
+            </div>
+            <div class="kpi-card" style="border-top-color: var(--accent-red);">
+                <h4>Carga Fija</h4>
+                <div class="value">$<span id="txtTotalFijos">0</span></div>
+            </div>
+            <div class="kpi-card" style="border-top-color: var(--accent-orange);">
+                <h4>Carga Variable</h4>
+                <div class="value">$<span id="txtTotalOtros">0</span></div>
+            </div>
+            <div class="kpi-card kpi-saldo" style="border-top-width: 4px;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <h4 data-en="Net Balance">Balance Real</h4>
+                    <div id="badgeDias" style="font-size: 0.6rem; background: rgba(0,0,0,0.4); padding: 2px 4px; border-radius: 4px; font-weight: 800; color: var(--color-saldo); border: 1px solid rgba(46,160,67,0.3);">-- DÍAS</div>
+                </div>
+                <div class="value" style="margin-top:2px;">$<span id="txtSaldo">0</span></div>
+            </div>
+            <div class="kpi-card kpi-proyectado">
+                <h4 data-en="Projected Close">Saldo - TC</h4>
+                <div class="value">$<span id="txtProyectado">0</span></div>
+            </div>
+        </div>
     </div>
 
     <div class="command-ribbon">
@@ -266,13 +253,12 @@ h2 { color: var(--text-main); margin: 0; font-size: 1.3rem; font-weight: 900; le
         <div class="form-group sm" id="boxCuotas" style="display:none;"><label data-en="Installments">Cuotas</label>
             <select id="inputCuotas" class="form-control" style="border-color:var(--color-ingresos);"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="6">6</option><option value="12">12</option></select>
         </div>
-        <div class="form-group lg"><label data-en="Description">Descripción</label><input type="text" id="inputNombre" class="form-control" placeholder="[ AUTO-PILOTO M/L ] Ingresa gasto..."></div>
-        <div class="form-group sm"><label data-en="Amount ($)">Monto ($)</label><input type="text" id="inputMonto" class="form-control" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this)" style="color:var(--color-edit); font-weight:bold; font-size:1rem;"></div>
+        <div class="form-group lg"><label data-en="Description">Descripción</label><input type="text" id="inputNombre" class="form-control" placeholder="[ AUTO-PILOTO M/L ] Ingresa gasto..." autocomplete="off" autocorrect="off" spellcheck="false"></div>
+        <div class="form-group sm"><label data-en="Amount ($)">Monto ($)</label><input type="text" id="inputMonto" class="form-control" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this)" style="color:var(--color-edit); font-weight:bold; font-size:1rem;" autocomplete="off"></div>
         <button id="btnGuardar" class="btn-ribbon" onclick="agregarMovimiento()" data-en="INJECT">INYECTAR</button>
     </div>
 
     <div class="dual-core">
-        
         <div class="core-panel" id="panelMain" ondragover="dragOverPanel(event, 'main')" ondragleave="dragLeavePanel(event, 'main')" ondrop="dropOnPanel(event, 'main')">
             <div class="core-header">
                 <div class="core-title"><span style="color:var(--color-saldo); text-shadow: 0 0 8px var(--color-saldo);">●</span> <span>FLUJO PRESENTE (LIBRO DIARIO)</span></div>
@@ -300,7 +286,7 @@ h2 { color: var(--text-main); margin: 0; font-size: 1.3rem; font-weight: 900; le
                 </div>
 
                 <div style="padding: 6px 12px; background: rgba(0,0,0,0.3); border-bottom: 1px solid var(--border-color); border-top: 1px solid var(--border-color); position: sticky; top: 0; z-index: 30;">
-                    <input type="text" id="inputBuscador" class="form-control" placeholder="🔍 Buscar en la matriz diaria..." oninput="actualizarDashboard()" style="width: 100%; max-width: 350px; height: 28px; background: var(--bg-panel);">
+                    <input type="text" id="inputBuscador" class="form-control" placeholder="🔍 Buscar en la matriz diaria..." autocomplete="off" oninput="actualizarDashboard()" style="width: 100%; max-width: 350px; height: 28px; background: var(--bg-panel);">
                 </div>
                 
                 <table id="tablaGastos" class="data-grid">
@@ -357,51 +343,6 @@ h2 { color: var(--text-main); margin: 0; font-size: 1.3rem; font-weight: 900; le
                     </thead>
                     <tbody id="listaDetalleTC"></tbody>
                 </table>
-            </div>
-        </div>
-
-        <div class="core-panel hidden" id="panelPatrimonio" style="border-color: rgba(121, 192, 255, 0.3); box-shadow: inset 0 0 30px rgba(121, 192, 255, 0.02);">
-            <div class="core-header" style="background: rgba(121, 192, 255, 0.08); border-bottom-color: rgba(121, 192, 255, 0.3);">
-                <div class="core-title"><span style="color:#79c0ff; text-shadow: 0 0 8px #79c0ff;">●</span> <span>RADAR PATRIMONIAL (NET WORTH)</span></div>
-                <button class="btn-sys" onclick="guardarPatrimonioEnNube()" style="background-color: #1f6feb; color: white; border: none; box-shadow: 0 0 10px rgba(31, 111, 235, 0.4);">💾 GUARDAR ESTADO</button>
-            </div>
-            <div class="core-body" style="padding: 20px;">
-                <div style="text-align:center; margin-bottom:20px;">
-                    <div style="font-size:0.8rem; color:var(--text-muted); text-transform:uppercase; font-weight:900; letter-spacing:2px;">Patrimonio Neto Total</div>
-                    <div style="font-size:3.5rem; font-weight:900; color:#79c0ff; font-family:monospace; text-shadow: 0 0 20px rgba(121, 192, 255, 0.3); line-height: 1;">$<span id="hud-patrimonio-neto">0</span></div>
-                    <div style="width:100%; height:8px; background:rgba(255,255,255,0.05); margin-top:15px; border-radius:4px; display:flex; overflow:hidden;">
-                        <div id="ptr-bar-activos" style="height:100%; background:var(--color-saldo); transition:width 0.5s;"></div>
-                        <div id="ptr-bar-pasivos" style="height:100%; background:var(--color-fuga); transition:width 0.5s;"></div>
-                    </div>
-                    <div style="display:flex; justify-content:space-between; margin-top:5px; font-size:0.75rem; font-family:monospace; font-weight:bold;">
-                        <span style="color:var(--color-saldo);">ACTIVOS: $<span id="hud-activos">0</span></span>
-                        <span style="color:var(--color-fuga);">PASIVOS: $<span id="hud-pasivos">0</span></span>
-                    </div>
-                </div>
-
-                <div style="background: rgba(46, 160, 67, 0.05); border: 1px solid rgba(46, 160, 67, 0.3); border-radius: 12px; padding: 15px; text-align: center; margin-bottom: 25px; box-shadow: 0 0 20px rgba(46, 160, 67, 0.1);">
-                    <div style="font-size:0.7rem; color:var(--color-saldo); text-transform:uppercase; font-weight:900; letter-spacing:1px; margin-bottom:5px;">Rendimiento Automático (Tiempo Real)</div>
-                    <div id="live-yield-counter" style="font-size:2rem; font-weight:900; color:#2ea043; font-family:monospace; text-shadow: 0 0 15px rgba(46, 160, 67, 0.6);">+ $0.0000</div>
-                    <div id="live-yield-daily" style="font-size:0.75rem; color:var(--text-muted); font-family:monospace; margin-top:4px;">($0 / día en Automático)</div>
-                </div>
-
-                <div class="ptr-grid">
-                    <div class="ptr-box">
-                        <div class="ptr-box-title" style="color:var(--color-saldo);">🟢 Activos Físicos e Inversión</div>
-                        <div class="ptr-input-group"><label>Inversión Activa</label><input type="text" id="ptr-inversion" class="ptr-input" placeholder="0" oninput="formatearEntradaNumerica(this)"></div>
-                        <div class="ptr-input-group"><label>Rendimiento Anual (TIR %)</label><input type="text" id="ptr-tir" class="ptr-input" style="color:var(--color-saldo);" placeholder="8" oninput="formatearEntradaNumerica(this)"></div>
-                        <div class="ptr-input-group"><label>Vehículo (Tasación)</label><input type="text" id="ptr-auto" class="ptr-input" placeholder="0" oninput="formatearEntradaNumerica(this)"></div>
-                        <div class="ptr-input-group"><label>Otros Activos</label><input type="text" id="ptr-otros-act" class="ptr-input" placeholder="0" oninput="formatearEntradaNumerica(this)"></div>
-                        <div style="font-size:0.6rem; color:var(--text-muted); margin-top:10px;">* Liquidez (Saldo) se suma automáticamente del Flujo Presente.</div>
-                    </div>
-                    <div class="ptr-box">
-                        <div class="ptr-box-title" style="color:var(--color-fuga);">🔴 Pasivos a Largo Plazo</div>
-                        <div class="ptr-input-group"><label>Deuda CAE</label><input type="text" id="ptr-cae" class="ptr-input" placeholder="0" oninput="formatearEntradaNumerica(this)"></div>
-                        <div class="ptr-input-group"><label>Crédito Hipotecario</label><input type="text" id="ptr-hipo" class="ptr-input" placeholder="0" oninput="formatearEntradaNumerica(this)"></div>
-                        <div class="ptr-input-group"><label>Otros Pasivos</label><input type="text" id="ptr-otros-pas" class="ptr-input" placeholder="0" oninput="formatearEntradaNumerica(this)"></div>
-                        <div style="font-size:0.6rem; color:var(--text-muted); margin-top:10px;">* Deuda TC se suma automáticamente de la Matriz TC.</div>
-                    </div>
-                </div>
             </div>
         </div>
     </div>
@@ -461,7 +402,6 @@ h2 { color: var(--text-main); margin: 0; font-size: 1.3rem; font-weight: 900; le
                         <button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-tc-nac')">EST</button>
                         <input type="text" id="pv-tc-nac" class="pv-input" style="color:#ff5252;" placeholder="0" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();">
                     </div>
-                    
                     <div style="display:flex; flex-direction:column; width:100%; background: var(--bg-card); border-radius: 12px; border: 1px solid rgba(255,82,82,0.3); margin-bottom: 10px; padding: 12px 14px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
                         <div style="display: flex; align-items: center; justify-content: space-between; gap:10px;">
                             <div style="flex:1;">
@@ -473,7 +413,6 @@ h2 { color: var(--text-main); margin: 0; font-size: 1.3rem; font-weight: 900; le
                         </div>
                         <div id="pv-tc-int-clp" style="text-align:right; font-size:0.85rem; color:#ff5252; font-family:monospace; font-weight:900; margin-top:10px; border-top: 1px dashed rgba(255,82,82,0.3); padding-top: 10px;">~ $0 CLP</div>
                     </div>
-
                     <div class="pv-input-group">
                         <label>Línea de Crédito</label>
                         <button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-linea')">EST</button>
@@ -507,8 +446,8 @@ h2 { color: var(--text-main); margin: 0; font-size: 1.3rem; font-weight: 900; le
         </div>
         
         <div class="pv-footer">
-            <button class="btn-pv-close" onclick="cerrarPreVuelo()" data-en="ABORT">ABORTAR</button>
-            <button class="btn-pv-launch" onclick="ejecutarArranque()" data-en="EXECUTE LAUNCH (INJECT MATRIX)">EFECTUAR ARRANQUE (INYECTAR MATRIZ)</button>
+            <button class="btn-pv-close" onclick="cerrarPreVuelo()">ABORTAR</button>
+            <button class="btn-pv-launch" onclick="ejecutarArranque()">EFECTUAR ARRANQUE (INYECTAR MATRIZ)</button>
         </div>
     </div>
 </div>
@@ -526,9 +465,6 @@ h2 { color: var(--text-main); margin: 0; font-size: 1.3rem; font-weight: 900; le
         } else if(viewId === 'tc') {
             document.getElementById('panelTC').classList.remove('hidden');
             document.getElementById('tabBtnTC').style.background = 'rgba(255, 82, 82, 0.1)'; document.getElementById('tabBtnTC').style.color = 'white'; document.getElementById('tabBtnTC').style.borderColor = 'var(--color-fuga)';
-        } else if(viewId === 'patrimonio') {
-            document.getElementById('panelPatrimonio').classList.remove('hidden');
-            document.getElementById('tabBtnPat').style.background = 'rgba(121, 192, 255, 0.1)'; document.getElementById('tabBtnPat').style.color = 'white'; document.getElementById('tabBtnPat').style.borderColor = '#79c0ff';
         }
     }
 </script>
