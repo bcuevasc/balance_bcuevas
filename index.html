@@ -220,22 +220,32 @@ h2 { color: var(--text-main); margin: 0; font-size: 1.3rem; font-weight: 900; le
             </div>
         </div>
 
-        <div class="kpi-row" style="flex: 1;">
-            <div class="kpi-card" style="border-top-color: var(--border-color);"><h4 data-en="Base Salary">Sueldo Base</h4><div class="value"><span>$</span><input type="text" id="inputSueldo" oninput="formatearEntradaNumerica(this); actualizarDashboard();" onchange="guardarSueldoEnNube()" style="background:transparent; border:none; color:var(--text-main); font-weight:900; width:100%; font-size:1.15rem; outline:none; font-family: monospace; padding:0; min-width: 0;"></div></div>
-            <div class="kpi-card" style="border-top-color: var(--border-color);"><h4 data-en="Extra Income">Ingresos Extra</h4><div class="value" style="color:var(--color-ingresos);">$<span id="txtTotalIngresos">0</span></div></div>
-            <div class="kpi-card" style="border-top-color: var(--color-infra);"><h4 style="color:var(--color-infra);" data-en="Real Estate">Infraestructura</h4><div class="value">$<span id="txtTotalInfra">0</span></div></div>
-            <div class="kpi-card" style="border-top-color: var(--color-flota);"><h4 style="color:var(--color-flota);" data-en="Fleet & Mobility">Flota / Auto</h4><div class="value">$<span id="txtTotalFlota">0</span></div></div>
-            <div class="kpi-card" style="border-top-color: var(--color-fuga);"><h4 data-en="Overhead (Fixed)">Carga Fija</h4><div class="value">$<span id="txtTotalFijos">0</span></div><div class="kpi-progress-container"><div id="barFijos" class="kpi-progress-fill" style="background:var(--color-fuga); box-shadow: 0 0 8px var(--color-fuga);"></div></div></div>
-            <div class="kpi-card" style="border-top-color: #d29922;"><h4 data-en="Variable Burn">Carga Variable</h4><div class="value">$<span id="txtTotalOtros">0</span></div><div class="kpi-progress-container"><div id="barOtros" class="kpi-progress-fill" style="background:#d29922; box-shadow: 0 0 8px #d29922;"></div></div></div>
-            <div class="kpi-card kpi-saldo" id="cardBalanceReal">
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <h4 data-en="Net Balance">Balance Real</h4>
-                    <div id="badgeDias" style="font-size: 0.6rem; background: rgba(0,0,0,0.4); padding: 2px 4px; border-radius: 4px; font-weight: 800; color: var(--color-saldo); border: 1px solid rgba(46,160,67,0.3);">-- DÍAS</div>
-                </div>
-                <div class="value" style="margin-top:2px;">$<span id="txtSaldo">0</span></div>
-            </div>
-            <div class="kpi-card kpi-proyectado" id="cardProyectado"><h4 data-en="Projected Close">Saldo + TC (Cierre)</h4><div class="value">$<span id="txtProyectado">0</span></div></div>
-        </div>
+       <div class="kpi-row" style="grid-template-columns: repeat(6, 1fr);">
+    <div class="kpi-card">
+        <h4 data-en="Operating Base">Sueldo Base</h4>
+        <div class="value"><span>$</span><input type="text" id="inputSueldo" oninput="formatearEntradaNumerica(this); actualizarDashboard();" onchange="guardarSueldoEnNube()" style="background:transparent; border:none; color:var(--text-main); font-weight:900; width:100%; font-size:1.1rem; outline:none; font-family:monospace;"></div>
+    </div>
+    <div class="kpi-card" id="cardArrastre" style="border-top-color: var(--accent-red); display:none;">
+        <h4 style="color:var(--accent-red);">Arrastre Línea (M-1)</h4>
+        <div class="value" style="color:var(--accent-red);">$<span id="txtArrastreLinea">0</span></div>
+    </div>
+    <div class="kpi-card" style="border-top-color: var(--accent-red);">
+        <h4>Carga Fija</h4>
+        <div class="value">$<span id="txtTotalFijos">0</span></div>
+    </div>
+    <div class="kpi-card" style="border-top-color: var(--accent-orange);">
+        <h4>Carga Variable</h4>
+        <div class="value">$<span id="txtTotalOtros">0</span></div>
+    </div>
+    <div class="kpi-card kpi-saldo" style="border-top-width: 4px;">
+        <h4 data-en="Net Balance">Balance Real</h4>
+        <div class="value">$<span id="txtSaldo">0</span></div>
+    </div>
+    <div class="kpi-card kpi-proyectado">
+        <h4 data-en="Projected Close">Saldo - TC</h4>
+        <div class="value">$<span id="txtProyectado">0</span></div>
+    </div>
+</div>
     </div>
 
     <div class="command-ribbon">
