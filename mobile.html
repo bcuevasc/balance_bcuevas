@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Bunker Móvil HUD V12.4 (Ergonomía Pro)</title>
+    <title>Bunker Móvil HUD V13.0 (Global Edition)</title>
     <link rel="apple-touch-icon" href="bunker-icon.png">
     <meta name="theme-color" content="#030508">
 
@@ -25,7 +25,6 @@
         .user-tag { color: var(--accent-green); background: rgba(46, 160, 67, 0.1); border: 1px solid rgba(46, 160, 67, 0.3); font-weight: 800; padding: 4px 10px; border-radius: 6px; font-size: 0.7rem; letter-spacing: 1px; box-shadow: 0 0 10px rgba(46, 160, 67, 0.2); }
 
         .master-hud { text-align: center; padding: 10px 20px 25px 20px; width: 100%; overflow: hidden;}
-        /* 🟢 MEJORA 3: Tipografía Elástica (Clamp) */
         .hud-value { font-size: clamp(2.5rem, 12vw, 4.5rem); font-weight: 900; letter-spacing: -2px; font-family: monospace; text-shadow: 0 0 30px rgba(31, 111, 235, 0.3); transition: transform 0.3s; word-break: break-all; line-height: 1.1;}
         .hud-value.danger { color: var(--accent-red); text-shadow: 0 0 30px rgba(255, 82, 82, 0.3); }
         
@@ -37,7 +36,9 @@
         .slave-pill.purple::before { background: var(--color-infra); box-shadow: 0 0 10px var(--color-infra); }
         .slave-pill.cyan::before { background: var(--color-flota); box-shadow: 0 0 10px var(--color-flota); }
 
-        .lista-contenedor { padding: 0 10px; display: flex; flex-direction: column; gap: 6px; margin-top: 5px; }
+        /* 🟢 PARCHE V13.0: SCROLL INFINITO (Z-INDEX FIX) 🟢 */
+        .lista-contenedor { padding: 0 10px; display: flex; flex-direction: column; gap: 6px; margin-top: 5px; padding-bottom: calc(120px + env(safe-area-inset-bottom)); }
+        
         .mobile-card { background: var(--bg-card) !important; border: 1px solid var(--border-subtle) !important; border-radius: 14px !important; padding: 14px 12px !important; display: flex; align-items: center; transition: transform 0.1s ease; box-shadow: 0 4px 10px rgba(0,0,0,0.2) !important; }
         .mobile-card:active { transform: scale(0.97); }
         .date-header { padding-left: 5px; font-size: 0.65rem; font-weight: 900; color: #79c0ff; text-transform: uppercase; margin: 15px 0 5px 5px; letter-spacing: 1px; display: flex; align-items: center; gap: 5px; }
@@ -75,11 +76,10 @@
         .impact-pill { background: rgba(255, 82, 82, 0.08); border: 1px solid rgba(255,82,82,0.3); border-radius: 12px; padding: 15px; display: flex; justify-content: space-between; align-items: center; margin: 0 15px 15px 15px; box-shadow: 0 0 25px rgba(255,82,82,0.15); border-left: 5px solid var(--accent-red); }
         .mini-kpi-fugas { display: flex; align-items: center; justify-content: space-between; padding: 12px 20px; background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 12px; margin: 0 15px 10px 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.2);}
         
-        /* 🟢 MEJORA 5: HISTORIAN LOG REDISEÑADO 🟢 */
         #modal-historian { position: fixed; inset: 0; background: rgba(3, 5, 8, 0.95); z-index: 25000; display: none; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(10px); padding: 20px; }
-        .hist-box { background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 12px; width: 100%; box-shadow: 0 0 40px rgba(255, 82, 82, 0.2); overflow: hidden; border-top: 4px solid #ff5252;}
-        .hist-header { padding: 15px; background: rgba(0,0,0,0.3); border-bottom: 1px solid var(--border-subtle); display: flex; justify-content: space-between; align-items: center;}
-        .hist-body { padding: 15px; max-height: 60vh; overflow-y: auto;}
+        .hist-box { background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 12px; width: 100%; box-shadow: 0 0 40px rgba(255, 82, 82, 0.2); overflow: hidden; border-top: 4px solid #ff5252; display: flex; flex-direction: column; max-height: 85vh;}
+        .hist-header { padding: 15px; background: rgba(0,0,0,0.3); border-bottom: 1px solid var(--border-subtle); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;}
+        .hist-body { padding: 15px; overflow-y: auto; flex-grow: 1;}
         
         .log-item { display: flex; gap: 15px; padding: 15px; border-radius: 12px; margin-bottom: 12px; background: var(--bg-elevated); border: 1px solid transparent; align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.2);}
         .log-icon { font-size: 1.8rem; background: rgba(0,0,0,0.2); width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; border-radius: 50%; flex-shrink: 0;}
@@ -92,7 +92,6 @@
         .log-item.warning { border-color: rgba(255,152,0,0.4); background: linear-gradient(90deg, rgba(255,152,0,0.1), transparent); }
         .log-item.warning strong, .log-item.warning span { color: #ff9800; }
 
-        /* 🟢 MEJORA 4: TAP TARGETS MÁS GRANDES EN PRE-VUELO 🟢 */
         #modal-dia-cero { position: fixed; inset: 0; background: rgba(3, 5, 8, 0.98); z-index: 20000; display: none; flex-direction: column; overflow-y: auto; padding: 20px 15px 100px 15px; }
         .pv-title { font-size: 1.3rem; font-weight: 900; color: #ff9800; letter-spacing: 2px; margin: 20px 0 5px 0; text-transform: uppercase; text-align: center; }
         .pv-subtitle { font-size: 0.75rem; color: var(--text-muted); font-family: monospace; text-align: center; margin-bottom: 20px;}
@@ -106,7 +105,6 @@
         .pv-certeza { font-size: 0.7rem; font-weight: bold; color: var(--text-muted); text-align: center; margin-top: 10px; text-transform: uppercase; letter-spacing: 1px;}
         .pv-section-title { font-size: 0.75rem; font-weight: 900; text-transform: uppercase; margin: 15px 0 10px 0; border-bottom: 1px solid var(--border-subtle); padding-bottom: 5px; display:flex; align-items:center; gap:5px;}
         
-        /* Modificación Ergonomía */
         .pv-input-group { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; background: var(--bg-card); padding: 12px 14px; border-radius: 12px; border: 1px solid var(--border-subtle); gap:10px;}
         .pv-input-group label { font-size: 0.8rem; font-weight: 800; color: var(--text-main); flex:1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
         .pv-input { background: var(--bg-elevated); border: 1px solid var(--border-subtle); color: white; padding: 10px; border-radius: 8px; font-family: monospace; font-size: 1.1rem; width: 110px; text-align: right; outline: none; font-weight: bold; transition: all 0.3s;}
@@ -125,13 +123,13 @@
 
 <div id="login-screen">
     <h2 style="color:var(--color-proyectado); margin: 20px 0; font-weight:900; font-size:2.5rem; letter-spacing: 2px;">BÚNKER SCADA</h2>
-    <p style="color:var(--text-dim); font-size:0.9rem; margin-bottom:40px; font-family: monospace; letter-spacing: 1px;">[ HUD MÓVIL V12.4 ERGO ]</p>
+    <p style="color:var(--text-dim); font-size:0.9rem; margin-bottom:40px; font-family: monospace; letter-spacing: 1px;">[ HUD MÓVIL V13.0 GLOBAL ]</p>
     <button onclick="loginWithGoogle()" style="padding:18px 40px; border-radius:12px; font-weight:900; color:black; background:white; border:none; font-size:1.1rem; box-shadow: 0 0 30px rgba(255,255,255,0.3);">INICIAR ENLACE</button>
 </div>
 
 <div class="app-container" id="reportZone">
     <div class="top-bar">
-        <div class="brand">BÚNKER <span class="brand-badge">V12.4</span></div>
+        <div class="brand">BÚNKER <span class="brand-badge">V13.0</span></div>
         <div style="display:flex; gap:8px;">
             <button onclick="toggleLanguage()" style="background:rgba(121,192,255,0.1); border:1px solid rgba(121,192,255,0.4); color:#79c0ff; border-radius:6px; font-weight:bold; font-size:0.7rem; padding:4px 8px;">ENG</button>
             <div id="user-display" class="user-tag">OPERATOR</div>
@@ -249,7 +247,7 @@
         <input type="hidden" id="editId">
         <div class="injection-hud">
             <div style="font-size:0.75rem; color:var(--text-dim); font-weight:900; text-transform:uppercase; letter-spacing: 3px;" data-en="Injection Protocol">Protocolo de Inyección</div>
-            <input type="text" id="inputMonto" class="monto-gigante" inputmode="numeric" placeholder="$0" oninput="formatearEntradaNumerica(this)">
+            <input type="text" id="inputMonto" class="monto-gigante" inputmode="numeric" pattern="[0-9]*" placeholder="$0" oninput="formatearEntradaNumerica(this)">
         </div>
         
         <div class="terminal-form">
@@ -297,7 +295,7 @@
         <h3 style="font-weight:900; text-align:center; letter-spacing:2px; color:var(--text-dim);" data-en="[ SYSTEM CONFIG ]">[ SISTEMA ]</h3>
         <div style="background:var(--bg-card); border-radius: 16px; padding:20px; border:1px solid var(--border-subtle); margin-bottom:15px; box-shadow: 0 8px 20px rgba(0,0,0,0.3);">
             <label style="font-size:0.75rem; font-weight:800; color:var(--text-dim); margin-bottom:10px; display:block; text-transform:uppercase;" data-en="Base Operative Salary">Sueldo Base Operativo</label>
-            <input type="text" id="inputSueldo" style="width:100%; padding:5px 0; background:transparent; border:none; border-bottom:2px solid var(--accent-green); color:var(--text-main); font-size:2.2rem; font-weight:900; outline:none; font-family:monospace;" oninput="formatearEntradaNumerica(this); actualizarDashboard();" onchange="guardarSueldoEnNube()">
+            <input type="text" id="inputSueldo" style="width:100%; padding:5px 0; background:transparent; border:none; border-bottom:2px solid var(--accent-green); color:var(--text-main); font-size:2.2rem; font-weight:900; outline:none; font-family:monospace;" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); actualizarDashboard();" onchange="guardarSueldoEnNube()">
         </div>
         <div style="margin-top:15px; background:var(--bg-card); border-radius: 16px; padding:20px; border:1px solid var(--border-subtle); margin-bottom:20px; box-shadow: 0 8px 20px rgba(0,0,0,0.3);">
             <label style="font-size:0.75rem; font-weight:800; color:var(--text-dim); margin-bottom:10px; display:block; text-transform:uppercase;" data-en="Time Navigator">Navegador de Tiempo</label>
@@ -357,34 +355,43 @@
     </div>
 
     <div style="font-size:0.75rem; font-weight:900; color:#ff5252; text-transform:uppercase; margin:20px 0 10px 0; border-bottom:1px solid var(--border-subtle); padding-bottom:5px; display:flex; align-items:center; gap:5px;"><span>💳</span> Deducciones Críticas</div>
-    <div class="pv-input-group" style="background:rgba(46,160,67,0.1); border-color:var(--color-saldo);"><label style="color:var(--color-saldo);">Sueldo (Ingreso)</label><input type="text" id="pv-sueldo" style="background:transparent; border:none; color:var(--color-saldo); padding:6px; font-family:monospace; font-size:1.1rem; width:110px; text-align:right; font-weight:bold; outline:none;" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
-    <div class="pv-input-group"><label>TC Nacional</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-tc-nac')">EST</button><input type="text" id="pv-tc-nac" class="pv-input" style="color:#ff5252;" placeholder="0" data-estado="est" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
-    <div class="pv-input-group"><label>TC Internacional</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-tc-int')">EST</button><input type="text" id="pv-tc-int" class="pv-input" style="color:#ff5252;" placeholder="0" data-estado="est" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
-    <div class="pv-input-group"><label>Línea de Crédito</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-linea')">EST</button><input type="text" id="pv-linea" class="pv-input" style="color:#ff5252;" placeholder="0" data-estado="est" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
+    <div class="pv-input-group" style="background:rgba(46,160,67,0.1); border-color:var(--color-saldo);"><label style="color:var(--color-saldo);">Sueldo (Ingreso)</label><input type="text" id="pv-sueldo" style="background:transparent; border:none; color:var(--color-saldo); padding:6px; font-family:monospace; font-size:1.1rem; width:110px; text-align:right; font-weight:bold; outline:none;" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
+    <div class="pv-input-group"><label>TC Nacional</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-tc-nac')">EST</button><input type="text" id="pv-tc-nac" class="pv-input" style="color:#ff5252;" placeholder="0" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
+    
+    <div style="display:flex; flex-direction:column; width:100%;">
+        <div class="pv-input-group" style="margin-bottom: 2px; border-color: rgba(255,82,82,0.3);">
+            <label>TC Inter. <span id="lbl-dolar-actual" style="display:block; font-size:0.55rem; color:var(--text-muted); font-family:monospace; margin-top:2px;">Consultando USD...</span></label>
+            <button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-tc-int')">EST</button>
+            <input type="text" id="pv-tc-int" class="pv-input" style="color:#ff5252; width:75px;" placeholder="US$ 0" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();">
+        </div>
+        <div id="pv-tc-int-clp" style="text-align:right; font-size:0.7rem; color:#ff5252; font-family:monospace; font-weight:bold; margin-bottom:8px; padding-right:5px;">~ $0 CLP</div>
+    </div>
+
+    <div class="pv-input-group"><label>Línea de Crédito</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-linea')">EST</button><input type="text" id="pv-linea" class="pv-input" style="color:#ff5252;" placeholder="0" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
 
     <div style="font-size:0.75rem; font-weight:900; color:var(--color-infra); text-transform:uppercase; margin:25px 0 10px 0; border-bottom:1px solid var(--border-subtle); padding-bottom:5px; display:flex; align-items:center; gap:5px;"><span>🏢</span> Carga Estructural</div>
-    <div class="pv-input-group"><label>Arriendo</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-arriendo')">EST</button><input type="text" id="pv-arriendo" class="pv-input" value="330.000" data-estado="est" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
-    <div class="pv-input-group"><label>UDEC 2024</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-udec')">EST</button><input type="text" id="pv-udec" class="pv-input" value="48.000" data-estado="est" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
-    <div class="pv-input-group"><label>CAE</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-cae')">EST</button><input type="text" id="pv-cae" class="pv-input" value="38.742" data-estado="est" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
+    <div class="pv-input-group"><label>Arriendo</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-arriendo')">EST</button><input type="text" id="pv-arriendo" class="pv-input" value="330.000" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
+    <div class="pv-input-group"><label>UDEC 2024</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-udec')">EST</button><input type="text" id="pv-udec" class="pv-input" value="48.000" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
+    <div class="pv-input-group"><label>CAE</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-cae')">EST</button><input type="text" id="pv-cae" class="pv-input" value="38.742" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
 
     <div style="font-size:0.75rem; font-weight:900; color:#d29922; text-transform:uppercase; margin:25px 0 10px 0; border-bottom:1px solid var(--border-subtle); padding-bottom:5px; display:flex; align-items:center; gap:5px;"><span>⚡</span> Serv. Básicos Hogar</div>
-    <div class="pv-input-group"><label>Gastos Comunes</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-ggcc')">EST</button><input type="text" id="pv-ggcc" class="pv-input" value="63.220" data-estado="est" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
-    <div class="pv-input-group"><label>Luz</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-luz')">EST</button><input type="text" id="pv-luz" class="pv-input" value="20.000" data-estado="est" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
-    <div class="pv-input-group"><label>Agua</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-agua')">EST</button><input type="text" id="pv-agua" class="pv-input" value="8.000" data-estado="est" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
-    <div class="pv-input-group"><label>Gas</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-gas')">EST</button><input type="text" id="pv-gas" class="pv-input" value="0" data-estado="est" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
+    <div class="pv-input-group"><label>Gastos Comunes</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-ggcc')">EST</button><input type="text" id="pv-ggcc" class="pv-input" value="63.220" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
+    <div class="pv-input-group"><label>Luz</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-luz')">EST</button><input type="text" id="pv-luz" class="pv-input" value="20.000" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
+    <div class="pv-input-group"><label>Agua</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-agua')">EST</button><input type="text" id="pv-agua" class="pv-input" value="8.000" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
+    <div class="pv-input-group"><label>Gas</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-gas')">EST</button><input type="text" id="pv-gas" class="pv-input" value="0" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
 
     <div style="font-size:0.75rem; font-weight:900; color:#79c0ff; text-transform:uppercase; margin:25px 0 10px 0; border-bottom:1px solid var(--border-subtle); padding-bottom:5px; display:flex; align-items:center; gap:5px;"><span>📱</span> Op. Complementaria</div>
-    <div class="pv-input-group"><label>Celu Mio</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-celu')">EST</button><input type="text" id="pv-celu" class="pv-input" value="13.990" data-estado="est" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
-    <div class="pv-input-group"><label>Movistar Madre</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-madre')">EST</button><input type="text" id="pv-madre" class="pv-input" value="19.290" data-estado="est" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
-    <div class="pv-input-group"><label>Pack Subs</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-subs')">EST</button><input type="text" id="pv-subs" class="pv-input" value="20.540" data-estado="est" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
-    <div class="pv-input-group"><label>Seguro Auto</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-seguro')">EST</button><input type="text" id="pv-seguro" class="pv-input" value="38.300" data-estado="est" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
+    <div class="pv-input-group"><label>Celu Mio</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-celu')">EST</button><input type="text" id="pv-celu" class="pv-input" value="13.990" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
+    <div class="pv-input-group"><label>Movistar Madre</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-madre')">EST</button><input type="text" id="pv-madre" class="pv-input" value="19.290" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
+    <div class="pv-input-group"><label>Pack Subs</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-subs')">EST</button><input type="text" id="pv-subs" class="pv-input" value="20.540" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
+    <div class="pv-input-group"><label>Seguro Auto</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-seguro')">EST</button><input type="text" id="pv-seguro" class="pv-input" value="38.300" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
 
     <button onclick="ejecutarArranque()" class="btn-pv-launch">EFECTUAR ARRANQUE</button>
     <button onclick="cerrarPreVuelo()" class="btn-pv-close">ABORTAR</button>
 </div>
 
 <script>
-    // 🟢 RENDERIZADOR MÓVIL V12.4 (CON CABLES) 🟢
+    // 🟢 RENDERIZADOR MÓVIL V13.0 (CON CABLES) 🟢
     document.addEventListener("DOMContentLoaded", () => {
         if(typeof renderizarListas === 'function') {
             window.renderizarListas = function(sueldoBase, filtroBuscador) {
