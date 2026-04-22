@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Bunker Móvil HUD V13.0 (Global Edition)</title>
+    <title>Bunker Móvil HUD V13.1 (Global Edition)</title>
     <link rel="apple-touch-icon" href="bunker-icon.png">
     <meta name="theme-color" content="#030508">
 
@@ -36,7 +36,6 @@
         .slave-pill.purple::before { background: var(--color-infra); box-shadow: 0 0 10px var(--color-infra); }
         .slave-pill.cyan::before { background: var(--color-flota); box-shadow: 0 0 10px var(--color-flota); }
 
-        /* 🟢 PARCHE V13.0: SCROLL INFINITO (Z-INDEX FIX) 🟢 */
         .lista-contenedor { padding: 0 10px; display: flex; flex-direction: column; gap: 6px; margin-top: 5px; padding-bottom: calc(120px + env(safe-area-inset-bottom)); }
         
         .mobile-card { background: var(--bg-card) !important; border: 1px solid var(--border-subtle) !important; border-radius: 14px !important; padding: 14px 12px !important; display: flex; align-items: center; transition: transform 0.1s ease; box-shadow: 0 4px 10px rgba(0,0,0,0.2) !important; }
@@ -107,6 +106,7 @@
         
         .pv-input-group { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; background: var(--bg-card); padding: 12px 14px; border-radius: 12px; border: 1px solid var(--border-subtle); gap:10px;}
         .pv-input-group label { font-size: 0.8rem; font-weight: 800; color: var(--text-main); flex:1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
+        /* 🟢 PARCHE CAJA CORTADA: width a 135px 🟢 */
         .pv-input { background: var(--bg-elevated); border: 1px solid var(--border-subtle); color: white; padding: 10px; border-radius: 8px; font-family: monospace; font-size: 1.1rem; width: 135px; text-align: right; outline: none; font-weight: bold; transition: all 0.3s;}
         .btn-estado { width: 48px; height: 48px; border-radius: 10px; border: 1px solid var(--border-color); background: var(--bg-panel); color: var(--text-muted); font-size: 0.85rem; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; font-weight: 900; flex-shrink: 0;}
         
@@ -123,13 +123,13 @@
 
 <div id="login-screen">
     <h2 style="color:var(--color-proyectado); margin: 20px 0; font-weight:900; font-size:2.5rem; letter-spacing: 2px;">BÚNKER SCADA</h2>
-    <p style="color:var(--text-dim); font-size:0.9rem; margin-bottom:40px; font-family: monospace; letter-spacing: 1px;">[ HUD MÓVIL V13.0 GLOBAL ]</p>
+    <p style="color:var(--text-dim); font-size:0.9rem; margin-bottom:40px; font-family: monospace; letter-spacing: 1px;">[ HUD MÓVIL V13.1 GLOBAL ]</p>
     <button onclick="loginWithGoogle()" style="padding:18px 40px; border-radius:12px; font-weight:900; color:black; background:white; border:none; font-size:1.1rem; box-shadow: 0 0 30px rgba(255,255,255,0.3);">INICIAR ENLACE</button>
 </div>
 
 <div class="app-container" id="reportZone">
     <div class="top-bar">
-        <div class="brand">BÚNKER <span class="brand-badge">V13.0</span></div>
+        <div class="brand">BÚNKER <span class="brand-badge">V13.1</span></div>
         <div style="display:flex; gap:8px;">
             <button onclick="toggleLanguage()" style="background:rgba(121,192,255,0.1); border:1px solid rgba(121,192,255,0.4); color:#79c0ff; border-radius:6px; font-weight:bold; font-size:0.7rem; padding:4px 8px;">ENG</button>
             <div id="user-display" class="user-tag">OPERATOR</div>
@@ -359,16 +359,16 @@
     <div class="pv-input-group"><label>TC Nacional</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-tc-nac')">EST</button><input type="text" id="pv-tc-nac" class="pv-input" style="color:#ff5252;" placeholder="0" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
     
     <div style="display:flex; flex-direction:column; width:100%; background: var(--bg-card); border-radius: 12px; border: 1px solid rgba(255,82,82,0.3); margin-bottom: 10px; padding: 12px 14px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
-                        <div style="display: flex; align-items: center; justify-content: space-between; gap:10px;">
-                            <div style="flex:1;">
-                                <label style="font-size: 0.8rem; font-weight: 900; color: var(--text-main); text-transform: uppercase;">TC Internacional</label>
-                                <span id="lbl-dolar-actual" style="display:block; font-size:0.65rem; color:var(--text-muted); font-family:monospace; margin-top:4px;">Consultando USD...</span>
-                            </div>
-                            <button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-tc-int')">EST</button>
-                            <input type="text" id="pv-tc-int" class="pv-input" style="color:#ff5252; width:100px;" placeholder="US$ 0" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();">
-                        </div>
-                        <div id="pv-tc-int-clp" style="text-align:right; font-size:0.85rem; color:#ff5252; font-family:monospace; font-weight:900; margin-top:10px; border-top: 1px dashed rgba(255,82,82,0.3); padding-top: 10px;">~ $0 CLP</div>
-                    </div>
+        <div style="display: flex; align-items: center; justify-content: space-between; gap:10px;">
+            <div style="flex:1;">
+                <label style="font-size: 0.8rem; font-weight: 900; color: var(--text-main); text-transform: uppercase;">TC Internacional</label>
+                <span id="lbl-dolar-actual" style="display:block; font-size:0.65rem; color:var(--text-muted); font-family:monospace; margin-top:4px;">Consultando USD...</span>
+            </div>
+            <button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-tc-int')">EST</button>
+            <input type="text" id="pv-tc-int" class="pv-input" style="color:#ff5252; width:100px;" placeholder="US$ 0" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();">
+        </div>
+        <div id="pv-tc-int-clp" style="text-align:right; font-size:0.85rem; color:#ff5252; font-family:monospace; font-weight:900; margin-top:10px; border-top: 1px dashed rgba(255,82,82,0.3); padding-top: 10px;">~ $0 CLP</div>
+    </div>
 
     <div class="pv-input-group"><label>Línea de Crédito</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-linea')">EST</button><input type="text" id="pv-linea" class="pv-input" style="color:#ff5252;" placeholder="0" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
 
@@ -386,7 +386,7 @@
     <div style="font-size:0.75rem; font-weight:900; color:#79c0ff; text-transform:uppercase; margin:25px 0 10px 0; border-bottom:1px solid var(--border-subtle); padding-bottom:5px; display:flex; align-items:center; gap:5px;"><span>📱</span> Op. Complementaria</div>
     <div class="pv-input-group"><label>Celu Mio</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-celu')">EST</button><input type="text" id="pv-celu" class="pv-input" value="13.990" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
     <div class="pv-input-group"><label>Movistar Madre</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-madre')">EST</button><input type="text" id="pv-madre" class="pv-input" value="19.290" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
-    <div class="pv-input-group"><label>Pack Subs</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-subs')">EST</button><input type="text" id="pv-subs" class="pv-input" value="20.540" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
+    <div class="pv-input-group" title="YT Premium, Disney, Icloud, Google, Spotify, HBO"><label>Pack Subs</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-subs')">EST</button><input type="text" id="pv-subs" class="pv-input" value="20.540" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
     <div class="pv-input-group"><label>Seguro Auto</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-seguro')">EST</button><input type="text" id="pv-seguro" class="pv-input" value="38.300" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
 
     <button onclick="ejecutarArranque()" class="btn-pv-launch">EFECTUAR ARRANQUE</button>
@@ -394,7 +394,7 @@
 </div>
 
 <script>
-    // 🟢 RENDERIZADOR MÓVIL V13.0 (CON CABLES) 🟢
+    // 🟢 RENDERIZADOR MÓVIL V13.1 (CON CABLES) 🟢
     document.addEventListener("DOMContentLoaded", () => {
         if(typeof renderizarListas === 'function') {
             window.renderizarListas = function(sueldoBase, filtroBuscador) {
