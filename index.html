@@ -132,7 +132,7 @@ h2 { color: var(--text-main); margin: 0; font-size: 1.3rem; font-weight: 900; le
 .pv-section-title { font-size: 0.7rem; font-weight: 900; text-transform: uppercase; margin-bottom: 10px; border-bottom: 1px solid var(--border-color); padding-bottom: 5px; color: var(--text-main); display:flex; align-items:center; gap:5px;}
 .pv-input-group { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; gap: 5px;}
 .pv-input-group label { font-size: 0.65rem; font-weight: 700; color: var(--text-muted); flex:1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
-.pv-input { background: var(--input-bg); border: 1px solid var(--border-color); color: var(--text-main); padding: 4px 6px; border-radius: 4px; font-family: monospace; font-size: 0.85rem; width: 75px; text-align: right; outline: none; font-weight: bold; transition: all 0.3s;}
+.pv-input { background: var(--bg-elevated); border: 1px solid var(--border-subtle); color: white; padding: 10px; border-radius: 8px; font-family: monospace; font-size: 1.1rem; width: 135px; text-align: right; outline: none; font-weight: bold; transition: all 0.3s;}
 .pv-input:focus { border-color: #ff9800; }
 .pv-input.pagado { text-decoration: line-through; color: var(--text-muted); background: transparent; border-color: transparent;}
 
@@ -374,13 +374,16 @@ h2 { color: var(--text-main); margin: 0; font-size: 1.3rem; font-weight: 900; le
                         <input type="text" id="pv-tc-nac" class="pv-input" style="color:#ff5252;" placeholder="0" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();">
                     </div>
                     
-                    <div style="display:flex; flex-direction:column; width:100%;">
-                        <div class="pv-input-group" style="margin-bottom: 2px; border-color: rgba(255,82,82,0.3);">
-                            <label>TC Inter. <span id="lbl-dolar-actual" style="display:block; font-size:0.55rem; color:var(--text-muted); font-family:monospace; margin-top:2px;">Consultando USD...</span></label>
+                    <div style="display:flex; flex-direction:column; width:100%; background: var(--bg-card); border-radius: 12px; border: 1px solid rgba(255,82,82,0.3); margin-bottom: 10px; padding: 12px 14px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+                        <div style="display: flex; align-items: center; justify-content: space-between; gap:10px;">
+                            <div style="flex:1;">
+                                <label style="font-size: 0.8rem; font-weight: 900; color: var(--text-main); text-transform: uppercase;">TC Internacional</label>
+                                <span id="lbl-dolar-actual" style="display:block; font-size:0.65rem; color:var(--text-muted); font-family:monospace; margin-top:4px;">Consultando USD...</span>
+                            </div>
                             <button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-tc-int')">EST</button>
-                            <input type="text" id="pv-tc-int" class="pv-input" style="color:#ff5252; width:75px;" placeholder="US$ 0" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();">
+                            <input type="text" id="pv-tc-int" class="pv-input" style="color:#ff5252; width:100px;" placeholder="US$ 0" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();">
                         </div>
-                        <div id="pv-tc-int-clp" style="text-align:right; font-size:0.7rem; color:#ff5252; font-family:monospace; font-weight:bold; margin-bottom:8px; padding-right:5px;">~ $0 CLP</div>
+                        <div id="pv-tc-int-clp" style="text-align:right; font-size:0.85rem; color:#ff5252; font-family:monospace; font-weight:900; margin-top:10px; border-top: 1px dashed rgba(255,82,82,0.3); padding-top: 10px;">~ $0 CLP</div>
                     </div>
 
                     <div class="pv-input-group">
