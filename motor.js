@@ -959,6 +959,7 @@ function cerrarPreVuelo() {
 }
 
 // 🟢 V13.0: MOTOR HÁPTICO (Vibración) 🟢
+// 🟢 V13.0: MOTOR HÁPTICO (Vibración) 🟢
 window.toggleEstadoPV = function(btn, inputId) {
     const input = document.getElementById(inputId);
     if(!input) return;
