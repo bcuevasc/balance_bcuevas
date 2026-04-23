@@ -3,90 +3,99 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Bunker Digital SCADA v13.2 (Modular)</title>
-    
+    <title>Bunker Digital SCADA v16.5 PRO</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
-    
     <style>
-:root { --bg-body: #030508; --bg-panel: #0d1117; --bg-subpanel: #161b22; --text-main: #e6edf3; --text-muted: #7d8590; --border-color: #21262d; --input-bg: #010409; --item-hover: #1c2128; --color-guardar: #1f6feb; --color-ingresos: #238636; --color-gastos: #da3633;  --color-saldo: #2ea043; --color-edit: #d29922; --color-fuga: #ff5252; --color-proyectado: #79c0ff; --color-infra: #a371f7; --color-flota: #00bcd4; }
-* { box-sizing: border-box; transition: background-color 0.3s, border-color 0.3s; font-family: 'Segoe UI', sans-serif; }
-body { background-color: var(--bg-body); background-image: radial-gradient(rgba(255,255,255,0.015) 1px, transparent 1px); background-size: 25px 25px; margin: 0; padding: 0; color: var(--text-main); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
-.app-container { display: none; width: 100%; height: 100vh; padding: 10px; flex-direction: column; gap: 10px; margin: 0 auto; max-width: 2560px; overflow: hidden;}
-.app-container.active-app { display: flex; }
-#login-screen { position: fixed; inset: 0; background: #030508; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10000; text-align: center; }
-.login-box { padding: 40px; background: #0d1117; border: 1px solid var(--border-color); border-radius: 12px; box-shadow: 0 0 80px rgba(31, 111, 235, 0.15); }
-.btn-google { background: #fff; color: #000; border: none; padding: 12px 24px; border-radius: 6px; font-weight: 900; cursor: pointer; margin-top: 20px; font-size: 1rem; }
-.header-titles { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 5px; flex-shrink: 0;}
-h2 { color: var(--text-main); margin: 0; font-size: 1.3rem; font-weight: 900; letter-spacing: 2px; }
-.scada-badge { background: linear-gradient(90deg, #1f6feb, #8c9eff); color: #fff; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; margin-left: 5px; font-family: monospace;}
-.system-btns { display: flex; gap: 8px; align-items: center; }
-.btn-sys { background: var(--bg-subpanel); color: var(--text-main); border: 1px solid var(--border-color); padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: 800; font-size: 0.7rem; text-transform: uppercase;}
-.time-navigator-panel { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 8px; padding: 6px 15px; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid var(--color-ingresos); flex-shrink: 0;}
-.nav-select { background: var(--input-bg); color: var(--text-main); border: 1px solid var(--border-color); padding: 4px 12px; border-radius: 4px; font-weight: 800; text-transform: uppercase; font-size: 0.8rem; outline: none; cursor: pointer;}
-.nav-badge { font-family: monospace; background: rgba(31, 111, 235, 0.1); color: #79c0ff; border: 1px solid rgba(31, 111, 235, 0.3); padding: 4px 10px; border-radius: 4px; font-size: 0.8rem; font-weight: 900; margin-left: 10px; }
+        :root { --bg-body: #030508; --bg-panel: #0d1117; --bg-subpanel: #161b22; --text-main: #e6edf3; --text-muted: #7d8590; --border-color: #21262d; --input-bg: #010409; --item-hover: #1c2128; --color-guardar: #1f6feb; --color-ingresos: #238636; --color-gastos: #da3633;  --color-saldo: #2ea043; --color-edit: #d29922; --color-fuga: #ff5252; --color-proyectado: #79c0ff; --color-infra: #a371f7; --color-flota: #00bcd4; }
+        * { box-sizing: border-box; transition: background-color 0.2s; font-family: 'Segoe UI', system-ui, sans-serif; }
+        body { background-color: var(--bg-body); background-image: radial-gradient(rgba(255,255,255,0.015) 1px, transparent 1px); background-size: 25px 25px; margin: 0; padding: 0; color: var(--text-main); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        .app-container { display: none; width: 100%; height: 100vh; padding: 10px; flex-direction: column; gap: 10px; margin: 0 auto; max-width: 2560px; overflow: hidden;}
+        .app-container.active-app { display: flex; }
+        
+        #login-screen { position: fixed; inset: 0; background: #030508; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10000; text-align: center; }
+        .login-box { padding: 40px; background: #0d1117; border: 1px solid var(--border-color); border-radius: 12px; box-shadow: 0 0 80px rgba(31, 111, 235, 0.15); }
+        .btn-google { background: #fff; color: #000; border: none; padding: 12px 24px; border-radius: 6px; font-weight: 900; cursor: pointer; margin-top: 20px; font-size: 1rem; }
+        
+        .header-titles { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 5px; flex-shrink: 0;}
+        h2 { color: var(--text-main); margin: 0; font-size: 1.3rem; font-weight: 900; letter-spacing: 2px; }
+        .scada-badge { background: linear-gradient(90deg, #1f6feb, #8c9eff); color: #fff; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; margin-left: 5px; font-family: monospace;}
+        .cronos { font-family: monospace; font-size: 0.9rem; font-weight: 900; color: var(--color-saldo); background: var(--input-bg); padding: 4px 12px; border-radius: 6px; border: 1px solid rgba(46, 160, 67, 0.3); }
+        .system-btns { display: flex; gap: 8px; align-items: center; }
+        .btn-sys { background: var(--bg-subpanel); color: var(--text-main); border: 1px solid var(--border-color); padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: 800; font-size: 0.7rem; text-transform: uppercase;}
+        
+        .time-navigator-panel { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 8px; padding: 6px 15px; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid var(--color-ingresos); flex-shrink: 0;}
+        .nav-select { background: var(--input-bg); color: var(--text-main); border: 1px solid var(--border-color); padding: 4px 12px; border-radius: 4px; font-weight: 800; text-transform: uppercase; font-size: 0.8rem; outline: none; cursor: pointer;}
+        .nav-badge { font-family: monospace; background: rgba(31, 111, 235, 0.1); color: #79c0ff; border: 1px solid rgba(31, 111, 235, 0.3); padding: 4px 10px; border-radius: 4px; font-size: 0.8rem; font-weight: 900; letter-spacing: 0.5px; }
 
-/* 🟢 MÓDULO 1: GRID SIMPLIFICADO A 5 COLUMNAS 🟢 */
-.kpi-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; flex-shrink: 0; }
-.kpi-card { padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-panel); border-top: 3px solid var(--border-color); position: relative; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.2);}
-.kpi-card h4 { margin: 0 0 4px 0; font-size: 0.65rem; text-transform: uppercase; color: var(--text-muted); font-weight: 800; letter-spacing: 0.5px;}
-.kpi-card .value { margin: 0; font-size: 1.25rem; font-weight: 900; color: var(--text-main); font-family: monospace; display: flex; align-items: center; white-space: nowrap; overflow: hidden;}
-.kpi-card .value span { color: var(--text-muted); font-size: 0.95rem; margin-right: 2px;}
-.kpi-saldo { background: rgba(46, 160, 67, 0.05); border-color: rgba(46, 160, 67, 0.4); border-top: 3px solid var(--color-saldo);}
-.kpi-saldo h4 { color: var(--color-saldo); }
-.kpi-proyectado { background: rgba(121, 192, 255, 0.05); border-color: rgba(121, 192, 255, 0.4); border-top: 3px solid #79c0ff;}
+        .kpi-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; flex-shrink: 0; }
+        .kpi-card { padding: 10px 15px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-panel); border-top: 4px solid var(--border-color); box-shadow: 0 4px 10px rgba(0,0,0,0.2);}
+        .kpi-card h4 { margin: 0 0 5px 0; font-size: 0.65rem; text-transform: uppercase; color: var(--text-muted); font-weight: 900; letter-spacing: 0.5px;}
+        .kpi-card .value { margin: 0; font-size: 1.4rem; font-weight: 900; font-family: monospace; display: flex; align-items: center; }
+        .kpi-saldo { border-top-color: var(--color-saldo); background: rgba(46, 160, 67, 0.05); }
 
-.charts-panorama { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; flex-shrink: 0; height: 260px; }
-.chart-box { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px 12px 6px 12px; display: flex; flex-direction: column; position: relative; box-shadow: 0 4px 15px rgba(0,0,0,0.2);}
-.chart-box h5 { margin: 0 0 8px 0; font-size: 0.7rem; color: var(--text-muted); text-align: center;}
-.canvas-container { position: relative; flex-grow: 1; min-height: 0; width: 100%; }
+        .charts-panorama { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; flex-shrink: 0; height: 260px; }
+        .chart-box { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; display: flex; flex-direction: column; position: relative; box-shadow: 0 4px 15px rgba(0,0,0,0.2);}
+        .chart-box h5 { margin: 0 0 8px 0; font-size: 0.7rem; color: var(--text-muted); text-align: center; font-weight: 900;}
+        .canvas-container { position: relative; flex-grow: 1; min-height: 0; width: 100%; }
 
-.command-ribbon { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; background: var(--bg-panel); border: 1px solid var(--border-color); border-left: 4px solid var(--color-edit); padding: 10px 15px; border-radius: 8px; flex-shrink: 0; }
-.form-group { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 120px; }
-.form-control { background: var(--input-bg); color: var(--text-main); border: 1px solid var(--border-color); padding: 8px 10px; border-radius: 6px; font-size: 0.85rem; outline: none; height: 34px; }
-.btn-ribbon { background: var(--color-edit); color: #000; border: none; border-radius: 6px; font-weight: 900; padding: 0 25px; height: 34px; cursor: pointer; text-transform: uppercase; font-size: 0.85rem;}
+        .command-ribbon { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; background: var(--bg-panel); border: 1px solid var(--border-color); border-left: 4px solid var(--color-edit); padding: 10px 15px; border-radius: 8px; flex-shrink: 0; box-shadow: 0 5px 20px rgba(0,0,0,0.3);}
+        .form-control { background: var(--input-bg); color: var(--text-main); border: 1px solid var(--border-color); padding: 8px 10px; border-radius: 6px; font-size: 0.85rem; outline: none; height: 34px; }
+        .btn-ribbon { background: var(--color-edit); color: #000; border: none; border-radius: 6px; font-weight: 900; padding: 0 25px; height: 34px; cursor: pointer; text-transform: uppercase; font-size: 0.85rem; transition: transform 0.1s;}
+        .btn-ribbon:active { transform: scale(0.95); }
 
-.dual-core { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; flex: 1; min-height: 0; overflow: hidden; }
-.core-panel { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 10px; display: flex; flex-direction: column; overflow: hidden; }
-.core-header { padding: 12px 15px; border-bottom: 1px solid var(--border-color); background: rgba(0,0,0,0.3); display: flex; justify-content: space-between; align-items: center;}
-.core-title { font-size: 0.95rem; font-weight: 900; }
-.core-body { flex: 1; overflow-y: auto; }
+        .dual-core { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; flex: 1 1 0px; min-height: 0; overflow: hidden; }
+        .core-panel { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 10px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 5px 25px rgba(0,0,0,0.2);}
+        .core-header { padding: 12px 15px; border-bottom: 1px solid var(--border-color); background: rgba(0,0,0,0.3); display: flex; justify-content: space-between; align-items: center;}
+        .core-title { font-size: 0.95rem; font-weight: 900; display: flex; align-items: center; gap: 8px;}
+        .core-body { flex: 1 1 0px; overflow-y: auto; }
 
-.data-grid { width: 100%; border-collapse: collapse; text-align: left; }
-.data-grid th { position: sticky; top: 0; background: var(--bg-subpanel); padding: 10px 12px; font-size: 0.65rem; color: var(--text-muted); border-bottom: 2px solid var(--border-color); }
-.data-grid td { padding: 8px 12px; font-size: 0.8rem; border-bottom: 1px solid var(--border-color); }
-.data-grid tbody tr:hover { background-color: var(--item-hover); }
+        .data-grid { width: 100%; border-collapse: collapse; text-align: left; }
+        .data-grid th { position: sticky; top: 0; background: var(--bg-subpanel); padding: 12px 15px; font-size: 0.7rem; color: var(--text-muted); border-bottom: 2px solid var(--border-color); text-transform: uppercase; z-index: 10;}
+        .data-grid td { padding: 10px 15px; font-size: 0.85rem; border-bottom: 1px solid var(--border-color); vertical-align: middle;}
+        .data-grid tbody tr:hover { background-color: var(--item-hover); }
 
-#modal-dia-cero { position: fixed; inset: 0; background: rgba(3, 5, 8, 0.95); z-index: 20000; display: none; align-items: center; justify-content: center; backdrop-filter: blur(10px); }
-.pv-container { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 16px; width: 100%; max-width: 900px; display: flex; flex-direction: column; border-top: 4px solid #ff9800; }
-.pv-header { padding: 15px; text-align: center; border-bottom: 1px solid var(--border-color); }
-.pv-body { padding: 15px; overflow-y: auto; }
-.pv-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; }
-.pv-section { background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; }
-.pv-input-group { display: flex; justify-content: space-between; margin-bottom: 8px; align-items: center;}
-.pv-input { background: var(--input-bg); border: 1px solid var(--border-color); color: white; padding: 4px 6px; border-radius: 4px; font-family: monospace; width: 100px; text-align: right; }
-.btn-estado { width: 28px; height: 28px; border-radius: 4px; border: 1px solid var(--border-color); background: var(--bg-panel); color: var(--text-muted); cursor: pointer; }
-.btn-estado.real { color: #79c0ff; } .btn-estado.pag { color: #2ea043; }
-.pv-footer { padding: 15px; display: flex; gap: 15px; background: rgba(0,0,0,0.3); border-top: 1px solid var(--border-color); }
+        .modal-base { position: fixed; inset: 0; background: rgba(3,5,8,0.95); z-index: 20000; display: none; align-items: center; justify-content: center; backdrop-filter: blur(10px); }
+        .modal-container { position: relative; background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 16px; width: 100%; max-width: 900px; display: flex; flex-direction: column; border-top: 4px solid #ff9800; box-shadow: 0 0 50px rgba(255, 152, 0, 0.2); max-height: 95vh;}
+        .btn-close-modal { position: absolute; top: 15px; right: 15px; background: transparent; border: 1px solid var(--border-color); color: var(--text-muted); border-radius: 50%; width: 30px; height: 30px; cursor: pointer; font-weight: 900; }
+        .btn-close-modal:hover { color: var(--color-fuga); border-color: var(--color-fuga); }
+        
+        .pv-header { padding: 15px; text-align: center; border-bottom: 1px solid var(--border-color); background: rgba(0,0,0,0.3);}
+        .pv-body { padding: 15px; overflow-y: auto; }
+        .pv-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; }
+        .pv-section { background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; }
+        .pv-input-group { display: flex; justify-content: space-between; margin-bottom: 8px; align-items: center; gap: 5px;}
+        .pv-input-group label { font-size: 0.65rem; font-weight: 700; color: var(--text-muted); flex:1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
+        .pv-input { background: var(--input-bg); border: 1px solid var(--border-color); color: white; padding: 6px 8px; border-radius: 4px; font-family: monospace; width: 120px; text-align: right; outline: none; font-weight: bold;}
+        .btn-estado { width: 28px; height: 28px; border-radius: 4px; border: 1px solid var(--border-color); background: var(--bg-panel); color: var(--text-muted); cursor: pointer; font-weight: bold; flex-shrink: 0;}
+        .btn-estado.real { color: #79c0ff; border-color: rgba(31, 111, 235, 0.6); background: rgba(31, 111, 235, 0.2); }
+        .btn-estado.pag { color: #2ea043; border-color: rgba(46, 160, 67, 0.6); background: rgba(46, 160, 67, 0.2); }
+        .pv-input.pagado { text-decoration: line-through; color: var(--text-muted); background: transparent; border-color: transparent;}
+        .floating-mass-actions { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #1c2128; border: 1px solid var(--color-edit); border-radius: 50px; padding: 8px 20px; display: flex; align-items: center; gap: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); z-index: 9999; }
     </style>
 </head>
 <body>
+
 <div id="login-screen">
     <div class="login-box">
-        <h2 style="color:var(--color-proyectado); margin-bottom:10px; font-size: 2rem;">BÚNKER SCADA</h2>
-        <p style="color:var(--text-muted); font-size:0.85rem; letter-spacing: 2px;">V13.2 (MODULAR CORE)</p>
-        <button class="btn-google" onclick="window.loginWithGoogle()">INICIAR ENLACE</button>
+        <h2 style="color:var(--color-proyectado); font-weight:900; font-size: 2rem;">BÚNKER SCADA</h2>
+        <p style="color:var(--text-muted); font-size:0.85rem; letter-spacing: 2px;">V16.5 PRO</p>
+        <button class="btn-google" onclick="window.loginWithGoogle()">INICIAR ENLACE NEURAL</button>
     </div>
 </div>
 
 <div class="app-container" id="reportZone">
     <div class="header-titles">
         <div style="display:flex; align-items:center;">
-            <h2>BUNKER SCADA <span class="scada-badge">V13.2</span></h2>
+            <h2>BUNKER SCADA <span class="scada-badge">V16.5 PRO</span></h2>
+            <div id="user-display" style="margin-left: 15px; font-size: 0.75rem; color: var(--color-saldo); font-weight:800; text-transform:uppercase;"></div>
         </div>
         <div class="system-btns">
+            <div id="cronos" class="cronos">--:--:--</div>
+            <button class="btn-sys" onclick="window.enviarReporteTelegram()" style="color:#0088cc;">✈️ TELEGRAM</button>
+            <button class="btn-sys" onclick="window.abrirHistorian()" style="color:#ff5252;">⚠️ LOG</button>
             <button class="btn-sys" onclick="window.abrirPreVuelo()" style="color:#ff9800;">🚀 PRE-VUELO</button>
             <button class="btn-sys" onclick="window.logout()" style="color:var(--color-fuga);">🚪 SALIR</button>
         </div>
@@ -96,53 +105,58 @@ h2 { color: var(--text-main); margin: 0; font-size: 1.3rem; font-weight: 900; le
         <div class="time-navigator-panel">
             <div style="display: flex; gap: 8px;">
                 <select id="navAnio" class="nav-select" onchange="window.aplicarCicloAlSistema()"><option value="2025">2025</option><option value="2026" selected>2026</option></select>
-                <select id="navMesConceptual" class="nav-select" onchange="window.aplicarCicloAlSistema()"><option value="0">Enero</option><option value="1">Febrero</option><option value="2">Marzo</option><option value="3" selected>Abril</option><option value="4">Mayo</option><option value="5">Junio</option><option value="6">Julio</option><option value="7">Agosto</option><option value="8">Septiembre</option><option value="9">Octubre</option><option value="10">Noviembre</option><option value="11">Diciembre</option></select>
+                <select id="navMesConceptual" class="nav-select" onchange="window.aplicarCicloAlSistema()" style="color: var(--color-ingresos);"><option value="0">Enero</option><option value="1">Febrero</option><option value="2">Marzo</option><option value="3" selected>Abril</option><option value="4">Mayo</option><option value="5">Junio</option><option value="6">Julio</option><option value="7">Agosto</option><option value="8">Septiembre</option><option value="9">Octubre</option><option value="10">Noviembre</option><option value="11">Diciembre</option></select>
             </div>
             <div id="navRangoBadge" class="nav-badge">--/-- al --/--</div>
         </div>
 
         <div class="kpi-row" style="flex: 1;">
-            <div class="kpi-card"><h4>Sueldo Base</h4><div class="value"><span>$</span><input type="text" id="inputSueldo" oninput="window.formatearEntradaNumerica(this); window.actualizarDashboard();" onchange="window.guardarSueldoEnNube()" style="background:transparent; border:none; color:var(--text-main); font-weight:900; width:100%; font-size:1.15rem; outline:none; font-family: monospace; padding:0;"></div></div>
-            <div class="kpi-card" style="border-top-color: var(--color-infra);"><h4>Costo Estructural</h4><div class="value">$<span id="txtCostoEstructural">0</span></div></div>
-            <div class="kpi-card" style="border-top-color: #d29922;"><h4>Carga Variable</h4><div class="value">$<span id="txtTotalOtros">0</span></div></div>
-            <div class="kpi-card kpi-saldo"><h4>Balance Real</h4><div class="value">$<span id="txtSaldo">0</span></div></div>
-            <div class="kpi-card kpi-proyectado"><h4>Saldo Cierre (-TC)</h4><div class="value">$<span id="txtProyectado">0</span></div></div>
+            <div class="kpi-card"><h4>Sueldo Base</h4><div class="value"><span>$</span><input type="text" id="inputSueldo" oninput="window.formatearEntradaNumerica(this); window.actualizarDashboard();" onchange="window.guardarSueldoEnNube()" style="background:transparent; border:none; color:var(--text-main); font-weight:900; width:100%; outline:none; font-family:monospace;"></div></div>
+            <div class="kpi-card" style="border-top-color: var(--color-infra);"><h4>Estructural (Fijos)</h4><div class="value">$<span id="txtTotalFijos">0</span></div></div>
+            <div class="kpi-card" style="border-top-color: var(--color-edit);"><h4>Gasto Variable</h4><div class="value">$<span id="txtTotalOtros">0</span></div></div>
+            <div class="kpi-card kpi-saldo"><h4>Balance Líquido</h4><div class="value">$<span id="txtSaldo">0</span></div></div>
+            <div class="kpi-card" style="border-top-color: #79c0ff;"><h4>Proyectado Cierre</h4><div class="value">$<span id="txtProyectado">0</span></div></div>
         </div>
     </div>
 
     <div class="charts-panorama">
         <div class="chart-box"><h5>TRAYECTORIA (BURN-RATE)</h5><div class="canvas-container"><canvas id="chartBurnDown"></canvas></div></div>
-        <div class="chart-box"><h5>PULSO VITAL (BASE VS FUGA)</h5><div class="canvas-container"><canvas id="chartDiario"></canvas></div></div>
+        <div class="chart-box"><h5>PULSO VITAL DIARIO</h5><div class="canvas-container"><canvas id="chartDiario"></canvas></div></div>
         <div class="chart-box"><h5>ESPECTRO CATEGÓRICO</h5><div class="canvas-container"><canvas id="chartPareto"></canvas></div></div>
         <div class="chart-box" style="border-color: rgba(255, 82, 82, 0.3);"><h5>HORIZONTE DE DEUDA TC</h5><div class="canvas-container"><canvas id="chartRadar"></canvas></div></div>
     </div>
 
     <div class="command-ribbon">
-        <div style="display:flex; gap:5px; border-right: 1px solid var(--border-color); padding-right: 10px; margin-right: 5px;">
-            <button class="btn-sys" style="color:#79c0ff; border-color:rgba(121, 192, 255, 0.4);" onclick="window.aplicarMacro('cajero')" title="Giro en Cajero Automático">🏧 CAJERO</button>
-            <button class="btn-sys" style="color:var(--color-saldo); border-color:rgba(46, 160, 67, 0.4);" onclick="window.aplicarMacro('super')" title="Gasto Despensa">🛒 SUPER</button>
-            <button class="btn-sys" style="color:var(--color-fuga); border-color:rgba(255, 82, 82, 0.4);" onclick="window.aplicarMacro('antojo')" title="Fuga 100%">🍔 ANTOJO</button>
-        </div>
-
-        <div class="form-group" style="flex:0.5;"><label>Fecha</label><input type="datetime-local" id="inputFecha" class="form-control"></div>
-        <div class="form-group" style="flex:0.5;"><label>Tipo Flujo</label><select id="inputTipo" class="form-control"><option value="Gasto">Gasto Var.</option><option value="Gasto Fijo">Gasto Fijo</option><option value="Ingreso">Ingreso</option><option value="Por Cobrar">Préstamo</option><option value="Ahorro">Ahorro</option></select></div>
-        <div class="form-group" style="flex:1;"><label>Categoría</label><select id="inputCategoria" class="form-control"></select></div>
-        <div class="form-group" style="flex:0.5;" id="boxFuga"><label>% Fuga</label><select id="inputFuga" class="form-control"><option value="100">100%</option><option value="50">50%</option><option value="0" selected>0%</option></select></div>
-        <div class="form-group" style="flex:2;"><label>Descripción</label><input type="text" id="inputNombre" class="form-control" placeholder="[ AUTO-PILOTO ]"></div>
-        <div class="form-group" style="flex:0.5;"><label>Monto ($)</label><input type="text" id="inputMonto" class="form-control" inputmode="numeric" oninput="window.formatearEntradaNumerica(this)" style="color:var(--color-edit); font-weight:bold;"></div>
+        <button class="btn-sys" style="color:#79c0ff; border-color:rgba(121, 192, 255, 0.4);" onclick="window.aplicarMacro('cajero')">🏧 CAJERO</button>
+        <button class="btn-sys" style="color:var(--color-saldo); border-color:rgba(46, 160, 67, 0.4);" onclick="window.aplicarMacro('super')">🛒 SUPER</button>
+        <button class="btn-sys" style="color:var(--color-fuga); border-color:rgba(255, 82, 82, 0.4);" onclick="window.aplicarMacro('antojo')">🍔 ANTOJO</button>
+        <div style="flex:1;"></div>
+        
+        <input type="datetime-local" id="inputFecha" class="form-control" style="width:180px;">
+        <select id="inputTipo" class="form-control" style="width:120px; display:none;"><option value="Gasto">Gasto Var.</option><option value="Gasto Fijo">Gasto Fijo</option><option value="Ingreso">Ingreso</option><option value="Por Cobrar">Préstamo</option><option value="Ahorro">Ahorro</option></select>
+        <select id="inputCategoria" class="form-control" style="width:200px;"></select>
+        <select id="inputFuga" class="form-control" style="width:80px; display:none;"><option value="100">100</option><option value="0" selected>0</option></select>
+        <input type="text" id="inputNombre" class="form-control" placeholder="Descripción..." style="flex:2;" autocomplete="off">
+        <input type="text" id="inputMonto" class="form-control" placeholder="$ 0" style="width:120px; color:var(--color-edit); font-weight:bold;" oninput="window.formatearEntradaNumerica(this)">
         <input type="hidden" id="editId">
-        <button id="btnGuardar" class="btn-ribbon" onclick="window.agregarMovimiento()">INYECTAR</button>
+        <button class="btn-ribbon" onclick="window.agregarMovimiento()">INYECTAR</button>
     </div>
 
     <div class="dual-core">
         <div class="core-panel" id="panelMain">
             <div class="core-header">
-                <div class="core-title"><span style="color:var(--color-saldo);">●</span> FLUJO PRESENTE (LIBRO DIARIO)</div>
-                <button class="btn-sys" onclick="window.exportarDataLink()">📥 EXPORTAR</button>
+                <div class="core-title"><span style="color:var(--color-saldo);">●</span> LIBRO DIARIO</div>
+                <div style="display:flex; gap:10px; align-items:center;">
+                    <span style="font-size:0.7rem; color:var(--text-muted); font-weight:bold;">FUGAS: <span id="txtTotalEvitable" style="color:var(--color-fuga);">0</span></span>
+                    <button class="btn-sys" onclick="window.exportarDataLink()">📥 EXPORTAR</button>
+                </div>
+            </div>
+            <div style="padding: 6px 12px; background: rgba(0,0,0,0.3); border-bottom: 1px solid var(--border-color);">
+                <input type="text" id="inputBuscador" class="form-control" placeholder="🔍 Buscar..." oninput="window.renderizarListas(window.obtenerSueldoMes(parseInt(document.getElementById('navAnio').value), parseInt(document.getElementById('navMesConceptual').value)))" style="width: 100%; max-width: 350px; height: 28px; background: var(--bg-panel);">
             </div>
             <div class="core-body">
                 <table class="data-grid">
-                    <thead><tr><th>Fecha</th><th>Descripción</th><th>Categoría</th><th style="text-align:right;">Monto ($)</th><th style="text-align:right;">Saldo</th><th></th></tr></thead>
+                    <thead><tr><th style="width: 30px;"><input type="checkbox" id="checkAll" onchange="window.toggleAllChecks()"></th><th>Fecha</th><th>Descripción</th><th>Categoría</th><th style="text-align:right;">Monto</th><th style="text-align:right;">Saldo</th><th></th></tr></thead>
                     <tbody id="listaDetalle"></tbody>
                 </table>
             </div>
@@ -150,19 +164,87 @@ h2 { color: var(--text-main); margin: 0; font-size: 1.3rem; font-weight: 900; le
 
         <div class="core-panel" id="panelTC" style="border-color: rgba(255, 82, 82, 0.2);">
             <div class="core-header" style="background: rgba(255, 82, 82, 0.08); border-bottom-color: rgba(255, 82, 82, 0.2);">
-                <div class="core-title"><span style="color:var(--color-fuga);">●</span> MATRIZ DE DEUDA TC</div>
+                <div class="core-title"><span style="color:var(--color-fuga);">●</span> MATRIZ TC</div>
                 <div style="display:flex; gap:10px; align-items:center;">
                     <div style="font-size:1.2rem; font-weight:900; color:var(--color-fuga); font-family:monospace;">$<span id="txtTotalTC">0</span></div>
                     <button class="btn-sys" onclick="window.cargarCSV_TC()" style="background:var(--color-fuga); color:white; border:none;">💳 INGESTAR</button>
                 </div>
             </div>
+            <div style="padding: 12px; border-bottom: 1px solid rgba(255, 82, 82, 0.2); background: rgba(0,0,0,0.2);">
+                <div id="barraAccionesTC" style="display:none; background: #b71c1c; color: white; padding: 8px 15px; border-radius: 6px; justify-content: space-between; align-items: center; margin-top: 8px;">
+                    <span id="txtSeleccionadosTC" style="font-weight: 900; font-size: 0.8rem;">0 SEL</span>
+                    <button onclick="window.ejecutarPurgaMasivaTC()" style="background: white; color: #b71c1c; border: none; padding: 6px 15px; border-radius: 4px; font-weight: 900; cursor: pointer; font-size: 0.75rem;">🗑️ PURGAR</button>
+                </div>
+            </div>
             <div class="core-body">
                 <table class="data-grid">
-                    <thead style="background: rgba(255, 82, 82, 0.05);"><tr><th style="width:30px;"><input type="checkbox" id="checkMaestroTC"></th><th>Ciclo</th><th>Comercio</th><th style="text-align:right;">Cuota ($)</th></tr></thead>
+                    <thead style="background: rgba(255, 82, 82, 0.05);"><tr><th style="width: 30px;"><input type="checkbox" id="checkMaestroTC" onclick="window.toggleTodosTC(this)"></th><th>Ciclo</th><th>Comercio</th><th style="text-align:right;">Cuota ($)</th></tr></thead>
                     <tbody id="listaDetalleTC"></tbody>
                 </table>
             </div>
         </div>
+    </div>
+    
+    <div id="massActionsBar" class="floating-mass-actions" style="display: none;">
+        <span id="massCount" style="font-weight:900; font-size:0.85rem;">0 SEL</span>
+        <select id="massCategorySelect" class="form-control" style="width:220px; border-color:var(--color-edit);"></select>
+        <button class="btn-sys" style="background:var(--color-edit); color:#000; font-weight:900;" onclick="window.massCategorize()">MUTE/CAT</button>
+        <button class="btn-sys" style="background:rgba(255,82,82,0.2); border-color:var(--color-fuga); font-size:1.1rem; color:var(--color-fuga);" onclick="window.massDelete()">🗑️</button>
+    </div>
+</div>
+
+<div id="modal-historian" class="modal-base">
+    <div class="modal-container" style="max-width: 600px;">
+        <button class="btn-close-modal" onclick="document.getElementById('modal-historian').style.display='none'">X</button>
+        <div style="padding: 15px 20px; background: rgba(0,0,0,0.3); border-bottom: 1px solid var(--border-color);"><h3 style="color:#ff5252; margin:0;">⚠️ HISTORIAN LOG</h3></div>
+        <div id="historian-content" style="padding: 20px; overflow-y: auto; max-height: 60vh;"></div>
+    </div>
+</div>
+
+<div id="modal-dia-cero" class="modal-base">
+    <div class="modal-container">
+        <button class="btn-close-modal" onclick="window.cerrarPreVuelo()">X</button>
+        <div class="pv-header"><h2 style="color:#ff9800; margin:0;">SIMULADOR DÍA CERO</h2><div style="font-size:0.75rem; color:var(--text-muted); margin-top:5px;">MES DE <span id="pv-mes-label" style="color:#fff;">--</span></div></div>
+        <div style="padding:20px; text-align:center;"><div style="font-size:3.5rem; font-weight:900; color:var(--color-saldo); font-family:monospace;">$<span id="pv-txt-liquidez">0</span></div></div>
+        <div class="pv-body">
+            <div class="pv-grid">
+                <div class="pv-section">
+                    <div style="color:#ff5252; font-weight:bold; margin-bottom:10px; font-size:0.8rem;">💳 CRÍTICAS</div>
+                    <div class="pv-input-group"><label style="color:var(--color-saldo);">Sueldo</label><input type="text" id="pv-sueldo" class="pv-input" style="color:var(--color-saldo); border-color:var(--color-saldo);" oninput="window.formatearEntradaNumerica(this); window.calcularDiaCero();"></div>
+                    <div class="pv-input-group"><label>TC Nac</label><button class="btn-estado est" onclick="window.toggleEstadoPV(this, 'pv-tc-nac')">EST</button><input type="text" id="pv-tc-nac" class="pv-input" style="color:#ff5252;" oninput="window.formatearEntradaNumerica(this); window.calcularDiaCero();"></div>
+                    <div style="display:flex; flex-direction:column; background: var(--bg-panel); border-radius: 8px; border: 1px solid rgba(255,82,82,0.3); margin-bottom: 8px; padding: 10px;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; gap:5px;">
+                            <div style="flex:1;"><label style="font-size: 0.65rem; font-weight: 700;">TC Int (USD)</label><span id="lbl-dolar-actual" style="display:block; font-size:0.6rem; color:var(--text-muted); font-family:monospace;">USD...</span></div>
+                            <button class="btn-estado est" onclick="window.toggleEstadoPV(this, 'pv-tc-int')">EST</button>
+                            <input type="text" id="pv-tc-int" class="pv-input" style="color:#ff5252; width:80px;" placeholder="US$ 0" data-estado="est" oninput="window.formatearEntradaNumerica(this); window.calcularDiaCero();">
+                        </div>
+                        <div id="pv-tc-int-clp" style="text-align:right; font-size:0.8rem; color:#ff5252; font-family:monospace; font-weight:900; margin-top:5px; border-top: 1px dashed rgba(255,82,82,0.3); padding-top: 5px;">~ $0 CLP</div>
+                    </div>
+                    <div class="pv-input-group"><label>Línea</label><button class="btn-estado est" onclick="window.toggleEstadoPV(this, 'pv-linea')">EST</button><input type="text" id="pv-linea" class="pv-input" style="color:#ff5252;" oninput="window.formatearEntradaNumerica(this); window.calcularDiaCero();"></div>
+                </div>
+                <div class="pv-section">
+                    <div style="color:var(--color-infra); font-weight:bold; margin-bottom:10px; font-size:0.8rem;">🏢 ESTRUCTURAL</div>
+                    <div class="pv-input-group"><label>Arriendo</label><button class="btn-estado est" onclick="window.toggleEstadoPV(this, 'pv-arriendo')">EST</button><input type="text" id="pv-arriendo" class="pv-input" value="330.000" oninput="window.formatearEntradaNumerica(this); window.calcularDiaCero();"></div>
+                    <div class="pv-input-group"><label>UDEC</label><button class="btn-estado est" onclick="window.toggleEstadoPV(this, 'pv-udec')">EST</button><input type="text" id="pv-udec" class="pv-input" value="48.000" oninput="window.formatearEntradaNumerica(this); window.calcularDiaCero();"></div>
+                    <div class="pv-input-group"><label>CAE</label><button class="btn-estado est" onclick="window.toggleEstadoPV(this, 'pv-cae')">EST</button><input type="text" id="pv-cae" class="pv-input" value="38.742" oninput="window.formatearEntradaNumerica(this); window.calcularDiaCero();"></div>
+                </div>
+                <div class="pv-section">
+                    <div style="color:#d29922; font-weight:bold; margin-bottom:10px; font-size:0.8rem;">⚡ SERVICIOS</div>
+                    <div class="pv-input-group"><label>GGCC</label><button class="btn-estado est" onclick="window.toggleEstadoPV(this, 'pv-ggcc')">EST</button><input type="text" id="pv-ggcc" class="pv-input" value="63.220" oninput="window.formatearEntradaNumerica(this); window.calcularDiaCero();"></div>
+                    <div class="pv-input-group"><label>Luz</label><button class="btn-estado est" onclick="window.toggleEstadoPV(this, 'pv-luz')">EST</button><input type="text" id="pv-luz" class="pv-input" value="20.000" oninput="window.formatearEntradaNumerica(this); window.calcularDiaCero();"></div>
+                    <div class="pv-input-group"><label>Agua</label><button class="btn-estado est" onclick="window.toggleEstadoPV(this, 'pv-agua')">EST</button><input type="text" id="pv-agua" class="pv-input" value="8.000" oninput="window.formatearEntradaNumerica(this); window.calcularDiaCero();"></div>
+                    <div class="pv-input-group"><label>Gas</label><button class="btn-estado est" onclick="window.toggleEstadoPV(this, 'pv-gas')">EST</button><input type="text" id="pv-gas" class="pv-input" value="0" oninput="window.formatearEntradaNumerica(this); window.calcularDiaCero();"></div>
+                </div>
+                <div class="pv-section">
+                    <div style="color:#79c0ff; font-weight:bold; margin-bottom:10px; font-size:0.8rem;">📱 COMPLEMENTOS</div>
+                    <div class="pv-input-group"><label>Celu Mio</label><button class="btn-estado est" onclick="window.toggleEstadoPV(this, 'pv-celu')">EST</button><input type="text" id="pv-celu" class="pv-input" value="13.990" oninput="window.formatearEntradaNumerica(this); window.calcularDiaCero();"></div>
+                    <div class="pv-input-group"><label>Movi Madre</label><button class="btn-estado est" onclick="window.toggleEstadoPV(this, 'pv-madre')">EST</button><input type="text" id="pv-madre" class="pv-input" value="19.290" oninput="window.formatearEntradaNumerica(this); window.calcularDiaCero();"></div>
+                    <div class="pv-input-group"><label>Pack Subs</label><button class="btn-estado est" onclick="window.toggleEstadoPV(this, 'pv-subs')">EST</button><input type="text" id="pv-subs" class="pv-input" value="20.540" oninput="window.formatearEntradaNumerica(this); window.calcularDiaCero();"></div>
+                    <div class="pv-input-group"><label>Seguro Auto</label><button class="btn-estado est" onclick="window.toggleEstadoPV(this, 'pv-seguro')">EST</button><input type="text" id="pv-seguro" class="pv-input" value="38.300" oninput="window.formatearEntradaNumerica(this); window.calcularDiaCero();"></div>
+                </div>
+            </div>
+        </div>
+        <div style="padding:15px; background:rgba(0,0,0,0.2);"><button class="btn-sys" style="width:100%; padding:15px; background:#ff9800; color:black; border:none; font-size:1rem;" onclick="window.ejecutarArranque()">EFECTUAR ARRANQUE (INYECTAR MATRIZ)</button></div>
     </div>
 </div>
 
