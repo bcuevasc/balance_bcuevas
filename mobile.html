@@ -3,38 +3,98 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Bunker Móvil HUD V13.1 (Global Edition)</title>
-    <link rel="apple-touch-icon" href="bunker-icon.png">
+    <title>Bunker Móvil V13.2</title>
     <meta name="theme-color" content="#030508">
-
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
     
     <style>
-        :root { --bg-base: #030508; --bg-card: #0d1117; --bg-elevated: #161b22; --text-main: #e6edf3; --text-dim: #7d8590; --accent-blue: #1f6feb; --accent-green: #2ea043; --accent-red: #ff5252; --accent-orange: #d29922; --border-subtle: #21262d; --color-infra: #a371f7; --color-flota: #00bcd4; color-scheme: dark; }
-        * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
-        
-        body { background-color: var(--bg-base); background-image: radial-gradient(rgba(255,255,255,0.02) 1px, transparent 1px); background-size: 25px 25px; color: var(--text-main); margin: 0; padding-bottom: calc(90px + env(safe-area-inset-bottom)); overscroll-behavior-y: none; }
-
+        :root { --bg-base: #030508; --bg-card: #0d1117; --text-main: #e6edf3; --text-dim: #7d8590; --accent-blue: #1f6feb; --accent-red: #ff5252; --border-subtle: #21262d; }
+        * { box-sizing: border-box; font-family: -apple-system, sans-serif; -webkit-tap-highlight-color: transparent; }
+        html, body { width: 100vw; min-height: 100vh; overflow-x: hidden; }
+        body { background-color: var(--bg-base); color: var(--text-main); margin: 0; padding-bottom: 90px; }
         #login-screen { position: fixed; inset: 0; background: var(--bg-base); display: flex; align-items: center; justify-content: center; z-index: 10000; flex-direction: column; }
         .top-bar { padding: max(20px, env(safe-area-inset-top)) 20px 10px 20px; display: flex; justify-content: space-between; align-items: center; }
-        .brand { font-weight: 900; font-size: 1.2rem; letter-spacing: 2px; display: flex; align-items: center; gap: 6px;}
-        .brand-badge { background: linear-gradient(90deg, #1f6feb, #79c0ff); color: #fff; font-size: 0.65rem; padding: 2px 8px; border-radius: 4px; font-family: monospace; text-shadow: 0 1px 2px rgba(0,0,0,0.8);}
-        .user-tag { color: var(--accent-green); background: rgba(46, 160, 67, 0.1); border: 1px solid rgba(46, 160, 67, 0.3); font-weight: 800; padding: 4px 10px; border-radius: 6px; font-size: 0.7rem; letter-spacing: 1px; box-shadow: 0 0 10px rgba(46, 160, 67, 0.2); }
+        .master-hud { text-align: center; padding: 10px 20px 25px 20px; width: 100%;}
+        .hud-value { font-size: 3.5rem; font-weight: 900; font-family: monospace; }
+        .tab-content { display: none; padding: 10px 15px; } .active-tab { display: block; }
+        .swipe-container { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 15px; padding: 10px 0 20px 0; scrollbar-width: none; }
+        .swipe-container::-webkit-scrollbar { display: none; }
+        .swipe-card { flex: 0 0 90%; scroll-snap-align: center; background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 16px; padding: 15px; }
+        .lista-contenedor { display: flex; flex-direction: column; gap: 8px; }
+        .mobile-card { background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 15px; display: flex; align-items: center; cursor: pointer; }
+        .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(3, 5, 8, 0.95); border-top: 1px solid var(--border-subtle); display: flex; justify-content: space-around; align-items: center; padding: 10px 5px calc(15px + env(safe-area-inset-bottom)) 5px; z-index: 1000; }
+        .nav-item { color: var(--text-dim); text-align: center; font-size: 0.65rem; font-weight: 800; flex: 1; cursor: pointer; } .nav-item.active { color: var(--text-main); }
+        .nav-fab { background: var(--accent-blue); color: #fff; width: 60px; height: 60px; border-radius: 30px; display: flex; justify-content: center; align-items: center; font-size: 2rem; margin: -30px 10px 0 10px; border: 4px solid var(--bg-base); cursor: pointer; }
+        .terminal-form { background: var(--bg-card); border-radius: 16px; padding: 20px; border: 1px solid var(--border-subtle); }
+        .terminal-form input, .terminal-form select { width: 100%; padding: 16px; margin-bottom: 12px; background: #161b22; color: white; border: 1px solid var(--border-subtle); border-radius: 8px; font-size: 1rem; outline: none; }
+        .btn-sys { background: #161b22; color: white; border: 1px solid var(--border-subtle); padding: 15px; border-radius: 12px; font-weight: bold; width: 100%; cursor: pointer; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
 
-        .master-hud { text-align: center; padding: 10px 20px 25px 20px; width: 100%; overflow: hidden;}
-        .hud-value { font-size: clamp(2.5rem, 12vw, 4.5rem); font-weight: 900; letter-spacing: -2px; font-family: monospace; text-shadow: 0 0 30px rgba(31, 111, 235, 0.3); transition: transform 0.3s; word-break: break-all; line-height: 1.1;}
-        .hud-value.danger { color: var(--accent-red); text-shadow: 0 0 30px rgba(255, 82, 82, 0.3); }
+<div id="login-screen"><h2 style="color:#79c0ff;">BÚNKER SCADA</h2><button onclick="window.loginWithGoogle()" style="padding:15px 30px; border-radius:10px; font-weight:900; background: white; color: black; border: none; cursor: pointer;">INICIAR ENLACE</button></div>
+
+<div class="app-container" id="reportZone" style="display: none;">
+    <div class="top-bar"><div style="font-weight:bold;">BÚNKER V13.2</div></div>
+
+    <div id="tab-dash" class="tab-content active-tab">
+        <div class="master-hud"><div style="font-size:0.7rem; color:var(--text-dim); text-transform:uppercase;">Saldo Disponible</div><div class="hud-value">$<span id="txtSaldo">0</span></div></div>
+        <div class="swipe-container">
+            <div class="swipe-card"><div style="text-align: center; font-size: 0.7rem; font-weight: bold; color: var(--text-dim);">Trayectoria</div><div style="height:180px;"><canvas id="chartBurnDown"></canvas></div></div>
+            <div class="swipe-card"><div style="text-align: center; font-size: 0.7rem; font-weight: bold; color: var(--text-dim);">Diario</div><div style="height:180px;"><canvas id="chartDiario"></canvas></div></div>
+        </div>
+        <div style="padding: 10px 15px; font-size: 0.7rem; font-weight: bold; color: #1f6feb;">> RECIENTES</div>
+        <div id="listaMovilDetalle" class="lista-contenedor"></div>
+    </div>
+
+    <div id="tab-add" class="tab-content">
+        <h3 style="text-align: center; color: var(--text-dim);">INYECTAR DATOS</h3>
         
-        .slave-kpis { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 15px; margin-bottom: 20px; }
-        .slave-pill { background: var(--bg-card); border: 1px solid var(--border-subtle); padding: 10px; border-radius: 12px; display: flex; flex-direction: column; align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.3); position: relative; overflow: hidden;}
-        .slave-pill::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--border-subtle); }
-        .slave-pill.red::before { background: var(--accent-red); box-shadow: 0 0 10px var(--accent-red); }
-        .slave-pill.orange::before { background: var(--accent-orange); box-shadow: 0 0 10px var(--accent-orange); }
-        .slave-pill.purple::before { background: var(--color-infra); box-shadow: 0 0 10px var(--color-infra); }
-        .slave-pill.cyan::before { background: var(--color-flota); box-shadow: 0 0 10px var(--color-flota); }
+        <div style="display:flex; gap:10px; margin-bottom:15px; justify-content:center;">
+            <button class="btn-sys" style="flex:1; padding:10px; font-size:0.65rem; border-color:rgba(121, 192, 255, 0.4); color:#79c0ff; margin-bottom:0;" onclick="window.aplicarMacro('cajero')">🏧 CAJERO</button>
+            <button class="btn-sys" style="flex:1; padding:10px; font-size:0.65rem; border-color:rgba(46, 160, 67, 0.4); color:var(--color-saldo); margin-bottom:0;" onclick="window.aplicarMacro('super')">🛒 SUPER</button>
+            <button class="btn-sys" style="flex:1; padding:10px; font-size:0.65rem; border-color:rgba(255, 82, 82, 0.4); color:var(--color-fuga); margin-bottom:0;" onclick="window.aplicarMacro('antojo')">🍔 ANTOJO</button>
+        </div>
+
+        <div class="terminal-form">
+            <input type="text" id="inputMonto" placeholder="$ Monto" inputmode="numeric" oninput="window.formatearEntradaNumerica(this)" style="font-size: 2rem; font-weight: bold; text-align: center; color: #79c0ff; background: transparent; border: none; border-bottom: 2px solid #1f6feb; border-radius: 0;">
+            <input type="text" id="inputNombre" placeholder="Descripción...">
+            <select id="inputTipo"><option value="Gasto">Gasto Variable</option><option value="Gasto Fijo">Gasto Fijo</option><option value="Ahorro">Ahorro / Transf.</option></select>
+            <select id="inputCategoria"></select>
+            <select id="inputFuga" style="display:none;"><option value="100">100</option><option value="0" selected>0</option></select>
+            
+            <input type="datetime-local" id="inputFecha">
+            <button onclick="window.agregarMovimiento()" style="width: 100%; padding: 18px; background: #1f6feb; color: white; border: none; border-radius: 12px; font-weight: bold; margin-top: 10px;">GUARDAR</button>
+        </div>
+    </div>
+
+    <div id="tab-settings" class="tab-content">
+        <h3 style="text-align: center; color: var(--text-dim);">SISTEMA</h3>
+        <button class="btn-sys" onclick="window.logout()" style="color:#ff5252; border-color:rgba(255,82,82,0.3);">🚪 DESCONECTAR</button>
+    </div>
+
+    <div class="bottom-nav">
+        <div class="nav-item active" onclick="switchTabApp('dash', this)">RADAR</div>
+        <div class="nav-fab" onclick="switchTabApp('add', null)">+</div>
+        <div class="nav-item" onclick="switchTabApp('settings', this)">SET</div>
+    </div>
+</div>
+
+<script>
+    function switchTabApp(tabId, element) {
+        document.querySelectorAll('.tab-content').forEach(d => { d.classList.remove('active-tab'); });
+        document.getElementById('tab-' + tabId).classList.add('active-tab');
+        if(element) { document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active')); element.classList.add('active'); }
+        if (tabId === 'add') { let now = new Date(); now.setMinutes(now.getMinutes() - now.getTimezoneOffset()); document.getElementById('inputFecha').value = now.toISOString().slice(0,16); }
+        window.scrollTo(0,0);
+    }
+</script>
+<script src="motor.js"></script>
+</body>
+</html>        .slave-pill.cyan::before { background: var(--color-flota); box-shadow: 0 0 10px var(--color-flota); }
 
         .lista-contenedor { padding: 0 10px; display: flex; flex-direction: column; gap: 6px; margin-top: 5px; padding-bottom: calc(120px + env(safe-area-inset-bottom)); }
         
