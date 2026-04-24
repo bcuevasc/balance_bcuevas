@@ -535,7 +535,53 @@
             document.getElementById('vista-tc').style.display = 'block';
         }
     }
+    if(typeof renderizarTablaTC === 'function') {
+            window.renderizarTablaTC = function() {
+                const tbody = document.getElementById("listaMovilTC");
+                if (!tbody) return;
+                
+                if (datosTCGlobal.length === 0) {
+                    tbody.innerHTML = `<div style="text-align:center; padding: 40px 20px; color: var(--text-dim);"><i>📡</i><br>MATRIZ TC SIN DATOS</div>`;
+                    let boxImpacto = document.getElementById('boxImpactoTC'); if(boxImpacto) boxImpacto.style.display = 'none';
+                    return;
+                }
 
+                let htmlMovil = '';
+                let sumaProximoMes = 0; let fechaHoy = new Date();
+                let proximoMes = fechaHoy.getMonth() + 1; let proximoAnio = fechaHoy.getFullYear();
+                if (proximoMes > 11) { proximoMes = 0; proximoAnio++; }
+
+                datosTCGlobal.forEach(doc => {
+                    let fechaObj = new Date(doc.mesCobro);
+                    let mesTxt = fechaObj.toLocaleString('es-CL', { month: 'short', year: 'numeric' }).toUpperCase();
+                    if (fechaObj.getMonth() === proximoMes && fechaObj.getFullYear() === proximoAnio) sumaProximoMes += doc.monto;
+                    
+                    const clickAction = typeof openBottomSheet === 'function' ? `openBottomSheet('${doc.id}', '${doc.nombre.replace(/'/g, "\\'")}', ${doc.monto})` : ``;
+                    
+                    htmlMovil += `
+                    <div class="mobile-card" style="margin-bottom:6px; border-radius:12px !important; background: var(--bg-card) !important; padding: 14px 15px !important; border: 1px solid rgba(255,82,82,0.1) !important;">
+                        <div style="flex: 1; min-width: 0;">
+                            <div style="font-weight:bold; font-size:0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text-main);">${doc.nombre}</div>
+                            <div style="font-size:0.7rem; color:var(--accent-red); margin-top:3px; font-weight:800; letter-spacing: 0.5px;">${mesTxt} (${doc.cuota})</div>
+                        </div>
+                        <div style="font-weight:900; color:var(--text-main); flex-shrink: 0; font-size:1.15rem; font-family:monospace;">$${doc.monto.toLocaleString('es-CL')}</div>
+                    </div>`;
+                });
+                
+                tbody.innerHTML = htmlMovil;
+
+                let mesNombreStr = new Date(proximoAnio, proximoMes, 1).toLocaleString('es-CL', { month: 'long' }).toUpperCase();
+                let boxImpacto = document.getElementById('boxImpactoTC');
+                if (boxImpacto) {
+                    if (sumaProximoMes > 0) {
+                        boxImpacto.style.display = 'flex';
+                        document.getElementById('lblImpactoMes').innerText = `${mesNombreStr}`;
+                        document.getElementById('txtImpactoMonto').innerText = `$${sumaProximoMes.toLocaleString('es-CL')}`;
+                    } else { boxImpacto.style.display = 'none'; }
+                }
+            }
+        }
+    });
     function switchTabApp(tabId, element) {
         document.querySelectorAll('.tab-content').forEach(d => { d.style.display = 'none'; });
         document.getElementById('tab-' + tabId).style.display = 'block';
