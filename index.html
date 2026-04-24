@@ -258,12 +258,18 @@ h2 { color: var(--text-main); margin: 0; font-size: 1.3rem; font-weight: 900; le
             <div class="core-header">
                 <div class="core-title"><span style="color:var(--color-saldo); text-shadow: 0 0 8px var(--color-saldo);">●</span> <span data-en="PRESENT FLOW (LEDGER)">FLUJO PRESENTE (LIBRO DIARIO)</span></div>
                 <div style="display: flex; gap: 15px; align-items: center;">
-                    <div class="fugas-mini-kpi" title="Eficiencia de Gasto">
-                        <span data-en="SYSTEM LEAKS:">FUGAS DE SISTEMA:</span><strong id="txtTotalEvitable">0</strong>
-                        <span style="margin-left: 5px;">(<span id="txtPorcentajeFugas" style="color:var(--color-fuga); font-weight:bold;">0%</span>)</span>
-                    </div>
-                    <button class="btn-sys" onclick="let b=this; b.innerHTML='⏳...'; b.style.opacity='0.7'; exportarDataLink(); setTimeout(()=>{b.innerHTML='📥 DATA-LINK'; b.style.opacity='1';}, 2000)" style="background:var(--accent-blue); color:#fff; border:none; transition:all 0.2s;" data-en="📥 DATA-LINK">📥 DATA-LINK</button>
-                </div>
+    <div class="fugas-mini-kpi" style="border-color: #d29922; box-shadow: inset 0 0 10px rgba(210, 153, 34, 0.1);" title="Flujo de Salida Operativa">
+        <span data-en="TOTAL BURN:">SALIDA TOTAL:</span>
+        <strong id="txtGastoTotalPeriodo" style="color:#d29922; text-shadow: 0 0 10px rgba(210, 153, 34, 0.3);">$0</strong>
+    </div>
+
+    <div class="fugas-mini-kpi" title="Eficiencia de Gasto">
+        <span data-en="SYSTEM LEAKS:">FUGAS DE SISTEMA:</span><strong id="txtTotalEvitable">0</strong>
+        <span style="margin-left: 5px;">(<span id="txtPorcentajeFugas" style="color:var(--color-fuga); font-weight:bold;">0%</span>)</span>
+    </div>
+    
+    <button class="btn-sys" onclick="let b=this; b.innerHTML='⏳...'; b.style.opacity='0.7'; exportarDataLink(); setTimeout(()=>{b.innerHTML='📥 DATA-LINK'; b.style.opacity='1';}, 2000)" style="background:var(--accent-blue); color:#fff; border:none; transition:all 0.2s;" data-en="📥 DATA-LINK">📥 DATA-LINK</button>
+</div>
             </div>
             <div style="padding: 6px 12px; background: rgba(0,0,0,0.3); border-bottom: 1px solid var(--border-color);">
                 <input type="text" id="inputBuscador" class="form-control" placeholder="🔍 Buscar en la matriz diaria..." oninput="actualizarDashboard()" style="width: 100%; max-width: 350px; height: 28px; background: var(--bg-panel);">
