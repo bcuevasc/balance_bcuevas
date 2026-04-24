@@ -569,5 +569,35 @@
     function closeBottomSheet() { const overlay = document.getElementById('bottom-sheet-overlay'); const sheet = document.getElementById('bottom-sheet'); sheet.style.bottom = '-100%'; overlay.style.opacity = '0'; setTimeout(()=> overlay.style.display = 'none', 300); }
 </script>
 <script src="motor.js"></script>
+<script>
+    // MOTOR DE GESTOS (SWIPE NAVIGATOR) V15.0
+    let touchstartX = 0; let touchendX = 0;
+    const swipeZone = document.getElementById('reportZone');
+    
+    // Mapeo del orden de las pestañas
+    const tabsMap = ['dash', 'trend', 'add', 'cloud', 'settings'];
+    
+    swipeZone.addEventListener('touchstart', e => { touchstartX = e.changedTouches[0].screenX; }, {passive: true});
+    swipeZone.addEventListener('touchend', e => {
+        touchendX = e.changedTouches[0].screenX;
+        handleSwipe();
+    }, {passive: true});
+
+    function handleSwipe() {
+        const swipeThreshold = 80; // Distancia mínima para considerar un swipe
+        let activeTab = document.querySelector('.tab-content[style*="display: block"]');
+        if(!activeTab) activeTab = document.getElementById('tab-dash');
+        let currentIdx = tabsMap.indexOf(activeTab.id.replace('tab-', ''));
+        
+        if (touchendX < touchstartX - swipeThreshold) {
+            // Swipe Izquierda (Avanzar)
+            if (currentIdx < tabsMap.length - 1) switchTabApp(tabsMap[currentIdx + 1], document.querySelectorAll('.nav-item')[currentIdx + 1]);
+        }
+        if (touchendX > touchstartX + swipeThreshold) {
+            // Swipe Derecha (Retroceder)
+            if (currentIdx > 0) switchTabApp(tabsMap[currentIdx - 1], document.querySelectorAll('.nav-item')[currentIdx - 1]);
+        }
+    }
+</script>
 </body>
 </html>
