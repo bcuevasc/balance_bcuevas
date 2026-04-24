@@ -394,73 +394,76 @@ function actualizarDashboard() {
     let dataGraficos = dataMes.filter(x => x.catV !== 'Gasto Tarjeta de Crédito');
     if (typeof renderizarListas === 'function') renderizarListas(sueldo, b);
     if (typeof dibujarGraficos === 'function') dibujarGraficos(sueldo, [...dataGraficos].sort((x,y) => x.fechaISO < y.fechaISO ? -1 : 1), gCat, diasCiclo, T0, tF, tInfra, tFlota, deudaAprox);
-    
+    // Inyección al nuevo KPI de Salida Total (Gasto Variable + Fijo)
+    const kpiSalida = document.getElementById('txtGastoTotalPeriodo');
+    if (kpiSalida) kpiSalida.innerText = '$' + (tO + tF).toLocaleString('es-CL');
     setTxt('txtGastoTramo', tO + tF);
     setTxt('txtPromedioZoom', Math.round((tO + tF) / diasCiclo));
 }
 
 if (typeof window.renderizarListas === 'undefined') {
     window.renderizarListas = function(sueldoBase, filtroBuscador) {
-        let datos = [...datosMesGlobal].filter(x => x.catV !== 'Gasto Tarjeta de Crédito'); 
-        if (filtroBuscador) datos = datos.filter(x => x.nombre?.toLowerCase().includes(filtroBuscador) || x.catV.toLowerCase().includes(filtroBuscador));
+    let datos = [...datosMesGlobal].filter(x => x.catV !== 'Gasto Tarjeta de Crédito'); 
+    if (filtroBuscador) datos = datos.filter(x => x.nombre?.toLowerCase().includes(filtroBuscador) || x.catV.toLowerCase().includes(filtroBuscador));
 
-        datos.sort((a, b) => {
-            let valA = a[currentSort.column], valB = b[currentSort.column];
-            if (currentSort.column === 'nombre' || currentSort.column === 'catV') { valA = valA?.toLowerCase() || ''; valB = valB?.toLowerCase() || ''; }
-            if (valA < valB) return currentSort.direction === 'asc' ? -1 : 1;
-            if (valA > valB) return currentSort.direction === 'asc' ? 1 : -1;
-            return 0;
-        });
+    // 1. PRE-PROCESO: Orden Cronológico Estricto (Obligatorio para matemáticas)
+    datos.sort((a, b) => new Date(a.fechaISO) - new Date(b.fechaISO));
 
-        let saldoRelativo = sueldoBase;
-        datos.forEach((x, idx) => {
-            if (x.esIn) saldoRelativo += x.monto; else if (!x.esNeutro) saldoRelativo -= x.monto;
-            x.saldoCalculadoVista = saldoRelativo;
-        });
+    // 2. CÁLCULO INTEGRAL: Saldo Histórico Real
+    let saldoRelativo = sueldoBase;
+    datos.forEach(x => {
+        if (x.esIn) saldoRelativo += x.monto; else if (!x.esNeutro) saldoRelativo -= x.monto;
+        x.saldoCalculadoVista = saldoRelativo;
+    });
 
-        const contenedorPC = document.getElementById('listaDetalle'); 
-        if (!contenedorPC) return;
+    // 3. ORDEN INTERFAZ: Aplicar la preferencia del usuario (Por defecto LIFO / fecha desc)
+    datos.sort((a, b) => {
+        let valA = a[currentSort.column], valB = b[currentSort.column];
+        if (currentSort.column === 'nombre' || currentSort.column === 'catV') { valA = valA?.toLowerCase() || ''; valB = valB?.toLowerCase() || ''; }
+        if (valA < valB) return currentSort.direction === 'asc' ? -1 : 1;
+        if (valA > valB) return currentSort.direction === 'asc' ? 1 : -1;
+        return 0;
+    });
 
-        if(datos.length === 0) {
-            contenedorPC.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:20px; color:var(--text-muted); font-family:monospace;">MATRIZ SIN DATOS</td></tr>`;
-            return;
-        }
+    const contenedorPC = document.getElementById('listaDetalle'); 
+    if (!contenedorPC) return;
 
-        let htmlPC = '';
-        let now = new Date(); now.setHours(0,0,0,0);
-        let yesterday = new Date(now); yesterday.setDate(yesterday.getDate() - 1);
+    if(datos.length === 0) {
+        contenedorPC.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:20px; color:var(--text-muted); font-family:monospace;">MATRIZ SIN DATOS</td></tr>`;
+        return;
+    }
 
-        datos.forEach((x) => {
-            const d = new Date(x.fechaISO);
-            let dClean = new Date(d); dClean.setHours(0,0,0,0);
-            const dateStr = d.toLocaleDateString('es-CL', {day:'2-digit', month:'2-digit'});
-            const timeStr = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+    let htmlPC = '';
+    datos.forEach((x) => {
+        const d = new Date(x.fechaISO);
+        const dateStr = d.toLocaleDateString('es-CL', {day:'2-digit', month:'2-digit'});
+        const timeStr = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
 
-            const colorMonto = x.esIn ? "var(--color-ingresos)" : x.esNeutro ? "#d29922" : "var(--text-main)";
-            const nombreSeguro = x.nombre || "Dato no identificado";
-            const montoSeguro = (typeof x.monto === 'number' && !isNaN(x.monto)) ? x.monto : 0;
-            const colorSaldo = x.saldoCalculadoVista < 0 ? 'var(--color-fuga)' : 'var(--text-muted)';
-            let iconImpacto = x.esIn ? `<span class="impact-icon impact-pos">+</span>` : x.esNeutro ? `<span class="impact-icon impact-neu">=</span>` : `<span class="impact-icon impact-neg">-</span>`;
-            
-            let editIdVal = document.getElementById('editId') ? document.getElementById('editId').value : '';
-            let esEditando = (editIdVal === x.firestoreId);
-            
-            let cssFuga = x.catV === 'Dopamina & Antojos' && !esEditando ? 'background: linear-gradient(90deg, rgba(255,255,255,0.01) 60%, rgba(255,82,82,0.15) 100%); border-right: 2px solid #ff5252;' : '';
-            let bgEdicion = esEditando ? 'background-color: rgba(210, 153, 34, 0.15); border-left: 3px solid var(--color-edit);' : cssFuga;
+        const colorMonto = x.esIn ? "var(--color-ingresos)" : x.esNeutro ? "#d29922" : "var(--text-main)";
+        const nombreSeguro = x.nombre || "Dato no identificado";
+        const montoSeguro = (typeof x.monto === 'number' && !isNaN(x.monto)) ? x.monto : 0;
+        const colorSaldo = x.saldoCalculadoVista < 0 ? 'var(--color-fuga)' : 'var(--text-muted)';
+        let iconImpacto = x.esIn ? `<span class="impact-icon impact-pos">+</span>` : x.esNeutro ? `<span class="impact-icon impact-neu">=</span>` : `<span class="impact-icon impact-neg">-</span>`;
+        
+        let editIdVal = document.getElementById('editId') ? document.getElementById('editId').value : '';
+        let esEditando = (editIdVal === x.firestoreId);
+        
+        let cssFuga = x.catV === 'Dopamina & Antojos' && !esEditando ? 'background: linear-gradient(90deg, rgba(255,255,255,0.01) 60%, rgba(255,82,82,0.15) 100%); border-right: 2px solid #ff5252;' : '';
+        let bgEdicion = esEditando ? 'background-color: rgba(210, 153, 34, 0.15); border-left: 3px solid var(--color-edit);' : cssFuga;
 
-            htmlPC += `<tr style="${bgEdicion}" draggable="true" ondragstart="dragStart(event, '${x.firestoreId}')" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dropRow(event, '${x.firestoreId}')">
-                <td style="text-align: center;"><input type="checkbox" class="row-check" value="${x.firestoreId}" onchange="updateMassActions()"></td>
-                <td style="font-size:0.75rem; color:var(--text-muted);">${dateStr} <span class="col-hora">${timeStr}</span></td>
-                <td class="col-desc" title="${nombreSeguro}">${nombreSeguro}</td>
-                <td style="font-size:0.7rem;"><span class="cat-badge">${x.catV.replace(' & ','&')}</span></td>
-                <td class="col-monto" style="color:${colorMonto};">${iconImpacto}$${montoSeguro.toLocaleString('es-CL')}</td>
-                <td class="col-monto hide-mobile" style="color:${colorSaldo}; font-size:0.75rem;">$${x.saldoCalculadoVista.toLocaleString('es-CL')}</td>
-                <td style="text-align:center;"><button class="btn-sys" style="padding:2px 6px; border:none; background:transparent; font-size:1rem;" onclick="editarMovimiento('${x.firestoreId}')">✏️</button></td>
-            </tr>`;
-        });
+        htmlPC += `<tr style="${bgEdicion}" draggable="true" ondragstart="dragStart(event, '${x.firestoreId}')" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dropRow(event, '${x.firestoreId}')">
+            <td style="text-align: center;"><input type="checkbox" class="row-check" value="${x.firestoreId}" onchange="updateMassActions()"></td>
+            <td style="font-size:0.75rem; color:var(--text-muted);">${dateStr} <span class="col-hora">${timeStr}</span></td>
+            <td class="col-desc" title="${nombreSeguro}">${nombreSeguro}</td>
+            <td style="font-size:0.7rem;"><span class="cat-badge">${x.catV.replace(' & ','&')}</span></td>
+            <td class="col-monto" style="color:${colorMonto};">${iconImpacto}$${montoSeguro.toLocaleString('es-CL')}</td>
+            <td class="col-monto hide-mobile" style="color:${colorSaldo}; font-size:0.75rem;">$${x.saldoCalculadoVista.toLocaleString('es-CL')}</td>
+            <td style="text-align:center;"><button class="btn-sys" style="padding:2px 6px; border:none; background:transparent; font-size:1rem;" onclick="editarMovimiento('${x.firestoreId}')">✏️</button></td>
+        </tr>`;
+    });
 
-        contenedorPC.innerHTML = htmlPC;
-    }
+    contenedorPC.innerHTML = htmlPC;
+}
 }
 
 function sortTable(column) {
