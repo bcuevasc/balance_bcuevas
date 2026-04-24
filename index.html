@@ -62,7 +62,19 @@ h2 { color: var(--text-main); margin: 0; font-size: 1.3rem; font-weight: 900; le
 .bd-overlay-kpis { position: absolute; top: 10px; width: calc(100% - 24px); display: flex; justify-content: space-between; z-index: 20; pointer-events: none;}
 .bd-badge { padding: 2px 8px; font-size: 0.65rem; font-weight: 900; color: var(--text-main); background: rgba(0,0,0,0.6); border-radius: 4px; border: 1px solid var(--border-color); backdrop-filter: blur(2px);}
 
-.command-ribbon { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; background: linear-gradient(90deg, var(--bg-panel) 0%, rgba(31, 111, 235, 0.08) 100%); border: 1px solid var(--border-color); border-left: 4px solid var(--color-edit); padding: 10px 15px; border-radius: 8px; flex-shrink: 0; box-shadow: 0 5px 20px rgba(0,0,0,0.3);}
+/* --- REDISEÑO DEL COMMAND RIBBON (PC) --- */
+.command-ribbon { display: flex; align-items: center; justify-content: space-between; background: linear-gradient(135deg, var(--bg-panel) 0%, rgba(31, 111, 235, 0.05) 100%); border: 1px solid var(--border-color); border-left: 4px solid var(--color-edit); padding: 12px 20px; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 8px 25px rgba(0,0,0,0.4); flex-shrink: 0; }
+.ribbon-config-zone { display: flex; gap: 15px; flex: 1; align-items: flex-end; }
+.ribbon-action-zone { display: flex; gap: 10px; align-items: flex-end; margin-left: 20px; padding-left: 20px; border-left: 1px dashed rgba(255,255,255,0.1); }
+.btn-ribbon { background: linear-gradient(90deg, #d29922, #e3a932); color: #000; border: none; border-radius: 8px; font-weight: 900; padding: 0 30px; height: 38px; cursor: pointer; text-transform: uppercase; font-size: 0.9rem; letter-spacing: 1px; box-shadow: 0 0 20px rgba(210, 153, 34, 0.3); transition: all 0.2s; }
+.btn-ribbon:hover { transform: translateY(-2px); box-shadow: 0 5px 25px rgba(210, 153, 34, 0.5); }
+.btn-ribbon:active { transform: translateY(1px); }
+
+/* --- ESTANQUE DÍA CERO: ESTIMADO VS REAL (AMBOS HTML) --- */
+/* Rayado tipo industrial para valores "Estimados" */
+.pv-fill-rojo.estimado { background: repeating-linear-gradient(45deg, #b71c1c, #b71c1c 10px, #ff5252 10px, #ff5252 20px); }
+.pv-fill-naranja.estimado { background: repeating-linear-gradient(45deg, #e65100, #e65100 10px, #ff9800 10px, #ff9800 20px); }
+.pv-fill-verde.estimado { background: repeating-linear-gradient(45deg, #1b5e20, #1b5e20 10px, #2ea043 10px, #2ea043 20px); }
 .ribbon-title { font-size: 0.7rem; font-weight: 900; color: var(--color-edit); text-transform: uppercase; letter-spacing: 1px; writing-mode: vertical-lr; transform: rotate(180deg); margin: 0 5px 0 0; text-align: center; text-shadow: 0 0 10px rgba(210, 153, 34, 0.5); display: flex; align-items: center; justify-content: center; }
 
 .form-group { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 120px; }
