@@ -361,6 +361,9 @@ function actualizarDashboard() {
     setTxt('txtCxC', tC); setTxt('txtSaldo', saldoAcc);
     setTxt('txtTotalInfra', tInfra); setTxt('txtTotalFlota', tFlota); 
     
+    // --- INYECCIÓN V15.1: CONEXIÓN SUELDO AL DASHBOARD MÓVIL ---
+    setTxt('txtSueldoDash', sueldo);
+    
     const diasCiclo = Math.max(1, Math.round((TFinal - T0) / 86400000));
     const hoy = new Date();
     let diasT = (hoy >= T0 && hoy <= TFinal) ? Math.max(Math.floor((hoy - T0) / 86400000) + 1, 1) : (hoy > TFinal ? diasCiclo : 0);
