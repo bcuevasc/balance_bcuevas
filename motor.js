@@ -324,32 +324,7 @@ function actualizarDashboard() {
     if(fHasta) { let [y,m,d] = fHasta.split('-'); TFinal = new Date(y, m-1, d, 23, 59, 59); }
     
     let dataMes = listaMovimientos.filter(x => { let d = new Date(x.fechaISO); return d >= T0 && d <= TFinal; });
-  // Enlace del Sueldo al Cuadro Principal
-const sueldo = inputSueldo && document.activeElement === inputSueldo ? parseInt(inputSueldo.value.replace(/\./g,'')) : obtenerSueldoMes(anioVal, mesVal);
-const setTxt = (id, val) => { const el = document.getElementById(id); if(el) el.innerText = val.toLocaleString('es-CL'); };
-
-setTxt('txtSueldoDash', sueldo); // Nuevo cable al Dashboard
-
-// Feedback de Sincronización
-window.triggerSync = function() {
-    const btn = event.currentTarget;
-    const originalText = btn.innerHTML;
-    btn.innerHTML = "⏳ SINCRONIZANDO...";
-    btn.style.opacity = "0.6";
-    
-    fetch("https://script.google.com/macros/s/AKfycbwKlub0qrv8_d24ZuyKKNryqOw1E68xv1_JvPOoEUc6W8TICllFfodNcwkigQE_7AuoNg/exec", {mode:'no-cors'})
-    .then(() => {
-        mostrarToast("SYNC COMPLETADA");
-        btn.innerHTML = "✅ SYNC EXITOSA";
-        setTimeout(() => { btn.innerHTML = originalText; btn.style.opacity = "1"; }, 2000);
-    })
-    .catch(e => {
-        btn.innerHTML = "❌ FALLA SYNC";
-        setTimeout(() => { btn.innerHTML = originalText; btn.style.opacity = "1"; }, 2000);
-    });
-}; 
-  
-  dataMes.forEach(x => {
+    dataMes.forEach(x => {
         x.catV = x.categoria || 'Sin Categoría';
         if (x.monto <= 1000 && x.catV === 'Sin Categoría') x.catV = "Ruido de Sistema";
         x.esIn = x.tipo === 'Ingreso' || x.catV === 'Transferencia Recibida' || x.catV === 'Ingreso Adicional';
