@@ -23,35 +23,12 @@ async function inicializarSensorDolar() {
 document.addEventListener("DOMContentLoaded", inicializarSensorDolar);
 
 // ==========================================================
-// 🧠 BÚNKER SCADA ORACLE - MOTOR LÓGICO COMPLETO V14.4
+// 🧠 BÚNKER SCADA ORACLE - MOTOR LÓGICO COMPLETO V15.2
 // ==========================================================
 const BYRON_EMAIL = "bvhcc94@gmail.com"; 
 const catEvitables = ["Dopamina & Antojos"]; 
 const SUELDO_BASE_DEFAULT = 3602505;
-// Enlace del Sueldo al Cuadro Principal
-const sueldo = inputSueldo && document.activeElement === inputSueldo ? parseInt(inputSueldo.value.replace(/\./g,'')) : obtenerSueldoMes(anioVal, mesVal);
-const setTxt = (id, val) => { const el = document.getElementById(id); if(el) el.innerText = val.toLocaleString('es-CL'); };
 
-setTxt('txtSueldoDash', sueldo); // Nuevo cable al Dashboard
-
-// Feedback de Sincronización
-window.triggerSync = function() {
-    const btn = event.currentTarget;
-    const originalText = btn.innerHTML;
-    btn.innerHTML = "⏳ SINCRONIZANDO...";
-    btn.style.opacity = "0.6";
-    
-    fetch("https://script.google.com/macros/s/AKfycbwKlub0qrv8_d24ZuyKKNryqOw1E68xv1_JvPOoEUc6W8TICllFfodNcwkigQE_7AuoNg/exec", {mode:'no-cors'})
-    .then(() => {
-        mostrarToast("SYNC COMPLETADA");
-        btn.innerHTML = "✅ SYNC EXITOSA";
-        setTimeout(() => { btn.innerHTML = originalText; btn.style.opacity = "1"; }, 2000);
-    })
-    .catch(e => {
-        btn.innerHTML = "❌ FALLA SYNC";
-        setTimeout(() => { btn.innerHTML = originalText; btn.style.opacity = "1"; }, 2000);
-    });
-};
 const diccAuto = [
     { keys: ["prestamo", "debe", "pagar dps", "por cobrar", "cuota de"], cat: "Cuentas por Cobrar (Activos)", tipo: "Por Cobrar", fuga: "0" },
     { keys: ["uber", "didi", "cabify", "pasaje", "buses", "turbus", "metro"], cat: "Transporte & Logística", tipo: "Gasto", fuga: "0" },
@@ -84,23 +61,7 @@ const catMaestras = [
     { id: "Ruido de Sistema", em: "⚙️", label: "Ruido de Sistema" },
     { id: "Sin Categoría", em: "❓", label: "Sin Categoría" }
 ];
-window.triggerSync = function() {
-    const btn = event.currentTarget;
-    const originalText = btn.innerHTML;
-    btn.innerHTML = "⏳ SINCRONIZANDO...";
-    btn.style.opacity = "0.6";
-    
-    fetch("https://script.google.com/macros/s/AKfycbwKlub0qrv8_d24ZuyKKNryqOw1E68xv1_JvPOoEUc6W8TICllFfodNcwkigQE_7AuoNg/exec", {mode:'no-cors'})
-    .then(() => {
-        mostrarToast("SYNC COMPLETADA");
-        btn.innerHTML = "✅ SYNC EXITOSA";
-        setTimeout(() => { btn.innerHTML = originalText; btn.style.opacity = "1"; }, 2000);
-    })
-    .catch(e => {
-        btn.innerHTML = "❌ FALLA SYNC";
-        setTimeout(() => { btn.innerHTML = originalText; btn.style.opacity = "1"; }, 2000);
-    });
-};
+
 const catEmojis = {}; const aliasMap = {}; 
 catMaestras.forEach(c => { catEmojis[c.id] = c.em; aliasMap[c.id] = c.label; });
 
@@ -400,8 +361,8 @@ function actualizarDashboard() {
     setTxt('txtCxC', tC); setTxt('txtSaldo', saldoAcc);
     setTxt('txtTotalInfra', tInfra); setTxt('txtTotalFlota', tFlota); 
     
-    // --- INYECCIÓN V15.1: CONEXIÓN SUELDO AL DASHBOARD MÓVIL ---
-    setTxt('txtSueldoDash', sueldo);
+    // --- INYECCIÓN V15.2: CONEXIÓN SUELDO AL DASHBOARD MÓVIL ---
+    setTxt('txtSueldoDash', sueldo); 
     
     const diasCiclo = Math.max(1, Math.round((TFinal - T0) / 86400000));
     const hoy = new Date();
@@ -889,9 +850,28 @@ document.addEventListener('dragend', (e) => { if(e.target.tagName === 'TR') e.ta
 // ☁️ SINC Y EXPORT
 // ==========================================
 window.triggerSync = function() {
-    fetch("https://script.google.com/macros/s/AKfycbwKlub0qrv8_d24ZuyKKNryqOw1E68xv1_JvPOoEUc6W8TICllFfodNcwkigQE_7AuoNg/exec", {mode:'no-cors'})
-    .then(()=>mostrarToast("SYNC COMPLETADA"))
-    .catch(e => alert("Error Net: " + e));
+    const btn = event.currentTarget;
+    if(btn) {
+        const originalText = btn.innerHTML;
+        btn.innerHTML = "⏳ SINCRONIZANDO...";
+        btn.style.opacity = "0.6";
+        
+        fetch("https://script.google.com/macros/s/AKfycbwKlub0qrv8_d24ZuyKKNryqOw1E68xv1_JvPOoEUc6W8TICllFfodNcwkigQE_7AuoNg/exec", {mode:'no-cors'})
+        .then(() => {
+            mostrarToast("SYNC COMPLETADA");
+            btn.innerHTML = "✅ SYNC EXITOSA";
+            setTimeout(() => { btn.innerHTML = originalText; btn.style.opacity = "1"; }, 2000);
+        })
+        .catch(e => {
+            btn.innerHTML = "❌ FALLA SYNC";
+            setTimeout(() => { btn.innerHTML = originalText; btn.style.opacity = "1"; }, 2000);
+        });
+    } else {
+        // Fallback si se llama sin evento
+        fetch("https://script.google.com/macros/s/AKfycbwKlub0qrv8_d24ZuyKKNryqOw1E68xv1_JvPOoEUc6W8TICllFfodNcwkigQE_7AuoNg/exec", {mode:'no-cors'})
+        .then(()=>mostrarToast("SYNC COMPLETADA"))
+        .catch(e => alert("Error Net: " + e));
+    }
 };
 
 window.exportarDataLink = function() {
@@ -1169,6 +1149,7 @@ function ejecutarArranque() {
         alert("No se inyectaron registros."); cerrarPreVuelo();
     }
 }
+
 // ==========================================
 // 💳 RENDERIZADOR MATRIZ TC (UNIFICADO PC/MÓVIL)
 // ==========================================
@@ -1282,9 +1263,13 @@ window.enviarReporteTelegram = async function() {
     */
 };
 
-function switchTabApp(tabId, element) {
+// ==========================================
+// 🔄 LÓGICA DE NAVEGACIÓN MÓVIL (PÍLDORA IG)
+// ==========================================
+window.switchTabApp = function(tabId, element) {
     document.querySelectorAll('.tab-content').forEach(d => { d.style.display = 'none'; });
-    document.getElementById('tab-' + tabId).style.display = 'block';
+    const tabTarget = document.getElementById('tab-' + tabId);
+    if(tabTarget) tabTarget.style.display = 'block';
     
     const highlighter = document.getElementById('nav-highlighter');
     if(element && highlighter) {
@@ -1300,6 +1285,15 @@ function switchTabApp(tabId, element) {
     }
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
+
+// Auto-Posicionar la píldora apenas carga la web
+window.addEventListener('load', () => {
+    setTimeout(() => {
+        const activeItem = document.querySelector('.nav-item.active');
+        if (activeItem) switchTabApp('dash', activeItem);
+    }, 150);
+});
+
 // ==========================================
 // 🛑 LISTENER DE EVASIÓN GLOBAL (TECLA ESC Y BACKDROP)
 // ==========================================
