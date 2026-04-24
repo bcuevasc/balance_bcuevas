@@ -109,7 +109,6 @@
 .pv-fill-rojo.estimado { background: repeating-linear-gradient(45deg, #b71c1c, #b71c1c 10px, #ff5252 10px, #ff5252 20px); }
 .pv-fill-naranja.estimado { background: repeating-linear-gradient(45deg, #e65100, #e65100 10px, #ff9800 10px, #ff9800 20px); }
 .pv-fill-verde.estimado { background: repeating-linear-gradient(45deg, #1b5e20, #1b5e20 10px, #2ea043 10px, #2ea043 20px); }
-        .slave-pill.green::before { background: var(--accent-green); box-shadow: 0 0 10px var(--accent-green); }
         .pv-input-group { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; background: var(--bg-card); padding: 12px 14px; border-radius: 12px; border: 1px solid var(--border-subtle); gap:10px;}
         .pv-input-group label { font-size: 0.8rem; font-weight: 800; color: var(--text-main); flex:1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
         .pv-input { background: var(--bg-elevated); border: 1px solid var(--border-subtle); color: white; padding: 10px; border-radius: 8px; font-family: monospace; font-size: 1.1rem; width: 135px; text-align: right; outline: none; font-weight: bold; transition: all 0.3s;}
@@ -155,11 +154,14 @@
             </div>
             
             <div class="slave-kpis">
-                <div class="slave-pill green" style="grid-column: span 2;">
-                    <div style="font-size:0.65rem; font-weight:800; color:var(--text-dim); text-transform:uppercase; letter-spacing: 1px;" data-en="Operating Base">Sueldo Base Operativo</div>
-                    <div style="color:var(--accent-green); font-size:1.8rem; font-weight:900; margin-top:5px; font-family:monospace; text-shadow: 0 0 20px rgba(46, 160, 67, 0.3);">$<span id="txtSueldoDash">0</span></div>
+                <div class="slave-pill purple">
+                    <div style="font-size:0.6rem; font-weight:800; color:var(--text-dim); text-transform:uppercase;" data-en="Real Estate">Infraestructura</div>
+                    <div style="color:var(--text-main); font-size:1.1rem; font-weight:900; margin-top:5px; font-family:monospace;">$<span id="txtTotalInfra">0</span></div>
                 </div>
-                
+                <div class="slave-pill cyan">
+                    <div style="font-size:0.6rem; font-weight:800; color:var(--text-dim); text-transform:uppercase;" data-en="Fleet & Mob.">Flota / Auto</div>
+                    <div style="color:var(--text-main); font-size:1.1rem; font-weight:900; margin-top:5px; font-family:monospace;">$<span id="txtTotalFlota">0</span></div>
+                </div>
                 <div class="slave-pill red">
                     <div style="font-size:0.6rem; font-weight:800; color:var(--text-dim); text-transform:uppercase;" data-en="Fixed Overhead">Carga Fija</div>
                     <div style="color:var(--text-main); font-size:1.1rem; font-weight:900; margin-top:5px; font-family:monospace;">$<span id="txtTotalFijos">0</span></div>
@@ -596,18 +598,6 @@
             if (currentIdx > 0) switchTabApp(tabsMap[currentIdx - 1], document.querySelectorAll('.nav-item')[currentIdx - 1]);
         }
     }
-// Evitar que el teclado nativo oculte el botón de inyección
-const inputMontoMovil = document.getElementById('inputMonto');
-if(inputMontoMovil) {
-    inputMontoMovil.addEventListener('focus', () => {
-        setTimeout(() => {
-            const btnInject = document.getElementById('btnGuardar');
-            btnInject.scrollIntoView({ behavior: "smooth", block: "center" });
-        }, 300); // Pequeño delay para dejar que el teclado suba
-    });
-}
 </script>
-
 </body>
-
 </html>
