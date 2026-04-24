@@ -1129,7 +1129,7 @@ function ejecutarArranque() {
 }
 
 // ==========================================
-// 🛑 LISTENER DE EVASIÓN GLOBAL (TECLA ESC)
+// 🛑 LISTENER DE EVASIÓN GLOBAL (TECLA ESC Y BACKDROP)
 // ==========================================
 document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
@@ -1139,4 +1139,15 @@ document.addEventListener('keydown', (e) => {
         if(typeof closeBottomSheet === 'function') closeBottomSheet();
         console.log("%c[SYS] COMANDO ESCAPE DETECTADO: CERRANDO VENTANAS", "color: #ff5252;");
     }
+});
+
+// Interlock para cierre al hacer clic fuera del área activa (backdrop)
+window.addEventListener('click', (e) => {
+    const modalPV = document.getElementById('modal-dia-cero');
+    const modalHist = document.getElementById('modal-historian');
+    const bottomSheetOverlay = document.getElementById('bottom-sheet-overlay');
+
+    if (e.target === modalPV) cerrarPreVuelo();
+    if (e.target === modalHist) modalHist.style.display = 'none';
+    if (e.target === bottomSheetOverlay && typeof closeBottomSheet === 'function') closeBottomSheet();
 });
