@@ -1,251 +1,430 @@
+=== INDEX ===
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Bunker Digital SCADA v16.5 PRO</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
-    <style>
-        :root { --bg-body: #030508; --bg-panel: #0d1117; --bg-subpanel: #161b22; --text-main: #e6edf3; --text-muted: #7d8590; --border-color: #21262d; --input-bg: #010409; --item-hover: #1c2128; --color-guardar: #1f6feb; --color-ingresos: #238636; --color-gastos: #da3633;  --color-saldo: #2ea043; --color-edit: #d29922; --color-fuga: #ff5252; --color-proyectado: #79c0ff; --color-infra: #a371f7; --color-flota: #00bcd4; }
-        * { box-sizing: border-box; transition: background-color 0.2s; font-family: 'Segoe UI', system-ui, sans-serif; }
-        body { background-color: var(--bg-body); background-image: radial-gradient(rgba(255,255,255,0.015) 1px, transparent 1px); background-size: 25px 25px; margin: 0; padding: 0; color: var(--text-main); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
-        .app-container { display: none; width: 100%; height: 100vh; padding: 10px; flex-direction: column; gap: 10px; margin: 0 auto; max-width: 2560px; overflow: hidden;}
-        .app-container.active-app { display: flex; }
-        
-        #login-screen { position: fixed; inset: 0; background: #030508; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10000; text-align: center; }
-        .login-box { padding: 40px; background: #0d1117; border: 1px solid var(--border-color); border-radius: 12px; box-shadow: 0 0 80px rgba(31, 111, 235, 0.15); }
-        .btn-google { background: #fff; color: #000; border: none; padding: 12px 24px; border-radius: 6px; font-weight: 900; cursor: pointer; margin-top: 20px; font-size: 1rem; }
-        
-        .header-titles { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 5px; flex-shrink: 0;}
-        h2 { color: var(--text-main); margin: 0; font-size: 1.3rem; font-weight: 900; letter-spacing: 2px; }
-        .scada-badge { background: linear-gradient(90deg, #1f6feb, #8c9eff); color: #fff; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; margin-left: 5px; font-family: monospace;}
-        .cronos { font-family: monospace; font-size: 0.9rem; font-weight: 900; color: var(--color-saldo); background: var(--input-bg); padding: 4px 12px; border-radius: 6px; border: 1px solid rgba(46, 160, 67, 0.3); }
-        .system-btns { display: flex; gap: 8px; align-items: center; }
-        .btn-sys { background: var(--bg-subpanel); color: var(--text-main); border: 1px solid var(--border-color); padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: 800; font-size: 0.7rem; text-transform: uppercase;}
-        
-        .time-navigator-panel { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 8px; padding: 6px 15px; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid var(--color-ingresos); flex-shrink: 0;}
-        .nav-select { background: var(--input-bg); color: var(--text-main); border: 1px solid var(--border-color); padding: 4px 12px; border-radius: 4px; font-weight: 800; text-transform: uppercase; font-size: 0.8rem; outline: none; cursor: pointer;}
-        .nav-badge { font-family: monospace; background: rgba(31, 111, 235, 0.1); color: #79c0ff; border: 1px solid rgba(31, 111, 235, 0.3); padding: 4px 10px; border-radius: 4px; font-size: 0.8rem; font-weight: 900; letter-spacing: 0.5px; }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Bunker Digital SCADA v13.0 (Global Edition)</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
+    
+    <style>
+:root { --bg-body: #030508; --bg-panel: #0d1117; --bg-subpanel: #161b22; --text-main: #e6edf3; --text-muted: #7d8590; --border-color: #21262d; --input-bg: #010409; --item-hover: #1c2128; --color-guardar: #1f6feb; --color-ingresos: #238636; --color-gastos: #da3633;  --color-saldo: #2ea043; --color-edit: #d29922; --color-fuga: #ff5252; --color-proyectado: #79c0ff; --color-telegram: #0088cc; --color-infra: #a371f7; --color-flota: #00bcd4; }
+body.light-theme { --bg-body: #f0f2f5; --bg-panel: #ffffff; --bg-subpanel: #f8f9fa; --text-main: #24292e; --text-muted: #57606a; --border-color: #d0d7de; --input-bg: #ffffff; --item-hover: #e1e4e8; }
+* { box-sizing: border-box; transition: background-color 0.3s, border-color 0.3s; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
 
-        .kpi-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; flex-shrink: 0; }
-        .kpi-card { padding: 10px 15px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-panel); border-top: 4px solid var(--border-color); box-shadow: 0 4px 10px rgba(0,0,0,0.2);}
-        .kpi-card h4 { margin: 0 0 5px 0; font-size: 0.65rem; text-transform: uppercase; color: var(--text-muted); font-weight: 900; letter-spacing: 0.5px;}
-        .kpi-card .value { margin: 0; font-size: 1.4rem; font-weight: 900; font-family: monospace; display: flex; align-items: center; }
-        .kpi-saldo { border-top-color: var(--color-saldo); background: rgba(46, 160, 67, 0.05); }
+body { background-color: var(--bg-body); background-image: radial-gradient(rgba(255,255,255,0.015) 1px, transparent 1px); background-size: 25px 25px; margin: 0; padding: 0; color: var(--text-main); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+.app-container { display: none; width: 100%; height: 100vh; padding: 10px; flex-direction: column; gap: 10px; margin: 0 auto; max-width: 2560px; overflow: hidden;}
+.app-container.active-app { display: flex; }
 
-        .charts-panorama { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; flex-shrink: 0; height: 260px; }
-        .chart-box { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; display: flex; flex-direction: column; position: relative; box-shadow: 0 4px 15px rgba(0,0,0,0.2);}
-        .chart-box h5 { margin: 0 0 8px 0; font-size: 0.7rem; color: var(--text-muted); text-align: center; font-weight: 900;}
-        .canvas-container { position: relative; flex-grow: 1; min-height: 0; width: 100%; }
+#login-screen { position: fixed; inset: 0; background: #030508; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10000; text-align: center; }
+.login-box { padding: 40px; background: #0d1117; border: 1px solid var(--border-color); border-radius: 12px; box-shadow: 0 0 80px rgba(31, 111, 235, 0.15); }
+.btn-google { background: #fff; color: #000; border: none; padding: 12px 24px; border-radius: 6px; font-weight: 900; cursor: pointer; display: flex; align-items: center; gap: 10px; margin-top: 20px; font-size: 1rem; }
 
-        .command-ribbon { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; background: var(--bg-panel); border: 1px solid var(--border-color); border-left: 4px solid var(--color-edit); padding: 10px 15px; border-radius: 8px; flex-shrink: 0; box-shadow: 0 5px 20px rgba(0,0,0,0.3);}
-        .form-control { background: var(--input-bg); color: var(--text-main); border: 1px solid var(--border-color); padding: 8px 10px; border-radius: 6px; font-size: 0.85rem; outline: none; height: 34px; }
-        .btn-ribbon { background: var(--color-edit); color: #000; border: none; border-radius: 6px; font-weight: 900; padding: 0 25px; height: 34px; cursor: pointer; text-transform: uppercase; font-size: 0.85rem; transition: transform 0.1s;}
-        .btn-ribbon:active { transform: scale(0.95); }
+.header-titles { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 5px; flex-shrink: 0;}
+h2 { color: var(--text-main); margin: 0; font-size: 1.3rem; font-weight: 900; letter-spacing: 2px; }
+.scada-badge { background: linear-gradient(90deg, #1f6feb, #8c9eff); color: #fff; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; vertical-align: top; margin-left: 5px; font-family: monospace; text-shadow: 0 2px 4px rgba(0,0,0,0.5);}
+.cronos { font-family: 'Courier New', Courier, monospace; font-size: 0.9rem; font-weight: 900; color: var(--color-saldo); background: var(--input-bg); padding: 4px 12px; border-radius: 6px; border: 1px solid rgba(46, 160, 67, 0.3); text-shadow: 0 0 10px rgba(46, 160, 67, 0.4);}
+.system-btns { display: flex; gap: 8px; align-items: center; }
+.btn-sys { background: var(--bg-subpanel); color: var(--text-main); border: 1px solid var(--border-color); padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: 800; font-size: 0.7rem; text-transform: uppercase; transition: all 0.2s;}
+.btn-sys:hover { border-color: var(--color-ingresos); background: rgba(31, 111, 235, 0.1); }
+.time-navigator-panel { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 8px; padding: 6px 15px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.4); border-left: 4px solid var(--color-ingresos); flex-shrink: 0;}
+.nav-select { background: var(--input-bg); color: var(--text-main); border: 1px solid var(--border-color); padding: 4px 12px; border-radius: 4px; font-weight: 800; text-transform: uppercase; font-size: 0.8rem; outline: none; cursor: pointer;}
+.nav-badge { font-family: monospace; background: rgba(31, 111, 235, 0.1); color: #79c0ff; border: 1px solid rgba(31, 111, 235, 0.3); padding: 4px 10px; border-radius: 4px; font-size: 0.8rem; font-weight: 900; letter-spacing: 0.5px; }
+@keyframes fadeSlideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        .dual-core { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; flex: 1 1 0px; min-height: 0; overflow: hidden; }
-        .core-panel { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 10px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 5px 25px rgba(0,0,0,0.2);}
-        .core-header { padding: 12px 15px; border-bottom: 1px solid var(--border-color); background: rgba(0,0,0,0.3); display: flex; justify-content: space-between; align-items: center;}
-        .core-title { font-size: 0.95rem; font-weight: 900; display: flex; align-items: center; gap: 8px;}
-        .core-body { flex: 1 1 0px; overflow-y: auto; }
+.kpi-row { display: grid; grid-template-columns: repeat(8, 1fr); gap: 10px; flex-shrink: 0; }
+.kpi-card { padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-panel); border-top: 3px solid var(--border-color); position: relative; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.2);}
+.kpi-card h4 { margin: 0 0 4px 0; font-size: 0.6rem; text-transform: uppercase; color: var(--text-muted); font-weight: 800; letter-spacing: 0.5px;}
+.kpi-card .value { margin: 0; font-size: 1.15rem; font-weight: 900; color: var(--text-main); font-family: monospace; display: flex; align-items: center; white-space: nowrap; overflow: hidden;}
+.kpi-card .value span { color: var(--text-muted); font-size: 0.95rem; margin-right: 2px;}
 
-        .data-grid { width: 100%; border-collapse: collapse; text-align: left; }
-        .data-grid th { position: sticky; top: 0; background: var(--bg-subpanel); padding: 12px 15px; font-size: 0.7rem; color: var(--text-muted); border-bottom: 2px solid var(--border-color); text-transform: uppercase; z-index: 10;}
-        .data-grid td { padding: 10px 15px; font-size: 0.85rem; border-bottom: 1px solid var(--border-color); vertical-align: middle;}
-        .data-grid tbody tr:hover { background-color: var(--item-hover); }
+.kpi-progress-container { width: 100%; height: 3px; background: rgba(255,255,255,0.05); margin-top: 6px; border-radius: 2px;}
+.kpi-progress-fill { height: 100%; width: 0%; transition: width 0.6s ease; border-radius: 2px;}
+.kpi-saldo { background: rgba(46, 160, 67, 0.05); border-color: rgba(46, 160, 67, 0.4); border-top: 3px solid var(--color-saldo);}
+.kpi-saldo h4 { color: var(--color-saldo); }
+.kpi-saldo .value { text-shadow: 0 0 15px rgba(46, 160, 67, 0.4); }
+.kpi-proyectado { background: rgba(121, 192, 255, 0.05); border-color: rgba(121, 192, 255, 0.4); border-top: 3px solid #79c0ff;}
+.kpi-proyectado h4 { color: #79c0ff; }
 
-        .modal-base { position: fixed; inset: 0; background: rgba(3,5,8,0.95); z-index: 20000; display: none; align-items: center; justify-content: center; backdrop-filter: blur(10px); }
-        .modal-container { position: relative; background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 16px; width: 100%; max-width: 900px; display: flex; flex-direction: column; border-top: 4px solid #ff9800; box-shadow: 0 0 50px rgba(255, 152, 0, 0.2); max-height: 95vh;}
-        .btn-close-modal { position: absolute; top: 15px; right: 15px; background: transparent; border: 1px solid var(--border-color); color: var(--text-muted); border-radius: 50%; width: 30px; height: 30px; cursor: pointer; font-weight: 900; }
-        .btn-close-modal:hover { color: var(--color-fuga); border-color: var(--color-fuga); }
-        
-        .pv-header { padding: 15px; text-align: center; border-bottom: 1px solid var(--border-color); background: rgba(0,0,0,0.3);}
-        .pv-body { padding: 15px; overflow-y: auto; }
-        .pv-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; }
-        .pv-section { background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; }
-        .pv-input-group { display: flex; justify-content: space-between; margin-bottom: 8px; align-items: center; gap: 5px;}
-        .pv-input-group label { font-size: 0.65rem; font-weight: 700; color: var(--text-muted); flex:1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
-        .pv-input { background: var(--input-bg); border: 1px solid var(--border-color); color: white; padding: 6px 8px; border-radius: 4px; font-family: monospace; width: 120px; text-align: right; outline: none; font-weight: bold;}
-        .btn-estado { width: 28px; height: 28px; border-radius: 4px; border: 1px solid var(--border-color); background: var(--bg-panel); color: var(--text-muted); cursor: pointer; font-weight: bold; flex-shrink: 0;}
-        .btn-estado.real { color: #79c0ff; border-color: rgba(31, 111, 235, 0.6); background: rgba(31, 111, 235, 0.2); }
-        .btn-estado.pag { color: #2ea043; border-color: rgba(46, 160, 67, 0.6); background: rgba(46, 160, 67, 0.2); }
-        .pv-input.pagado { text-decoration: line-through; color: var(--text-muted); background: transparent; border-color: transparent;}
-        .floating-mass-actions { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #1c2128; border: 1px solid var(--color-edit); border-radius: 50px; padding: 8px 20px; display: flex; align-items: center; gap: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); z-index: 9999; }
-    </style>
+.charts-panorama { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; flex-shrink: 0; height: 280px; }
+.chart-box { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px 12px 6px 12px; display: flex; flex-direction: column; position: relative; box-shadow: 0 4px 15px rgba(0,0,0,0.2);}
+.chart-box h5 { margin: 0 0 8px 0; font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; font-weight: 900; z-index: 10; text-align: center;}
+.canvas-container { position: relative; flex-grow: 1; min-height: 0; width: 100%; }
+.bd-overlay-kpis { position: absolute; top: 12px; width: calc(100% - 24px); display: flex; justify-content: space-between; z-index: 20; pointer-events: none;}
+.bd-badge { padding: 2px 8px; font-size: 0.65rem; font-weight: 900; color: var(--text-main); background: rgba(0,0,0,0.6); border-radius: 4px; border: 1px solid var(--border-color); backdrop-filter: blur(2px);}
+
+.command-ribbon { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; background: linear-gradient(90deg, var(--bg-panel) 0%, rgba(31, 111, 235, 0.08) 100%); border: 1px solid var(--border-color); border-left: 4px solid var(--color-edit); padding: 10px 15px; border-radius: 8px; flex-shrink: 0; box-shadow: 0 5px 20px rgba(0,0,0,0.3);}
+.ribbon-title { font-size: 0.7rem; font-weight: 900; color: var(--color-edit); text-transform: uppercase; letter-spacing: 1px; writing-mode: vertical-lr; transform: rotate(180deg); margin: 0 5px 0 0; text-align: center; text-shadow: 0 0 10px rgba(210, 153, 34, 0.5); display: flex; align-items: center; justify-content: center; }
+
+.form-group { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 120px; }
+.form-group.sm { flex: 0.5; min-width: 80px; }
+.form-group.lg { flex: 2; min-width: 200px; }
+.form-group label { font-size: 0.6rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;}
+.form-control { background: var(--input-bg); color: var(--text-main); border: 1px solid var(--border-color); padding: 8px 10px; border-radius: 6px; font-size: 0.85rem; outline: none; width: 100%; height: 34px; font-family: 'Segoe UI', sans-serif;}
+.form-control:focus { border-color: var(--color-edit); box-shadow: 0 0 0 1px var(--color-edit); }
+.btn-ribbon { background: var(--color-edit); color: #000; border: none; border-radius: 6px; font-weight: 900; padding: 0 25px; height: 34px; cursor: pointer; text-transform: uppercase; font-size: 0.85rem; transition: transform 0.1s, box-shadow 0.2s; white-space: nowrap; box-shadow: 0 0 15px rgba(210, 153, 34, 0.4);}
+.btn-ribbon:active { transform: scale(0.95); }
+
+.dual-core { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; flex: 1 1 0px; min-height: 0; overflow: hidden; }
+.core-panel { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 10px; display: flex; flex-direction: column; overflow: hidden; position: relative; box-shadow: 0 5px 25px rgba(0,0,0,0.2);}
+.core-header { padding: 12px 15px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.3); }
+.core-title { font-size: 0.95rem; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; gap: 8px;}
+.core-body { flex: 1 1 0px; overflow-y: auto; overflow-x: hidden; padding: 0; scrollbar-width: thin; scrollbar-color: var(--border-color) var(--bg-body); }
+
+.data-grid { width: 100%; border-collapse: collapse; text-align: left; }
+.data-grid th { position: sticky; top: 0; background: var(--bg-subpanel); padding: 10px 12px; font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; z-index: 10; border-bottom: 2px solid var(--border-color); letter-spacing: 0.5px; cursor: pointer; }
+.data-grid td { padding: 8px 12px; font-size: 0.8rem; border-bottom: 1px solid var(--border-color); vertical-align: middle; }
+.data-grid tbody tr:nth-child(odd) { background-color: rgba(255,255,255,0.01); }
+.data-grid tbody tr:hover { background-color: var(--item-hover); }
+.col-monto { text-align: right; font-family: monospace; font-weight: bold; font-size: 0.9rem; }
+.col-hora { font-size: 0.65rem; color: var(--text-muted); margin-left: 5px; }
+.col-desc { color: var(--text-main); font-weight: 600; }
+.cat-badge { font-size: 0.65rem; padding: 3px 8px; border-radius: 4px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: var(--text-muted); font-weight: 600;}
+.impact-icon { font-weight: 900; margin-right: 5px; }
+
+.fugas-mini-kpi { display: flex; align-items: center; gap: 10px; background: var(--input-bg); border: 1px solid var(--border-color); padding: 6px 12px; border-radius: 20px; box-shadow: inset 0 0 10px rgba(0,0,0,0.5);}
+.fugas-mini-kpi span { font-size: 0.7rem; font-weight: 800; color: var(--text-muted); }
+.fugas-mini-kpi strong { font-size: 0.85rem; font-weight: 900; color: var(--color-fuga); font-family: monospace; text-shadow: 0 0 10px rgba(255, 82, 82, 0.4);}
+
+.tc-impact-box { background: rgba(255, 82, 82, 0.1); border: 1px solid rgba(255, 82, 82, 0.4); border-radius: 6px; padding: 6px 15px; display: flex; gap: 15px; align-items: center; box-shadow: 0 0 15px rgba(255, 82, 82, 0.15); border-left: 4px solid var(--color-fuga);}
+.tc-impact-box span { font-size: 0.75rem; font-weight: 900; color: var(--color-fuga); text-transform: uppercase; letter-spacing: 1px;}
+.tc-impact-box strong { font-size: 1.1rem; font-family: monospace; font-weight: 900; color: var(--color-fuga); text-shadow: 0 0 10px rgba(255, 82, 82, 0.4);}
+
+.floating-mass-actions { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #1c2128; border: 1px solid var(--color-edit); border-radius: 50px; padding: 8px 20px; display: flex; align-items: center; gap: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); z-index: 9999; }
+
+#modal-historian { position: fixed; inset: 0; background: rgba(3, 5, 8, 0.95); z-index: 25000; display: none; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(10px); padding: 20px; }
+.hist-box { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 12px; width: 100%; max-width: 600px; box-shadow: 0 0 40px rgba(255, 82, 82, 0.2); overflow: hidden; border-top: 4px solid #ff5252; display: flex; flex-direction: column; max-height: 85vh;}
+.hist-header { padding: 15px 20px; background: rgba(0,0,0,0.3); border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;}
+.hist-body { padding: 20px; overflow-y: auto; flex-grow: 1;}
+
+.log-item { display: flex; gap: 15px; padding: 15px; border-radius: 12px; margin-bottom: 12px; background: rgba(255,255,255,0.02); border: 1px solid transparent; align-items: center; }
+.log-icon { font-size: 1.8rem; background: rgba(0,0,0,0.2); width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; border-radius: 50%; flex-shrink: 0;}
+.log-content { flex: 1; line-height: 1.3; }
+.log-content strong { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; }
+.log-content div.log-date { font-size: 0.75rem; color: var(--text-muted); margin-bottom: 4px; }
+.log-content span { font-family: monospace; font-size: 1.2rem; font-weight: 900; }
+.log-item.critical { border-color: rgba(255,82,82,0.4); background: linear-gradient(90deg, rgba(255,82,82,0.05), transparent); }
+.log-item.critical strong, .log-item.critical span { color: #ff5252; }
+.log-item.warning { border-color: rgba(255,152,0,0.4); background: linear-gradient(90deg, rgba(255,152,0,0.05), transparent); }
+.log-item.warning strong, .log-item.warning span { color: #ff9800; }
+
+/* MÓDULO PRE-VUELO V13.0 */
+#modal-dia-cero { position: fixed; inset: 0; background: rgba(3, 5, 8, 0.95); z-index: 20000; display: none; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(10px); padding: 10px; }
+.pv-container { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 16px; width: 100%; max-width: 900px; max-height: 95vh; box-shadow: 0 0 50px rgba(255, 152, 0, 0.2); display: flex; flex-direction: column; border-top: 4px solid #ff9800; }
+.pv-header { padding: 15px 20px; text-align: center; border-bottom: 1px solid var(--border-color); background: rgba(0,0,0,0.3); flex-shrink:0;}
+.pv-title { font-size: 1.3rem; font-weight: 900; color: #ff9800; letter-spacing: 2px; margin: 0; text-transform: uppercase; }
+.pv-subtitle { font-size: 0.75rem; color: var(--text-muted); font-family: monospace; margin-top: 4px; }
+.pv-tank-wrapper { padding: 15px 20px; border-bottom: 1px solid var(--border-color); flex-shrink:0;}
+.pv-tank-label { display: flex; justify-content: space-between; font-weight: 900; font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px; }
+.pv-tank { width: 100%; height: 35px; background: rgba(255,255,255,0.05); border-radius: 20px; overflow: hidden; display: flex; border: 1px solid var(--border-color); box-shadow: inset 0 0 15px rgba(0,0,0,0.5); }
+.pv-fill-rojo { background: linear-gradient(90deg, #b71c1c, #ff5252); height: 100%; transition: width 0.4s ease; }
+.pv-fill-naranja { background: linear-gradient(90deg, #e65100, #ff9800); height: 100%; transition: width 0.4s ease; }
+.pv-fill-verde { background: linear-gradient(90deg, #1b5e20, #2ea043); height: 100%; transition: width 0.4s ease; box-shadow: 0 0 20px rgba(46, 160, 67, 0.5); }
+.pv-liquidez-text { text-align: center; font-size: 2.5rem; font-weight: 900; color: var(--color-saldo); font-family: monospace; margin-top: 10px; text-shadow: 0 0 15px rgba(46, 160, 67, 0.4); }
+.pv-certeza { font-size: 0.7rem; font-weight: bold; color: var(--text-muted); text-align: center; margin-top: 8px; text-transform: uppercase; letter-spacing: 1px;}
+.pv-body { padding: 15px 20px; overflow-y: auto; flex-grow:1;}
+.pv-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; }
+.pv-section { background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; }
+.pv-section-title { font-size: 0.7rem; font-weight: 900; text-transform: uppercase; margin-bottom: 10px; border-bottom: 1px solid var(--border-color); padding-bottom: 5px; color: var(--text-main); display:flex; align-items:center; gap:5px;}
+.pv-input-group { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; gap: 5px;}
+.pv-input-group label { font-size: 0.65rem; font-weight: 700; color: var(--text-muted); flex:1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
+.pv-input { background: var(--bg-elevated); border: 1px solid var(--border-subtle); color: white; padding: 10px; border-radius: 8px; font-family: monospace; font-size: 1.1rem; width: 135px; text-align: right; outline: none; font-weight: bold; transition: all 0.3s;}
+.pv-input:focus { border-color: #ff9800; }
+.pv-input.pagado { text-decoration: line-through; color: var(--text-muted); background: transparent; border-color: transparent;}
+
+.btn-estado { width: 28px; height: 28px; border-radius: 4px; border: 1px solid var(--border-color); background: var(--bg-panel); color: var(--text-muted); font-size: 0.7rem; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; font-weight: bold; flex-shrink: 0;}
+.btn-estado.est { border-color: rgba(255, 152, 0, 0.4); color: #ff9800; background: rgba(255, 152, 0, 0.1); }
+.btn-estado.real { border-color: rgba(31, 111, 235, 0.6); color: #79c0ff; background: rgba(31, 111, 235, 0.2); box-shadow: 0 0 8px rgba(31, 111, 235, 0.3);}
+.btn-estado.pag { border-color: rgba(46, 160, 67, 0.6); color: #2ea043; background: rgba(46, 160, 67, 0.2); box-shadow: 0 0 8px rgba(46, 160, 67, 0.3);}
+
+.pv-footer { padding: 15px 20px; display: flex; gap: 15px; background: rgba(0,0,0,0.3); border-top: 1px solid var(--border-color); flex-shrink:0;}
+.btn-pv-close { flex: 1; padding: 12px; background: transparent; border: 1px solid var(--text-muted); color: var(--text-muted); border-radius: 8px; font-weight: 900; cursor: pointer; text-transform: uppercase; font-size:0.9rem;}
+.btn-pv-launch { flex: 2; padding: 12px; background: #ff9800; color: #000; border: none; border-radius: 8px; font-weight: 900; font-size: 1rem; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 0 15px rgba(255, 152, 0, 0.4); transition: transform 0.1s; }
+.btn-pv-launch:active { transform: scale(0.98); }
+    </style>
 </head>
 <body>
 
 <div id="login-screen">
-    <div class="login-box">
-        <h2 style="color:var(--color-proyectado); font-weight:900; font-size: 2rem;">BÚNKER SCADA</h2>
-        <p style="color:var(--text-muted); font-size:0.85rem; letter-spacing: 2px;">V16.5 PRO</p>
-        <button class="btn-google" onclick="window.loginWithGoogle()">INICIAR ENLACE NEURAL</button>
-    </div>
+    <div class="login-box">
+        <h2 style="color:var(--color-proyectado); margin-bottom:10px; font-size: 2rem;">BÚNKER SCADA</h2>
+        <p style="color:var(--text-muted); font-size:0.85rem; letter-spacing: 2px;">VERSIÓN 13.0 (GLOBAL EDITION)</p>
+        <button class="btn-google" onclick="loginWithGoogle()">INICIAR ENLACE NEURAL</button>
+    </div>
 </div>
 
 <div class="app-container" id="reportZone">
-    <div class="header-titles">
-        <div style="display:flex; align-items:center;">
-            <h2>BUNKER SCADA <span class="scada-badge">V16.5 PRO</span></h2>
-            <div id="user-display" style="margin-left: 15px; font-size: 0.75rem; color: var(--color-saldo); font-weight:800; text-transform:uppercase;"></div>
-        </div>
-        <div class="system-btns">
-            <div id="cronos" class="cronos">--:--:--</div>
-            <button class="btn-sys" onclick="window.enviarReporteTelegram()" style="color:#0088cc;">✈️ TELEGRAM</button>
-            <button class="btn-sys" onclick="window.abrirHistorian()" style="color:#ff5252;">⚠️ LOG</button>
-            <button class="btn-sys" onclick="window.abrirPreVuelo()" style="color:#ff9800;">🚀 PRE-VUELO</button>
-            <button class="btn-sys" onclick="window.logout()" style="color:var(--color-fuga);">🚪 SALIR</button>
-        </div>
-    </div>
+    <div class="header-titles">
+        <div style="display:flex; align-items:center;">
+            <h2>BUNKER SCADA <span class="scada-badge">V13.0</span></h2>
+            <div id="user-display" style="margin-left: 15px; font-size: 0.75rem; color: var(--color-saldo); font-weight:800; text-transform:uppercase;"></div>
+        </div>
+        <div class="system-btns">
+            <div id="cronos" class="cronos">--:--:--</div>
+            <button class="btn-sys" onclick="toggleLanguage()" style="color:#79c0ff; border-color:rgba(121,192,255,0.4);">🌐 ENG</button>
+            <button class="btn-sys" onclick="abrirHistorian()" style="color:#ff5252; border-color:rgba(255,82,82,0.4);">⚠️ LOG</button>
+            <button class="btn-sys" onclick="abrirPreVuelo()" style="color:#ff9800; border-color:rgba(255,152,0,0.4); background:rgba(255,152,0,0.1);" data-en="🚀 PRE-FLIGHT">🚀 PRE-VUELO</button>
+            <button class="btn-sys" onclick="toggleTheme()">☀️/🌙</button>
+            <button class="btn-sys" onclick="logout()" style="color:var(--color-fuga); border-color:rgba(255,82,82,0.3);" data-en="🚪 LOGOUT">🚪 SALIR</button>
+        </div>
+    </div>
 
-    <div style="display: flex; gap: 10px; flex-shrink: 0;">
-        <div class="time-navigator-panel">
-            <div style="display: flex; gap: 8px;">
-                <select id="navAnio" class="nav-select" onchange="window.aplicarCicloAlSistema()"><option value="2025">2025</option><option value="2026" selected>2026</option></select>
-                <select id="navMesConceptual" class="nav-select" onchange="window.aplicarCicloAlSistema()" style="color: var(--color-ingresos);"><option value="0">Enero</option><option value="1">Febrero</option><option value="2">Marzo</option><option value="3" selected>Abril</option><option value="4">Mayo</option><option value="5">Junio</option><option value="6">Julio</option><option value="7">Agosto</option><option value="8">Septiembre</option><option value="9">Octubre</option><option value="10">Noviembre</option><option value="11">Diciembre</option></select>
-            </div>
-            <div id="navRangoBadge" class="nav-badge">--/-- al --/--</div>
-        </div>
+    <div style="display: flex; gap: 10px; flex-shrink: 0;">
+        <div class="time-navigator-panel">
+            <div style="display: flex; gap: 8px;">
+                <select id="navAnio" class="nav-select" onchange="aplicarCicloAlSistema()"><option value="2025">2025</option><option value="2026" selected>2026</option></select>
+                <select id="navMesConceptual" class="nav-select" onchange="aplicarCicloAlSistema()" style="color: var(--color-ingresos);"><option value="0">Enero</option><option value="1">Febrero</option><option value="2">Marzo</option><option value="3" selected>Abril</option><option value="4">Mayo</option><option value="5">Junio</option><option value="6">Julio</option><option value="7">Agosto</option><option value="8">Septiembre</option><option value="9">Octubre</option><option value="10">Noviembre</option><option value="11">Diciembre</option></select>
+            </div>
+            <div id="navRangoBadge" class="nav-badge" style="margin-left: 10px;">--/-- al --/--</div>
+        </div>
 
-        <div class="kpi-row" style="flex: 1;">
-            <div class="kpi-card"><h4>Sueldo Base</h4><div class="value"><span>$</span><input type="text" id="inputSueldo" oninput="window.formatearEntradaNumerica(this); window.actualizarDashboard();" onchange="window.guardarSueldoEnNube()" style="background:transparent; border:none; color:var(--text-main); font-weight:900; width:100%; outline:none; font-family:monospace;"></div></div>
-            <div class="kpi-card" style="border-top-color: var(--color-infra);"><h4>Estructural (Fijos)</h4><div class="value">$<span id="txtTotalFijos">0</span></div></div>
-            <div class="kpi-card" style="border-top-color: var(--color-edit);"><h4>Gasto Variable</h4><div class="value">$<span id="txtTotalOtros">0</span></div></div>
-            <div class="kpi-card kpi-saldo"><h4>Balance Líquido</h4><div class="value">$<span id="txtSaldo">0</span></div></div>
-            <div class="kpi-card" style="border-top-color: #79c0ff;"><h4>Proyectado Cierre</h4><div class="value">$<span id="txtProyectado">0</span></div></div>
-        </div>
-    </div>
+        <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px; padding-right: 10px; border-right: 1px solid var(--border-color); margin-right: 10px; justify-content: center;">
+            <span id="lblPeriodoViendo" style="font-size:0.55rem; color:var(--text-muted); font-weight:900; text-transform:uppercase; letter-spacing:1px;" data-en="FULL PERIOD">PERIODO COMPLETO</span>
+            <div style="display: flex; align-items: center;">
+                <button id="btnToggleFechas" class="btn-sys" style="border-style: dashed;" onclick="document.getElementById('cajaFechasCustom').style.display='flex'; this.style.display='none';" data-en="📅 CUSTOM RANGE">📅 RANGO CUSTOM</button>
+                <div id="cajaFechasCustom" style="display: none; align-items: center; gap: 5px; animation: fadeSlideUp 0.3s;">
+                    <input type="date" id="filtroDesde" class="nav-select" onchange="document.getElementById('lblPeriodoViendo').innerText= isEng ? 'CUSTOM RANGE' : 'RANGO PERSONALIZADO'; actualizarDashboard();">
+                    <input type="date" id="filtroHasta" class="nav-select" onchange="document.getElementById('lblPeriodoViendo').innerText= isEng ? 'CUSTOM RANGE' : 'RANGO PERSONALIZADO'; actualizarDashboard();">
+                    <button class="btn-sys" onclick="document.getElementById('filtroDesde').value=''; document.getElementById('filtroHasta').value=''; document.getElementById('lblPeriodoViendo').innerText= isEng ? 'FULL PERIOD' : 'PERIODO COMPLETO'; document.getElementById('cajaFechasCustom').style.display='none'; document.getElementById('btnToggleFechas').style.display='block'; actualizarDashboard();" style="border-color:var(--color-fuga); color:var(--color-fuga); padding: 4px 8px;">✖</button>
+                </div>
+            </div>
+        </div>
 
-    <div class="charts-panorama">
-        <div class="chart-box"><h5>TRAYECTORIA (BURN-RATE)</h5><div class="canvas-container"><canvas id="chartBurnDown"></canvas></div></div>
-        <div class="chart-box"><h5>PULSO VITAL DIARIO</h5><div class="canvas-container"><canvas id="chartDiario"></canvas></div></div>
-        <div class="chart-box"><h5>ESPECTRO CATEGÓRICO</h5><div class="canvas-container"><canvas id="chartPareto"></canvas></div></div>
-        <div class="chart-box" style="border-color: rgba(255, 82, 82, 0.3);"><h5>HORIZONTE DE DEUDA TC</h5><div class="canvas-container"><canvas id="chartRadar"></canvas></div></div>
-    </div>
+        <div class="kpi-row" style="flex: 1;">
+            <div class="kpi-card" style="border-top-color: var(--border-color);"><h4 data-en="Base Salary">Sueldo Base</h4><div class="value"><span>$</span><input type="text" id="inputSueldo" oninput="formatearEntradaNumerica(this); actualizarDashboard();" onchange="guardarSueldoEnNube()" style="background:transparent; border:none; color:var(--text-main); font-weight:900; width:100%; font-size:1.15rem; outline:none; font-family: monospace; padding:0; min-width: 0;"></div></div>
+            <div class="kpi-card" style="border-top-color: var(--border-color);"><h4 data-en="Extra Income">Ingresos Extra</h4><div class="value" style="color:var(--color-ingresos);">$<span id="txtTotalIngresos">0</span></div></div>
+            <div class="kpi-card" style="border-top-color: var(--color-infra);"><h4 style="color:var(--color-infra);" data-en="Real Estate">Infraestructura</h4><div class="value">$<span id="txtTotalInfra">0</span></div></div>
+            <div class="kpi-card" style="border-top-color: var(--color-flota);"><h4 style="color:var(--color-flota);" data-en="Fleet & Mobility">Flota / Auto</h4><div class="value">$<span id="txtTotalFlota">0</span></div></div>
+            <div class="kpi-card" style="border-top-color: var(--color-fuga);"><h4 data-en="Overhead (Fixed)">Carga Fija</h4><div class="value">$<span id="txtTotalFijos">0</span></div><div class="kpi-progress-container"><div id="barFijos" class="kpi-progress-fill" style="background:var(--color-fuga); box-shadow: 0 0 8px var(--color-fuga);"></div></div></div>
+            <div class="kpi-card" style="border-top-color: #d29922;"><h4 data-en="Variable Burn">Carga Variable</h4><div class="value">$<span id="txtTotalOtros">0</span></div><div class="kpi-progress-container"><div id="barOtros" class="kpi-progress-fill" style="background:#d29922; box-shadow: 0 0 8px #d29922;"></div></div></div>
+            <div class="kpi-card kpi-saldo" id="cardBalanceReal">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <h4 data-en="Net Balance">Balance Real</h4>
+                    <div id="badgeDias" style="font-size: 0.6rem; background: rgba(0,0,0,0.4); padding: 2px 4px; border-radius: 4px; font-weight: 800; color: var(--color-saldo); border: 1px solid rgba(46,160,67,0.3);">-- DÍAS</div>
+                </div>
+                <div class="value" style="margin-top:2px;">$<span id="txtSaldo">0</span></div>
+            </div>
+            <div class="kpi-card kpi-proyectado" id="cardProyectado"><h4 data-en="Projected Close">Saldo + TC (Cierre)</h4><div class="value">$<span id="txtProyectado">0</span></div></div>
+        </div>
+    </div>
 
-    <div class="command-ribbon">
-        <button class="btn-sys" style="color:#79c0ff; border-color:rgba(121, 192, 255, 0.4);" onclick="window.aplicarMacro('cajero')">🏧 CAJERO</button>
-        <button class="btn-sys" style="color:var(--color-saldo); border-color:rgba(46, 160, 67, 0.4);" onclick="window.aplicarMacro('super')">🛒 SUPER</button>
-        <button class="btn-sys" style="color:var(--color-fuga); border-color:rgba(255, 82, 82, 0.4);" onclick="window.aplicarMacro('antojo')">🍔 ANTOJO</button>
-        <div style="flex:1;"></div>
-        
-        <input type="datetime-local" id="inputFecha" class="form-control" style="width:180px;">
-        <select id="inputTipo" class="form-control" style="width:120px; display:none;"><option value="Gasto">Gasto Var.</option><option value="Gasto Fijo">Gasto Fijo</option><option value="Ingreso">Ingreso</option><option value="Por Cobrar">Préstamo</option><option value="Ahorro">Ahorro</option></select>
-        <select id="inputCategoria" class="form-control" style="width:200px;"></select>
-        <select id="inputFuga" class="form-control" style="width:80px; display:none;"><option value="100">100</option><option value="0" selected>0</option></select>
-        <input type="text" id="inputNombre" class="form-control" placeholder="Descripción..." style="flex:2;" autocomplete="off">
-        <input type="text" id="inputMonto" class="form-control" placeholder="$ 0" style="width:120px; color:var(--color-edit); font-weight:bold;" oninput="window.formatearEntradaNumerica(this)">
-        <input type="hidden" id="editId">
-        <button class="btn-ribbon" onclick="window.agregarMovimiento()">INYECTAR</button>
-    </div>
+    <div class="charts-panorama">
+        <div class="chart-box">
+            <div class="bd-overlay-kpis">
+                <div class="bd-badge">G: <span id="txtGastoTramo" style="color:var(--color-fuga)">$0</span></div>
+                <div class="bd-badge">P: <span id="txtPromedioZoom" style="color:#d29922">$0</span></div>
+            </div>
+            <h5 data-en="BURN-RATE TRAJECTORY">TRAYECTORIA (BURN-RATE)</h5>
+            <div class="canvas-container"><canvas id="chartBurnDown"></canvas></div>
+        </div>
+        <div class="chart-box"><h5 data-en="VITAL PULSE (BASE VS LEAK)">PULSO VITAL (BASE VS FUGA)</h5><div class="canvas-container"><canvas id="chartDiario"></canvas></div></div>
+        <div class="chart-box"><h5 data-en="CATEGORICAL SPECTRUM">ESPECTRO CATEGÓRICO</h5><div class="canvas-container"><canvas id="chartPareto"></canvas></div></div>
+        <div class="chart-box" style="border-color: rgba(255, 82, 82, 0.3); box-shadow: 0 0 20px rgba(255, 82, 82, 0.05);"><h5 data-en="TC LIABILITY HORIZON">HORIZONTE DE DEUDA TC</h5><div class="canvas-container"><canvas id="chartRadar"></canvas></div></div>
+    </div>
 
-    <div class="dual-core">
-        <div class="core-panel" id="panelMain">
-            <div class="core-header">
-                <div class="core-title"><span style="color:var(--color-saldo);">●</span> LIBRO DIARIO</div>
-                <div style="display:flex; gap:10px; align-items:center;">
-                    <span style="font-size:0.7rem; color:var(--text-muted); font-weight:bold;">FUGAS: <span id="txtTotalEvitable" style="color:var(--color-fuga);">0</span></span>
-                    <button class="btn-sys" onclick="window.exportarDataLink()">📥 EXPORTAR</button>
-                </div>
-            </div>
-            <div style="padding: 6px 12px; background: rgba(0,0,0,0.3); border-bottom: 1px solid var(--border-color);">
-                <input type="text" id="inputBuscador" class="form-control" placeholder="🔍 Buscar..." oninput="window.renderizarListas(window.obtenerSueldoMes(parseInt(document.getElementById('navAnio').value), parseInt(document.getElementById('navMesConceptual').value)))" style="width: 100%; max-width: 350px; height: 28px; background: var(--bg-panel);">
-            </div>
-            <div class="core-body">
-                <table class="data-grid">
-                    <thead><tr><th style="width: 30px;"><input type="checkbox" id="checkAll" onchange="window.toggleAllChecks()"></th><th>Fecha</th><th>Descripción</th><th>Categoría</th><th style="text-align:right;">Monto</th><th style="text-align:right;">Saldo</th><th></th></tr></thead>
-                    <tbody id="listaDetalle"></tbody>
-                </table>
-            </div>
-        </div>
+    <div class="command-ribbon">
+        <div class="ribbon-title">CMD</div>
+        <input type="hidden" id="editId">
+        <div class="form-group sm"><label data-en="Date">Fecha</label><input type="datetime-local" id="inputFecha" class="form-control"></div>
+        <div class="form-group sm"><label data-en="Flow Type">Tipo Flujo</label>
+            <select id="inputTipo" class="form-control">
+                <option value="Gasto">Gasto Variable</option><option value="Gasto Fijo">Gasto Fijo</option><option value="Ingreso">Ingreso Extra</option><option value="Por Cobrar">Préstamo (CxC)</option><option value="Ahorro">Ahorro / Neutro</option>
+            </select>
+        </div>
+        <div class="form-group"><label data-en="Category">Categoría V31.4</label><select id="inputCategoria" class="form-control"></select></div>
+        <div class="form-group sm" id="boxFuga"><label data-en="% Leak">% Fuga</label>
+            <select id="inputFuga" class="form-control">
+                <option value="100">100%</option><option value="90">90%</option><option value="80">80%</option><option value="50">50%</option><option value="0" selected>0%</option>
+            </select>
+        </div>
+        <div class="form-group sm" id="boxCuotas" style="display:none;"><label data-en="Installments">Cuotas</label>
+            <select id="inputCuotas" class="form-control" style="border-color:var(--color-ingresos);"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="6">6</option><option value="12">12</option></select>
+        </div>
+        <div class="form-group lg"><label data-en="Description">Descripción</label><input type="text" id="inputNombre" class="form-control" placeholder="[ AUTO-PILOTO M/L ] Ingresa gasto..."></div>
+        <div class="form-group sm"><label data-en="Amount ($)">Monto ($)</label><input type="text" id="inputMonto" class="form-control" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this)" style="color:var(--color-edit); font-weight:bold; font-size:1rem;"></div>
+        <button id="btnGuardar" class="btn-ribbon" onclick="agregarMovimiento()" data-en="INJECT">INYECTAR</button>
+    </div>
 
-        <div class="core-panel" id="panelTC" style="border-color: rgba(255, 82, 82, 0.2);">
-            <div class="core-header" style="background: rgba(255, 82, 82, 0.08); border-bottom-color: rgba(255, 82, 82, 0.2);">
-                <div class="core-title"><span style="color:var(--color-fuga);">●</span> MATRIZ TC</div>
-                <div style="display:flex; gap:10px; align-items:center;">
-                    <div style="font-size:1.2rem; font-weight:900; color:var(--color-fuga); font-family:monospace;">$<span id="txtTotalTC">0</span></div>
-                    <button class="btn-sys" onclick="window.cargarCSV_TC()" style="background:var(--color-fuga); color:white; border:none;">💳 INGESTAR</button>
-                </div>
-            </div>
-            <div style="padding: 12px; border-bottom: 1px solid rgba(255, 82, 82, 0.2); background: rgba(0,0,0,0.2);">
-                <div id="barraAccionesTC" style="display:none; background: #b71c1c; color: white; padding: 8px 15px; border-radius: 6px; justify-content: space-between; align-items: center; margin-top: 8px;">
-                    <span id="txtSeleccionadosTC" style="font-weight: 900; font-size: 0.8rem;">0 SEL</span>
-                    <button onclick="window.ejecutarPurgaMasivaTC()" style="background: white; color: #b71c1c; border: none; padding: 6px 15px; border-radius: 4px; font-weight: 900; cursor: pointer; font-size: 0.75rem;">🗑️ PURGAR</button>
-                </div>
-            </div>
-            <div class="core-body">
-                <table class="data-grid">
-                    <thead style="background: rgba(255, 82, 82, 0.05);"><tr><th style="width: 30px;"><input type="checkbox" id="checkMaestroTC" onclick="window.toggleTodosTC(this)"></th><th>Ciclo</th><th>Comercio</th><th style="text-align:right;">Cuota ($)</th></tr></thead>
-                    <tbody id="listaDetalleTC"></tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-    
-    <div id="massActionsBar" class="floating-mass-actions" style="display: none;">
-        <span id="massCount" style="font-weight:900; font-size:0.85rem;">0 SEL</span>
-        <select id="massCategorySelect" class="form-control" style="width:220px; border-color:var(--color-edit);"></select>
-        <button class="btn-sys" style="background:var(--color-edit); color:#000; font-weight:900;" onclick="window.massCategorize()">MUTE/CAT</button>
-        <button class="btn-sys" style="background:rgba(255,82,82,0.2); border-color:var(--color-fuga); font-size:1.1rem; color:var(--color-fuga);" onclick="window.massDelete()">🗑️</button>
-    </div>
+    <div class="dual-core">
+        <div class="core-panel" id="panelMain" ondragover="dragOverPanel(event, 'main')" ondragleave="dragLeavePanel(event, 'main')" ondrop="dropOnPanel(event, 'main')">
+            <div class="core-header">
+                <div class="core-title"><span style="color:var(--color-saldo); text-shadow: 0 0 8px var(--color-saldo);">●</span> <span data-en="PRESENT FLOW (LEDGER)">FLUJO PRESENTE (LIBRO DIARIO)</span></div>
+                <div style="display: flex; gap: 15px; align-items: center;">
+                    <div class="fugas-mini-kpi" title="Eficiencia de Gasto">
+                        <span data-en="SYSTEM LEAKS:">FUGAS DE SISTEMA:</span><strong id="txtTotalEvitable">0</strong>
+                        <span style="margin-left: 5px;">(<span id="txtPorcentajeFugas" style="color:var(--color-fuga); font-weight:bold;">0%</span>)</span>
+                    </div>
+                    <button class="btn-sys" onclick="let b=this; b.innerHTML='⏳...'; b.style.opacity='0.7'; exportarDataLink(); setTimeout(()=>{b.innerHTML='📥 DATA-LINK'; b.style.opacity='1';}, 2000)" style="background:var(--accent-blue); color:#fff; border:none; transition:all 0.2s;" data-en="📥 DATA-LINK">📥 DATA-LINK</button>
+                </div>
+            </div>
+            <div style="padding: 6px 12px; background: rgba(0,0,0,0.3); border-bottom: 1px solid var(--border-color);">
+                <input type="text" id="inputBuscador" class="form-control" placeholder="🔍 Buscar en la matriz diaria..." oninput="actualizarDashboard()" style="width: 100%; max-width: 350px; height: 28px; background: var(--bg-panel);">
+            </div>
+            <div class="core-body">
+                <table id="tablaGastos" class="data-grid">
+                    <thead>
+                        <tr>
+                            <th style="width: 30px; text-align: center;"><input type="checkbox" id="checkAll" onchange="toggleAllChecks()"></th>
+                            <th onclick="sortTable('fechaISO')" data-en="Date">Fecha</th>
+                            <th onclick="sortTable('nombre')" data-en="Description">Descripción</th>
+                            <th onclick="sortTable('catV')" data-en="Category">Categoría</th>
+                            <th onclick="sortTable('monto')" style="text-align: right;" data-en="Amount ($)">Monto ($)</th>
+                            <th style="text-align: right;" data-en="Hist. Balance">Saldo Hist.</th>
+                            <th style="text-align: center; width: 40px;">CMD</th>
+                        </tr>
+                    </thead>
+                    <tbody id="listaDetalle"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="core-panel" id="panelTC" style="border-color: rgba(255, 82, 82, 0.2); box-shadow: inset 0 0 30px rgba(255, 82, 82, 0.02);" ondragover="dragOverPanel(event, 'tc')" ondragleave="dragLeavePanel(event, 'tc')" ondrop="dropOnPanel(event, 'tc')">
+            <div class="core-header" style="background: rgba(255, 82, 82, 0.08); border-bottom-color: rgba(255, 82, 82, 0.2);">
+                <div class="core-title"><span style="color:var(--color-fuga); text-shadow: 0 0 8px var(--color-fuga);">●</span> <span data-en="TC LIABILITIES MATRIX">MATRIZ DE DEUDA TC</span></div>
+                <div style="display: flex; gap: 12px; align-items: center;">
+                    <div style="font-size:1.2rem; font-weight:900; color:var(--color-fuga); font-family: monospace; text-shadow: 0 0 10px rgba(255, 82, 82, 0.3);">$<span id="txtTotalTC">0</span></div>
+                    <button class="btn-sys" onclick="cargarCSV_TC()" style="background-color: var(--color-fuga); color: white; border: none; box-shadow: 0 0 10px rgba(255, 82, 82, 0.4);" data-en="💳 INGEST">💳 INGESTAR</button>
+                </div>
+            </div>
+            
+            <div style="padding: 12px; border-bottom: 1px solid rgba(255, 82, 82, 0.2); background: rgba(0,0,0,0.2);">
+                <div id="boxImpactoTC" class="tc-impact-box" style="display:none;">
+                    <span id="lblImpactoMes" data-en="⚠️ NEXT MONTH IMPACT ALARM">⚠️ ALARMA DE IMPACTO PRÓX. MES</span>
+                    <strong id="txtImpactoMonto">$0</strong>
+                    <div style="flex:1;"></div>
+                    <button class="btn-sys" onclick="exportarTablaBunker('tablaCuotas', 'Bunker_Proyeccion_TC')" style="border-color: var(--color-fuga); color: var(--color-fuga); background: transparent; padding: 4px 10px;" data-en="📥 EXPORT">📥 EXPORTAR</button>
+                </div>
+                
+                <div id="barraAccionesTC" style="display:none; background: #b71c1c; color: white; padding: 8px 15px; border-radius: 6px; justify-content: space-between; align-items: center; margin-top: 8px; box-shadow: 0 4px 15px rgba(183, 28, 28, 0.4);">
+                    <span id="txtSeleccionadosTC" style="font-weight: 900; font-size: 0.8rem; letter-spacing: 1px;">0 SELECCIONADAS</span>
+                    <button onclick="ejecutarPurgaMasivaTC()" style="background: white; color: #b71c1c; border: none; padding: 6px 15px; border-radius: 4px; font-weight: 900; cursor: pointer; font-size: 0.75rem; text-transform: uppercase;">🗑️ PURGAR MATRIZ</button>
+                </div>
+            </div>
+
+            <div class="core-body">
+                <table id="tablaCuotas" class="data-grid">
+                    <thead style="background: rgba(255, 82, 82, 0.05);">
+                        <tr>
+                            <th style="width: 30px; text-align: center;"><input type="checkbox" id="checkMaestroTC" onclick="toggleTodosTC(this)" style="accent-color: #ff5252;"></th>
+                            <th data-en="Cycle/Inst.">Ciclo/Cuota</th>
+                            <th data-en="Merchant">Comercio Asociado</th>
+                            <th style="text-align: right;" data-en="Amount ($)">Cuota ($)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="listaDetalleTC"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <div id="massActionsBar" class="floating-mass-actions" style="display: none;">
+        <span id="massCount" style="font-weight:900; font-size:0.85rem; letter-spacing: 0.5px;">0 SEL</span>
+        <select id="massCategorySelect" class="form-control" style="width:220px; height: 30px; border-color:var(--color-edit);"></select>
+        <button class="btn-sys" style="background:var(--color-edit); color:#000; font-weight:900;" onclick="massCategorize()">MUTE/CAT</button>
+        <button class="btn-sys" style="background:rgba(255,82,82,0.2); border-color:var(--color-fuga); font-size:1.1rem; color:var(--color-fuga);" onclick="massDelete()">🗑️</button>
+    </div>
 </div>
 
-<div id="modal-historian" class="modal-base">
-    <div class="modal-container" style="max-width: 600px;">
-        <button class="btn-close-modal" onclick="document.getElementById('modal-historian').style.display='none'">X</button>
-        <div style="padding: 15px 20px; background: rgba(0,0,0,0.3); border-bottom: 1px solid var(--border-color);"><h3 style="color:#ff5252; margin:0;">⚠️ HISTORIAN LOG</h3></div>
-        <div id="historian-content" style="padding: 20px; overflow-y: auto; max-height: 60vh;"></div>
-    </div>
+<div id="modal-historian" style="display:none; position:fixed; inset:0; background:rgba(3, 5, 8, 0.95); z-index:25000; flex-direction:column; align-items:center; justify-content:center; backdrop-filter:blur(10px); padding:20px;">
+    <div class="hist-box">
+        <div class="hist-header">
+            <h3 style="color:#ff5252; margin:0; display:flex; align-items:center; gap:10px;"><span style="font-size:1.5rem;">⚠️</span> HISTORIAN LOG</h3>
+            <button class="btn-sys" onclick="document.getElementById('modal-historian').style.display='none'" style="border-color:var(--text-muted);">✖ CLOSE</button>
+        </div>
+        <div class="hist-body" id="historian-content"></div>
+    </div>
 </div>
 
-<div id="modal-dia-cero" class="modal-base">
-    <div class="modal-container">
-        <button class="btn-close-modal" onclick="window.cerrarPreVuelo()">X</button>
-        <div class="pv-header"><h2 style="color:#ff9800; margin:0;">SIMULADOR DÍA CERO</h2><div style="font-size:0.75rem; color:var(--text-muted); margin-top:5px;">MES DE <span id="pv-mes-label" style="color:#fff;">--</span></div></div>
-        <div style="padding:20px; text-align:center;"><div style="font-size:3.5rem; font-weight:900; color:var(--color-saldo); font-family:monospace;">$<span id="pv-txt-liquidez">0</span></div></div>
-        <div class="pv-body">
-            <div class="pv-grid">
-                <div class="pv-section">
-                    <div style="color:#ff5252; font-weight:bold; margin-bottom:10px; font-size:0.8rem;">💳 CRÍTICAS</div>
-                    <div class="pv-input-group"><label style="color:var(--color-saldo);">Sueldo</label><input type="text" id="pv-sueldo" class="pv-input" style="color:var(--color-saldo); border-color:var(--color-saldo);" oninput="window.formatearEntradaNumerica(this); window.calcularDiaCero();"></div>
-                    <div class="pv-input-group"><label>TC Nac</label><button class="btn-estado est" onclick="window.toggleEstadoPV(this, 'pv-tc-nac')">EST</button><input type="text" id="pv-tc-nac" class="pv-input" style="color:#ff5252;" oninput="window.formatearEntradaNumerica(this); window.calcularDiaCero();"></div>
-                    <div style="display:flex; flex-direction:column; background: var(--bg-panel); border-radius: 8px; border: 1px solid rgba(255,82,82,0.3); margin-bottom: 8px; padding: 10px;">
-                        <div style="display: flex; align-items: center; justify-content: space-between; gap:5px;">
-                            <div style="flex:1;"><label style="font-size: 0.65rem; font-weight: 700;">TC Int (USD)</label><span id="lbl-dolar-actual" style="display:block; font-size:0.6rem; color:var(--text-muted); font-family:monospace;">USD...</span></div>
-                            <button class="btn-estado est" onclick="window.toggleEstadoPV(this, 'pv-tc-int')">EST</button>
-                            <input type="text" id="pv-tc-int" class="pv-input" style="color:#ff5252; width:80px;" placeholder="US$ 0" data-estado="est" oninput="window.formatearEntradaNumerica(this); window.calcularDiaCero();">
-                        </div>
-                        <div id="pv-tc-int-clp" style="text-align:right; font-size:0.8rem; color:#ff5252; font-family:monospace; font-weight:900; margin-top:5px; border-top: 1px dashed rgba(255,82,82,0.3); padding-top: 5px;">~ $0 CLP</div>
-                    </div>
-                    <div class="pv-input-group"><label>Línea</label><button class="btn-estado est" onclick="window.toggleEstadoPV(this, 'pv-linea')">EST</button><input type="text" id="pv-linea" class="pv-input" style="color:#ff5252;" oninput="window.formatearEntradaNumerica(this); window.calcularDiaCero();"></div>
-                </div>
-                <div class="pv-section">
-                    <div style="color:var(--color-infra); font-weight:bold; margin-bottom:10px; font-size:0.8rem;">🏢 ESTRUCTURAL</div>
-                    <div class="pv-input-group"><label>Arriendo</label><button class="btn-estado est" onclick="window.toggleEstadoPV(this, 'pv-arriendo')">EST</button><input type="text" id="pv-arriendo" class="pv-input" value="330.000" oninput="window.formatearEntradaNumerica(this); window.calcularDiaCero();"></div>
-                    <div class="pv-input-group"><label>UDEC</label><button class="btn-estado est" onclick="window.toggleEstadoPV(this, 'pv-udec')">EST</button><input type="text" id="pv-udec" class="pv-input" value="48.000" oninput="window.formatearEntradaNumerica(this); window.calcularDiaCero();"></div>
-                    <div class="pv-input-group"><label>CAE</label><button class="btn-estado est" onclick="window.toggleEstadoPV(this, 'pv-cae')">EST</button><input type="text" id="pv-cae" class="pv-input" value="38.742" oninput="window.formatearEntradaNumerica(this); window.calcularDiaCero();"></div>
-                </div>
-                <div class="pv-section">
-                    <div style="color:#d29922; font-weight:bold; margin-bottom:10px; font-size:0.8rem;">⚡ SERVICIOS</div>
-                    <div class="pv-input-group"><label>GGCC</label><button class="btn-estado est" onclick="window.toggleEstadoPV(this, 'pv-ggcc')">EST</button><input type="text" id="pv-ggcc" class="pv-input" value="63.220" oninput="window.formatearEntradaNumerica(this); window.calcularDiaCero();"></div>
-                    <div class="pv-input-group"><label>Luz</label><button class="btn-estado est" onclick="window.toggleEstadoPV(this, 'pv-luz')">EST</button><input type="text" id="pv-luz" class="pv-input" value="20.000" oninput="window.formatearEntradaNumerica(this); window.calcularDiaCero();"></div>
-                    <div class="pv-input-group"><label>Agua</label><button class="btn-estado est" onclick="window.toggleEstadoPV(this, 'pv-agua')">EST</button><input type="text" id="pv-agua" class="pv-input" value="8.000" oninput="window.formatearEntradaNumerica(this); window.calcularDiaCero();"></div>
-                    <div class="pv-input-group"><label>Gas</label><button class="btn-estado est" onclick="window.toggleEstadoPV(this, 'pv-gas')">EST</button><input type="text" id="pv-gas" class="pv-input" value="0" oninput="window.formatearEntradaNumerica(this); window.calcularDiaCero();"></div>
-                </div>
-                <div class="pv-section">
-                    <div style="color:#79c0ff; font-weight:bold; margin-bottom:10px; font-size:0.8rem;">📱 COMPLEMENTOS</div>
-                    <div class="pv-input-group"><label>Celu Mio</label><button class="btn-estado est" onclick="window.toggleEstadoPV(this, 'pv-celu')">EST</button><input type="text" id="pv-celu" class="pv-input" value="13.990" oninput="window.formatearEntradaNumerica(this); window.calcularDiaCero();"></div>
-                    <div class="pv-input-group"><label>Movi Madre</label><button class="btn-estado est" onclick="window.toggleEstadoPV(this, 'pv-madre')">EST</button><input type="text" id="pv-madre" class="pv-input" value="19.290" oninput="window.formatearEntradaNumerica(this); window.calcularDiaCero();"></div>
-                    <div class="pv-input-group"><label>Pack Subs</label><button class="btn-estado est" onclick="window.toggleEstadoPV(this, 'pv-subs')">EST</button><input type="text" id="pv-subs" class="pv-input" value="20.540" oninput="window.formatearEntradaNumerica(this); window.calcularDiaCero();"></div>
-                    <div class="pv-input-group"><label>Seguro Auto</label><button class="btn-estado est" onclick="window.toggleEstadoPV(this, 'pv-seguro')">EST</button><input type="text" id="pv-seguro" class="pv-input" value="38.300" oninput="window.formatearEntradaNumerica(this); window.calcularDiaCero();"></div>
-                </div>
-            </div>
-        </div>
-        <div style="padding:15px; background:rgba(0,0,0,0.2);"><button class="btn-sys" style="width:100%; padding:15px; background:#ff9800; color:black; border:none; font-size:1rem;" onclick="window.ejecutarArranque()">EFECTUAR ARRANQUE (INYECTAR MATRIZ)</button></div>
-    </div>
+<div id="modal-dia-cero">
+    <div class="pv-container">
+        <div class="pv-header">
+            <h2 class="pv-title" data-en="DAY ZERO SIMULATOR">SIMULADOR DÍA CERO</h2>
+            <div class="pv-subtitle" data-en="FEEDFORWARD CONTROL FOR">CONTROL PREALIMENTADO DE LIQUIDEZ MES DE <span id="pv-mes-label" style="color:#fff; font-weight:bold;">--</span></div>
+        </div>
+        
+        <div class="pv-tank-wrapper">
+            <div class="pv-tank-label">
+                <span data-en="Hard Deductions">Deducciones Duras</span>
+                <span data-en="Net Maneuver Liquidity">Liquidez Neta de Maniobra</span>
+            </div>
+            <div class="pv-tank">
+                <div id="pv-barra-roja" class="pv-fill-rojo" style="width: 0%;"></div>
+                <div id="pv-barra-naranja" class="pv-fill-naranja" style="width: 0%;"></div>
+                <div id="pv-barra-verde" class="pv-fill-verde" style="width: 100%;"></div>
+            </div>
+            <div class="pv-liquidez-text">$<span id="pv-txt-liquidez">0</span></div>
+            <div class="pv-certeza" id="pv-certeza-container">CERTEZA DEL CÁLCULO: <span id="pv-certeza-pct" style="color:#ff5252;">0%</span></div>
+        </div>
+
+        <div class="pv-body">
+            <div class="pv-grid">
+                <div class="pv-section">
+                    <div class="pv-section-title" style="color:#ff5252;"><span style="font-size:1rem;">💳</span> Deducciones Críticas</div>
+                    <div class="pv-input-group" style="background:rgba(46,160,67,0.1); border-color:var(--color-saldo);">
+                        <label style="color:var(--color-saldo);">Sueldo (Ingreso)</label>
+                        <input type="text" id="pv-sueldo" class="pv-input" style="color:var(--color-saldo); border-color:var(--color-saldo);" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();">
+                    </div>
+                    <div class="pv-input-group">
+                        <label>TC Nacional</label>
+                        <button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-tc-nac')">EST</button>
+                        <input type="text" id="pv-tc-nac" class="pv-input" style="color:#ff5252;" placeholder="0" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();">
+                    </div>
+                    
+                    <div style="display:flex; flex-direction:column; width:100%; background: var(--bg-card); border-radius: 12px; border: 1px solid rgba(255,82,82,0.3); margin-bottom: 10px; padding: 12px 14px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+                        <div style="display: flex; align-items: center; justify-content: space-between; gap:10px;">
+                            <div style="flex:1;">
+                                <label style="font-size: 0.8rem; font-weight: 900; color: var(--text-main); text-transform: uppercase;">TC Internacional</label>
+                                <span id="lbl-dolar-actual" style="display:block; font-size:0.65rem; color:var(--text-muted); font-family:monospace; margin-top:4px;">Consultando USD...</span>
+                            </div>
+                            <button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-tc-int')">EST</button>
+                            <input type="text" id="pv-tc-int" class="pv-input" style="color:#ff5252; width:100px;" placeholder="US$ 0" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();">
+                        </div>
+                        <div id="pv-tc-int-clp" style="text-align:right; font-size:0.85rem; color:#ff5252; font-family:monospace; font-weight:900; margin-top:10px; border-top: 1px dashed rgba(255,82,82,0.3); padding-top: 10px;">~ $0 CLP</div>
+                    </div>
+
+                    <div class="pv-input-group">
+                        <label>Línea de Crédito</label>
+                        <button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-linea')">EST</button>
+                        <input type="text" id="pv-linea" class="pv-input" style="color:#ff5252;" placeholder="0" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();">
+                    </div>
+                </div>
+
+                <div class="pv-section">
+                    <div class="pv-section-title" style="color:var(--color-infra);"><span style="font-size:1rem;">🏢</span> Carga Estructural</div>
+                    <div class="pv-input-group"><label>Arriendo</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-arriendo')">EST</button><input type="text" id="pv-arriendo" class="pv-input" value="330.000" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
+                    <div class="pv-input-group"><label>UDEC 2024</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-udec')">EST</button><input type="text" id="pv-udec" class="pv-input" value="48.000" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
+                    <div class="pv-input-group"><label>CAE</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-cae')">EST</button><input type="text" id="pv-cae" class="pv-input" value="38.742" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
+                </div>
+
+                <div class="pv-section">
+                    <div class="pv-section-title" style="color:#d29922;"><span style="font-size:1rem;">⚡</span> Serv. Básicos Hogar</div>
+                    <div class="pv-input-group"><label>Gastos Comunes</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-ggcc')">EST</button><input type="text" id="pv-ggcc" class="pv-input" value="63.220" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
+                    <div class="pv-input-group"><label>Luz</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-luz')">EST</button><input type="text" id="pv-luz" class="pv-input" value="20.000" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
+                    <div class="pv-input-group"><label>Agua</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-agua')">EST</button><input type="text" id="pv-agua" class="pv-input" value="8.000" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
+                    <div class="pv-input-group"><label>Gas</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-gas')">EST</button><input type="text" id="pv-gas" class="pv-input" value="0" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
+                </div>
+
+                <div class="pv-section">
+                    <div class="pv-section-title" style="color:#79c0ff;"><span style="font-size:1rem;">📱</span> Op. Complementaria</div>
+                    <div class="pv-input-group"><label>Celu Mio</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-celu')">EST</button><input type="text" id="pv-celu" class="pv-input" value="13.990" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
+                    <div class="pv-input-group"><label>Movistar Madre</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-madre')">EST</button><input type="text" id="pv-madre" class="pv-input" value="19.290" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
+                    <div class="pv-input-group" title="YT Premium, Disney, Icloud, Google, Spotify, HBO"><label>Pack Subs</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-subs')">EST</button><input type="text" id="pv-subs" class="pv-input" value="20.540" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
+                    <div class="pv-input-group"><label>Seguro Auto</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-seguro')">EST</button><input type="text" id="pv-seguro" class="pv-input" value="38.300" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="pv-footer">
+            <button class="btn-pv-close" onclick="cerrarPreVuelo()" data-en="ABORT">ABORTAR</button>
+            <button class="btn-pv-launch" onclick="ejecutarArranque()" data-en="EXECUTE LAUNCH (INJECT MATRIX)">EFECTUAR ARRANQUE (INYECTAR MATRIZ)</button>
+        </div>
+    </div>
 </div>
 
 <script src="motor.js"></script>
