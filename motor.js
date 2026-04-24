@@ -1127,7 +1127,118 @@ function ejecutarArranque() {
         alert("No se inyectaron registros."); cerrarPreVuelo();
     }
 }
+// ==========================================
+// 💳 RENDERIZADOR MATRIZ TC (UNIFICADO PC/MÓVIL)
+// ==========================================
+window.renderizarTablaTC = function() {
+    let htmlMovil = ''; let htmlPC = '';
+    let sumaProximoMes = 0; let fechaHoy = new Date();
+    let proximoMes = fechaHoy.getMonth() + 1; let proximoAnio = fechaHoy.getFullYear();
+    if (proximoMes > 11) { proximoMes = 0; proximoAnio++; }
 
+    const tbodyMovil = document.getElementById("listaMovilTC");
+    const tbodyPC = document.getElementById("listaDetalleTC");
+
+    if (datosTCGlobal.length === 0) {
+        if (tbodyMovil) tbodyMovil.innerHTML = `<div style="text-align:center; padding: 40px 20px; color: var(--text-dim);"><i>📡</i><br>MATRIZ TC SIN DATOS</div>`;
+        if (tbodyPC) tbodyPC.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:20px; color:var(--text-muted); font-family:monospace;">MATRIZ SIN DATOS</td></tr>`;
+        let boxImpacto = document.getElementById('boxImpactoTC'); if(boxImpacto) boxImpacto.style.display = 'none';
+        return;
+    }
+
+    datosTCGlobal.forEach(doc => {
+        let fechaObj = new Date(doc.mesCobro);
+        let mesTxt = fechaObj.toLocaleString('es-CL', { month: 'short', year: 'numeric' }).toUpperCase();
+        
+        if (fechaObj.getMonth() === proximoMes && fechaObj.getFullYear() === proximoAnio) sumaProximoMes += doc.monto;
+        
+        // RENDER MÓVIL
+        if (tbodyMovil) {
+            const clickAction = typeof openBottomSheet === 'function' ? `openBottomSheet('${doc.id}', '${doc.nombre.replace(/'/g, "\\'")}', ${doc.monto})` : ``;
+            htmlMovil += `
+            <div class="mobile-card" onclick="${clickAction}" style="margin-bottom:6px; border-radius:12px !important; background: var(--bg-card) !important; padding: 14px 15px !important; border: 1px solid rgba(255,82,82,0.1) !important;">
+                <div style="flex: 1; min-width: 0;">
+                    <div style="font-weight:bold; font-size:0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text-main);">${doc.nombre}</div>
+                    <div style="font-size:0.7rem; color:var(--accent-red); margin-top:3px; font-weight:800; letter-spacing: 0.5px;">${mesTxt} (${doc.cuota})</div>
+                </div>
+                <div style="font-weight:900; color:var(--text-main); flex-shrink: 0; font-size:1.15rem; font-family:monospace;">$${doc.monto.toLocaleString('es-CL')}</div>
+            </div>`;
+        }
+
+        // RENDER PC
+        if (tbodyPC) {
+            htmlPC += `
+            <tr>
+                <td style="text-align: center;"><input type="checkbox" class="checkItemTC" value="${doc.id}" onclick="actualizarBarraTC()" style="accent-color: #ff5252;"></td>
+                <td style="font-size:0.75rem; color:var(--text-muted); font-weight:bold;">${mesTxt} <span style="color:var(--color-fuga); margin-left:5px;">(${doc.cuota})</span></td>
+                <td style="font-weight: 600; color: var(--text-main);">${doc.nombre}</td>
+                <td style="text-align: right; font-family: monospace; font-weight: bold; font-size: 0.9rem; color: var(--color-fuga);">$${doc.monto.toLocaleString('es-CL')}</td>
+            </tr>`;
+        }
+    });
+    
+    if (tbodyMovil) tbodyMovil.innerHTML = htmlMovil;
+    if (tbodyPC) tbodyPC.innerHTML = htmlPC;
+
+    // ALARMA DE IMPACTO
+    let mesNombreStr = new Date(proximoAnio, proximoMes, 1).toLocaleString('es-CL', { month: 'long' }).toUpperCase();
+    let boxImpacto = document.getElementById('boxImpactoTC');
+    if (boxImpacto) {
+        if (sumaProximoMes > 0) {
+            boxImpacto.style.display = 'flex';
+            let lblImpacto = document.getElementById('lblImpactoMes');
+            if(lblImpacto) {
+                if(lblImpacto.tagName === 'SPAN') lblImpacto.innerText = `⚠️ ALARMA IMPACTO (${mesNombreStr})`;
+                else lblImpacto.innerText = `${mesNombreStr}`;
+            }
+            document.getElementById('txtImpactoMonto').innerText = `$${sumaProximoMes.toLocaleString('es-CL')}`;
+        } else { boxImpacto.style.display = 'none'; }
+    }
+};
+
+// ==========================================
+// 🚀 GATEWAY TELEGRAM (FASE 2 - EN PREPARACIÓN)
+// ==========================================
+window.enviarReporteTelegram = async function() {
+    // Tags a definir en Fase 3
+    const TELEGRAM_BOT_TOKEN = "TU_TOKEN_AQUI"; 
+    const TELEGRAM_CHAT_ID = "TU_CHAT_ID_AQUI";
+
+    let hoyStr = new Date().toLocaleDateString('es-CL');
+    let fugasHoy = datosMesGlobal.filter(x => 
+        x.catV === 'Dopamina & Antojos' && 
+        new Date(x.fechaISO).toLocaleDateString('es-CL') === hoyStr
+    );
+
+    let totalFugasDia = fugasHoy.reduce((acc, val) => acc + val.monto, 0);
+
+    let mensaje = `🚨 *BÚNKER SCADA: REPORTE DIARIO* 🚨\n\n`;
+    mensaje += `📅 Fecha: ${hoyStr}\n`;
+    mensaje += `💧 Fugas Detectadas: ${fugasHoy.length}\n`;
+    mensaje += `💰 Total Fuga Hoy: $${totalFugasDia.toLocaleString('es-CL')}\n\n`;
+    
+    if (fugasHoy.length > 0) {
+        mensaje += `*Detalle de Perturbaciones:*\n`;
+        fugasHoy.forEach(f => { mensaje += `- ${f.nombre}: $${f.monto.toLocaleString('es-CL')}\n`; });
+    } else {
+        mensaje += `✅ Lazo estable. Sin perturbaciones (Burn-Rate ideal).`;
+    }
+
+    console.log("[TELEMETRÍA TELEGRAM] Payload listo:\n", mensaje);
+    mostrarToast("REPORTE PREPARADO EN CONSOLA");
+
+    // Descomentar cuando conectemos el bot
+    /*
+    try {
+        const response = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text: mensaje, parse_mode: 'Markdown' })
+        });
+        if(response.ok) mostrarToast("REPORTE TRANSMITIDO");
+    } catch (error) { alert("❌ Falla de enlace con satélite Telegram."); }
+    */
+};
 // ==========================================
 // 🛑 LISTENER DE EVASIÓN GLOBAL (TECLA ESC Y BACKDROP)
 // ==========================================
