@@ -23,7 +23,7 @@ async function inicializarSensorDolar() {
 document.addEventListener("DOMContentLoaded", inicializarSensorDolar);
 
 // ==========================================================
-// 🧠 BÚNKER SCADA ORACLE - MOTOR LÓGICO COMPLETO V15.2
+// 🧠 BÚNKER SCADA ORACLE - MOTOR LÓGICO COMPLETO V14.4
 // ==========================================================
 const BYRON_EMAIL = "bvhcc94@gmail.com"; 
 const catEvitables = ["Dopamina & Antojos"]; 
@@ -360,9 +360,6 @@ function actualizarDashboard() {
     setTxt('txtTotalFijos', tF); setTxt('txtTotalOtros', tO); setTxt('txtTotalIngresos', tI);
     setTxt('txtCxC', tC); setTxt('txtSaldo', saldoAcc);
     setTxt('txtTotalInfra', tInfra); setTxt('txtTotalFlota', tFlota); 
-    
-    // --- INYECCIÓN V15.2: CONEXIÓN SUELDO AL DASHBOARD MÓVIL ---
-    setTxt('txtSueldoDash', sueldo); 
     
     const diasCiclo = Math.max(1, Math.round((TFinal - T0) / 86400000));
     const hoy = new Date();
@@ -850,28 +847,9 @@ document.addEventListener('dragend', (e) => { if(e.target.tagName === 'TR') e.ta
 // ☁️ SINC Y EXPORT
 // ==========================================
 window.triggerSync = function() {
-    const btn = event.currentTarget;
-    if(btn) {
-        const originalText = btn.innerHTML;
-        btn.innerHTML = "⏳ SINCRONIZANDO...";
-        btn.style.opacity = "0.6";
-        
-        fetch("https://script.google.com/macros/s/AKfycbwKlub0qrv8_d24ZuyKKNryqOw1E68xv1_JvPOoEUc6W8TICllFfodNcwkigQE_7AuoNg/exec", {mode:'no-cors'})
-        .then(() => {
-            mostrarToast("SYNC COMPLETADA");
-            btn.innerHTML = "✅ SYNC EXITOSA";
-            setTimeout(() => { btn.innerHTML = originalText; btn.style.opacity = "1"; }, 2000);
-        })
-        .catch(e => {
-            btn.innerHTML = "❌ FALLA SYNC";
-            setTimeout(() => { btn.innerHTML = originalText; btn.style.opacity = "1"; }, 2000);
-        });
-    } else {
-        // Fallback si se llama sin evento
-        fetch("https://script.google.com/macros/s/AKfycbwKlub0qrv8_d24ZuyKKNryqOw1E68xv1_JvPOoEUc6W8TICllFfodNcwkigQE_7AuoNg/exec", {mode:'no-cors'})
-        .then(()=>mostrarToast("SYNC COMPLETADA"))
-        .catch(e => alert("Error Net: " + e));
-    }
+    fetch("https://script.google.com/macros/s/AKfycbwKlub0qrv8_d24ZuyKKNryqOw1E68xv1_JvPOoEUc6W8TICllFfodNcwkigQE_7AuoNg/exec", {mode:'no-cors'})
+    .then(()=>mostrarToast("SYNC COMPLETADA"))
+    .catch(e => alert("Error Net: " + e));
 };
 
 window.exportarDataLink = function() {
@@ -1149,7 +1127,6 @@ function ejecutarArranque() {
         alert("No se inyectaron registros."); cerrarPreVuelo();
     }
 }
-
 // ==========================================
 // 💳 RENDERIZADOR MATRIZ TC (UNIFICADO PC/MÓVIL)
 // ==========================================
@@ -1262,38 +1239,6 @@ window.enviarReporteTelegram = async function() {
     } catch (error) { alert("❌ Falla de enlace con satélite Telegram."); }
     */
 };
-
-// ==========================================
-// 🔄 LÓGICA DE NAVEGACIÓN MÓVIL (PÍLDORA IG)
-// ==========================================
-window.switchTabApp = function(tabId, element) {
-    document.querySelectorAll('.tab-content').forEach(d => { d.style.display = 'none'; });
-    const tabTarget = document.getElementById('tab-' + tabId);
-    if(tabTarget) tabTarget.style.display = 'block';
-    
-    const highlighter = document.getElementById('nav-highlighter');
-    if(element && highlighter) {
-        document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-        element.classList.add('active');
-        
-        // Mover la píldora detrás del ícono seleccionado
-        highlighter.style.width = (element.offsetWidth * 0.85) + 'px';
-        highlighter.style.transform = `translateX(${element.offsetLeft + (element.offsetWidth * 0.075)}px)`;
-        highlighter.style.opacity = '1';
-    } else if (highlighter) {
-        highlighter.style.opacity = '0'; // Ocultar si es el FAB central (+)
-    }
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
-// Auto-Posicionar la píldora apenas carga la web
-window.addEventListener('load', () => {
-    setTimeout(() => {
-        const activeItem = document.querySelector('.nav-item.active');
-        if (activeItem) switchTabApp('dash', activeItem);
-    }, 150);
-});
-
 // ==========================================
 // 🛑 LISTENER DE EVASIÓN GLOBAL (TECLA ESC Y BACKDROP)
 // ==========================================
