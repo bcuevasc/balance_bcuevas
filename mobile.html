@@ -27,21 +27,7 @@
         .master-hud { text-align: center; padding: 10px 20px 25px 20px; width: 100%; overflow: hidden;}
         .hud-value { font-size: clamp(2.5rem, 12vw, 4.5rem); font-weight: 900; letter-spacing: -2px; font-family: monospace; text-shadow: 0 0 30px rgba(31, 111, 235, 0.3); transition: transform 0.3s; word-break: break-all; line-height: 1.1;}
         .hud-value.danger { color: var(--accent-red); text-shadow: 0 0 30px rgba(255, 82, 82, 0.3); }
-        /* --- EFECTO NAVEGACIÓN IG V15.1 --- */
-#nav-highlighter {
-    position: absolute;
-    height: 52px;
-    background: rgba(255, 255, 255, 0.08); /* Píldora gris translúcida */
-    border-radius: 16px;
-    top: 6px;
-    transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1), width 0.3s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.2s;
-    z-index: 0;
-    pointer-events: none;
-    opacity: 0;
-}
-.nav-item.active { color: var(--text-main); } /* Removimos el translateY antiguo */
-.nav-item i { display: block; font-size: 1.6rem; margin-bottom: 2px; font-style: normal; transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-.nav-item.active i { transform: scale(1.15); color: #79c0ff; text-shadow: 0 0 15px rgba(121, 192, 255, 0.6); }
+        
         .slave-kpis { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 15px; margin-bottom: 20px; }
         .slave-pill { background: var(--bg-card); border: 1px solid var(--border-subtle); padding: 10px; border-radius: 12px; display: flex; flex-direction: column; align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.3); position: relative; overflow: hidden;}
         .slave-pill::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--border-subtle); }
@@ -118,12 +104,7 @@
         .pv-liquidez-text { text-align: center; font-size: 2.8rem; font-weight: 900; color: var(--color-saldo); font-family: monospace; margin-top: 15px; text-shadow: 0 0 20px rgba(46, 160, 67, 0.4); }
         .pv-certeza { font-size: 0.7rem; font-weight: bold; color: var(--text-muted); text-align: center; margin-top: 10px; text-transform: uppercase; letter-spacing: 1px;}
         .pv-section-title { font-size: 0.75rem; font-weight: 900; text-transform: uppercase; margin: 15px 0 10px 0; border-bottom: 1px solid var(--border-subtle); padding-bottom: 5px; display:flex; align-items:center; gap:5px;}
-        /* --- ESTANQUE DÍA CERO: ESTIMADO VS REAL (AMBOS HTML) --- */
-/* Rayado tipo industrial para valores "Estimados" */
-.pv-fill-rojo.estimado { background: repeating-linear-gradient(45deg, #b71c1c, #b71c1c 10px, #ff5252 10px, #ff5252 20px); }
-.pv-fill-naranja.estimado { background: repeating-linear-gradient(45deg, #e65100, #e65100 10px, #ff9800 10px, #ff9800 20px); }
-.pv-fill-verde.estimado { background: repeating-linear-gradient(45deg, #1b5e20, #1b5e20 10px, #2ea043 10px, #2ea043 20px); }
-        .slave-pill.green::before { background: var(--accent-green); box-shadow: 0 0 10px var(--accent-green); }
+        
         .pv-input-group { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; background: var(--bg-card); padding: 12px 14px; border-radius: 12px; border: 1px solid var(--border-subtle); gap:10px;}
         .pv-input-group label { font-size: 0.8rem; font-weight: 800; color: var(--text-main); flex:1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
         .pv-input { background: var(--bg-elevated); border: 1px solid var(--border-subtle); color: white; padding: 10px; border-radius: 8px; font-family: monospace; font-size: 1.1rem; width: 135px; text-align: right; outline: none; font-weight: bold; transition: all 0.3s;}
@@ -169,11 +150,14 @@
             </div>
             
             <div class="slave-kpis">
-                <div class="slave-pill green" style="grid-column: span 2;">
-                    <div style="font-size:0.65rem; font-weight:800; color:var(--text-dim); text-transform:uppercase; letter-spacing: 1px;" data-en="Operating Base">Sueldo Base Operativo</div>
-                    <div style="color:var(--accent-green); font-size:1.8rem; font-weight:900; margin-top:5px; font-family:monospace; text-shadow: 0 0 20px rgba(46, 160, 67, 0.3);">$<span id="txtSueldoDash">0</span></div>
+                <div class="slave-pill purple">
+                    <div style="font-size:0.6rem; font-weight:800; color:var(--text-dim); text-transform:uppercase;" data-en="Real Estate">Infraestructura</div>
+                    <div style="color:var(--text-main); font-size:1.1rem; font-weight:900; margin-top:5px; font-family:monospace;">$<span id="txtTotalInfra">0</span></div>
                 </div>
-                
+                <div class="slave-pill cyan">
+                    <div style="font-size:0.6rem; font-weight:800; color:var(--text-dim); text-transform:uppercase;" data-en="Fleet & Mob.">Flota / Auto</div>
+                    <div style="color:var(--text-main); font-size:1.1rem; font-weight:900; margin-top:5px; font-family:monospace;">$<span id="txtTotalFlota">0</span></div>
+                </div>
                 <div class="slave-pill red">
                     <div style="font-size:0.6rem; font-weight:800; color:var(--text-dim); text-transform:uppercase;" data-en="Fixed Overhead">Carga Fija</div>
                     <div style="color:var(--text-main); font-size:1.1rem; font-weight:900; margin-top:5px; font-family:monospace;">$<span id="txtTotalFijos">0</span></div>
@@ -325,7 +309,6 @@
     </div>
 
     <div class="bottom-nav">
-        <div id="nav-highlighter"></div> <div class="nav-item active" onclick="switchTabApp('dash', this)"><i>📡</i><span data-en="Radar">Radar</span></div>
         <div class="nav-item active" onclick="switchTabApp('dash', this)"><i>📡</i><span data-en="Radar">Radar</span></div>
         <div class="nav-item" onclick="switchTabApp('trend', this)"><i>📈</i><span data-en="Oracle">Oráculo</span></div>
         <div class="nav-fab" onclick="switchTabApp('add', null)">+</div>
@@ -582,47 +565,5 @@
     function closeBottomSheet() { const overlay = document.getElementById('bottom-sheet-overlay'); const sheet = document.getElementById('bottom-sheet'); sheet.style.bottom = '-100%'; overlay.style.opacity = '0'; setTimeout(()=> overlay.style.display = 'none', 300); }
 </script>
 <script src="motor.js"></script>
-<script>
-    // MOTOR DE GESTOS (SWIPE NAVIGATOR) V15.0
-    let touchstartX = 0; let touchendX = 0;
-    const swipeZone = document.getElementById('reportZone');
-    
-    // Mapeo del orden de las pestañas
-    const tabsMap = ['dash', 'trend', 'add', 'cloud', 'settings'];
-    
-    swipeZone.addEventListener('touchstart', e => { touchstartX = e.changedTouches[0].screenX; }, {passive: true});
-    swipeZone.addEventListener('touchend', e => {
-        touchendX = e.changedTouches[0].screenX;
-        handleSwipe();
-    }, {passive: true});
-
-    function handleSwipe() {
-        const swipeThreshold = 80; // Distancia mínima para considerar un swipe
-        let activeTab = document.querySelector('.tab-content[style*="display: block"]');
-        if(!activeTab) activeTab = document.getElementById('tab-dash');
-        let currentIdx = tabsMap.indexOf(activeTab.id.replace('tab-', ''));
-        
-        if (touchendX < touchstartX - swipeThreshold) {
-            // Swipe Izquierda (Avanzar)
-            if (currentIdx < tabsMap.length - 1) switchTabApp(tabsMap[currentIdx + 1], document.querySelectorAll('.nav-item')[currentIdx + 1]);
-        }
-        if (touchendX > touchstartX + swipeThreshold) {
-            // Swipe Derecha (Retroceder)
-            if (currentIdx > 0) switchTabApp(tabsMap[currentIdx - 1], document.querySelectorAll('.nav-item')[currentIdx - 1]);
-        }
-    }
-// Evitar que el teclado nativo oculte el botón de inyección
-const inputMontoMovil = document.getElementById('inputMonto');
-if(inputMontoMovil) {
-    inputMontoMovil.addEventListener('focus', () => {
-        setTimeout(() => {
-            const btnInject = document.getElementById('btnGuardar');
-            btnInject.scrollIntoView({ behavior: "smooth", block: "center" });
-        }, 300); // Pequeño delay para dejar que el teclado suba
-    });
-}
-</script>
-
 </body>
-
 </html>
