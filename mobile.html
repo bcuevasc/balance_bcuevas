@@ -598,6 +598,18 @@
             if (currentIdx > 0) switchTabApp(tabsMap[currentIdx - 1], document.querySelectorAll('.nav-item')[currentIdx - 1]);
         }
     }
+// Evitar que el teclado nativo oculte el botón de inyección
+const inputMontoMovil = document.getElementById('inputMonto');
+if(inputMontoMovil) {
+    inputMontoMovil.addEventListener('focus', () => {
+        setTimeout(() => {
+            const btnInject = document.getElementById('btnGuardar');
+            btnInject.scrollIntoView({ behavior: "smooth", block: "center" });
+        }, 300); // Pequeño delay para dejar que el teclado suba
+    });
+}
 </script>
+
 </body>
+
 </html>
