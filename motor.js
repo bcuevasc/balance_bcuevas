@@ -1,7 +1,7 @@
 // ==========================================================
-// 🌐 V13.2: SENSOR DE DIVISAS BLINDADO (API MINDICADOR)
+// 🌐 V13.3: MOTOR SCADA PRO (Auto-Traductor & Edit-Unlock)
 // ==========================================================
-window.VALOR_USD = 950; // Fallback instantáneo
+window.VALOR_USD = 950;
 
 async function inicializarSensorDolar() {
     let lbl = document.getElementById('lbl-dolar-actual');
@@ -10,13 +10,9 @@ async function inicializarSensorDolar() {
         let data = await response.json();
         if(data && data.serie && data.serie.length > 0) {
             window.VALOR_USD = data.serie[0].valor;
-            console.log("[SYS] DÓLAR SINCRONIZADO: $" + window.VALOR_USD);
             if(lbl) lbl.innerText = `1 USD = $${Math.round(window.VALOR_USD)} CLP`;
-        } else {
-            throw new Error("Estructura API inválida");
-        }
+        } else { throw new Error("Estructura API inválida"); }
     } catch(e) {
-        console.warn("[SYS] Fallo API Dólar, usando fallback: $950");
         window.VALOR_USD = 950; 
         if(lbl) lbl.innerText = `Offline (Ref: $950)`;
     }
@@ -24,15 +20,12 @@ async function inicializarSensorDolar() {
 }
 document.addEventListener("DOMContentLoaded", inicializarSensorDolar);
 
-// ==========================================================
-// 🧠 BÚNKER SCADA ORACLE - MOTOR LÓGICO V13.2 (FULL CONTROL)
-// ==========================================================
 const BYRON_EMAIL = "bvhcc94@gmail.com"; 
 const CREDIT_SETPOINT = -300000; 
 const catEvitables = ["Dopamina & Antojos"]; 
 const SUELDO_BASE_DEFAULT = 3602505;
 
-// 🧠 DICCIONARIO COGNITIVO V13.3 (Con Auto-Traductor)
+// 🧠 DICCIONARIO COGNITIVO V13.3 (Con Auto-Renombrado)
 const diccAuto = [
     { keys: ["cargo en cuenta", "comision", "mantencion"], cat: "Gastos Fijos (Búnker)", tipo: "Gasto Fijo", fuga: "0", rename: "MANTENCIÓN BANCARIA" },
     { keys: ["prestamo", "debe", "pagar dps", "por cobrar", "cuota de"], cat: "Cuentas por Cobrar (Activos)", tipo: "Por Cobrar", fuga: "0" },
@@ -99,7 +92,30 @@ document.addEventListener("DOMContentLoaded", () => {
     const inputMonto = document.getElementById('inputMonto');
     
     if(inputNombre) {
-        inputNombre.addEventListener
+        inputNombre.addEventListener('keypress', e => {
+            if(e.key === 'Enter') { e.preventDefault(); if(inputMonto && !inputMonto.value) inputMonto.focus(); else document.getElementById('btnGuardar').click(); }
+        });
+        inputNombre.addEventListener('input', (e) => {
+            if(modoEdicionActivo) return; 
+            let texto = e.target.value.toLowerCase();
+            for(let dict of diccAuto) {
+                if(dict.keys.some(k => texto.includes(k))) {
+                    document.getElementById('inputCategoria').value = dict.cat;
+                    document.getElementById('inputTipo').value = dict.tipo;
+                    let fEl = document.getElementById('inputFuga');
+                    if(fEl) fEl.value = dict.fuga;
+                    
+                    // ⚡ NUEVO: Inyección de Auto-Renombrado
+                    if(dict.rename && texto !== dict.rename.toLowerCase()) {
+                        e.target.value = dict.rename;
+                    }
+
+                    inputNombre.style.borderBottom = "2px solid #2ea043";
+                    setTimeout(() => inputNombre.style.borderBottom = "2px solid var(--border-color)", 1000);
+                    break;
+                }
+            }
+        });
     }
     
     if(inputMonto) {
@@ -148,28 +164,21 @@ window.loginWithGoogle = function() {
             let btn = document.querySelector('.btn-google');
             if(btn) btn.innerHTML = "⏳ REDIRECCIONANDO...";
             auth.signInWithRedirect(provider);
-        } else {
-            alert("❌ ERROR DE CONEXIÓN:\n" + err.message);
-        }
+        } else { alert("❌ ERROR DE CONEXIÓN:\n" + err.message); }
     }); 
 };
 
 window.logout = function() { 
-    auth.signOut().then(() => {
-        localStorage.clear(); sessionStorage.clear(); window.location.reload();
-    }); 
+    auth.signOut().then(() => { localStorage.clear(); sessionStorage.clear(); window.location.reload(); }); 
 };
 
 auth.onAuthStateChanged(user => {
     if (user) {
         if (user.email.toLowerCase() === BYRON_EMAIL.toLowerCase()) {
-            console.log("%c[ORACLE V13.2] ACCESS GRANTED", "color: #2ea043; font-weight: bold;");
-            
             const loginScreen = document.getElementById('login-screen');
             const reportZone = document.getElementById('reportZone');
             if(loginScreen) loginScreen.style.display = 'none';
             if(reportZone) reportZone.classList.add('active-app');
-            
             const userDisplay = document.getElementById('user-display');
             if(userDisplay) userDisplay.innerText = user.displayName.split(" ")[0];
             
@@ -186,8 +195,7 @@ auth.onAuthStateChanged(user => {
             });
             inicializarListenerTC();
         } else {
-            auth.signOut();
-            alert(`⛔ ACCESO DENEGADO:\nEl correo ${user.email} no tiene permisos de operador.`);
+            auth.signOut(); alert(`⛔ ACCESO DENEGADO:\nEl correo ${user.email} no tiene permisos de operador.`);
         }
     }
 });
@@ -211,17 +219,13 @@ window.obtenerSueldoMes = function(anio, mes) {
 };
 
 window.guardarSueldoEnNube = function() {
-    const elSueldo = document.getElementById('inputSueldo');
-    if(!elSueldo) return;
+    const elSueldo = document.getElementById('inputSueldo'); if(!elSueldo) return;
     let m = parseInt(elSueldo.getAttribute('data-mes-ancla')), a = parseInt(elSueldo.getAttribute('data-anio-ancla'));
     if (isNaN(m) || isNaN(a) || elSueldo.value.trim() === '') return; 
-    let s = parseInt(elSueldo.value.replace(/\./g, '')); 
-    if (isNaN(s) || s <= 0) return;
-    
+    let s = parseInt(elSueldo.value.replace(/\./g, '')); if (isNaN(s) || s <= 0) return;
     let llave = `${a}_${m}`; sueldosHistoricos[llave] = s;
     db.collection("parametros").doc("sueldos").set({ [llave]: s }, {merge: true}).then(() => {
-        mostrarToast(`SUELDO GUARDADO: $${s.toLocaleString('es-CL')}`);
-        actualizarDashboard();
+        mostrarToast(`SUELDO GUARDADO: $${s.toLocaleString('es-CL')}`); actualizarDashboard();
     });
 };
 
@@ -370,11 +374,24 @@ function sortTable(column) {
     actualizarDashboard();
 }
 
+// ⚡ FIX V13.3: LÓGICA DE DESBLOQUEO DE EDICIÓN
 function editarMovimiento(id) {
     const mov = listaMovimientos.find(m => m.firestoreId === id);
     if(!mov) return alert("Registro no encontrado.");
+    
+    // Activa modo edición PRIMERO para que los event listeners del DOM no interfieran
+    modoEdicionActivo = true; 
+    
     if(document.getElementById('editId')) document.getElementById('editId').value = mov.firestoreId; 
-    if(document.getElementById('inputNombre')) document.getElementById('inputNombre').value = mov.nombre;
+    
+    const inputNombre = document.getElementById('inputNombre');
+    if(inputNombre) {
+        inputNombre.value = mov.nombre;
+        inputNombre.focus();
+        // Auto-selecciona el texto para sobrescribir fácil
+        setTimeout(() => inputNombre.select(), 50); 
+    }
+    
     if(document.getElementById('inputMonto')) document.getElementById('inputMonto').value = mov.monto.toLocaleString('es-CL');
     if(document.getElementById('inputCategoria')) {
         document.getElementById('inputCategoria').value = mov.categoria || 'Sin Categoría';
@@ -388,13 +405,16 @@ function editarMovimiento(id) {
     if (mov.catV === 'Transferencia Recibida' || mov.catV === 'Ingreso Adicional') tipoC = 'Ingreso';
     if (mov.catV === 'Transferencia Propia / Ahorro') tipoC = 'Ahorro';
     if(document.getElementById('inputTipo')) document.getElementById('inputTipo').value = tipoC;
+    
     try {
         let d = new Date(mov.fechaISO);
         document.getElementById('inputFecha').value = new Date(d.getTime() - (d.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
     } catch(e) {}
+    
     const btn = document.getElementById('btnGuardar');
     if(btn) { btn.innerHTML = isEng ? "UPDATE" : "ACTUALIZAR"; btn.style.backgroundColor = "var(--color-saldo)"; }
-    modoEdicionActivo = true; actualizarDashboard(); 
+    
+    actualizarDashboard(); 
 }
 
 // --- 💳 MOTOR DE AUTOMATIZACIÓN TC ---
