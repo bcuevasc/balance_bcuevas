@@ -32,7 +32,9 @@ const CREDIT_SETPOINT = -300000;
 const catEvitables = ["Dopamina & Antojos"]; 
 const SUELDO_BASE_DEFAULT = 3602505;
 
+// 🧠 DICCIONARIO COGNITIVO V13.3 (Con Auto-Traductor)
 const diccAuto = [
+    { keys: ["cargo en cuenta", "comision", "mantencion"], cat: "Gastos Fijos (Búnker)", tipo: "Gasto Fijo", fuga: "0", rename: "MANTENCIÓN BANCARIA" },
     { keys: ["prestamo", "debe", "pagar dps", "por cobrar", "cuota de"], cat: "Cuentas por Cobrar (Activos)", tipo: "Por Cobrar", fuga: "0" },
     { keys: ["uber", "didi", "cabify", "pasaje", "buses", "turbus", "metro"], cat: "Transporte & Logística", tipo: "Gasto", fuga: "0" },
     { keys: ["copec", "shell", "autopase", "revision tecnica", "lavado auto", "mecanico", "peaje", "seguro auto", "permiso circulacion"], cat: "Flota & Movilidad", tipo: "Gasto Fijo", fuga: "0" },
@@ -97,24 +99,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const inputMonto = document.getElementById('inputMonto');
     
     if(inputNombre) {
-        inputNombre.addEventListener('keypress', e => {
-            if(e.key === 'Enter') { e.preventDefault(); if(inputMonto && !inputMonto.value) inputMonto.focus(); else document.getElementById('btnGuardar').click(); }
-        });
-        inputNombre.addEventListener('input', (e) => {
-            if(modoEdicionActivo) return; 
-            let texto = e.target.value.toLowerCase();
-            for(let dict of diccAuto) {
-                if(dict.keys.some(k => texto.includes(k))) {
-                    document.getElementById('inputCategoria').value = dict.cat;
-                    document.getElementById('inputTipo').value = dict.tipo;
-                    let fEl = document.getElementById('inputFuga');
-                    if(fEl) fEl.value = dict.fuga;
-                    inputNombre.style.borderBottom = "2px solid #2ea043";
-                    setTimeout(() => inputNombre.style.borderBottom = "2px solid var(--accent-blue)", 1000);
-                    break;
-                }
-            }
-        });
+        inputNombre.addEventListener
     }
     
     if(inputMonto) {
