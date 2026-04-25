@@ -505,37 +505,63 @@ function editarMovimiento(id) {
 }
 
 function agregarMovimiento() {
-    const m = parseInt(document.getElementById('inputMonto').value.replace(/\./g, ''));
-    const n = document.getElementById('inputNombre').value;
-    const c = document.getElementById('inputCategoria').value;
-    const t = document.getElementById('inputTipo').value;
-    const fInput = document.getElementById('inputFecha').value;
-    const editId = document.getElementById('editId').value;
-    
-    const iFugaEl = document.getElementById('inputFuga');
-    const pctFuga = iFugaEl ? parseInt(iFugaEl.value) : (catEvitables.includes(c) ? 100 : 0);
-    const cuotasEl = document.getElementById('inputCuotas');
-    const cantCuotas = (cuotasEl && c === "Gasto Tarjeta de Crédito") ? parseInt(cuotasEl.value) : 1;
+    const m = parseInt(document.getElementById('inputMonto').value.replace(/\./g, ''));
+    const n = document.getElementById('inputNombre').value;
+    const c = document.getElementById('inputCategoria').value;
+    const t = document.getElementById('inputTipo').value;
+    const fInput = document.getElementById('inputFecha').value;
+    const editId = document.getElementById('editId').value;
+    
+    const iFugaEl = document.getElementById('inputFuga');
+    const pctFuga = iFugaEl ? parseInt(iFugaEl.value) : (catEvitables.includes(c) ? 100 : 0);
+    const cuotasEl = document.getElementById('inputCuotas');
+    const cantCuotas = (cuotasEl && c === "Gasto Tarjeta de Crédito") ? parseInt(cuotasEl.value) : 1;
 
-    if (!m || !n || !fInput) return alert("⚠️ Faltan parámetros en la consola.");
-    const btn = document.getElementById('btnGuardar');
-    btn.innerHTML = isEng ? "INJECTING..." : "INYECTANDO..."; btn.disabled = true;
-    const dataPayload = { nombre: n, monto: m, categoria: c, tipo: t, fecha: new Date(fInput), status: 'Manual', innecesarioPct: pctFuga, cuotas: cantCuotas };
-    
-    let op = (modoEdicionActivo && editId) ? db.collection("movimientos").doc(editId).update(dataPayload) : db.collection("movimientos").add(dataPayload);
-    op.then(() => {
-        document.getElementById('editId').value = ''; document.getElementById('inputNombre').value = ''; document.getElementById('inputMonto').value = '';
-        // INICIO DE LA INTERCEPCIÓN
-    if (c === "Gasto Tarjeta de Crédito") {
+    if (!m || !n || !fInput) return alert("⚠️ Faltan parámetros en la consola.");
+
+    // =======================================================
+    // 🛑 VÁLVULA DE DESVÍO (TC) -> Envía a Matriz de Deuda
+    // =======================================================
+    if (c === "Gasto Tarjeta de Crédito" && !modoEdicionActivo) {
         procesarCompraTCManual(n, m, cantCuotas, fInput);
-        return; // Aborta la ejecución para que no vaya al Libro Diario
+        return; // Aborta la inyección. No entra al Libro Diario.
     }
-    // FIN DE LA INTERCEPCIÓN
-        btn.innerHTML = isEng ? "INJECT" : "INYECTAR"; btn.style.backgroundColor = "var(--color-edit)"; btn.disabled = false; modoEdicionActivo = false;
-        mostrarToast("REGISTRO CONFIRMADO");
-    }).catch(err => { alert("❌ Error de Matriz: " + err.message); btn.innerHTML = "ERROR"; btn.disabled = false; });
-}
+    // =======================================================
 
+    const btn = document.getElementById('btnGuardar');
+    btn.innerHTML = isEng ? "INJECTING..." : "INYECTANDO..."; 
+    btn.disabled = true;
+    
+    const dataPayload = { 
+        nombre: n, 
+        monto: m, 
+        categoria: c, 
+        tipo: t, 
+        fecha: new Date(fInput), 
+        status: 'Manual', 
+        innecesarioPct: pctFuga, 
+        cuotas: cantCuotas 
+    };
+    
+    let op = (modoEdicionActivo && editId) 
+        ? db.collection("movimientos").doc(editId).update(dataPayload) 
+        : db.collection("movimientos").add(dataPayload);
+        
+    op.then(() => {
+        document.getElementById('editId').value = ''; 
+        document.getElementById('inputNombre').value = ''; 
+        document.getElementById('inputMonto').value = '';
+        btn.innerHTML = isEng ? "INJECT" : "INYECTAR"; 
+        btn.style.backgroundColor = "var(--color-edit)"; 
+        btn.disabled = false; 
+        modoEdicionActivo = false;
+        mostrarToast("REGISTRO CONFIRMADO");
+    }).catch(err => { 
+        alert("❌ Error de Matriz: " + err.message); 
+        btn.innerHTML = "ERROR"; 
+        btn.disabled = false; 
+    });
+}
 function formatearEntradaNumerica(i) { let v = i.value.replace(/\D/g,''); i.value = v ? parseInt(v).toLocaleString('es-CL') : ''; }
 function toggleTheme() { document.body.classList.toggle('light-theme'); }
 setInterval(() => { const c = document.getElementById('cronos'); if(c) c.innerText = new Date().toLocaleString('es-CL').toUpperCase(); }, 1000);
@@ -711,7 +737,43 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0, totalFijosMes, 
     }
 }
 // =====================================================================
+/**
+ * ⚙️ MOTOR DE ENRUTAMIENTO TC V13.2
+ * Toma una compra manual, la divide en cuotas y aplica el cortafuegos.
+ */
+function procesarCompraTCManual(nombre, montoTotal, cuotas, fechaStr) {
+    const batch = db.batch();
+    const diaCorte = 20; // Cortafuegos del banco
+    
+    let fechaCompra = new Date(fechaStr);
+    let dia = fechaCompra.getDate();
+    let mes = fechaCompra.getMonth();
+    let anio = fechaCompra.getFullYear();
 
+    let montoCuota = Math.round(montoTotal / cuotas);
+
+    for (let i = 1; i <= cuotas; i++) {
+        // Lógica de salto: Si compras post-20, la primera cuota salta 2 meses.
+        let mesesDesfase = (dia > diaCorte) ? 2 : 1; 
+        
+        let fCobro = new Date(anio, mes + mesesDesfase + (i - 1), 15);
+        let ref = db.collection("deuda_tc").doc();
+        
+        batch.set(ref, {
+            nombre: `${nombre.toUpperCase()} (MANUAL)`,
+            monto: montoCuota,
+            cuota: `${i}/${cuotas}`,
+            mesCobro: fCobro.toISOString(),
+            status: "Proyectado"
+        });
+    }
+
+    batch.commit().then(() => {
+        mostrarToast(`INYECCIÓN TC: ${cuotas} CUOTA(S) DESPLEGADA(S)`);
+        document.getElementById('inputNombre').value = ''; 
+        document.getElementById('inputMonto').value = '';
+    }).catch(e => alert("Error en Bus TC: " + e));
+}
 function calcularFechasCiclo(mesConceptual, anio) {
     let mesInicio = mesConceptual - 1; let anioInicio = anio; if (mesInicio < 0) { mesInicio = 11; anioInicio--; }
     let T0 = new Date(anioInicio, mesInicio, 30); if (T0.getMonth() !== mesInicio) T0 = new Date(anioInicio, mesInicio + 1, 0); 
@@ -1178,43 +1240,6 @@ function calcularDiaCero() {
         elCertezaPct.innerText = certeza + '%';
         elCertezaPct.style.color = certeza < 40 ? '#ff5252' : (certeza < 80 ? '#ff9800' : '#2ea043');
     }
-}
-/**
- * ⚙️ MOTOR DE ENRUTAMIENTO TC V13.2
- * Toma una compra manual, la divide en cuotas y aplica el cortafuegos.
- */
-function procesarCompraTCManual(nombre, montoTotal, cuotas, fechaStr) {
-    const batch = db.batch();
-    const diaCorte = 20; // Cortafuegos del banco
-    
-    let fechaCompra = new Date(fechaStr);
-    let dia = fechaCompra.getDate();
-    let mes = fechaCompra.getMonth();
-    let anio = fechaCompra.getFullYear();
-
-    let montoCuota = Math.round(montoTotal / cuotas);
-
-    for (let i = 1; i <= cuotas; i++) {
-        // Lógica de salto: Si compras post-20, la primera cuota salta 2 meses.
-        let mesesDesfase = (dia > diaCorte) ? 2 : 1; 
-        
-        let fCobro = new Date(anio, mes + mesesDesfase + (i - 1), 15);
-        let ref = db.collection("deuda_tc").doc();
-        
-        batch.set(ref, {
-            nombre: `${nombre.toUpperCase()} (MANUAL)`,
-            monto: montoCuota,
-            cuota: `${i}/${cuotas}`,
-            mesCobro: fCobro.toISOString(),
-            status: "Proyectado"
-        });
-    }
-
-    batch.commit().then(() => {
-        mostrarToast(`INYECCIÓN TC: ${cuotas} CUOTA(S) DESPLEGADA(S)`);
-        document.getElementById('inputNombre').value = ''; 
-        document.getElementById('inputMonto').value = '';
-    }).catch(e => alert("Error en Bus TC: " + e));
 }
 function ejecutarArranque() {
     if(!confirm("⚠️ INYECCIÓN CRÍTICA V12.4\n\n¿Estás seguro de inyectar toda tu Planilla Operativa en la Matriz del mes seleccionado?\n\nNota: Los gastos marcados como ✔️ PAGADO serán ignorados para evitar doble contabilización.")) return;
