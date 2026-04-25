@@ -201,20 +201,42 @@ auth.onAuthStateChanged(user => {
 });
 
 window.cargarSueldoVisual = function() {
-    const elMes = document.getElementById('navMesConceptual'), elAnio = document.getElementById('navAnio'), elSueldo = document.getElementById('inputSueldo');
+    const elMes = document.getElementById('navMesConceptual');
+    const elAnio = document.getElementById('navAnio');
+    const elSueldo = document.getElementById('inputSueldo');
+    
     if(!elMes || !elAnio || !elSueldo) return;
-    let m = elMes.value, a = elAnio.value, llave = `${a}_${m}`;
-    elSueldo.setAttribute('data-mes-ancla', m); elSueldo.setAttribute('data-anio-ancla', a);
+    
+    let m = parseInt(elMes.value);
+    let a = parseInt(elAnio.value);
+    
+    elSueldo.setAttribute('data-mes-ancla', m);
+    elSueldo.setAttribute('data-anio-ancla', a);
     
     if (document.activeElement !== elSueldo) {
-        if (sueldosHistoricos[llave]) { elSueldo.value = sueldosHistoricos[llave].toLocaleString('es-CL'); } 
-        else { elSueldo.value = ''; elSueldo.placeholder = 'PENDIENTE'; }
+        // Extrae el sueldo real o heredado y lo pinta en la interfaz
+        let sueldo = obtenerSueldoMes(a, m);
+        elSueldo.value = sueldo.toLocaleString('es-CL');
     }
 };
 
+// ⚡ MOTOR DE HERENCIA INTELIGENTE
 window.obtenerSueldoMes = function(anio, mes) {
     let llave = `${anio}_${mes}`;
+    
+    // 1. Si el mes actual (o proyectado) tiene un sueldo fijado, lo usamos.
     if (sueldosHistoricos[llave]) return sueldosHistoricos[llave];
+    
+    // 2. HERENCIA: Si está vacío, buscamos hacia atrás el último sueldo registrado.
+    let a = parseInt(anio);
+    let m = parseInt(mes);
+    for (let i = 0; i < 6; i++) {
+        m--;
+        if (m < 0) { m = 11; a--; }
+        let prevLlave = `${a}_${m}`;
+        if (sueldosHistoricos[prevLlave]) return sueldosHistoricos[prevLlave];
+    }
+    
     return SUELDO_BASE_DEFAULT;
 };
 
@@ -224,9 +246,13 @@ window.guardarSueldoEnNube = function() {
     if (isNaN(m) || isNaN(a) || elSueldo.value.trim() === '') return; 
     let s = parseInt(elSueldo.value.replace(/\./g, '')); if (isNaN(s) || s <= 0) return;
     let llave = `${a}_${m}`; sueldosHistoricos[llave] = s;
-    db.collection("parametros").doc("sueldos").set({ [llave]: s }, {merge: true}).then(() => {
-        mostrarToast(`SUELDO GUARDADO: $${s.toLocaleString('es-CL')}`); actualizarDashboard();
-    });
+    db.collection("parametros").doc("sueldos").onSnapshot(snap => { 
+                if(snap.exists) {
+                    sueldosHistoricos = snap.data(); 
+                    if(typeof cargarSueldoVisual === 'function') cargarSueldoVisual();
+                    if(typeof actualizarDashboard === 'function') actualizarDashboard();
+                }
+            });
 };
 
 let alarmLogCache = "";
