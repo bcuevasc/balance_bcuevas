@@ -1112,7 +1112,32 @@ function actualizarBarraTC() {
     if (seleccionados.length > 0) { if(barra) barra.style.display = 'flex'; if(txt) txt.innerText = `${seleccionados.length} SEL`; } 
     else { if(barra) barra.style.display = 'none'; let maestro = document.getElementById('checkMaestroTC'); if(maestro) maestro.checked = false; }
 }
+// 🔧 FIX: Válvula de cierre para el Simulador
+window.cerrarPreVuelo = function() {
+    const modal = document.getElementById('modal-dia-cero');
+    if(modal) modal.style.display = 'none';
+};
 
+// 🔧 LÓGICA DE LATCH: Marcado de pago y actualización de liquidez
+window.toggleEstadoPV = function(btn, idInput) {
+    const el = document.getElementById(idInput);
+    if (!btn || !el) return;
+    
+    let estado = el.getAttribute('data-estado');
+    
+    if (estado === 'est') {
+        btn.innerText = 'REAL'; btn.className = 'btn-estado real'; el.setAttribute('data-estado', 'real');
+    } else if (estado === 'real') {
+        btn.innerText = 'PAG'; btn.className = 'btn-estado pag'; el.setAttribute('data-estado', 'pag');
+        el.style.textDecoration = 'line-through'; el.style.opacity = '0.5';
+    } else {
+        btn.innerText = 'EST'; btn.className = 'btn-estado est'; el.setAttribute('data-estado', 'est');
+        el.style.textDecoration = 'none'; el.style.opacity = '1';
+    }
+    
+    // Recálculo automático de la liquidez neta disponible
+    window.calcularDiaCero();
+};
 function toggleTodosTC(maestro) { document.querySelectorAll('.checkItemTC').forEach(c => c.checked = maestro.checked); actualizarBarraTC(); }
 async function ejecutarPurgaMasivaTC() {
     const seleccionados = document.querySelectorAll('.checkItemTC:checked');
