@@ -36,7 +36,14 @@ h2 { color: var(--text-main); margin: 0; font-size: 1.3rem; font-weight: 900; le
 .nav-badge { font-family: monospace; background: rgba(31, 111, 235, 0.1); color: #79c0ff; border: 1px solid rgba(31, 111, 235, 0.3); padding: 4px 10px; border-radius: 4px; font-size: 0.8rem; font-weight: 900; letter-spacing: 0.5px; }
 @keyframes fadeSlideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-.kpi-row { display: grid; grid-template-columns: repeat(8, 1fr); gap: 10px; flex-shrink: 0; }
+/* Optimización de Espacio en PC */
+.kpi-row {
+    grid-template-columns: repeat(5, 1fr) !important;
+}
+/* Aumentar holgura de tabla */
+.data-grid td {
+    padding: 12px 15px; /* Más padding para reducir fatiga visual */
+}
 .kpi-card { padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-panel); border-top: 3px solid var(--border-color); position: relative; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.2);}
 .kpi-card h4 { margin: 0 0 4px 0; font-size: 0.6rem; text-transform: uppercase; color: var(--text-muted); font-weight: 800; letter-spacing: 0.5px;}
 
