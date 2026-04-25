@@ -562,6 +562,7 @@ function agregarMovimiento() {
         btn.disabled = false; 
     });
 }
+
 function formatearEntradaNumerica(i) { let v = i.value.replace(/\D/g,''); i.value = v ? parseInt(v).toLocaleString('es-CL') : ''; }
 function toggleTheme() { document.body.classList.toggle('light-theme'); }
 setInterval(() => { const c = document.getElementById('cronos'); if(c) c.innerText = new Date().toLocaleString('es-CL').toUpperCase(); }, 1000);
@@ -773,7 +774,7 @@ function procesarCompraTCManual(nombre, montoTotal, cuotas, fechaStr) {
         document.getElementById('inputNombre').value = ''; 
         document.getElementById('inputMonto').value = '';
     }).catch(e => alert("Error en Bus TC: " + e));
-}
+}5
 function calcularFechasCiclo(mesConceptual, anio) {
     let mesInicio = mesConceptual - 1; let anioInicio = anio; if (mesInicio < 0) { mesInicio = 11; anioInicio--; }
     let T0 = new Date(anioInicio, mesInicio, 30); if (T0.getMonth() !== mesInicio) T0 = new Date(anioInicio, mesInicio + 1, 0); 
@@ -913,7 +914,7 @@ function inicializarListenerTC() {
 
 // Para PC
 if (typeof window.renderizarTablaTC === 'undefined') {
-    window.renderizarTablaTC = function() {
+   window.renderizarTablaTC = function() {
     const tbody = document.getElementById("listaDetalleTC"); if (!tbody) return;
     tbody.innerHTML = "";
     
@@ -986,7 +987,7 @@ if (typeof window.renderizarTablaTC === 'undefined') {
     }
     actualizarBarraTC(); 
 }
-};58        
+}
 
 /**
  * REPARACIÓN: Motor de Ingesta TC V13.1 (Anti-Format-Shift)
@@ -1307,4 +1308,4 @@ function ejecutarArranque() {
         alert("No se inyectaron registros (todos estaban marcados como pagados o con valor 0).");
         cerrarPreVuelo();
     }
-}
+}522225
