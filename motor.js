@@ -375,6 +375,7 @@ function sortTable(column) {
 }
 
 // ⚡ FIX V13.3: LÓGICA DE DESBLOQUEO DE EDICIÓN
+// ⚡ FIX V13.3.1: DESBLOQUEO Y ENRUTAMIENTO MÓVIL
 function editarMovimiento(id) {
     const mov = listaMovimientos.find(m => m.firestoreId === id);
     if(!mov) return alert("Registro no encontrado.");
@@ -387,9 +388,12 @@ function editarMovimiento(id) {
     const inputNombre = document.getElementById('inputNombre');
     if(inputNombre) {
         inputNombre.value = mov.nombre;
-        inputNombre.focus();
-        // Auto-selecciona el texto para sobrescribir fácil
-        setTimeout(() => inputNombre.select(), 50); 
+        
+        // 🛡️ PARCHE MÓVIL: Evita que el teclado salte de golpe en celulares
+        if (window.innerWidth > 768) {
+            inputNombre.focus();
+            setTimeout(() => inputNombre.select(), 50); 
+        }
     }
     
     if(document.getElementById('inputMonto')) document.getElementById('inputMonto').value = mov.monto.toLocaleString('es-CL');
@@ -415,8 +419,19 @@ function editarMovimiento(id) {
     if(btn) { btn.innerHTML = isEng ? "UPDATE" : "ACTUALIZAR"; btn.style.backgroundColor = "var(--color-saldo)"; }
     
     actualizarDashboard(); 
-}
 
+    // 📱 LÓGICA DE NAVEGACIÓN MÓVIL (Auto-Switch de Pestaña)
+    if (typeof closeBottomSheet === 'function') closeBottomSheet(); // Cierra el detalle si lo abriste
+    if (typeof switchTabApp === 'function') {
+        const navItems = document.querySelectorAll('.nav-item');
+        if (navItems.length >= 3) switchTabApp('add', navItems[2]); // Te lanza a la pestaña del formulario
+    } else if (typeof window.switchTab === 'function') {
+        window.switchTab('add');
+    }
+    
+    // Sube la pantalla al tope suavemente
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
 // --- 💳 MOTOR DE AUTOMATIZACIÓN TC ---
 function procesarCompraTCManual(nombre, montoTotal, cuotas, fechaStr) {
     const batch = db.batch(); const diaCorte = 20;
