@@ -887,6 +887,10 @@ if (typeof window.renderizarTablaTC === 'undefined') {
  * REPARACIÓN: Motor de Ingesta TC V13.1 (Anti-Format-Shift)
  * Maneja desplazamientos de columnas y formatos de cuotas "ABR 2026 (1/1)"
  */
+/**
+ * REPARACIÓN: Motor de Ingesta TC V13.1 (Anti-Format-Shift)
+ * Maneja desplazamientos de columnas y formatos de cuotas "ABR 2026 (1/1)"
+ */
 function cargarCSV_TC() {
     let fileInputTC = document.createElement('input'); 
     fileInputTC.type = 'file'; 
