@@ -525,6 +525,12 @@ function agregarMovimiento() {
     let op = (modoEdicionActivo && editId) ? db.collection("movimientos").doc(editId).update(dataPayload) : db.collection("movimientos").add(dataPayload);
     op.then(() => {
         document.getElementById('editId').value = ''; document.getElementById('inputNombre').value = ''; document.getElementById('inputMonto').value = '';
+        // INICIO DE LA INTERCEPCIÓN
+    if (c === "Gasto Tarjeta de Crédito") {
+        procesarCompraTCManual(n, m, cantCuotas, fInput);
+        return; // Aborta la ejecución para que no vaya al Libro Diario
+    }
+    // FIN DE LA INTERCEPCIÓN
         btn.innerHTML = isEng ? "INJECT" : "INYECTAR"; btn.style.backgroundColor = "var(--color-edit)"; btn.disabled = false; modoEdicionActivo = false;
         mostrarToast("REGISTRO CONFIRMADO");
     }).catch(err => { alert("❌ Error de Matriz: " + err.message); btn.innerHTML = "ERROR"; btn.disabled = false; });
@@ -846,41 +852,77 @@ function inicializarListenerTC() {
 // Para PC
 if (typeof window.renderizarTablaTC === 'undefined') {
     window.renderizarTablaTC = function() {
-        const tbody = document.getElementById("listaDetalleTC"); if (!tbody) return;
-        tbody.innerHTML = "";
-        if (datosTCGlobal.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:20px; color:var(--text-muted); font-family:monospace;">MATRIZ SIN DATOS</td></tr>`;
-            let boxImpacto = document.getElementById('boxImpactoTC'); if(boxImpacto) boxImpacto.style.display = 'none';
-            return;
-        }
-        let sumaProximoMes = 0; let fechaHoy = new Date();
-        let proximoMes = fechaHoy.getMonth() + 1; let proximoAnio = fechaHoy.getFullYear();
-        if (proximoMes > 11) { proximoMes = 0; proximoAnio++; }
+    const tbody = document.getElementById("listaDetalleTC"); if (!tbody) return;
+    tbody.innerHTML = "";
+    
+    if (datosTCGlobal.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:20px; color:var(--text-muted); font-family:monospace;">MATRIZ SIN DATOS</td></tr>`;
+        return;
+    }
 
-        datosTCGlobal.forEach(doc => {
-            let fechaObj = new Date(doc.mesCobro);
-            let mesTxt = fechaObj.toLocaleString('es-CL', { month: 'short', year: 'numeric' }).toUpperCase();
-            if (fechaObj.getMonth() === proximoMes && fechaObj.getFullYear() === proximoAnio) sumaProximoMes += doc.monto;
-            let tr = document.createElement("tr");
-            tr.innerHTML = `
-                <td style="text-align: center;"><input type="checkbox" class="checkItemTC" value="${doc.id}" onclick="actualizarBarraTC()" style="accent-color: #ff5252;"></td>
-                <td style="font-size: 0.75rem; color: #79c0ff; font-weight: bold;">${mesTxt} (${doc.cuota})</td>
-                <td class="col-desc" title="${doc.nombre}">${doc.nombre}</td>
-                <td class="col-monto">$${doc.monto.toLocaleString('es-CL')}</td>`;
-            tbody.appendChild(tr);
-        });
+    // 1. Agrupar la telemetría por Mes y Año
+    let matrizAgrupada = {};
+    datosTCGlobal.forEach(doc => {
+        let f = new Date(doc.mesCobro);
+        let llaveStr = f.getFullYear() + "-" + String(f.getMonth()).padStart(2, '0');
+        
+        if (!matrizAgrupada[llaveStr]) {
+            matrizAgrupada[llaveStr] = { 
+                etiqueta: f.toLocaleString('es-CL', { month: 'long', year: 'numeric' }).toUpperCase(),
+                totalMes: 0, 
+                items: [] 
+            };
+        }
+        matrizAgrupada[llaveStr].items.push(doc);
+        matrizAgrupada[llaveStr].totalMes += doc.monto;
+    });
 
-        let mesNombreStr = new Date(proximoAnio, proximoMes, 1).toLocaleString('es-CL', { month: 'long' }).toUpperCase();
-        let boxImpacto = document.getElementById('boxImpactoTC');
-        if (boxImpacto) {
-            if (sumaProximoMes > 0) {
-                boxImpacto.style.display = 'flex';
-                document.getElementById('lblImpactoMes').innerText = `${mesNombreStr}`;
-                document.getElementById('txtImpactoMonto').innerText = `$${sumaProximoMes.toLocaleString('es-CL')}`;
-            } else { boxImpacto.style.display = 'none'; }
-        }
-        actualizarBarraTC(); 
-    }
+    // 2. Renderizar con Jerarquía Visual
+    Object.keys(matrizAgrupada).sort().forEach(llave => {
+        let grupo = matrizAgrupada[llave];
+
+        // Fila Maestra (El Total del Mes "E")
+        let trHeader = document.createElement("tr");
+        trHeader.style.backgroundColor = "rgba(255, 82, 82, 0.15)";
+        trHeader.style.borderTop = "2px solid rgba(255, 82, 82, 0.5)";
+        trHeader.innerHTML = `
+            <td></td>
+            <td colspan="2" style="font-weight:900; color:#ff5252; font-size:0.85rem; letter-spacing:1px;">🗓️ ${grupo.etiqueta}</td>
+            <td class="col-monto" style="color:#ff5252; font-weight:900;">$${grupo.totalMes.toLocaleString('es-CL')}</td>
+        `;
+        tbody.appendChild(trHeader);
+
+        // Filas de Detalle (Los componentes "a, b, c")
+        grupo.items.forEach(doc => {
+            let tr = document.createElement("tr");
+            let isEstructural = doc.nombre.includes("PROYECCIÓN") || doc.nombre.includes("FACTURADA");
+            let opacidad = isEstructural ? "1" : "0.7"; // Atenuar cuotas individuales para dar respiro visual
+            
+            tr.innerHTML = `
+                <td style="text-align: center;"><input type="checkbox" class="checkItemTC" value="${doc.id}" onclick="actualizarBarraTC()" style="accent-color: #ff5252;"></td>
+                <td style="font-size: 0.7rem; color: #79c0ff; opacity:${opacidad};">Cuota: ${doc.cuota}</td>
+                <td class="col-desc" title="${doc.nombre}" style="opacity:${opacidad}; font-size:0.75rem;">${doc.nombre}</td>
+                <td class="col-monto" style="opacity:${opacidad};">$${doc.monto.toLocaleString('es-CL')}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    });
+
+    // Lógica de Alarma Próximo Mes (Mantener tu código existente aquí)
+    let fechaHoy = new Date();
+    let proximoMes = fechaHoy.getMonth() + 1; let proximoAnio = fechaHoy.getFullYear();
+    if (proximoMes > 11) { proximoMes = 0; proximoAnio++; }
+    let llaveProxMes = proximoAnio + "-" + String(proximoMes).padStart(2, '0');
+    
+    let boxImpacto = document.getElementById('boxImpactoTC');
+    if (boxImpacto) {
+        if (matrizAgrupada[llaveProxMes]) {
+            boxImpacto.style.display = 'flex';
+            document.getElementById('lblImpactoMes').innerText = matrizAgrupada[llaveProxMes].etiqueta;
+            document.getElementById('txtImpactoMonto').innerText = `$${matrizAgrupada[llaveProxMes].totalMes.toLocaleString('es-CL')}`;
+        } else { boxImpacto.style.display = 'none'; }
+    }
+    actualizarBarraTC(); 
 }
 
 /**
@@ -1136,6 +1178,43 @@ function calcularDiaCero() {
         elCertezaPct.innerText = certeza + '%';
         elCertezaPct.style.color = certeza < 40 ? '#ff5252' : (certeza < 80 ? '#ff9800' : '#2ea043');
     }
+}
+/**
+ * ⚙️ MOTOR DE ENRUTAMIENTO TC V13.2
+ * Toma una compra manual, la divide en cuotas y aplica el cortafuegos.
+ */
+function procesarCompraTCManual(nombre, montoTotal, cuotas, fechaStr) {
+    const batch = db.batch();
+    const diaCorte = 20; // Cortafuegos del banco
+    
+    let fechaCompra = new Date(fechaStr);
+    let dia = fechaCompra.getDate();
+    let mes = fechaCompra.getMonth();
+    let anio = fechaCompra.getFullYear();
+
+    let montoCuota = Math.round(montoTotal / cuotas);
+
+    for (let i = 1; i <= cuotas; i++) {
+        // Lógica de salto: Si compras post-20, la primera cuota salta 2 meses.
+        let mesesDesfase = (dia > diaCorte) ? 2 : 1; 
+        
+        let fCobro = new Date(anio, mes + mesesDesfase + (i - 1), 15);
+        let ref = db.collection("deuda_tc").doc();
+        
+        batch.set(ref, {
+            nombre: `${nombre.toUpperCase()} (MANUAL)`,
+            monto: montoCuota,
+            cuota: `${i}/${cuotas}`,
+            mesCobro: fCobro.toISOString(),
+            status: "Proyectado"
+        });
+    }
+
+    batch.commit().then(() => {
+        mostrarToast(`INYECCIÓN TC: ${cuotas} CUOTA(S) DESPLEGADA(S)`);
+        document.getElementById('inputNombre').value = ''; 
+        document.getElementById('inputMonto').value = '';
+    }).catch(e => alert("Error en Bus TC: " + e));
 }
 function ejecutarArranque() {
     if(!confirm("⚠️ INYECCIÓN CRÍTICA V12.4\n\n¿Estás seguro de inyectar toda tu Planilla Operativa en la Matriz del mes seleccionado?\n\nNota: Los gastos marcados como ✔️ PAGADO serán ignorados para evitar doble contabilización.")) return;
