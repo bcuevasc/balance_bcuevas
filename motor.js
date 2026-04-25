@@ -891,73 +891,114 @@ if (typeof window.renderizarTablaTC === 'undefined') {
  * REPARACIÓN: Motor de Ingesta TC V13.1 (Anti-Format-Shift)
  * Maneja desplazamientos de columnas y formatos de cuotas "ABR 2026 (1/1)"
  */
-function cargarCSV_TC() {
+// PARCHE V13.1.2: INGESTA CON ANCLA FACTURADA Y CORTAFUEGOS DE FECHA
+window.cargarCSV_TC = function() {
     let fileInputTC = document.createElement('input'); 
     fileInputTC.type = 'file'; 
     fileInputTC.accept = '.csv';
-    
     fileInputTC.onchange = e => {
         let file = e.target.files[0];
-        let esFacturado = confirm("💳 PARÁMETRO DE INGESTA\n\n¿Corresponde a movimientos FACTURADOS?\n\n[OK] = Sí, se cobra este ciclo.\n[Cancelar] = No, es proyección futura.");
-        let reader = new FileReader();
         
+        // 1. EL ANCLA DE FACTURACIÓN (Inyecta los 441.332)
+        let montoFacturadoStr = prompt("💰 ANCLA DE FACTURACIÓN OFICIAL:\n\nIngresa el Monto Total FACTURADO que te llegó en la boleta para pagar el próximo mes (ejemplo: 441332).\n\nEsto clavará el gráfico y el Día Cero de forma exacta. Si no tienes boleta aún, pon 0.", "0");
+        let montoFacturado = parseInt(montoFacturadoStr.replace(/[^0-9]/g, '')) || 0;
+
+        // 2. CORTAFUEGOS DE FECHA
+        let corteStr = prompt("📅 CORTAFUEGOS DE FECHA:\n\nIngresa el DÍA DE CIERRE de tu tarjeta (ej: 20).\nLos gastos en el CSV que se hicieron después de este día se patearán automáticamente al mes subsiguiente.", "20");
+        let diaCorte = parseInt(corteStr) || 20;
+
+        let reader = new FileReader();
         reader.onload = async ev => {
             try {
                 let text = ev.target.result; 
                 let lineas = text.split('\n'); 
                 let batch = db.batch(); 
                 let cuotasProcesadas = 0;
+                let hoy = new Date();
 
+                // INYECTAR EL FACTURADO OFICIAL COMO BASE DEL PRÓXIMO MES
+                if (montoFacturado > 0) {
+                    let mesVisor = parseInt(document.getElementById('navMesConceptual').value);
+                    let anioVisor = parseInt(document.getElementById('navAnio').value);
+                    let mesPago = mesVisor + 1; 
+                    let anioPago = anioVisor;
+                    if (mesPago > 11) { mesPago = 0; anioPago++; }
+                    
+                    let fechaCobroFacturado = new Date(anioPago, mesPago, 15);
+                    batch.set(db.collection("deuda_tc").doc("FACTURADO_BASE_OFICIAL"), { 
+                        nombre: "⚠️ BOLETA FACTURADA OFICIAL", 
+                        monto: montoFacturado, 
+                        cuota: "1/1", 
+                        mesCobro: fechaCobroFacturado.toISOString(), 
+                        status: "Facturado" 
+                    });
+                }
+                
                 for(let i = 1; i < lineas.length; i++) {
                     if(lineas[i].trim() === '') continue; 
-                    let separador = lineas[i].includes(';') ? ';' : ',';
-                    let cols = lineas[i].split(separador).map(c => c.replace(/"/g, '').trim());
-
-                    // --- DETECTOR DE OFFSET ---
-                    // Si cols[0] está vacío, los datos empiezan en cols[1]
-                    let offset = (cols[0] === "") ? 1 : 0;
+                    let separador = lineas[i].includes(';') ? ';' : ','; 
+                    let cols = lineas[i].split(separador); 
+                    if(cols.length < 4) continue; 
                     
-                    let rawCiclo = cols[0 + offset] || ""; // Ej: "ABR 2026 (1/1)"
-                    let nombre = (cols[1 + offset] || "DESCONOCIDO").toUpperCase();
-                    let montoStr = (cols[2 + offset] || "0").replace(/[^0-9-]/g, '');
-                    let montoTotal = parseInt(montoStr);
-
-                    if(isNaN(montoTotal) || montoTotal <= 0) continue;
-                    if(nombre.includes("PAGO PESOS") || nombre.includes("TEF")) continue;
-
-                    // Extracción de cuotas por RegEx para ser más resilientes
-                    let cuotaMatch = rawCiclo.match(/(\d+)\/(\d+)/);
-                    let cuotaActual = cuotaMatch ? parseInt(cuotaMatch[1]) : 1;
-                    let totalCuotas = cuotaMatch ? parseInt(cuotaMatch[2]) : 1;
+                    let fecha = cols[0].trim(); 
+                    if(!fecha.includes('/')) continue; 
                     
-                    let fechaReferencia = new Date(); // Fallback hoy
-                    let fechaCobro = new Date(fechaReferencia.getFullYear(), fechaReferencia.getMonth() + (cuotaActual - 1), 15);
-
-                    // ID determinístico para evitar duplicados en la inyección
-                    let docId = `INGESTA_${new Date().getTime()}_${i}`;
-                    let ref = db.collection("deuda_tc").doc(docId);
+                    let nombre = cols[1] ? cols[1].trim().replace(/\s+/g, ' ').toUpperCase() : "DESCONOCIDO"; 
+                    let colCuotas = cols.find(c => c.includes('/') && c.length <= 5 && c !== fecha) || "01/01"; 
+                    let cuotasInfo = colCuotas.trim().split('/'); 
                     
-                    batch.set(ref, { 
-                        nombre: nombre, 
-                        monto: montoTotal, 
-                        cuota: `${cuotaActual}/${totalCuotas}`, 
-                        mesCobro: fechaCobro.toISOString(), 
-                        status: esFacturado ? "Facturado" : "Proyectado" 
-                    });
-                    cuotasProcesadas++;
+                    let montoTotal = 0;
+                    for (let j = cols.length - 1; j >= 2; j--) {
+                        let numStr = cols[j].replace(/[^0-9]/g, '');
+                        if (numStr.length > 0) { montoTotal = parseInt(numStr); break; }
+                    }
+
+                    if(isNaN(montoTotal) || montoTotal <= 0 || nombre.includes("REV.COMPRAS") || nombre.includes("PAGO PESOS") || nombre.includes("TEF") || nombre.includes("PAGO EN LINEA")) continue;
+                    
+                    let cuotaActual = parseInt(cuotasInfo[0]) || 1; 
+                    let totalCuotas = parseInt(cuotasInfo[1]) || 1; 
+                    let montoMensual = totalCuotas > 1 ? Math.round(montoTotal / totalCuotas) : montoTotal;
+                    
+                    let partesF = fecha.replace(/-/g, '/').split('/'); 
+                    if (partesF.length !== 3) continue; 
+                    
+                    let diaCompra = parseInt(partesF[0]);
+                    let mesCompra = parseInt(partesF[1]) - 1; 
+                    let anioCompra = parseInt(partesF[2]);
+                    
+                    for(let c = cuotaActual; c <= totalCuotas; c++) {
+                        let mesesDesfase = 1; // Por defecto, se cobra al mes siguiente
+                        
+                        // LÓGICA DE CORTAFUEGOS
+                        if (diaCompra > diaCorte) mesesDesfase = 2; // Post-cierre se patea un mes más
+                        if (totalCuotas > 1) mesesDesfase = 2; // Las cuotas siempre arrancan un mes después
+                        
+                        let fechaCobro = new Date(anioCompra, mesCompra + mesesDesfase + (c - cuotaActual), 15);
+                        
+                        let docId = `${fecha.replace(/[^0-9]/g, '')}-${nombre.replace(/[^A-Z0-9]/g, '').substring(0,10)}-C${c}de${totalCuotas}`;
+                        batch.set(db.collection("deuda_tc").doc(docId), { 
+                            nombre: nombre, 
+                            monto: montoMensual, 
+                            cuota: `${c}/${totalCuotas}`, 
+                            mesCobro: fechaCobro.toISOString(), 
+                            status: "Proyectado" 
+                        });
+                        cuotasProcesadas++;
+                    }
                 }
                 
                 await batch.commit(); 
-                mostrarToast(`${cuotasProcesadas} INYECTADAS CORRECTAMENTE`);
+                if(typeof mostrarToast === 'function') mostrarToast(`ANCLA FIJADA Y ${cuotasProcesadas} CUOTAS INYECTADAS`); 
+                
             } catch (error) { 
-                console.error("CRITICAL ERROR:", error); 
-                alert("❌ FALLO DE NÚCLEO: " + error.message); 
+                console.error("Error CSV:", error); 
+                alert("❌ ERROR DE CÁLCULO: " + error.message); 
             }
         };
         reader.readAsText(file, 'UTF-8');
     };
     fileInputTC.click();
-}
+};
 function actualizarBarraTC() {
     const seleccionados = document.querySelectorAll('.checkItemTC:checked');
     const barra = document.getElementById('barraAccionesTC');
@@ -977,77 +1018,44 @@ async function ejecutarPurgaMasivaTC() {
 // ==========================================================
 // 🚀 MÓDULO DÍA CERO V12.4 (SINTONÍA FINA)
 // ==========================================================
-function abrirPreVuelo() {
-    const modal = document.getElementById('modal-dia-cero');
-    if(!modal) return;
-    
-    const elMes = document.getElementById('navMesConceptual');
-    const elAnio = document.getElementById('navAnio');
-    const nombresMes = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
-    
-    document.getElementById('pv-mes-label').innerText = `${nombresMes[parseInt(elMes.value)]} ${elAnio.value}`.toUpperCase();
-    
-    const sueldoInput = document.getElementById('inputSueldo');
-    document.getElementById('pv-sueldo').value = sueldoInput ? sueldoInput.value : "3.602.505";
-    
-    let mesVal = parseInt(elMes.value);
-    let anioVal = parseInt(elAnio.value);
-    let sumaTCMes = 0;
-    
-    datosTCGlobal.forEach(doc => {
-        let fCobro = new Date(doc.mesCobro);
-        if (fCobro.getMonth() === mesVal && fCobro.getFullYear() === anioVal) {
-            sumaTCMes += doc.monto;
-        }
-    });
-    
-    let elTcNac = document.getElementById('pv-tc-nac');
-    
-    if(elTcNac && elTcNac.getAttribute('data-estado') === 'est') {
-        elTcNac.value = sumaTCMes > 0 ? sumaTCMes.toLocaleString('es-CL') : "";
-    }
-    
-    calcularDiaCero();
-    modal.style.display = 'flex';
-}
+// PARCHE V13.1.2: DÍA CERO MIRANDO AL MES SIGUIENTE
+window.abrirPreVuelo = function() {
+    const modal = document.getElementById('modal-dia-cero');
+    if(!modal) return;
+    
+    const elMes = document.getElementById('navMesConceptual');
+    const elAnio = document.getElementById('navAnio');
+    const nombresMes = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+    
+    // LÓGICA DE SALTO DE MES (Mira hacia el futuro)
+    let mesVisor = parseInt(elMes.value);
+    let anioVisor = parseInt(elAnio.value);
+    let mesProximo = mesVisor + 1;
+    let anioProximo = anioVisor;
+    if (mesProximo > 11) { mesProximo = 0; anioProximo++; }
 
-function cerrarPreVuelo() {
-    const modal = document.getElementById('modal-dia-cero');
-    if(modal) modal.style.display = 'none';
-}
-
-// 🟢 V13.0: MOTOR HÁPTICO (Vibración) 🟢
-// 🟢 V13.0: MOTOR HÁPTICO (Vibración) 🟢
-window.toggleEstadoPV = function(btn, inputId) {
-    const input = document.getElementById(inputId);
-    if(!input) return;
-    
-    // Dispara una micro-vibración de 15ms en el celular (como un clic físico)
-    if (navigator.vibrate) navigator.vibrate(15); 
-    
-    let estadoActual = input.getAttribute('data-estado') || 'est';
-    
-    if (estadoActual === 'est') {
-        input.setAttribute('data-estado', 'real');
-        btn.className = "btn-estado real";
-        btn.innerText = "📄";
-        input.classList.remove('pagado');
-        input.readOnly = false;
-    } else if (estadoActual === 'real') {
-        input.setAttribute('data-estado', 'pag');
-        btn.className = "btn-estado pag";
-        btn.innerText = "✔️";
-        input.classList.add('pagado');
-        input.readOnly = true;
-    } else {
-        input.setAttribute('data-estado', 'est');
-        btn.className = "btn-estado est";
-        btn.innerText = "EST";
-        input.classList.remove('pagado');
-        input.readOnly = false;
-    }
-    
-    calcularDiaCero(); 
+    // Actualiza la etiqueta de la UI
+    document.getElementById('pv-mes-label').innerText = `${nombresMes[mesProximo]} ${anioProximo}`.toUpperCase();
+    
+    const sueldoInput = document.getElementById('inputSueldo');
+    document.getElementById('pv-sueldo').value = sueldoInput && sueldoInput.value ? sueldoInput.value : "3.602.505";
+    
+    // Suma la Matriz TC específicamente para el MES PRÓXIMO
+    let sumaTCMes = 0;
+    datosTCGlobal.forEach(doc => {
+        let fCobro = new Date(doc.mesCobro);
+        if (fCobro.getMonth() === mesProximo && fCobro.getFullYear() === anioProximo) {
+            sumaTCMes += doc.monto;
+        }
+    });
+    
+    let elTcNac = document.getElementById('pv-tc-nac');
+    if(elTcNac && elTcNac.getAttribute('data-estado') === 'est') {
+        elTcNac.value = sumaTCMes > 0 ? sumaTCMes.toLocaleString('es-CL') : "";
+    }
+    
+    window.calcularDiaCero();
+    modal.style.display = 'flex';
 }
 
 // 🟢 V13.0: MOTOR MATEMÁTICO MULTI-DIVISA 🟢
