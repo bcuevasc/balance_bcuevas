@@ -986,6 +986,7 @@ if (typeof window.renderizarTablaTC === 'undefined') {
     }
     actualizarBarraTC(); 
 }
+};58        
 
 /**
  * REPARACIÓN: Motor de Ingesta TC V13.1 (Anti-Format-Shift)
