@@ -883,53 +883,77 @@ if (typeof window.renderizarTablaTC === 'undefined') {
     }
 }
 
+/**
+ * REPARACIÓN: Motor de Ingesta TC V13.1 (Anti-Format-Shift)
+ * Maneja desplazamientos de columnas y formatos de cuotas "ABR 2026 (1/1)"
+ */
 function cargarCSV_TC() {
-    let fileInputTC = document.createElement('input'); fileInputTC.type = 'file'; fileInputTC.accept = '.csv';
-    fileInputTC.onchange = e => {
-        let file = e.target.files[0];
-        let esFacturado = confirm("💳 PARÁMETRO DE INGESTA\n\n¿Corresponde a movimientos FACTURADOS?\n\n[OK] = Sí, se cobra este ciclo.\n[Cancelar] = No, es proyección futura.");
-        let reader = new FileReader();
-        reader.onload = async ev => {
-            try {
-                let text = ev.target.result; let lineas = text.split('\n'); let batch = db.batch(); let cuotasProcesadas = 0;
-                for(let i = 1; i < lineas.length; i++) {
-                    if(lineas[i].trim() === '') continue; 
-                    let separador = lineas[i].includes(';') ? ';' : ',';
-                    let cols = lineas[i].split(separador); if(cols.length < 4) continue; 
-                    let fecha = cols[0].trim(); let nombre = cols[1].trim().replace(/\s+/g, ' ').toUpperCase(); 
-                    let colCuotas = cols.find(c => c.includes('/') && c.length <= 5) || "01/01";
-                    let cuotasInfo = colCuotas.trim().split('/'); 
-                    let montoStr = cols[cols.length - 1].replace(/[^0-9-]/g, '');
-                    if(!montoStr && cols.length > 1) montoStr = cols[cols.length - 2].replace(/[^0-9-]/g, '');
-                    let montoTotal = parseInt(montoStr);
+    let fileInputTC = document.createElement('input'); 
+    fileInputTC.type = 'file'; 
+    fileInputTC.accept = '.csv';
+    
+    fileInputTC.onchange = e => {
+        let file = e.target.files[0];
+        let esFacturado = confirm("💳 PARÁMETRO DE INGESTA\n\n¿Corresponde a movimientos FACTURADOS?\n\n[OK] = Sí, se cobra este ciclo.\n[Cancelar] = No, es proyección futura.");
+        let reader = new FileReader();
+        
+        reader.onload = async ev => {
+            try {
+                let text = ev.target.result; 
+                let lineas = text.split('\n'); 
+                let batch = db.batch(); 
+                let cuotasProcesadas = 0;
 
-                    if(isNaN(montoTotal) || montoTotal <= 0) continue;
-                    if(nombre.includes("REV.COMPRAS") || nombre.includes("PAGO PESOS") || nombre.includes("TEF") || nombre.includes("PAGO EN LINEA")) continue;
+                for(let i = 1; i < lineas.length; i++) {
+                    if(lineas[i].trim() === '') continue; 
+                    let separador = lineas[i].includes(';') ? ';' : ',';
+                    let cols = lineas[i].split(separador).map(c => c.replace(/"/g, '').trim());
 
-                    let cuotaActual = parseInt(cuotasInfo[0]) || 1; let totalCuotas = parseInt(cuotasInfo[1]) || 1;
-                    let montoMensual = totalCuotas > 1 ? Math.round(montoTotal / totalCuotas) : montoTotal;
-                    let partesF = fecha.replace(/-/g, '/').split('/'); if (partesF.length !== 3) continue; 
-                    let fechaCompra = new Date(partesF[2], partesF[1] - 1, partesF[0]); let hoy = new Date();
+                    // --- DETECTOR DE OFFSET ---
+                    // Si cols[0] está vacío, los datos empiezan en cols[1]
+                    let offset = (cols[0] === "") ? 1 : 0;
+                    
+                    let rawCiclo = cols[0 + offset] || ""; // Ej: "ABR 2026 (1/1)"
+                    let nombre = (cols[1 + offset] || "DESCONOCIDO").toUpperCase();
+                    let montoStr = (cols[2 + offset] || "0").replace(/[^0-9-]/g, '');
+                    let montoTotal = parseInt(montoStr);
 
-                    for(let c = cuotaActual; c <= totalCuotas; c++) {
-                        let fechaCobro;
-                        if (esFacturado) fechaCobro = new Date(hoy.getFullYear(), hoy.getMonth() + (c - cuotaActual), 15);
-                        else { let mesesDesfase = totalCuotas > 1 ? 2 : 1; fechaCobro = new Date(fechaCompra); fechaCobro.setMonth(fechaCobro.getMonth() + mesesDesfase + (c - cuotaActual)); }
-                        let docId = `${fecha.replace(/[^0-9]/g, '')}-${nombre.replace(/[^A-Z0-9]/g, '').substring(0,10)}-C${c}de${totalCuotas}`;
-                        let ref = db.collection("deuda_tc").doc(docId);
-                        batch.set(ref, { nombre: nombre, monto: montoMensual, cuota: `${c}/${totalCuotas}`, mesCobro: fechaCobro.toISOString(), status: esFacturado ? "Facturado" : "Proyectado" });
-                        cuotasProcesadas++;
-                    }
-                }
-                if (cuotasProcesadas === 0) alert("⚠️ RECHAZO:\nNo hay cuotas válidas.");
-                else { await batch.commit(); mostrarToast(`${cuotasProcesadas} INYECTADAS`); }
-            } catch (error) { console.error("Error:", error); alert("❌ SYS ERROR: " + error.message); }
-        };
-        reader.readAsText(file, 'UTF-8');
-    };
-    fileInputTC.click();
+                    if(isNaN(montoTotal) || montoTotal <= 0) continue;
+                    if(nombre.includes("PAGO PESOS") || nombre.includes("TEF")) continue;
+
+                    // Extracción de cuotas por RegEx para ser más resilientes
+                    let cuotaMatch = rawCiclo.match(/(\d+)\/(\d+)/);
+                    let cuotaActual = cuotaMatch ? parseInt(cuotaMatch[1]) : 1;
+                    let totalCuotas = cuotaMatch ? parseInt(cuotaMatch[2]) : 1;
+                    
+                    let fechaReferencia = new Date(); // Fallback hoy
+                    let fechaCobro = new Date(fechaReferencia.getFullYear(), fechaReferencia.getMonth() + (cuotaActual - 1), 15);
+
+                    // ID determinístico para evitar duplicados en la inyección
+                    let docId = `INGESTA_${new Date().getTime()}_${i}`;
+                    let ref = db.collection("deuda_tc").doc(docId);
+                    
+                    batch.set(ref, { 
+                        nombre: nombre, 
+                        monto: montoTotal, 
+                        cuota: `${cuotaActual}/${totalCuotas}`, 
+                        mesCobro: fechaCobro.toISOString(), 
+                        status: esFacturado ? "Facturado" : "Proyectado" 
+                    });
+                    cuotasProcesadas++;
+                }
+                
+                await batch.commit(); 
+                mostrarToast(`${cuotasProcesadas} INYECTADAS CORRECTAMENTE`);
+            } catch (error) { 
+                console.error("CRITICAL ERROR:", error); 
+                alert("❌ FALLO DE NÚCLEO: " + error.message); 
+            }
+        };
+        reader.readAsText(file, 'UTF-8');
+    };
+    fileInputTC.click();
 }
-
 function actualizarBarraTC() {
     const seleccionados = document.querySelectorAll('.checkItemTC:checked');
     const barra = document.getElementById('barraAccionesTC');
