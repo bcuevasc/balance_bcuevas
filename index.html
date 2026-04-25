@@ -139,7 +139,8 @@ h2 { color: var(--text-main); margin: 0; font-size: 1.3rem; font-weight: 900; le
 .pv-input { background: var(--input-bg); border: 1px solid var(--border-color); color: var(--text-main); padding: 4px 6px; border-radius: 4px; font-family: monospace; font-size: 0.85rem; width: 75px; text-align: right; outline: none; font-weight: bold; transition: all 0.3s;}
 .pv-input:focus { border-color: #ff9800; }
 .pv-input.pagado { text-decoration: line-through; color: var(--text-muted); background: transparent; border-color: transparent;}
-
+.pv-input.pagado { text-decoration: line-through; opacity: 0.4; pointer-events: none; }
+.btn-estado.pag { background: var(--color-ingresos); color: #fff; border-color: var(--color-ingresos); }
 .btn-estado { width: 28px; height: 28px; border-radius: 4px; border: 1px solid var(--border-color); background: var(--bg-panel); color: var(--text-muted); font-size: 0.7rem; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; font-weight: bold; flex-shrink: 0;}
 .btn-estado.est { border-color: rgba(255, 152, 0, 0.4); color: #ff9800; background: rgba(255, 152, 0, 0.1); }
 .btn-estado.real { border-color: rgba(31, 111, 235, 0.6); color: #79c0ff; background: rgba(31, 111, 235, 0.2); box-shadow: 0 0 8px rgba(31, 111, 235, 0.3);}
@@ -401,7 +402,10 @@ h2 { color: var(--text-main); margin: 0; font-size: 1.3rem; font-weight: 900; le
                     <div class="pv-input-group"><label>UDEC 2024</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-udec')">EST</button><input type="text" id="pv-udec" class="pv-input" value="48.000" data-estado="est" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
                     <div class="pv-input-group"><label>CAE</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-cae')">EST</button><input type="text" id="pv-cae" class="pv-input" value="38.742" data-estado="est" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
                 </div>
-
+                <div class="kpi-card" style="border-top-color: #d29922;">
+                <h4     data-en="TOTAL BURN">SALIDA TOTAL</h4>
+                    <div class="value" style="color:#d29922;">$<span id="txtGastoTotalPeriodo">0</span></div>
+                </div>
                 <div class="pv-section">
                     <div class="pv-section-title" style="color:#d29922;"><span style="font-size:1rem;">⚡</span> Serv. Básicos Hogar</div>
                     <div class="pv-input-group"><label>Gastos Comunes</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-ggcc')">EST</button><input type="text" id="pv-ggcc" class="pv-input" value="63.220" data-estado="est" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
@@ -426,13 +430,9 @@ h2 { color: var(--text-main); margin: 0; font-size: 1.3rem; font-weight: 900; le
         </div>
     </div>
 </div>
-.pv-input.pagado { text-decoration: line-through; opacity: 0.4; pointer-events: none; }
-.btn-estado.pag { background: var(--color-ingresos); color: #fff; border-color: var(--color-ingresos); }
 
-<div class="kpi-card" style="border-top-color: #d29922;">
-    <h4 data-en="TOTAL BURN">SALIDA TOTAL</h4>
-    <div class="value" style="color:#d29922;">$<span id="txtGastoTotalPeriodo">0</span></div>
-</div>2
+
+
 <script src="motor.js"></script>
 </body>
 </html>
