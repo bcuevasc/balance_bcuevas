@@ -231,29 +231,63 @@ auth.onAuthStateChanged(user => {
     }
 });
 
-// ⚡ LÓGICA DE PRESUPUESTO BLINDADA
+// ==========================================================
+// MÓDULO DE PRESUPUESTO AISLADO (STRICT MODE)
+// ==========================================================
 window.cargarSueldoVisual = function() {
-    const elMes = document.getElementById('navMesConceptual'), elAnio = document.getElementById('navAnio'), elSueldo = document.getElementById('inputSueldo');
+    const elMes = document.getElementById('navMesConceptual');
+    const elAnio = document.getElementById('navAnio');
+    const elSueldo = document.getElementById('inputSueldo');
+    
     if(!elMes || !elAnio || !elSueldo) return;
     
-    let m = elMes.value, a = elAnio.value, llave = `${a}_${m}`;
+    let m = parseInt(elMes.value); 
+    let a = parseInt(elAnio.value);
+    let llave = `${a}_${m}`;
     
-    elSueldo.setAttribute('data-mes-ancla', m); 
-    elSueldo.setAttribute('data-anio-ancla', a);
-    
-    if (sueldosHistoricos && sueldosHistoricos[llave]) { 
-        elSueldo.value = sueldosHistoricos[llave].toLocaleString('es-CL'); 
-    } else { 
-        elSueldo.value = ''; elSueldo.placeholder = 'PRESUPUESTO PENDIENTE'; 
+    if (document.activeElement !== elSueldo) {
+        if (sueldosHistoricos[llave]) {
+            elSueldo.value = sueldosHistoricos[llave].toLocaleString('es-CL');
+        } else {
+            elSueldo.value = '';
+            elSueldo.placeholder = 'NO ASIGNADO'; 
+        }
     }
 };
 
 window.obtenerSueldoMes = function(anio, mes) {
     let llave = `${anio}_${mes}`;
-    if (sueldosHistoricos && sueldosHistoricos[llave]) return sueldosHistoricos[llave];
-    return PRESUPUESTO_BASE_DEFAULT;
+    if (sueldosHistoricos[llave]) return sueldosHistoricos[llave];
+    return SUELDO_BASE_DEFAULT; 
 };
+window.guardarSueldoEnNube = function() {
+    const elSueldo = document.getElementById('inputSueldo');
+    const elMes = document.getElementById('navMesConceptual');
+    const elAnio = document.getElementById('navAnio');
+    
+    if(!elSueldo || !elMes || !elAnio) return;
+    
+    let m = parseInt(elMes.value);
+    let a = parseInt(elAnio.value);
+    
+    if (isNaN(m) || isNaN(a) || elSueldo.value.trim() === '') return; 
 
+    let s = parseInt(elSueldo.value.replace(/\./g, '')); 
+    if (isNaN(s) || s <= 0) return;
+    
+    let llave = `${a}_${m}`;
+    sueldosHistoricos[llave] = s;
+    
+    db.collection("parametros").doc("sueldos").set({
+        [llave]: s
+    }, {merge: true}).then(() => {
+        const nombresMes = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"];
+        if(typeof mostrarToast === 'function') mostrarToast(`PRESUPUESTO ${nombresMes[m]} FIJADO: $${s.toLocaleString('es-CL')}`);
+        actualizarDashboard();
+    }).catch(err => {
+        console.error("Error Nube:", err);
+    });
+};
 let alarmLogCache = "";
 window.abrirHistorian = function() {
     document.getElementById('historian-content').innerHTML = alarmLogCache || "<div style='color:var(--color-saldo); font-weight:bold; text-align:center; padding:20px;'>SYSTEM NOMINAL.<br>NO BREACHES DETECTED.</div>";
