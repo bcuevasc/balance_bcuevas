@@ -207,19 +207,16 @@ window.cargarSueldoVisual = function() {
     
     if(!elMes || !elAnio || !elSueldo) return;
     
-    let m = elMes.value; 
-    let a = elAnio.value;
-    let llave = `${a}_${m}`;
+    let m = parseInt(elMes.value);
+    let a = parseInt(elAnio.value);
     
     elSueldo.setAttribute('data-mes-ancla', m);
     elSueldo.setAttribute('data-anio-ancla', a);
     
-    // Limpieza de buffer: Si cambiamos de mes, forzamos la carga desde la nube
-    if (sueldosHistoricos[llave]) {
-        elSueldo.value = sueldosHistoricos[llave].toLocaleString('es-CL');
-    } else {
-        elSueldo.value = '';
-        elSueldo.placeholder = 'PENDIENTE';
+    if (document.activeElement !== elSueldo) {
+        // Extrae el sueldo real o heredado y lo pinta en la interfaz
+        let sueldo = obtenerSueldoMes(a, m);
+        elSueldo.value = sueldo.toLocaleString('es-CL');
     }
 };
 
@@ -871,14 +868,7 @@ window.abrirPreVuelo = function() {
     calcularDiaCero(); modal.style.display = 'flex';
 }
 
-window.cerrarPreVuelo = function() {
-    const m = document.getElementById('modal-dia-cero');
-    if(m) {
-        m.style.display = 'none';
-        // Limpiamos cualquier selección de input para evitar fugas de foco
-        document.activeElement.blur();
-    }
-};
+window.cerrarPreVuelo = function() { document.getElementById('modal-dia-cero').style.display = 'none'; actualizarDashboard(); };
 
 window.toggleEstadoPV = function(btn, idInput) {
     const estados = ['est', 'real', 'pag'];
@@ -930,62 +920,38 @@ window.calcularDiaCero = function() {
 }
 
 window.ejecutarArranque = function() {
-    if(!confirm("⚠️ INYECCIÓN CRÍTICA\n\n¿Inyectar Planilla Operativa en el MES SIGUIENTE?")) return;
+    if(!confirm("⚠️ INYECCIÓN CRÍTICA\n\n¿Inyectar Planilla Operativa en el MES SIGUIENTE? Los gastos marcados como ✔️ PAGADO serán ignorados.")) return;
     
-    const vM = parseInt(document.getElementById('navMesConceptual').value);
-    const vA = parseInt(document.getElementById('navAnio').value);
-    
-    // Cálculo de destino: Mes actual + 1
-    let pM = vM + 1;
-    let pA = vA;
-    if (pM > 11) { pM = 0; pA++; }
+    // ⚡ FIX: Cálculo estricto del mes siguiente para la inyección
+    let vM = parseInt(document.getElementById('navMesConceptual').value);
+    let vA = parseInt(document.getElementById('navAnio').value);
+    let pM = vM + 1; 
+    let pA = vA; 
+    if (pM > 11) { pM = 0; pA++; } // Salto de año si es diciembre
 
     const batch = db.batch();
-    // Clavamos la fecha en el día 1 del mes siguiente a las 10:00 AM
-    const fDestino = new Date(pA, pM, 1, 10, 0, 0);
+    // Inyecta el día 1 del mes siguiente a las 10:00 AM
+    const fDestino = new Date(pA, pM, 1, 10, 0, 0); 
     let inyectados = 0;
     
     const procesar = (id, nom, cat) => {
-        let el = document.getElementById(id);
-        if (!el || el.getAttribute('data-estado') === 'pag') return; 
+        let el = document.getElementById(id); if (!el) return;
+        let estado = el.getAttribute('data-estado') || 'est'; if (estado === 'pag') return; 
         let monto = parseInt(el.value.replace(/\./g, '')) || 0;
         if (monto > 0) {
-            batch.set(db.collection("movimientos").doc(), {
-                monto: monto, nombre: nom, categoria: cat, tipo: "Gasto Fijo",
-                fecha: fDestino, status: el.getAttribute('data-estado') === 'real' ? 'Real' : 'Estimado',
-                innecesarioPct: 0, cuotas: 1
+            batch.set(db.collection("movimientos").doc(), { 
+                monto: monto, 
+                nombre: nom, 
+                categoria: cat, 
+                tipo: "Gasto Fijo", 
+                fecha: fDestino, 
+                status: estado === 'real' ? 'Real' : 'Estimado', 
+                innecesarioPct: 0, 
+                cuotas: 1 
             });
             inyectados++;
         }
     };
-    
-    // Ejecución de ráfaga
-    procesar('pv-tc-nac', "PAGO TC NACIONAL (DÍA CERO)", "Gastos Fijos (Búnker)"); 
-    procesar('pv-tc-int', "PAGO TC INTERNACIONAL (DÍA CERO)", "Gastos Fijos (Búnker)"); 
-    procesar('pv-linea', "PAGO LÍNEA CRÉDITO (DÍA CERO)", "Gastos Fijos (Búnker)");
-    procesar('pv-arriendo', "ARRIENDO / DIVIDENDO", "Infraestructura (Depto)");
-    procesar('pv-udec', "PAGO UDEC 2024", "Infraestructura (Depto)");
-    procesar('pv-cae', "PAGO CAE", "Infraestructura (Depto)");
-    procesar('pv-ggcc', "GASTOS COMUNES", "Infraestructura (Depto)");
-    procesar('pv-luz', "LUZ / ELECTRICIDAD", "Infraestructura (Depto)");
-    procesar('pv-agua', "AGUA / SANEAMIENTO", "Infraestructura (Depto)");
-    procesar('pv-gas', "GAS", "Infraestructura (Depto)");
-    procesar('pv-celu', "CELU MIO PLAN", "Suscripciones");
-    procesar('pv-madre', "MOVISTAR MADRE", "Red de Apoyo (Familia)");
-    procesar('pv-subs', "PACK SUSCRIPCIONES", "Suscripciones");
-    procesar('pv-seguro', "SEGURO AUTO", "Flota & Movilidad");
-    
-    if (inyectados > 0) {
-        batch.commit().then(() => {
-            cerrarPreVuelo();
-            // Salto visual automático al mes donde inyectamos
-            document.getElementById('navMesConceptual').value = pM;
-            document.getElementById('navAnio').value = pA;
-            aplicarCicloAlSistema();
-            mostrarToast(`ÉXITO: ${inyectados} CARGAS EN ${new Date(pA, pM).toLocaleString('es-CL', {month:'long'}).toUpperCase()}`);
-        });
-    }
-};
     
     procesar('pv-tc-nac', "PAGO TC NACIONAL (DÍA CERO)", "Gastos Fijos (Búnker)"); 
     procesar('pv-tc-int', "PAGO TC INTERNACIONAL (DÍA CERO)", "Gastos Fijos (Búnker)"); 
@@ -1016,7 +982,7 @@ window.ejecutarArranque = function() {
         alert("No se inyectaron registros (0 o pagados)."); 
         cerrarPreVuelo(); 
     }
-
+}
     
     procesar('pv-tc-nac', "PAGO TC NACIONAL (DÍA CERO)", "Gastos Fijos (Búnker)"); 
     procesar('pv-tc-int', "PAGO TC INTERNACIONAL (DÍA CERO)", "Gastos Fijos (Búnker)"); 
@@ -1035,4 +1001,4 @@ window.ejecutarArranque = function() {
     
     if (inyectados > 0) { batch.commit().then(() => { cerrarPreVuelo(); mostrarToast(`ARRANQUE: ${inyectados} INYECTADOS.`); actualizarDashboard(); }).catch(err => alert("Error: " + err.message)); } 
     else { alert("No se inyectaron registros (0 o pagados)."); cerrarPreVuelo(); }
-
+}
