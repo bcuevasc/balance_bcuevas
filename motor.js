@@ -961,3 +961,26 @@ window.ejecutarArranque = function() {
         alert("Nada que inyectar.");
     }
 };
+    
+    procesar('pv-tc-nac', "PAGO TC NACIONAL (DÍA CERO)", "Gastos Fijos (Búnker)"); 
+    procesar('pv-tc-int', "PAGO TC INTERNACIONAL (DÍA CERO)", "Gastos Fijos (Búnker)"); 
+    procesar('pv-linea', "PAGO LÍNEA CRÉDITO (DÍA CERO)", "Gastos Fijos (Búnker)");
+    procesar('pv-arriendo', "ARRIENDO / DIVIDENDO", "Infraestructura (Depto)");
+    procesar('pv-udec', "PAGO UDEC 2024", "Infraestructura (Depto)");
+    procesar('pv-cae', "PAGO CAE", "Infraestructura (Depto)");
+    procesar('pv-ggcc', "GASTOS COMUNES", "Infraestructura (Depto)");
+    procesar('pv-luz', "LUZ / ELECTRICIDAD", "Infraestructura (Depto)");
+    procesar('pv-agua', "AGUA / SANEAMIENTO", "Infraestructura (Depto)");
+    procesar('pv-gas', "GAS", "Infraestructura (Depto)");
+    procesar('pv-celu', "CELU MIO PLAN", "Suscripciones");
+    procesar('pv-madre', "MOVISTAR MADRE", "Red de Apoyo (Familia)");
+    procesar('pv-subs', "PACK SUSCRIPCIONES", "Suscripciones");
+    procesar('pv-seguro', "SEGURO AUTO", "Flota & Movilidad");
+    
+    if (inyectados > 0) {
+        batch.commit().then(() => {
+            cerrarPreVuelo(); document.getElementById('navMesConceptual').value = pM; document.getElementById('navAnio').value = pA;
+            aplicarCicloAlSistema(); mostrarToast(`ÉXITO: ${inyectados} REGISTROS INYECTADOS EN ${new Date(pA, pM).toLocaleString('es-CL', {month:'long'}).toUpperCase()}`);
+        }).catch(err => alert("Error: " + err.message));
+    } else { alert("Nada que inyectar."); }
+};
