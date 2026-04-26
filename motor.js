@@ -1,5 +1,5 @@
 // ==========================================================
-// 🌐 V14.5: MOTOR SCADA PRO (Resilience & Mobile Fix)
+// 🌐 V14.6: MOTOR SCADA PRO (El Exorcismo Final)
 // ==========================================================
 window.VALOR_USD = 950;
 
@@ -82,21 +82,17 @@ document.addEventListener("DOMContentLoaded", () => {
     const selectMass = document.getElementById('massCategorySelect');
     if (selectMass) selectMass.innerHTML = `<option value="">-- Recategorizar a --</option>` + optionsHTML;
 
+    // ⚡ V14.6 CONTROLES BLINDADOS DE PRESUPUESTO
     const elSueldo = document.getElementById('inputSueldo');
     if(elSueldo) {
-        elSueldo.removeAttribute('onchange');
-        elSueldo.removeAttribute('onblur');
-        elSueldo.removeAttribute('oninput');
-        
         elSueldo.addEventListener('input', function() {
             let v = this.value.replace(/\D/g,'');
             this.value = v ? parseInt(v).toLocaleString('es-CL') : '';
         });
-
         elSueldo.addEventListener('blur', function() {
             window.guardarSueldoEnNube();
+            actualizarDashboard();
         });
-
         elSueldo.addEventListener('keypress', function(e) {
             if (e.key === 'Enter') { e.preventDefault(); this.blur(); }
         });
@@ -132,6 +128,16 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 });
+
+const logosComerciales = { "uber": "uber.com", "pedidosya": "pedidosya.com", "mcdonald": "mcdonalds.com", "starbucks": "starbucks.cl", "jumbo": "jumbo.cl", "lider": "lider.cl" };
+function obtenerIconoVisual(nombre, emojiFallback) {
+    if(!nombre) return `<span style="font-size:1.4rem;">${emojiFallback}</span>`;
+    let n = nombre.toLowerCase();
+    for (let marca in logosComerciales) {
+        if (n.includes(marca)) return `<img src="https://logo.clearbit.com/${logosComerciales[marca]}?size=100" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%; background: white;" onerror="this.outerHTML='<span style=\\'font-size:1.4rem;\\'>${emojiFallback}</span>'">`;
+    }
+    return `<span style="font-size:1.4rem;">${emojiFallback}</span>`;
+}
 
 firebase.initializeApp({ apiKey: "AIzaSyBiYETN_JipXWhMq9gKz-2Pap-Ce4ZJNAI", authDomain: "finanzas-bcuevas.firebaseapp.com", projectId: "finanzas-bcuevas" });
 const db = firebase.firestore(), auth = firebase.auth();
@@ -237,20 +243,18 @@ window.guardarSueldoEnNube = function() {
     if (sueldosHistoricos[llave] === s) return; 
 
     sueldosHistoricos[llave] = s;
-    db.collection("parametros").doc("sueldos").set({ [llave]: s }, {merge: true}).then(() => {
-        mostrarToast(`PRESUPUESTO ACTUALIZADO`); 
-    });
+    db.collection("parametros").doc("sueldos").set({ [llave]: s }, {merge: true});
 };
 
 function aplicarCicloAlSistema() {
-    // ⚡ FIX MÓVIL: Evita sangrado de números forzando el borrado visual antes de procesar el nuevo mes
+    // ⚡ FIX CELULAR: Cierre forzado y limpieza instantánea
     const elSueldo = document.getElementById('inputSueldo');
     if (elSueldo) {
         if (document.activeElement === elSueldo) {
             window.guardarSueldoEnNube(); 
             elSueldo.blur(); 
         }
-        elSueldo.value = ''; // Borra el dato fantasma al instante
+        elSueldo.value = ''; 
     }
     
     const navMes = document.getElementById('navMesConceptual'), navAnio = document.getElementById('navAnio');
@@ -263,7 +267,7 @@ function aplicarCicloAlSistema() {
     const badge = document.getElementById('navRangoBadge');
     if(badge) badge.innerText = `[${T0.toLocaleDateString('es-CL', {day:'2-digit', month:'short'}).toUpperCase()} - ${fechaFinVisual.toLocaleDateString('es-CL', {day:'2-digit', month:'short'}).toUpperCase()}]`;
     
-    // Micro-delay para que el celular termine de renderizar sus selectores nativos
+    // Retraso de 50ms para que el SO del celular cierre su rueda nativa
     setTimeout(() => {
         cargarSueldoVisual(); 
         actualizarDashboard();
@@ -279,15 +283,10 @@ window.abrirHistorian = function() {
 function actualizarDashboard() {
     const elMes = document.getElementById('navMesConceptual'), elAnio = document.getElementById('navAnio');
     const mesVal = parseInt(elMes.value), anioVal = parseInt(elAnio.value);
-    const inputSueldo = document.getElementById('inputSueldo');
     
     let sueldo = obtenerSueldoMes(anioVal, mesVal);
-    if (inputSueldo && inputSueldo.value) {
-        sueldo = parseInt(inputSueldo.value.replace(/\./g,'')) || sueldo;
-    }
     
     let { T0, TFinal } = calcularFechasCiclo(mesVal, anioVal);
-    
     const fDesde = document.getElementById('filtroDesde')?.value;
     const fHasta = document.getElementById('filtroHasta')?.value;
     if(fDesde) { let [y,m,d] = fDesde.split('-'); T0 = new Date(y, m-1, d); }
@@ -396,7 +395,7 @@ window.renderizarListas = function(sueldoBase, filtroBuscador) {
         let esEditando = (document.getElementById('editId')?.value === x.firestoreId);
         let bgEdicion = esEditando ? 'background-color: rgba(210, 153, 34, 0.15); border-left: 3px solid var(--color-edit);' : (x.catV === 'Dopamina & Antojos' ? 'background: linear-gradient(90deg, rgba(255,255,255,0.01) 60%, rgba(255,82,82,0.15) 100%); border-right: 2px solid #ff5252;' : '');
 
-        htmlPC += `<tr style="${bgEdicion}">
+        htmlPC += `<tr style="${bgEdicion}" draggable="true" ondragstart="dragStart(event, '${x.firestoreId}')" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dropRow(event, '${x.firestoreId}')">
             <td style="text-align: center;"><input type="checkbox" class="row-check" value="${x.firestoreId}" onchange="updateMassActions()"></td>
             <td style="font-size:0.75rem; color:var(--text-muted);">${d.toLocaleDateString('es-CL', {day:'2-digit', month:'2-digit'})} <span class="col-hora">${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}</span></td>
             <td class="col-desc" title="${x.nombre || 'Dato no identificado'}">${x.nombre || 'Dato no identificado'}</td>
@@ -457,6 +456,14 @@ function editarMovimiento(id) {
     if(btn) { btn.innerHTML = isEng ? "UPDATE" : "ACTUALIZAR"; btn.style.backgroundColor = "var(--color-saldo)"; }
     
     actualizarDashboard(); 
+
+    if (typeof closeBottomSheet === 'function') closeBottomSheet(); 
+    if (typeof switchTabApp === 'function') {
+        const navItems = document.querySelectorAll('.nav-item');
+        if (navItems.length >= 3) switchTabApp('add', navItems[2]); 
+    } else if (typeof window.switchTab === 'function') {
+        window.switchTab('add');
+    }
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -522,10 +529,13 @@ function limpiarFormulario() {
 function formatearEntradaNumerica(i) { let v = i.value.replace(/\D/g,''); i.value = v ? parseInt(v).toLocaleString('es-CL') : ''; }
 function toggleTheme() { document.body.classList.toggle('light-theme'); }
 setInterval(() => { const c = document.getElementById('cronos'); if(c) c.innerText = new Date().toLocaleString('es-CL').toUpperCase(); }, 1000);
+function toggleAllChecks() { const check = document.getElementById('checkAll')?.checked; document.querySelectorAll('.row-check').forEach(cb => cb.checked = check); updateMassActions(); }
+function updateMassActions() { const bar = document.getElementById('massActionsBar'); if(!bar) return; const cnt = document.querySelectorAll('.row-check:not(#checkAll):checked').length; bar.style.display = cnt > 0 ? 'flex' : 'none'; document.getElementById('massCount').innerText = `${cnt} SEL`; if(cnt === 0 && document.getElementById('checkAll')) document.getElementById('checkAll').checked = false; }
+function massDelete() { const ids = Array.from(document.querySelectorAll('.row-check:not(#checkAll):checked')).map(cb => cb.value); if(ids.length === 0 || !confirm(`⚠️ ¿Eliminar ${ids.length} registro(s)?`)) return; const btn = document.querySelector('button[onclick="massDelete()"]'); const orig = btn.innerHTML; btn.innerHTML = '⏳'; Promise.all(ids.map(id => db.collection("movimientos").doc(id).delete())).then(() => { document.getElementById('massActionsBar').style.display = 'none'; document.getElementById('checkAll').checked = false; btn.innerHTML = orig; }); }
+function massCategorize() { const ids = Array.from(document.querySelectorAll('.row-check:not(#checkAll):checked')).map(cb => cb.value); const cat = document.getElementById('massCategorySelect').value; if(ids.length === 0 || !cat || !confirm(`¿Categorizar como "${cat}"?`)) return; const btn = document.querySelector('button[onclick="massCategorize()"]'); const orig = btn.innerHTML; btn.innerHTML = '⏳'; Promise.all(ids.map(id => db.collection("movimientos").doc(id).update({categoria: cat}))).then(() => { document.getElementById('massActionsBar').style.display = 'none'; document.getElementById('checkAll').checked = false; document.getElementById('massCategorySelect').value = ''; btn.innerHTML = orig; }); }
 
-// ⚡ V14.5: AISLAMIENTO GRÁFICO (Compartimentos Estancos)
+// ⚡ V14.6: COMPARTIMENTACIÓN ESTANCA PARA GRÁFICOS (Cero Apagones)
 function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0, totalFijosMes, tInfra, tFlota, deudaAprox) {
-    // Destrucción segura
     try { if(chartBD) chartBD.destroy(); } catch(e){}
     try { if(chartP) chartP.destroy(); } catch(e){}
     try { if(chartDiario) chartDiario.destroy(); } catch(e){}
@@ -538,39 +548,18 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0, totalFijosMes, 
         id: 'labelsPlugin',
         afterDatasetsDraw(chart) {
             try {
-                const ctx = chart.ctx;
-                ctx.font = 'bold 10px monospace';
-                ctx.fillStyle = '#ffffff'; 
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'bottom';
-                
+                const ctx = chart.ctx; ctx.font = 'bold 10px monospace'; ctx.fillStyle = '#ffffff'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
                 if (chart.config.type === 'bar' && chart.data && chart.data.labels) {
                     const datasets = chart.data.datasets;
                     chart.data.labels.forEach((_, index) => {
                         let total = 0; let lastY = null; let xPos = null;
-                        datasets.forEach((dataset, i) => {
-                            const meta = chart.getDatasetMeta(i);
-                            if (!meta.hidden && dataset.data[index] > 0 && meta.data[index]) {
-                                total += dataset.data[index];
-                                lastY = meta.data[index].y;
-                                xPos = meta.data[index].x;
-                            }
-                        });
-                        if (total > 0 && lastY !== null && xPos !== null) {
-                            ctx.fillText(Math.round(total / 1000) + 'k', xPos, lastY - 4);
-                        }
+                        datasets.forEach((dataset, i) => { const meta = chart.getDatasetMeta(i); if (!meta.hidden && dataset.data[index] > 0 && meta.data[index]) { total += dataset.data[index]; lastY = meta.data[index].y; xPos = meta.data[index].x; } });
+                        if (total > 0 && lastY !== null && xPos !== null) { ctx.fillText(Math.round(total / 1000) + 'k', xPos, lastY - 4); }
                     });
                 } else if (chart.config.type === 'line' && chart.data && chart.data.datasets) {
                     chart.data.datasets.forEach((dataset, i) => {
                         const meta = chart.getDatasetMeta(i);
-                        if (!meta.hidden && meta.data) {
-                            meta.data.forEach((element, index) => {
-                                const data = dataset.data[index];
-                                if (data > 0 && element && typeof element.x === 'number' && typeof element.y === 'number') {
-                                    ctx.fillText(Math.round(data / 1000) + 'k', element.x, element.y - 6);
-                                }
-                            });
-                        }
+                        if (!meta.hidden && meta.data) { meta.data.forEach((element, index) => { const data = dataset.data[index]; if (data > 0 && element && typeof element.x === 'number' && typeof element.y === 'number') { ctx.fillText(Math.round(data / 1000) + 'k', element.x, element.y - 6); } }); }
                     });
                 }
             } catch(e) {}
@@ -609,24 +598,17 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0, totalFijosMes, 
         for(let i = limit + 1; i <= diasCiclo; i++) proyeccion[i] = proyeccion[i-1] - promedioGastoDiario;
     }
 
-    // [ GRÁFICO 1 ]
     try {
         const ctxBD = document.getElementById('chartBurnDown');
         if(ctxBD) {
-            let grad = ctxBD.getContext('2d').createLinearGradient(0, 0, 0, 400);
-            grad.addColorStop(0, 'rgba(31, 111, 235, 0.4)'); grad.addColorStop(1, 'rgba(31, 111, 235, 0)');
+            let grad = ctxBD.getContext('2d').createLinearGradient(0, 0, 0, 400); grad.addColorStop(0, 'rgba(31, 111, 235, 0.4)'); grad.addColorStop(1, 'rgba(31, 111, 235, 0)');
             chartBD = new Chart(ctxBD, {
-                type: 'line', data: { labels: labelsX, datasets: [
-                    { label: 'Consumo Real', data: actual, borderColor: '#1f6feb', backgroundColor: grad, borderWidth: 3, fill: true, pointRadius: 0, tension: 0.2 },
-                    { label: 'Proyección', data: proyeccion, borderColor: '#d29922', borderDash: [5, 5], borderWidth: 2, fill: false, pointRadius: 0, tension: 0.2 },
-                    { label: 'Ideal', data: ideal, borderColor: 'rgba(46, 160, 67, 0.4)', borderDash: [5, 5], borderWidth: 2, fill: false, pointRadius: 0 }
-                ]},
+                type: 'line', data: { labels: labelsX, datasets: [ { label: 'Consumo Real', data: actual, borderColor: '#1f6feb', backgroundColor: grad, borderWidth: 3, fill: true, pointRadius: 0, tension: 0.2 }, { label: 'Proyección', data: proyeccion, borderColor: '#d29922', borderDash: [5, 5], borderWidth: 2, fill: false, pointRadius: 0, tension: 0.2 }, { label: 'Ideal', data: ideal, borderColor: 'rgba(46, 160, 67, 0.4)', borderDash: [5, 5], borderWidth: 2, fill: false, pointRadius: 0 } ]},
                 options: { maintainAspectRatio:false, plugins:{legend:{display:false}}, scales: { x: { ticks: { color: cT, font: {size: 9} }, grid:{color:cG} }, y: { grid: { color: cG }, ticks: { color: cT, callback: v => '$' + Math.round(v/1000) + 'k' } } }, layout: { padding: 0 } }
             });
         }
-    } catch(e) { console.error("Error Chart 1", e); }
+    } catch(e) { console.error("Error BD", e); }
 
-    // [ GRÁFICO 2 ]
     try {
         const sorted = Object.entries(cats).sort((a,b)=>b[1]-a[1]).slice(0,6);
         const ctxP = document.getElementById('chartPareto');
@@ -637,39 +619,28 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0, totalFijosMes, 
                 options: { maintainAspectRatio:false, plugins:{legend:{position: 'right', labels:{color:cT, font:{size:10, family:'monospace'}}}}, scales:{ r:{ticks:{display:false}, grid:{color:cG}, angleLines:{color:cG}} } }
             });
         }
-    } catch(e) { console.error("Error Chart 2", e); }
+    } catch(e) { console.error("Error Pareto", e); }
 
-    // [ GRÁFICO 3 ]
     try {
         const ctxDiario = document.getElementById('chartDiario');
         let limiteDiarioIdeal = Math.max((sueldo - totalFijosMes - tInfra - tFlota) / diasCiclo, 0);
         alarmLogCache = deudaAprox > sueldo * 0.15 ? `<div class='log-item critical'><div class='log-icon'>🛑</div><div class='log-content'><strong>SOBRECARGA TC</strong><div class='log-date'>Riesgo Pasivos > 15%</div><span>$${deudaAprox.toLocaleString('es-CL')}</span></div></div>` : "";
 
         if(ctxDiario) {
-            let lastDayWithData = diasCiclo;
-            while(lastDayWithData > 0 && (dailyNecesario[lastDayWithData] === 0 && dailyFugas[lastDayWithData] === 0)) lastDayWithData--;
-            let startDayForBars = Math.max(1, lastDayWithData - 14); 
+            let lastDayWithData = diasCiclo; while(lastDayWithData > 0 && (dailyNecesario[lastDayWithData] === 0 && dailyFugas[lastDayWithData] === 0)) lastDayWithData--; let startDayForBars = Math.max(1, lastDayWithData - 14); 
             for(let i=startDayForBars; i<=lastDayWithData; i++) {
                 if (dailyFugas[i] > 0) alarmLogCache += `<div class='log-item warning'><div class='log-icon'>🍔</div><div class='log-content'><strong>FUGA DOPAMINA</strong><div class='log-date'>${labelsFechas[i]}</div><span>$${dailyFugas[i].toLocaleString('es-CL')}</span></div></div>`;
                 if ((dailyNecesario[i] + dailyFugas[i]) > limiteDiarioIdeal) alarmLogCache += `<div class='log-item critical'><div class='log-icon'>🔥</div><div class='log-content'><strong>LÍMITE ROTO</strong><div class='log-date'>${labelsFechas[i]}</div><span>$${(dailyNecesario[i]+dailyFugas[i]).toLocaleString('es-CL')}</span></div></div>`;
             }
-
             chartDiario = new Chart(ctxDiario, {
                 type: 'bar',
-                data: { labels: labelsFechas.slice(startDayForBars, lastDayWithData + 1), datasets: [
-                    { label: 'Gasto Base', data: dailyNecesario.slice(startDayForBars, lastDayWithData + 1), backgroundColor: 'rgba(31, 111, 235, 0.6)', borderRadius: 2 },
-                    { label: 'Fuga (Dopamina)', data: dailyFugas.slice(startDayForBars, lastDayWithData + 1), backgroundColor: 'rgba(255, 82, 82, 0.9)', borderRadius: 2 }
-                ]},
+                data: { labels: labelsFechas.slice(startDayForBars, lastDayWithData + 1), datasets: [ { label: 'Gasto Base', data: dailyNecesario.slice(startDayForBars, lastDayWithData + 1), backgroundColor: 'rgba(31, 111, 235, 0.6)', borderRadius: 2 }, { label: 'Fuga (Dopamina)', data: dailyFugas.slice(startDayForBars, lastDayWithData + 1), backgroundColor: 'rgba(255, 82, 82, 0.9)', borderRadius: 2 } ]},
                 options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { stacked: true, ticks: { color: cT, font:{size:8} }, grid: { display:false } }, y: { stacked: true, ticks: { color: cT, callback: v => '$' + Math.round(v / 1000) + 'k' }, grid: { color: cG } } } },
-                plugins: [
-                    { id: 'limiteDiarioPlugin', afterDraw: (chart) => { try { if(limiteDiarioIdeal <= 0) return; const ctx = chart.ctx, xAxis = chart.scales.x, yAxis = chart.scales.y, yPos = yAxis.getPixelForValue(limiteDiarioIdeal); if(yPos >= yAxis.top && yPos <= yAxis.bottom) { ctx.save(); ctx.beginPath(); ctx.moveTo(xAxis.left, yPos); ctx.lineTo(xAxis.right, yPos); ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(210, 153, 34, 0.8)'; ctx.setLineDash([4, 4]); ctx.stroke(); ctx.restore(); } } catch(e){} } },
-                    labelsPlugin
-                ]
+                plugins: [ { id: 'limiteDiarioPlugin', afterDraw: (chart) => { try { if(limiteDiarioIdeal <= 0) return; const ctx = chart.ctx, xAxis = chart.scales.x, yAxis = chart.scales.y, yPos = yAxis.getPixelForValue(limiteDiarioIdeal); if(yPos >= yAxis.top && yPos <= yAxis.bottom) { ctx.save(); ctx.beginPath(); ctx.moveTo(xAxis.left, yPos); ctx.lineTo(xAxis.right, yPos); ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(210, 153, 34, 0.8)'; ctx.setLineDash([4, 4]); ctx.stroke(); ctx.restore(); } } catch(e){} } }, labelsPlugin ]
             });
         }
-    } catch(e) { console.error("Error Chart 3", e); }
+    } catch(e) { console.error("Error Diario", e); }
 
-    // [ GRÁFICO 4 ] - Generación estática infalible
     try {
         const ctxProyeccion = document.getElementById('chartRadar');
         if(ctxProyeccion) {
@@ -677,8 +648,9 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0, totalFijosMes, 
             const nombresMesesFijos = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"];
             
             for(let i=1; i<=6; i++) {
-                let mIndex = (fechaHoy.getMonth() + i) % 12;
-                let anioTemp = fechaHoy.getFullYear() + Math.floor((fechaHoy.getMonth() + i) / 12);
+                let dTemp = new Date(fechaHoy.getFullYear(), fechaHoy.getMonth() + i, 1);
+                let mIndex = dTemp.getMonth();
+                let anioTemp = dTemp.getFullYear();
                 mesesLabels.push(nombresMesesFijos[mIndex]);
                 
                 let sumaMes = datosTCGlobal.filter(d => { 
@@ -686,29 +658,20 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0, totalFijosMes, 
                     let fC = new Date(d.mesCobro); 
                     return fC.getMonth() === mIndex && fC.getFullYear() === anioTemp; 
                 }).reduce((a, c) => a + (Number(c.monto) || 0), 0);
-                
                 montosProyectados.push(sumaMes);
             }
             
             let bgFill = 'rgba(255, 82, 82, 0.15)';
-            try {
-                let grad = ctxProyeccion.getContext('2d').createLinearGradient(0, 0, 0, 300); 
-                grad.addColorStop(0, 'rgba(255, 82, 82, 0.6)'); 
-                grad.addColorStop(1, 'rgba(255, 82, 82, 0.05)');
-                bgFill = grad;
-            } catch(e){}
+            try { let grad = ctxProyeccion.getContext('2d').createLinearGradient(0, 0, 0, 300); grad.addColorStop(0, 'rgba(255, 82, 82, 0.6)'); grad.addColorStop(1, 'rgba(255, 82, 82, 0.05)'); bgFill = grad; } catch(e){}
             
             chartRadar = new Chart(ctxProyeccion, {
                 type: 'line', 
                 data: { labels: mesesLabels, datasets: [{ label: 'Deuda TC', data: montosProyectados, backgroundColor: bgFill, borderColor: '#ff5252', borderWidth: 3, fill: true, tension: 0.4, pointRadius: 4, pointBackgroundColor: '#030508', pointBorderColor: '#ff5252' }] },
                 options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { color: cT, callback: v => '$' + Math.round(v/1000) + 'k' }, grid: { color: cG } }, x: { ticks: { color: cT, font: {size: 10, weight: 'bold'} }, grid: { display: false } } } },
-                plugins: [
-                    { id: 'setpointTCPlugin', afterDraw: (chart) => { try { const ctx = chart.ctx, xAxis = chart.scales.x, yAxis = chart.scales.y; const umbralSeguridad = (Number(sueldo) || 0) * 0.15; if(yAxis && yAxis.max !== undefined && yAxis.max > umbralSeguridad) { const yPos = yAxis.getPixelForValue(umbralSeguridad); ctx.save(); ctx.beginPath(); ctx.moveTo(xAxis.left, yPos); ctx.lineTo(xAxis.right, yPos); ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(255, 82, 82, 0.8)'; ctx.setLineDash([5, 5]); ctx.stroke(); ctx.fillStyle = '#ff5252'; ctx.font = 'bold 10px monospace'; ctx.fillText('MAX (15%)', xAxis.left + 5, yPos - 5); ctx.restore(); } } catch(e){} } },
-                    labelsPlugin
-                ]
+                plugins: [ { id: 'setpointTCPlugin', afterDraw: (chart) => { try { const ctx = chart.ctx, xAxis = chart.scales.x, yAxis = chart.scales.y; const umbralSeguridad = (Number(sueldo) || 0) * 0.15; if(yAxis && yAxis.max !== undefined && yAxis.max > umbralSeguridad) { const yPos = yAxis.getPixelForValue(umbralSeguridad); ctx.save(); ctx.beginPath(); ctx.moveTo(xAxis.left, yPos); ctx.lineTo(xAxis.right, yPos); ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(255, 82, 82, 0.8)'; ctx.setLineDash([5, 5]); ctx.stroke(); ctx.fillStyle = '#ff5252'; ctx.font = 'bold 10px monospace'; ctx.fillText('MAX (15%)', xAxis.left + 5, yPos - 5); ctx.restore(); } } catch(e){} } }, labelsPlugin ]
             });
         }
-    } catch(e) { console.error("Error Chart 4", e); }
+    } catch(e) { console.error("Error Radar", e); }
 }
 
 function calcularFechasCiclo(mesConceptual, anio) {
@@ -820,18 +783,6 @@ window.cargarCSV_TC = function() {
     };
     fileInputTC.click();
 };
-
-function actualizarBarraTC() {
-    const sel = document.querySelectorAll('.checkItemTC:checked'), barra = document.getElementById('barraAccionesTC'), txt = document.getElementById('txtSeleccionadosTC');
-    if (sel.length > 0) { if(barra) barra.style.display = 'flex'; if(txt) txt.innerText = `${sel.length} SEL`; } 
-    else { if(barra) barra.style.display = 'none'; let m = document.getElementById('checkMaestroTC'); if(m) m.checked = false; }
-}
-function toggleTodosTC(maestro) { document.querySelectorAll('.checkItemTC').forEach(c => c.checked = maestro.checked); actualizarBarraTC(); }
-async function ejecutarPurgaMasivaTC() {
-    const sel = document.querySelectorAll('.checkItemTC:checked'); if (!confirm(`⚠️ ¿Borrar ${sel.length} registros permanentemente?`)) return;
-    const batch = db.batch(); sel.forEach(cb => { batch.delete(db.collection("deuda_tc").doc(cb.value)); });
-    try { await batch.commit(); mostrarToast("PURGA COMPLETADA"); } catch (error) { alert("❌ Error Net."); }
-}
 
 window.abrirPreVuelo = function() {
     const modal = document.getElementById('modal-dia-cero'); if(!modal) return;
