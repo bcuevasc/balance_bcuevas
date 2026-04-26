@@ -200,7 +200,13 @@ h2 { color: var(--text-main); margin: 0; font-size: 1.3rem; font-weight: 900; le
         </div>
 
         <div class="kpi-row" style="flex: 1;">
-            <div class="kpi-card" style="border-top-color: var(--border-color);"><h4 data-en="Monthly Budget">Presupuesto Mensual</h4><div class="value"><span>$</span><input type="text" id="inputSueldo" oninput="formatearEntradaNumerica(this); actualizarDashboard();" style="background:transparent; border:none; color:var(--text-main); font-weight:900; width:100%; font-size:1.15rem; outline:none; font-family: monospace; padding:0; flex-grow:1;"></div></div>
+            <div class="kpi-card" style="border-top: 3px solid #d29922;">
+        <div class="kpi-label">PRESUPUESTO MENSUAL</div>
+        <div style="display: flex; align-items: baseline;">
+            <span style="color:var(--text-muted); font-size:1.2rem; margin-right:2px;">$</span>
+            <input type="text" id="inputSueldo" class="kpi-value editable-kpi" placeholder="NO ASIGNADO">
+        </div>
+    </div>
             <div class="kpi-card" style="border-top-color: var(--border-color);"><h4 data-en="Extra Income">Ingresos Extra</h4><div class="value" style="color:var(--color-ingresos);">$<span id="txtTotalIngresos">0</span></div></div>
             <div class="kpi-card" style="border-top-color: var(--color-infra);"><h4 style="color:var(--color-infra);" data-en="Real Estate">Infraestructura</h4><div class="value">$<span id="txtTotalInfra">0</span></div></div>
             <div class="kpi-card" style="border-top-color: var(--color-flota);"><h4 style="color:var(--color-flota);" data-en="Fleet & Mobility">Flota / Auto</h4><div class="value">$<span id="txtTotalFlota">0</span></div></div>
