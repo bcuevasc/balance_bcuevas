@@ -669,6 +669,21 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0, totalFijosMes, 
     }
 }
 
+function calcularFechasCiclo(mesConceptual, anio) {
+    let mesInicio = mesConceptual - 1; let anioInicio = anio; if (mesInicio < 0) { mesInicio = 11; anioInicio--; }
+    let T0 = new Date(anioInicio, mesInicio, 30); if (T0.getMonth() !== mesInicio) T0 = new Date(anioInicio, mesInicio + 1, 0); 
+    let TFinal = new Date(anio, mesConceptual, 30); if (TFinal.getMonth() !== mesConceptual) TFinal = new Date(anio, mesConceptual + 1, 0);
+    return { T0, TFinal, fechaFinVisual: new Date(TFinal.getTime() - 86400000) };
+}
+
+window.navegarMes = function(direccion) {
+    const navMes = document.getElementById('navMesConceptual'), navAnio = document.getElementById('navAnio');
+    if(!navMes || !navAnio) return;
+    let m = parseInt(navMes.value), a = parseInt(navAnio.value);
+    m += direccion; if(m > 11) { m = 0; a++; } else if(m < 0) { m = 11; a--; }
+    navMes.value = m; navAnio.value = a; aplicarCicloAlSistema();
+};
+
 function aplicarCicloAlSistema() {
     const navMes = document.getElementById('navMesConceptual'), navAnio = document.getElementById('navAnio');
     if(!navMes || !navAnio) return;
