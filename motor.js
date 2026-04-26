@@ -236,6 +236,7 @@ auth.onAuthStateChanged(user => {
 // ==========================================================
 let timerPresupuesto = null; // Reloj de latido
 
+// 1. CARGA AISLADA (Con placeholder actualizado)
 window.cargarSueldoVisual = function() {
     const elMes = document.getElementById('navMesConceptual');
     const elAnio = document.getElementById('navAnio');
@@ -247,13 +248,15 @@ window.cargarSueldoVisual = function() {
     let a = parseInt(elAnio.value);
     let llave = `${a}_${m}`;
     
-    if (document.activeElement !== elSueldo) {
-        if (sueldosHistoricos && sueldosHistoricos[llave]) {
-            elSueldo.value = sueldosHistoricos[llave].toLocaleString('es-CL');
-        } else {
-            elSueldo.value = '';
-            elSueldo.placeholder = 'NO ASIGNADO'; 
-        }
+    // ANCLAMOS AL NUEVO MES
+    elSueldo.setAttribute('data-mes-ancla', m);
+    elSueldo.setAttribute('data-anio-ancla', a);
+    
+    if (sueldosHistoricos && sueldosHistoricos[llave]) {
+        elSueldo.value = sueldosHistoricos[llave].toLocaleString('es-CL');
+    } else {
+        elSueldo.value = '';
+        elSueldo.placeholder = 'NO ASIGNADO'; 
     }
 };
 
@@ -263,15 +266,14 @@ window.obtenerSueldoMes = function(anio, mes) {
     return SUELDO_BASE_DEFAULT; // Mantiene el default por seguridad matemática interna
 };
 
+// 2. GUARDADO ANTI-CRUCES (Lee el ancla, NUNCA el selector)
 window.guardarSueldoEnNube = function() {
     const elSueldo = document.getElementById('inputSueldo');
-    const elMes = document.getElementById('navMesConceptual');
-    const elAnio = document.getElementById('navAnio');
+    if(!elSueldo) return;
     
-    if(!elSueldo || !elMes || !elAnio) return;
-    
-    let m = parseInt(elMes.value);
-    let a = parseInt(elAnio.value);
+    // 🛑 LA CLAVE: Leemos a qué mes estaba amarrado el input, ignorando lo que diga el selector
+    let m = parseInt(elSueldo.getAttribute('data-mes-ancla'));
+    let a = parseInt(elSueldo.getAttribute('data-anio-ancla'));
     
     if (isNaN(m) || isNaN(a) || elSueldo.value.trim() === '') return; 
 
@@ -279,21 +281,11 @@ window.guardarSueldoEnNube = function() {
     if (isNaN(s) || s <= 0) return;
     
     let llave = `${a}_${m}`;
-    
-    // Cortafuegos: Evita escrituras redundantes en Firebase
-    if (sueldosHistoricos && sueldosHistoricos[llave] === s) return;
+    if (sueldosHistoricos && sueldosHistoricos[llave] === s) return; // Evita doble guardado
 
     sueldosHistoricos[llave] = s;
-    
-    db.collection("parametros").doc("sueldos").set({
-        [llave]: s
-    }, {merge: true}).then(() => {
-        const nombresMes = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"];
-        if(typeof mostrarToast === 'function') mostrarToast(`PRESUPUESTO ${nombresMes[m]} FIJADO: $${s.toLocaleString('es-CL')}`);
-        actualizarDashboard();
-    }).catch(err => {
-        console.error("Error Nube:", err);
-    });
+    db.collection("parametros").doc("sueldos").set({ [llave]: s }, {merge: true});
+    console.log(`[SYS] Presupuesto guardado de forma segura en: ${llave}`);
 };
 
 // ⚡ LÓGICA DE AUTO-GUARDADO (Anula la condición de carrera en móviles)
@@ -313,12 +305,27 @@ document.addEventListener("DOMContentLoaded", () => {
 // ⚡ REGLA DE NAVEGACIÓN: En tu función aplicarCicloAlSistema() asegúrate de abortar cualquier guardado fantasma
 const originalAplicarCiclo = window.aplicarCicloAlSistema;
 window.aplicarCicloAlSistema = function() {
-    clearTimeout(timerPresupuesto); // Aborta si cambias de mes antes de los 800ms
     const elSueldo = document.getElementById('inputSueldo');
-    if (elSueldo && document.activeElement === elSueldo) elSueldo.blur();
     
-    // Ejecuta tu código original de ciclo
-    if (typeof originalAplicarCiclo === 'function') originalAplicarCiclo();
+    // 🛑 ANTES de cambiar al nuevo mes, disparamos el guardado del mes que dejas atrás
+    if (elSueldo) window.guardarSueldoEnNube();
+    
+    const navMes = document.getElementById('navMesConceptual'), navAnio = document.getElementById('navAnio');
+    if(!navMes || !navAnio) return;
+    
+    if(document.getElementById('filtroDesde')) document.getElementById('filtroDesde').value = ''; 
+    if(document.getElementById('filtroHasta')) document.getElementById('filtroHasta').value = '';
+
+    let lbl = document.getElementById('lblPeriodoViendo'); if(lbl) lbl.innerText = isEng ? 'FULL PERIOD' : 'PERIODO COMPLETO';
+    let cajaPC = document.getElementById('cajaFechasCustom'); if(cajaPC) cajaPC.style.display = 'none';
+    let btnPC = document.getElementById('btnToggleFechas'); if(btnPC) btnPC.style.display = 'block';
+
+    const { T0, fechaFinVisual } = calcularFechasCiclo(parseInt(navMes.value), parseInt(navAnio.value));
+    const badge = document.getElementById('navRangoBadge');
+    if(badge) badge.innerText = `[${T0.toLocaleDateString('es-CL', {day:'2-digit', month:'short'}).toUpperCase()} - ${fechaFinVisual.toLocaleDateString('es-CL', {day:'2-digit', month:'short'}).toUpperCase()}]`;
+    
+    cargarSueldoVisual(); 
+    actualizarDashboard();
 };
 let alarmLogCache = "";
 window.abrirHistorian = function() {
