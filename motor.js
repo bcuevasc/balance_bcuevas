@@ -1,5 +1,5 @@
 // ==========================================================
-// 🌐 V14.2: MOTOR SCADA PRO (Zero-Lag & Strict Budget)
+// 🌐 V14.4: MOTOR SCADA PRO (Renderizado TC Blindado)
 // ==========================================================
 window.VALOR_USD = 950;
 
@@ -87,26 +87,21 @@ document.addEventListener("DOMContentLoaded", () => {
     const selectMass = document.getElementById('massCategorySelect');
     if (selectMass) selectMass.innerHTML = `<option value="">-- Recategorizar a --</option>` + optionsHTML;
 
-    // ⚡ V14.2: PURGA DE EVENTOS NATIVOS Y LISTENERS BLINDADOS (ZERO LAG)
     const elSueldo = document.getElementById('inputSueldo');
     if(elSueldo) {
-        // Matamos eventos intrusos en el HTML
         elSueldo.removeAttribute('onchange');
         elSueldo.removeAttribute('onblur');
         elSueldo.removeAttribute('oninput');
-
-        // Formateo visual ultraligero mientras tecleas (SIN redibujar gráficos)
+        
         elSueldo.addEventListener('input', function() {
             let v = this.value.replace(/\D/g,'');
             this.value = v ? parseInt(v).toLocaleString('es-CL') : '';
         });
 
-        // Guardado único al quitar el foco o cambiar de mes
         elSueldo.addEventListener('blur', function() {
             window.guardarSueldoEnNube();
         });
 
-        // Guardado al presionar Enter
         elSueldo.addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
                 e.preventDefault();
@@ -227,21 +222,15 @@ auth.onAuthStateChanged(user => {
     }
 });
 
-// ==========================================================
-// ⚡ V14.2 NÚCLEO DE PRESUPUESTO AISLADO Y ROBUSTO
-// ==========================================================
-
 window.cargarSueldoVisual = function() {
     const elMes = document.getElementById('navMesConceptual'), elAnio = document.getElementById('navAnio'), elSueldo = document.getElementById('inputSueldo');
     if(!elMes || !elAnio || !elSueldo) return;
     
     let m = parseInt(elMes.value), a = parseInt(elAnio.value), llave = `${a}_${m}`;
     
-    // Siempre anclamos la caja de texto al nuevo mes
     elSueldo.setAttribute('data-mes-ancla', m); 
     elSueldo.setAttribute('data-anio-ancla', a);
     
-    // SOLO actualizamos visualmente si el usuario NO está escribiendo ahí
     if (document.activeElement !== elSueldo) {
         if (sueldosHistoricos && sueldosHistoricos[llave]) { 
             elSueldo.value = sueldosHistoricos[llave].toLocaleString('es-CL'); 
@@ -261,7 +250,6 @@ window.guardarSueldoEnNube = function() {
     const elSueldo = document.getElementById('inputSueldo');
     if(!elSueldo) return;
     
-    // Leemos el mes EXACTO donde el usuario estaba escribiendo
     let m = parseInt(elSueldo.getAttribute('data-mes-ancla'));
     let a = parseInt(elSueldo.getAttribute('data-anio-ancla'));
     if (isNaN(m) || isNaN(a) || elSueldo.value.trim() === '') return; 
@@ -270,7 +258,7 @@ window.guardarSueldoEnNube = function() {
     if (isNaN(s) || s <= 0) return;
     
     let llave = `${a}_${m}`;
-    if (sueldosHistoricos[llave] === s) return; // Evita gastos de red innecesarios
+    if (sueldosHistoricos[llave] === s) return; 
 
     sueldosHistoricos[llave] = s;
     db.collection("parametros").doc("sueldos").set({ [llave]: s }, {merge: true}).then(() => {
@@ -280,7 +268,6 @@ window.guardarSueldoEnNube = function() {
 };
 
 function aplicarCicloAlSistema() {
-    // ⚡ V14.2 KILL SWITCH: Si estaba editando y giró la rueda, guardamos y matamos el foco antes del salto
     const elSueldo = document.getElementById('inputSueldo');
     if (elSueldo && document.activeElement === elSueldo) {
         elSueldo.blur(); 
@@ -313,9 +300,12 @@ window.abrirHistorian = function() {
 function actualizarDashboard() {
     const elMes = document.getElementById('navMesConceptual'), elAnio = document.getElementById('navAnio');
     const mesVal = parseInt(elMes.value), anioVal = parseInt(elAnio.value);
+    const inputSueldo = document.getElementById('inputSueldo');
     
-    // Obtenemos el presupuesto consolidado
     let sueldo = obtenerSueldoMes(anioVal, mesVal);
+    if (inputSueldo && inputSueldo.value) {
+        sueldo = parseInt(inputSueldo.value.replace(/\./g,'')) || sueldo;
+    }
     
     const buscador = document.getElementById('inputBuscador');
     const b = buscador ? buscador.value.toLowerCase() : '';
@@ -573,44 +563,47 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0, totalFijosMes, 
     const cT = getComputedStyle(document.body).getPropertyValue('--text-main').trim() || "#f0f6fc"; 
     const cG = getComputedStyle(document.body).getPropertyValue('--border-color').trim() || "#21262d"; 
     
+    // ⚡ FIX: Plugin de etiquetas blindado con controles de nulidad estrictos
     const labelsPlugin = {
         id: 'labelsPlugin',
         afterDatasetsDraw(chart) {
-            const ctx = chart.ctx;
-            ctx.font = 'bold 10px monospace';
-            ctx.fillStyle = '#ffffff'; 
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'bottom';
-            
-            if (chart.config.type === 'bar') {
-                const datasets = chart.data.datasets;
-                chart.data.labels.forEach((_, index) => {
-                    let total = 0; let lastY = null; let xPos = null;
-                    datasets.forEach((dataset, i) => {
-                        const meta = chart.getDatasetMeta(i);
-                        if (!meta.hidden && dataset.data[index] > 0) {
-                            total += dataset.data[index];
-                            lastY = meta.data[index].y;
-                            xPos = meta.data[index].x;
-                        }
-                    });
-                    if (total > 0 && lastY !== null) {
-                        ctx.fillText(Math.round(total / 1000) + 'k', xPos, lastY - 4);
-                    }
-                });
-            } else if (chart.config.type === 'line') {
-                chart.data.datasets.forEach((dataset, i) => {
-                    const meta = chart.getDatasetMeta(i);
-                    if (!meta.hidden) {
-                        meta.data.forEach((element, index) => {
-                            const data = dataset.data[index];
-                            if (data > 0) {
-                                ctx.fillText(Math.round(data / 1000) + 'k', element.x, element.y - 6);
+            try {
+                const ctx = chart.ctx;
+                ctx.font = 'bold 10px monospace';
+                ctx.fillStyle = '#ffffff'; 
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'bottom';
+                
+                if (chart.config.type === 'bar' && chart.data && chart.data.labels) {
+                    const datasets = chart.data.datasets;
+                    chart.data.labels.forEach((_, index) => {
+                        let total = 0; let lastY = null; let xPos = null;
+                        datasets.forEach((dataset, i) => {
+                            const meta = chart.getDatasetMeta(i);
+                            if (!meta.hidden && dataset.data[index] > 0 && meta.data[index]) {
+                                total += dataset.data[index];
+                                lastY = meta.data[index].y;
+                                xPos = meta.data[index].x;
                             }
                         });
-                    }
-                });
-            }
+                        if (total > 0 && lastY !== null && xPos !== null) {
+                            ctx.fillText(Math.round(total / 1000) + 'k', xPos, lastY - 4);
+                        }
+                    });
+                } else if (chart.config.type === 'line' && chart.data && chart.data.datasets) {
+                    chart.data.datasets.forEach((dataset, i) => {
+                        const meta = chart.getDatasetMeta(i);
+                        if (!meta.hidden && meta.data) {
+                            meta.data.forEach((element, index) => {
+                                const data = dataset.data[index];
+                                if (data > 0 && element && typeof element.x === 'number' && typeof element.y === 'number') {
+                                    ctx.fillText(Math.round(data / 1000) + 'k', element.x, element.y - 6);
+                                }
+                            });
+                        }
+                    });
+                }
+            } catch (e) { console.warn("Aviso en labelsPlugin:", e); }
         }
     };
     
@@ -694,50 +687,87 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0, totalFijosMes, 
         });
     }
 
-    // 📈 4. RADAR TC (Blindado)
+    // ⚡ FIX EXTREMO: GRÁFICA DE PROYECCIÓN TC
     const ctxProyeccion = document.getElementById('chartRadar');
     if(ctxProyeccion) {
-        let mesesLabels = [], montosProyectados = [], fechaHoy = new Date();
+        let mesesLabels = [], montosProyectados = [];
+        let fechaHoy = new Date();
+        // Generación rígida de etiquetas para que toLocaleString no falle en el Eje X
+        const nombresMesesCorto = ["MAY.", "JUN.", "JUL.", "AGO.", "SEP.", "OCT.", "NOV.", "DIC.", "ENE.", "FEB.", "MAR.", "ABR."];
+        
         for(let i=1; i<=6; i++) {
-            let f = new Date(fechaHoy.getFullYear(), fechaHoy.getMonth() + i, 1);
-            mesesLabels.push(f.toLocaleString('es-CL', { month: 'short' }).toUpperCase());
+            let dTemp = new Date(fechaHoy.getFullYear(), fechaHoy.getMonth() + i, 1);
+            let mIndex = dTemp.getMonth();
+            let anioCalc = dTemp.getFullYear();
             
-            // FIX: Filtro estricto y conversión forzada a Número (Number) para evitar concatenación
-            montosProyectados.push(datosTCGlobal.filter(d => { 
+            mesesLabels.push(nombresMesesCorto[mIndex] || "N/A");
+            
+            let sumaMes = datosTCGlobal.filter(d => { 
                 if (!d.mesCobro) return false;
                 let fC = new Date(d.mesCobro); 
-                return fC.getMonth() === f.getMonth() && fC.getFullYear() === f.getFullYear(); 
-            }).reduce((a, c) => a + (Number(c.monto) || 0), 0));
+                return fC.getMonth() === mIndex && fC.getFullYear() === anioCalc; 
+            }).reduce((a, c) => a + (Number(c.monto) || 0), 0);
+            
+            montosProyectados.push(sumaMes);
         }
         
-        let grad = ctxProyeccion.getContext('2d').createLinearGradient(0, 0, 0, 300); 
-        grad.addColorStop(0, 'rgba(255, 82, 82, 0.6)'); 
-        grad.addColorStop(1, 'rgba(255, 82, 82, 0.05)');
+        // Seguro de color base por si el gradiente crashea en el Canvas
+        let bgFill = 'rgba(255, 82, 82, 0.15)';
+        try {
+            let grad = ctxProyeccion.getContext('2d').createLinearGradient(0, 0, 0, 300); 
+            grad.addColorStop(0, 'rgba(255, 82, 82, 0.6)'); 
+            grad.addColorStop(1, 'rgba(255, 82, 82, 0.05)');
+            bgFill = grad;
+        } catch(e) {}
         
         chartRadar = new Chart(ctxProyeccion, {
             type: 'line', 
-            data: { labels: mesesLabels, datasets: [{ label: 'Deuda TC', data: montosProyectados, backgroundColor: grad, borderColor: '#ff5252', borderWidth: 3, fill: true, tension: 0.4, pointRadius: 4, pointBackgroundColor: '#030508', pointBorderColor: '#ff5252' }] },
-            options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { color: cT, callback: v => '$' + Math.round(v/1000) + 'k' }, grid: { color: cG } }, x: { ticks: { color: cT, font: {size: 10, weight: 'bold'} }, grid: { display: false } } } },
+            data: { 
+                labels: mesesLabels, 
+                datasets: [{ 
+                    label: 'Deuda TC', 
+                    data: montosProyectados, 
+                    backgroundColor: bgFill, 
+                    borderColor: '#ff5252', 
+                    borderWidth: 3, 
+                    fill: true, 
+                    tension: 0.4, 
+                    pointRadius: 4, 
+                    pointBackgroundColor: '#030508', 
+                    pointBorderColor: '#ff5252' 
+                }] 
+            },
+            options: { 
+                maintainAspectRatio: false, 
+                plugins: { legend: { display: false } }, 
+                scales: { 
+                    y: { beginAtZero: true, ticks: { color: cT, callback: v => '$' + Math.round(v/1000) + 'k' }, grid: { color: cG } }, 
+                    x: { ticks: { color: cT, font: {size: 10, weight: 'bold'} }, grid: { display: false } } 
+                } 
+            },
             plugins: [
                 { 
                     id: 'setpointTCPlugin', 
                     afterDraw: (chart) => { 
-                        const ctx = chart.ctx, xAxis = chart.scales.x, yAxis = chart.scales.y;
-                        const umbralSeguridad = (Number(sueldo) || 0) * 0.15; 
-                        // FIX: Verificación de existencia del eje Y para evitar crasheos visuales
-                        if(yAxis && yAxis.max !== undefined && yAxis.max > umbralSeguridad) { 
-                            const yPos = yAxis.getPixelForValue(umbralSeguridad); 
-                            ctx.save(); ctx.beginPath(); ctx.moveTo(xAxis.left, yPos); ctx.lineTo(xAxis.right, yPos); 
-                            ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(255, 82, 82, 0.8)'; ctx.setLineDash([5, 5]); ctx.stroke(); 
-                            ctx.fillStyle = '#ff5252'; ctx.font = 'bold 10px monospace'; ctx.fillText('MAX (15%)', xAxis.left + 5, yPos - 5); 
-                            ctx.restore(); 
-                        } 
+                        try {
+                            const ctx = chart.ctx, xAxis = chart.scales.x, yAxis = chart.scales.y;
+                            const umbralSeguridad = (Number(sueldo) || 0) * 0.15; 
+                            if(yAxis && yAxis.max !== undefined && yAxis.max > umbralSeguridad) { 
+                                const yPos = yAxis.getPixelForValue(umbralSeguridad); 
+                                ctx.save(); ctx.beginPath(); ctx.moveTo(xAxis.left, yPos); ctx.lineTo(xAxis.right, yPos); 
+                                ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(255, 82, 82, 0.8)'; ctx.setLineDash([5, 5]); ctx.stroke(); 
+                                ctx.fillStyle = '#ff5252'; ctx.font = 'bold 10px monospace'; ctx.fillText('MAX (15%)', xAxis.left + 5, yPos - 5); 
+                                ctx.restore(); 
+                            } 
+                        } catch (e) { console.warn("Aviso en setpointTCPlugin:", e); }
                     } 
                 },
                 labelsPlugin
             ]
         });
     }
+}
+
 function calcularFechasCiclo(mesConceptual, anio) {
     let mesInicio = mesConceptual - 1; let anioInicio = anio; if (mesInicio < 0) { mesInicio = 11; anioInicio--; }
     let T0 = new Date(anioInicio, mesInicio, 30); if (T0.getMonth() !== mesInicio) T0 = new Date(anioInicio, mesInicio + 1, 0); 
@@ -756,7 +786,7 @@ window.navegarMes = function(direccion) {
 function inicializarListenerTC() {
     db.collection("deuda_tc").orderBy("mesCobro", "asc").onSnapshot(snapshot => {
         datosTCGlobal = []; let totalDeuda = 0;
-        snapshot.forEach(doc => { let data = doc.data(); data.id = doc.id; datosTCGlobal.push(data); totalDeuda += data.monto; });
+        snapshot.forEach(doc => { let data = doc.data(); data.id = doc.id; datosTCGlobal.push(data); totalDeuda += (Number(data.monto) || 0); });
         const txtTotalTC = document.getElementById("txtTotalTC");
         if(txtTotalTC) txtTotalTC.innerText = totalDeuda.toLocaleString('es-CL');
         if(typeof renderizarTablaTC === 'function') renderizarTablaTC();
@@ -773,9 +803,10 @@ if (typeof window.renderizarTablaTC === 'undefined') {
 
         let agrupado = {};
         datosTCGlobal.forEach(doc => {
+            if(!doc.mesCobro) return;
             let f = new Date(doc.mesCobro), key = f.getFullYear() + "-" + String(f.getMonth()).padStart(2, '0');
             if (!agrupado[key]) agrupado[key] = { label: f.toLocaleString('es-CL', { month: 'long', year: 'numeric' }).toUpperCase(), total: 0, items: [] };
-            agrupado[key].items.push(doc); agrupado[key].total += doc.monto;
+            agrupado[key].items.push(doc); agrupado[key].total += (Number(doc.monto) || 0);
         });
 
         Object.keys(agrupado).sort().forEach(key => {
@@ -785,12 +816,12 @@ if (typeof window.renderizarTablaTC === 'undefined') {
                 <td class="col-monto" style="color:#ff5252; font-weight:900;">$${g.total.toLocaleString('es-CL')}</td>
             </tr>`;
             g.items.forEach(doc => {
-                let op = (doc.nombre.includes("PROYECCIÓN") || doc.nombre.includes("FACTURADA")) ? "1" : "0.7";
+                let op = (doc.nombre && (doc.nombre.includes("PROYECCIÓN") || doc.nombre.includes("FACTURADA"))) ? "1" : "0.7";
                 tbody.innerHTML += `<tr>
                     <td style="text-align: center;"><input type="checkbox" class="checkItemTC" value="${doc.id}" onclick="actualizarBarraTC()" style="accent-color: #ff5252;"></td>
-                    <td style="font-size: 0.7rem; color: #79c0ff; opacity:${op};">Cuota: ${doc.cuota}</td>
-                    <td class="col-desc" title="${doc.nombre}" style="opacity:${op}; font-size:0.75rem;">${doc.nombre}</td>
-                    <td class="col-monto" style="opacity:${op};">$${doc.monto.toLocaleString('es-CL')}</td>
+                    <td style="font-size: 0.7rem; color: #79c0ff; opacity:${op};">Cuota: ${doc.cuota || '1/1'}</td>
+                    <td class="col-desc" title="${doc.nombre || 'N/A'}" style="opacity:${op}; font-size:0.75rem;">${doc.nombre || 'N/A'}</td>
+                    <td class="col-monto" style="opacity:${op};">$${(Number(doc.monto)||0).toLocaleString('es-CL')}</td>
                 </tr>`;
             });
         });
@@ -859,17 +890,20 @@ window.abrirPreVuelo = function() {
     const modal = document.getElementById('modal-dia-cero'); if(!modal) return;
     let vM = parseInt(document.getElementById('navMesConceptual').value), vA = parseInt(document.getElementById('navAnio').value);
     
-    // Calculamos el mes y año destino (Mes + 1)
     let pM = vM + 1, pA = vA; if (pM > 11) { pM = 0; pA++; }
 
     document.getElementById('pv-mes-label').innerText = new Date(pA, pM).toLocaleString('es-CL', {month:'long', year:'numeric'}).toUpperCase();
     
-    // ⚡ FIX: Consultamos a la nube el presupuesto del MES SIGUIENTE
+    // ⚡ FIX: Extraer Presupuesto del Próximo Mes Correctamente
     let sueldoProximoMes = window.obtenerSueldoMes(pA, pM);
     document.getElementById('pv-sueldo').value = sueldoProximoMes.toLocaleString('es-CL');
     
     let sumaTCMes = 0;
-    datosTCGlobal.forEach(d => { let f = new Date(d.mesCobro); if (f.getMonth() === pM && f.getFullYear() === pA) sumaTCMes += d.monto; });
+    datosTCGlobal.forEach(d => { 
+        if(!d.mesCobro) return;
+        let f = new Date(d.mesCobro); 
+        if (f.getMonth() === pM && f.getFullYear() === pA) sumaTCMes += (Number(d.monto) || 0); 
+    });
     
     let elTcNac = document.getElementById('pv-tc-nac');
     if(elTcNac && elTcNac.getAttribute('data-estado') !== 'pag') elTcNac.value = sumaTCMes > 0 ? sumaTCMes.toLocaleString('es-CL') : "";
@@ -900,9 +934,11 @@ window.calcularDiaCero = function() {
     const valSiNoPagado = (id) => { let el = document.getElementById(id); return (el && el.getAttribute('data-estado') !== 'pag') ? (parseInt(el.value.replace(/\./g, '')) || 0) : 0; };
     let sueldo = parseInt((document.getElementById('pv-sueldo').value || "0").replace(/\./g, '')) || 0;
     let tcNac = valSiNoPagado('pv-tc-nac');
+    
     let elTcInt = document.getElementById('pv-tc-int');
     let tcIntUSD = (elTcInt && elTcInt.getAttribute('data-estado') !== 'pag') ? (parseInt(elTcInt.value.replace(/\./g, '')) || 0) : 0;
     let tcIntCLP = Math.round(tcIntUSD * (isNaN(window.VALOR_USD) ? 950 : window.VALOR_USD)); 
+    
     let elTcIntCLP = document.getElementById('pv-tc-int-clp');
     if (elTcIntCLP) {
         if (elTcInt && elTcInt.getAttribute('data-estado') === 'pag') { elTcIntCLP.innerText = "✔️ PAGADO"; elTcIntCLP.style.color = "var(--color-saldo)"; } 
@@ -913,54 +949,19 @@ window.calcularDiaCero = function() {
     let estructural = valSiNoPagado('pv-arriendo') + valSiNoPagado('pv-udec') + valSiNoPagado('pv-cae') + valSiNoPagado('pv-ggcc') + valSiNoPagado('pv-luz') + valSiNoPagado('pv-agua') + valSiNoPagado('pv-gas') + valSiNoPagado('pv-celu') + valSiNoPagado('pv-madre') + valSiNoPagado('pv-subs') + valSiNoPagado('pv-seguro');
     
     document.getElementById('pv-txt-liquidez').innerText = (sueldo - deudasDuras - estructural).toLocaleString('es-CL');
+    
     if (sueldo > 0) {
         let pR = Math.min((deudasDuras / sueldo) * 100, 100), pN = Math.min((estructural / sueldo) * 100, 100 - pR), pV = Math.max(100 - pR - pN, 0);
         document.getElementById('pv-barra-roja').style.width = pR + '%'; document.getElementById('pv-barra-naranja').style.width = pN + '%'; document.getElementById('pv-barra-verde').style.width = pV + '%';
     }
+
     let tgls = document.querySelectorAll('.btn-estado'), conf = 0;
     tgls.forEach(b => { if(b.classList.contains('real') || b.classList.contains('pag')) conf++; });
     let cer = tgls.length > 0 ? Math.round((conf / tgls.length) * 100) : 0;
     let elCer = document.getElementById('pv-certeza-pct');
     if(elCer) { elCer.innerText = cer + '%'; elCer.style.color = cer < 40 ? '#ff5252' : (cer < 80 ? '#ff9800' : '#2ea043'); }
 }
-// 📥 MÓDULO EXPORTACIÓN DATA-LINK (Strict Mode)
-window.exportarDataLink = function() {
-    try {
-        if (!datosMesGlobal || datosMesGlobal.length === 0) {
-            mostrarToast("MATRIZ VACÍA: NO HAY DATOS PARA EXPORTAR");
-            return;
-        }
 
-        let csv = "ISO_DATE,YEAR,MONTH,DAY,CATEGORY,TYPE,AMOUNT_CLP,DETAIL,ML_FLAG\n";
-        
-        datosMesGlobal.forEach(x => {
-            // FIX: Validaciones de nulidad estrictas para evitar rotura del ciclo forEach
-            let d = x.fechaISO ? new Date(x.fechaISO) : new Date();
-            let catV = x.catV || x.categoria || 'Sin Categoría';
-            let tipo = x.tipo || 'Gasto Variable';
-            let monto = Number(x.monto) || 0;
-            let nombreLimpio = (x.nombre || "Unknown").replace(/(\r\n|\n|\r)/gm, " ").replace(/"/g, '""').trim();
-            
-            let flag = catEvitables.includes(catV) ? 'DOPAMINA_LEAK' : (tipo === 'Gasto Fijo' ? 'STRUCTURAL' : 'STANDARD');
-            
-            csv += `${x.fechaISO || d.toISOString()},${d.getFullYear()},${d.getMonth()+1},${d.getDate()},"${catV}","${tipo}",${monto},"${nombreLimpio}",${flag}\n`;
-        });
-        
-        const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement("a"); 
-        link.href = URL.createObjectURL(blob);
-        link.download = `Bunker_DataLink_${new Date().toISOString().slice(0,10)}.csv`;
-        document.body.appendChild(link); 
-        link.click(); 
-        document.body.removeChild(link);
-        
-        mostrarToast("EXPORTACIÓN DATA-LINK EXITOSA");
-
-    } catch (error) {
-        console.error("[CRITICAL] Error en exportación Data-Link:", error);
-        mostrarToast("ERROR DE EXPORTACIÓN (Ver Consola)");
-    }
-};
 window.ejecutarArranque = function() {
     if(!confirm("⚠️ INYECCIÓN DE PLANILLA\n\n¿Estás seguro de inyectar estos gastos en el MES SIGUIENTE?")) return;
     
@@ -1020,5 +1021,42 @@ window.ejecutarArranque = function() {
         }).catch(err => alert("Error: " + err.message));
     } else {
         alert("Nada que inyectar.");
+    }
+};
+
+// 📥 MÓDULO EXPORTACIÓN DATA-LINK (Strict Mode)
+window.exportarDataLink = function() {
+    try {
+        if (!datosMesGlobal || datosMesGlobal.length === 0) {
+            mostrarToast("MATRIZ VACÍA: NO HAY DATOS PARA EXPORTAR");
+            return;
+        }
+
+        let csv = "ISO_DATE,YEAR,MONTH,DAY,CATEGORY,TYPE,AMOUNT_CLP,DETAIL,ML_FLAG\n";
+        
+        datosMesGlobal.forEach(x => {
+            let d = x.fechaISO ? new Date(x.fechaISO) : new Date();
+            let catV = x.catV || x.categoria || 'Sin Categoría';
+            let tipo = x.tipo || 'Gasto Variable';
+            let monto = Number(x.monto) || 0;
+            let nombreLimpio = (x.nombre || "Unknown").replace(/(\r\n|\n|\r)/gm, " ").replace(/"/g, '""').trim();
+            let flag = catEvitables.includes(catV) ? 'DOPAMINA_LEAK' : (tipo === 'Gasto Fijo' ? 'STRUCTURAL' : 'STANDARD');
+            
+            csv += `${x.fechaISO || d.toISOString()},${d.getFullYear()},${d.getMonth()+1},${d.getDate()},"${catV}","${tipo}",${monto},"${nombreLimpio}",${flag}\n`;
+        });
+        
+        const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a"); 
+        link.href = URL.createObjectURL(blob);
+        link.download = `Bunker_DataLink_${new Date().toISOString().slice(0,10)}.csv`;
+        document.body.appendChild(link); 
+        link.click(); 
+        document.body.removeChild(link);
+        
+        mostrarToast("EXPORTACIÓN DATA-LINK EXITOSA");
+
+    } catch (error) {
+        console.error("[CRITICAL] Error en exportación Data-Link:", error);
+        mostrarToast("ERROR DE EXPORTACIÓN (Ver Consola)");
     }
 };
