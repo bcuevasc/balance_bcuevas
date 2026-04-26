@@ -1016,7 +1016,7 @@ window.ejecutarArranque = function() {
         alert("No se inyectaron registros (0 o pagados)."); 
         cerrarPreVuelo(); 
     }
-}
+
     
     procesar('pv-tc-nac', "PAGO TC NACIONAL (DÍA CERO)", "Gastos Fijos (Búnker)"); 
     procesar('pv-tc-int', "PAGO TC INTERNACIONAL (DÍA CERO)", "Gastos Fijos (Búnker)"); 
