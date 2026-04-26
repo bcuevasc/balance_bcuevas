@@ -1,5 +1,5 @@
 // ==========================================================
-// 🌐 V13.3.4: MOTOR SCADA PRO (Sintaxis Limpia & Auto-Traductor)
+// 🌐 V13.3: MOTOR SCADA PRO (Auto-Traductor & Edit-Unlock)
 // ==========================================================
 window.VALOR_USD = 950;
 
@@ -105,6 +105,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     let fEl = document.getElementById('inputFuga');
                     if(fEl) fEl.value = dict.fuga;
                     
+                    // ⚡ NUEVO: Inyección de Auto-Renombrado
                     if(dict.rename && texto !== dict.rename.toLowerCase()) {
                         e.target.value = dict.rename;
                     }
@@ -199,26 +200,15 @@ auth.onAuthStateChanged(user => {
     }
 });
 
-// ⚡ FIX: AISLAMIENTO Y CARGA DE SUELDO
 window.cargarSueldoVisual = function() {
-    const elMes = document.getElementById('navMesConceptual');
-    const elAnio = document.getElementById('navAnio');
-    const elSueldo = document.getElementById('inputSueldo');
-    
+    const elMes = document.getElementById('navMesConceptual'), elAnio = document.getElementById('navAnio'), elSueldo = document.getElementById('inputSueldo');
     if(!elMes || !elAnio || !elSueldo) return;
+    let m = elMes.value, a = elAnio.value, llave = `${a}_${m}`;
+    elSueldo.setAttribute('data-mes-ancla', m); elSueldo.setAttribute('data-anio-ancla', a);
     
-    let m = elMes.value; 
-    let a = elAnio.value;
-    let llave = `${a}_${m}`;
-    
-    elSueldo.setAttribute('data-mes-ancla', m);
-    elSueldo.setAttribute('data-anio-ancla', a);
-    
-    if (sueldosHistoricos && sueldosHistoricos[llave]) {
-        elSueldo.value = sueldosHistoricos[llave].toLocaleString('es-CL');
-    } else {
-        elSueldo.value = ''; 
-        elSueldo.placeholder = 'PENDIENTE';
+    if (document.activeElement !== elSueldo) {
+        if (sueldosHistoricos[llave]) { elSueldo.value = sueldosHistoricos[llave].toLocaleString('es-CL'); } 
+        else { elSueldo.value = ''; elSueldo.placeholder = 'PENDIENTE'; }
     }
 };
 
@@ -384,10 +374,13 @@ function sortTable(column) {
     actualizarDashboard();
 }
 
+// ⚡ FIX V13.3: LÓGICA DE DESBLOQUEO DE EDICIÓN
+// ⚡ FIX V13.3.1: DESBLOQUEO Y ENRUTAMIENTO MÓVIL
 function editarMovimiento(id) {
     const mov = listaMovimientos.find(m => m.firestoreId === id);
     if(!mov) return alert("Registro no encontrado.");
     
+    // Activa modo edición PRIMERO para que los event listeners del DOM no interfieran
     modoEdicionActivo = true; 
     
     if(document.getElementById('editId')) document.getElementById('editId').value = mov.firestoreId; 
@@ -395,6 +388,8 @@ function editarMovimiento(id) {
     const inputNombre = document.getElementById('inputNombre');
     if(inputNombre) {
         inputNombre.value = mov.nombre;
+        
+        // 🛡️ PARCHE MÓVIL: Evita que el teclado salte de golpe en celulares
         if (window.innerWidth > 768) {
             inputNombre.focus();
             setTimeout(() => inputNombre.select(), 50); 
@@ -425,16 +420,19 @@ function editarMovimiento(id) {
     
     actualizarDashboard(); 
 
-    if (typeof closeBottomSheet === 'function') closeBottomSheet(); 
+    // 📱 LÓGICA DE NAVEGACIÓN MÓVIL (Auto-Switch de Pestaña)
+    if (typeof closeBottomSheet === 'function') closeBottomSheet(); // Cierra el detalle si lo abriste
     if (typeof switchTabApp === 'function') {
         const navItems = document.querySelectorAll('.nav-item');
-        if (navItems.length >= 3) switchTabApp('add', navItems[2]); 
+        if (navItems.length >= 3) switchTabApp('add', navItems[2]); // Te lanza a la pestaña del formulario
     } else if (typeof window.switchTab === 'function') {
         window.switchTab('add');
     }
+    
+    // Sube la pantalla al tope suavemente
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
-
+// --- 💳 MOTOR DE AUTOMATIZACIÓN TC ---
 function procesarCompraTCManual(nombre, montoTotal, cuotas, fechaStr) {
     const batch = db.batch(); const diaCorte = 20;
     let fCompra = new Date(fechaStr); let dia = fCompra.getDate();
@@ -454,6 +452,7 @@ function procesarCompraTCManual(nombre, montoTotal, cuotas, fechaStr) {
     }).catch(e => alert("Error TC: " + e));
 }
 
+// --- 📥 INGESTADOR CENTRAL ---
 window.agregarMovimiento = function() {
     const m = parseInt(document.getElementById('inputMonto').value.replace(/\./g, ''));
     const n = document.getElementById('inputNombre').value;
@@ -466,6 +465,7 @@ window.agregarMovimiento = function() {
 
     if (!m || !n || !fInput) return alert("⚠️ Faltan parámetros en la consola.");
 
+    // Interceptor TC
     if (c === "Gasto Tarjeta de Crédito" && !modoEdicionActivo) {
         procesarCompraTCManual(n, m, cantCuotas, fInput);
         return; 
@@ -503,10 +503,7 @@ function massDelete() { const ids = Array.from(document.querySelectorAll('.row-c
 function massCategorize() { const ids = Array.from(document.querySelectorAll('.row-check:not(#checkAll):checked')).map(cb => cb.value); const cat = document.getElementById('massCategorySelect').value; if(ids.length === 0 || !cat || !confirm(`¿Categorizar como "${cat}"?`)) return; const btn = document.querySelector('button[onclick="massCategorize()"]'); const orig = btn.innerHTML; btn.innerHTML = '⏳'; Promise.all(ids.map(id => db.collection("movimientos").doc(id).update({categoria: cat}))).then(() => { document.getElementById('massActionsBar').style.display = 'none'; document.getElementById('checkAll').checked = false; document.getElementById('massCategorySelect').value = ''; btn.innerHTML = orig; }); }
 
 // =====================================================================
-// 🔮 PROYECTO ORÁCULO: TELEMETRÍA (GRÁFICOS V13.5 - FULL VISIBILITY)
-// =====================================================================
-// =====================================================================
-// 🔮 PROYECTO ORÁCULO: TELEMETRÍA (GRÁFICOS V13.6 - ETIQUETAS BLANCAS)
+// 🔮 PROYECTO ORÁCULO: TELEMETRÍA (GRAFICOS)
 // =====================================================================
 function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0, totalFijosMes, tInfra, tFlota, deudaAprox) {
     if(chartBD) chartBD.destroy(); if(chartP) chartP.destroy(); 
@@ -514,48 +511,6 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0, totalFijosMes, 
     
     const cT = getComputedStyle(document.body).getPropertyValue('--text-main').trim() || "#f0f6fc"; 
     const cG = getComputedStyle(document.body).getPropertyValue('--border-color').trim() || "#21262d"; 
-    
-    // ⚡ PLUGIN: Renderizador de Etiquetas Blancas
-    const labelsPlugin = {
-        id: 'labelsPlugin',
-        afterDatasetsDraw(chart) {
-            const ctx = chart.ctx;
-            ctx.font = 'bold 10px monospace';
-            ctx.fillStyle = '#ffffff'; // Color Blanco
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'bottom';
-            
-            if (chart.config.type === 'bar') {
-                const datasets = chart.data.datasets;
-                chart.data.labels.forEach((_, index) => {
-                    let total = 0; let lastY = null; let xPos = null;
-                    datasets.forEach((dataset, i) => {
-                        const meta = chart.getDatasetMeta(i);
-                        if (!meta.hidden && dataset.data[index] > 0) {
-                            total += dataset.data[index];
-                            lastY = meta.data[index].y;
-                            xPos = meta.data[index].x;
-                        }
-                    });
-                    if (total > 0 && lastY !== null) {
-                        ctx.fillText(Math.round(total / 1000) + 'k', xPos, lastY - 4);
-                    }
-                });
-            } else if (chart.config.type === 'line') {
-                chart.data.datasets.forEach((dataset, i) => {
-                    const meta = chart.getDatasetMeta(i);
-                    if (!meta.hidden) {
-                        meta.data.forEach((element, index) => {
-                            const data = dataset.data[index];
-                            if (data > 0) {
-                                ctx.fillText(Math.round(data / 1000) + 'k', element.x, element.y - 6);
-                            }
-                        });
-                    }
-                });
-            }
-        }
-    };
     
     let daily = Array(diasCiclo + 1).fill(0), dailyNecesario = Array(diasCiclo + 1).fill(0), dailyFugas = Array(diasCiclo + 1).fill(0); 
     let msT0 = T0.getTime();
@@ -589,7 +544,6 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0, totalFijosMes, 
         for(let i = limit + 1; i <= diasCiclo; i++) proyeccion[i] = proyeccion[i-1] - promedioGastoDiario;
     }
 
-    // 📉 1. BURN DOWN (Sin plugin de etiquetas, escala automática)
     const ctxBD = document.getElementById('chartBurnDown');
     if(ctxBD) {
         let grad = ctxBD.getContext('2d').createLinearGradient(0, 0, 0, 400);
@@ -604,7 +558,6 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0, totalFijosMes, 
         });
     }
 
-    // 🍕 2. PARETO (Sin cambios)
     const sorted = Object.entries(cats).sort((a,b)=>b[1]-a[1]).slice(0,6);
     chartP = new Chart(document.getElementById('chartPareto'), {
         type: 'polarArea', 
@@ -612,7 +565,6 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0, totalFijosMes, 
         options: { maintainAspectRatio:false, plugins:{legend:{position: 'right', labels:{color:cT, font:{size:10, family:'monospace'}}}}, scales:{ r:{ticks:{display:false}, grid:{color:cG}, angleLines:{color:cG}} } }
     });
 
-    // 📊 3. BARRAS DIARIAS (Con plugin de etiquetas)
     const ctxDiario = document.getElementById('chartDiario');
     let limiteDiarioIdeal = Math.max((sueldo - totalFijosMes - tInfra - tFlota) / diasCiclo, 0);
     alarmLogCache = deudaAprox > sueldo * 0.15 ? `<div class='log-item critical'><div class='log-icon'>🛑</div><div class='log-content'><strong>SOBRECARGA TC</strong><div class='log-date'>Riesgo Pasivos > 15%</div><span>$${deudaAprox.toLocaleString('es-CL')}</span></div></div>` : "";
@@ -633,15 +585,10 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0, totalFijosMes, 
                 { label: 'Fuga (Dopamina)', data: dailyFugas.slice(startDayForBars, lastDayWithData + 1), backgroundColor: 'rgba(255, 82, 82, 0.9)', borderRadius: 2 }
             ]},
             options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { stacked: true, ticks: { color: cT, font:{size:8} }, grid: { display:false } }, y: { stacked: true, ticks: { color: cT, callback: v => '$' + Math.round(v / 1000) + 'k' }, grid: { color: cG } } } },
-            // ⚡ Inyectamos ambos plugins aquí
-            plugins: [
-                { id: 'limiteDiarioPlugin', afterDraw: (chart) => { if(limiteDiarioIdeal <= 0) return; const ctx = chart.ctx, xAxis = chart.scales.x, yAxis = chart.scales.y, yPos = yAxis.getPixelForValue(limiteDiarioIdeal); if(yPos >= yAxis.top && yPos <= yAxis.bottom) { ctx.save(); ctx.beginPath(); ctx.moveTo(xAxis.left, yPos); ctx.lineTo(xAxis.right, yPos); ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(210, 153, 34, 0.8)'; ctx.setLineDash([4, 4]); ctx.stroke(); ctx.restore(); } } },
-                labelsPlugin
-            ]
+            plugins: [{ id: 'limiteDiarioPlugin', afterDraw: (chart) => { if(limiteDiarioIdeal <= 0) return; const ctx = chart.ctx, xAxis = chart.scales.x, yAxis = chart.scales.y, yPos = yAxis.getPixelForValue(limiteDiarioIdeal); if(yPos >= yAxis.top && yPos <= yAxis.bottom) { ctx.save(); ctx.beginPath(); ctx.moveTo(xAxis.left, yPos); ctx.lineTo(xAxis.right, yPos); ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(210, 153, 34, 0.8)'; ctx.setLineDash([4, 4]); ctx.stroke(); ctx.restore(); } } }]
         });
     }
 
-    // 📈 4. RADAR TC (Con plugin de etiquetas)
     const ctxProyeccion = document.getElementById('chartRadar');
     if(ctxProyeccion) {
         let mesesLabels = [], montosProyectados = [], fechaHoy = new Date();
@@ -654,14 +601,11 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0, totalFijosMes, 
         chartRadar = new Chart(ctxProyeccion, {
             type: 'line', data: { labels: mesesLabels, datasets: [{ label: 'Deuda TC', data: montosProyectados, backgroundColor: grad, borderColor: '#ff5252', borderWidth: 3, fill: true, tension: 0.4, pointRadius: 4, pointBackgroundColor: '#030508', pointBorderColor: '#ff5252' }] },
             options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { color: cT, callback: v => '$' + Math.round(v/1000) + 'k' }, grid: { color: cG } }, x: { ticks: { color: cT, font: {size: 10, weight: 'bold'} }, grid: { display: false } } } },
-            // ⚡ Inyectamos ambos plugins aquí
-            plugins: [
-                { id: 'setpointTCPlugin', afterDraw: (chart) => { const ctx = chart.ctx, xAxis = chart.scales.x, yAxis = chart.scales.y, umbralSeguridad = sueldo * 0.15; if(yAxis.max > umbralSeguridad) { const yPos = yAxis.getPixelForValue(umbralSeguridad); ctx.save(); ctx.beginPath(); ctx.moveTo(xAxis.left, yPos); ctx.lineTo(xAxis.right, yPos); ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(255, 82, 82, 0.8)'; ctx.setLineDash([5, 5]); ctx.stroke(); ctx.fillStyle = '#ff5252'; ctx.font = 'bold 10px monospace'; ctx.fillText('MAX (15%)', xAxis.left + 5, yPos - 5); ctx.restore(); } } },
-                labelsPlugin
-            ]
+            plugins: [{ id: 'setpointTCPlugin', afterDraw: (chart) => { const ctx = chart.ctx, xAxis = chart.scales.x, yAxis = chart.scales.y, umbralSeguridad = sueldo * 0.15; if(yAxis.max > umbralSeguridad) { const yPos = yAxis.getPixelForValue(umbralSeguridad); ctx.save(); ctx.beginPath(); ctx.moveTo(xAxis.left, yPos); ctx.lineTo(xAxis.right, yPos); ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(255, 82, 82, 0.8)'; ctx.setLineDash([5, 5]); ctx.stroke(); ctx.fillStyle = '#ff5252'; ctx.font = 'bold 10px monospace'; ctx.fillText('MAX (15%)', xAxis.left + 5, yPos - 5); ctx.restore(); } } }]
         });
     }
 }
+
 function calcularFechasCiclo(mesConceptual, anio) {
     let mesInicio = mesConceptual - 1; let anioInicio = anio; if (mesInicio < 0) { mesInicio = 11; anioInicio--; }
     let T0 = new Date(anioInicio, mesInicio, 30); if (T0.getMonth() !== mesInicio) T0 = new Date(anioInicio, mesInicio + 1, 0); 
@@ -693,6 +637,7 @@ function aplicarCicloAlSistema() {
     cargarSueldoVisual(); actualizarDashboard();
 }
 
+// --- Drag & Drop ---
 let draggedRowId = null;
 window.dragStart = function(e, id) { draggedRowId = id; e.dataTransfer.effectAllowed = 'move'; setTimeout(() => e.target.style.opacity = '0.4', 0); }
 window.dragOverPanel = function(e, tipo) { e.preventDefault(); const panel = e.currentTarget; panel.style.transition = "border-color 0.2s, box-shadow 0.2s"; if (tipo === 'tc') { panel.style.borderColor = "var(--color-fuga)"; panel.style.boxShadow = "inset 0 0 20px rgba(255, 82, 82, 0.15)"; } else { panel.style.borderColor = "var(--color-saldo)"; panel.style.boxShadow = "inset 0 0 20px rgba(46, 160, 67, 0.15)"; } }
@@ -722,6 +667,7 @@ window.dropRow = function(e, targetId) {
 }
 document.addEventListener('dragend', (e) => { if(e.target.tagName === 'TR') e.target.style.opacity = '1'; });
 
+// --- 🌐 ENLACE SYNC MANUAL SNIPER ---
 window.triggerSync = function() {
     const btn = document.querySelector('button[onclick="triggerSync()"]'); 
     if(btn) { btn.innerHTML = "⏳ SYNCING..."; btn.style.opacity = "0.5"; }
@@ -876,7 +822,7 @@ async function ejecutarPurgaMasivaTC() {
 }
 
 // ==========================================================
-// 🚀 MÓDULO DÍA CERO V13.3.4 (Cálculo Inmediato y Offset +1)
+// 🚀 MÓDULO DÍA CERO V13.2 (Cálculo Inmediato y Cierre Sano)
 // ==========================================================
 window.abrirPreVuelo = function() {
     const modal = document.getElementById('modal-dia-cero'); if(!modal) return;
@@ -896,14 +842,7 @@ window.abrirPreVuelo = function() {
     calcularDiaCero(); modal.style.display = 'flex';
 }
 
-window.cerrarPreVuelo = function() { 
-    const m = document.getElementById('modal-dia-cero');
-    if(m) {
-        m.style.display = 'none';
-        document.activeElement.blur(); // Limpia foco
-    }
-    actualizarDashboard(); 
-};
+window.cerrarPreVuelo = function() { document.getElementById('modal-dia-cero').style.display = 'none'; actualizarDashboard(); };
 
 window.toggleEstadoPV = function(btn, idInput) {
     const estados = ['est', 'real', 'pag'];
@@ -955,34 +894,16 @@ window.calcularDiaCero = function() {
 }
 
 window.ejecutarArranque = function() {
-    if(!confirm("⚠️ INYECCIÓN DE PLANILLA\n\n¿Estás seguro de inyectar estos gastos en el MES SIGUIENTE?")) return;
-    
-    const vM = parseInt(document.getElementById('navMesConceptual').value);
-    const vA = parseInt(document.getElementById('navAnio').value);
-    
-    let pM = vM + 1;
-    let pA = vA;
-    if (pM > 11) { pM = 0; pA++; }
-
-    const batch = db.batch();
-    const fDestino = new Date(pA, pM, 1, 10, 0, 0);
+    if(!confirm("⚠️ INYECCIÓN CRÍTICA\n\n¿Inyectar Planilla Operativa? Los gastos marcados como ✔️ PAGADO serán ignorados.")) return;
+    const batch = db.batch(), fDestino = new Date(parseInt(document.getElementById('navAnio').value), parseInt(document.getElementById('navMesConceptual').value), 1, 10, 0, 0);
     let inyectados = 0;
     
     const procesar = (id, nom, cat) => {
-        let el = document.getElementById(id);
-        if (!el) return;
-        
-        let estado = el.getAttribute('data-estado') || 'est';
-        if (estado === 'pag') return; 
-        
+        let el = document.getElementById(id); if (!el) return;
+        let estado = el.getAttribute('data-estado') || 'est'; if (estado === 'pag') return; 
         let monto = parseInt(el.value.replace(/\./g, '')) || 0;
         if (monto > 0) {
-            let ref = db.collection("movimientos").doc();
-            batch.set(ref, {
-                monto: monto, nombre: nom, categoria: cat, tipo: "Gasto Fijo",
-                fecha: fDestino, status: estado === 'real' ? 'Real' : 'Estimado',
-                innecesarioPct: 0, cuotas: 1
-            });
+            batch.set(db.collection("movimientos").doc(), { monto: monto, nombre: nom, categoria: cat, tipo: "Gasto Fijo", fecha: fDestino, status: estado === 'real' ? 'Real' : 'Estimado', innecesarioPct: 0, cuotas: 1 });
             inyectados++;
         }
     };
@@ -1002,15 +923,6 @@ window.ejecutarArranque = function() {
     procesar('pv-subs', "PACK SUSCRIPCIONES", "Suscripciones");
     procesar('pv-seguro', "SEGURO AUTO", "Flota & Movilidad");
     
-    if (inyectados > 0) {
-        batch.commit().then(() => {
-            cerrarPreVuelo();
-            document.getElementById('navMesConceptual').value = pM;
-            document.getElementById('navAnio').value = pA;
-            aplicarCicloAlSistema();
-            mostrarToast(`ÉXITO: ${inyectados} REGISTROS INYECTADOS EN ${new Date(pA, pM).toLocaleString('es-CL', {month:'long'}).toUpperCase()}`);
-        }).catch(err => alert("Error: " + err.message));
-    } else {
-        alert("Nada que inyectar.");
-    }
-};
+    if (inyectados > 0) { batch.commit().then(() => { cerrarPreVuelo(); mostrarToast(`ARRANQUE: ${inyectados} INYECTADOS.`); actualizarDashboard(); }).catch(err => alert("Error: " + err.message)); } 
+    else { alert("No se inyectaron registros (0 o pagados)."); cerrarPreVuelo(); }
+}
