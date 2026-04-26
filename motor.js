@@ -502,12 +502,57 @@ function updateMassActions() { const bar = document.getElementById('massActionsB
 function massDelete() { const ids = Array.from(document.querySelectorAll('.row-check:not(#checkAll):checked')).map(cb => cb.value); if(ids.length === 0 || !confirm(`⚠️ ¿Eliminar ${ids.length} registro(s)?`)) return; const btn = document.querySelector('button[onclick="massDelete()"]'); const orig = btn.innerHTML; btn.innerHTML = '⏳'; Promise.all(ids.map(id => db.collection("movimientos").doc(id).delete())).then(() => { document.getElementById('massActionsBar').style.display = 'none'; document.getElementById('checkAll').checked = false; btn.innerHTML = orig; }); }
 function massCategorize() { const ids = Array.from(document.querySelectorAll('.row-check:not(#checkAll):checked')).map(cb => cb.value); const cat = document.getElementById('massCategorySelect').value; if(ids.length === 0 || !cat || !confirm(`¿Categorizar como "${cat}"?`)) return; const btn = document.querySelector('button[onclick="massCategorize()"]'); const orig = btn.innerHTML; btn.innerHTML = '⏳'; Promise.all(ids.map(id => db.collection("movimientos").doc(id).update({categoria: cat}))).then(() => { document.getElementById('massActionsBar').style.display = 'none'; document.getElementById('checkAll').checked = false; document.getElementById('massCategorySelect').value = ''; btn.innerHTML = orig; }); }
 
+// =====================================================================
+// 🔮 PROYECTO ORÁCULO: TELEMETRÍA (GRÁFICOS V13.4 - DATA LABELS)
+// =====================================================================
 function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0, totalFijosMes, tInfra, tFlota, deudaAprox) {
     if(chartBD) chartBD.destroy(); if(chartP) chartP.destroy(); 
     if(chartDiario) chartDiario.destroy(); if(chartRadar) chartRadar.destroy();
     
     const cT = getComputedStyle(document.body).getPropertyValue('--text-main').trim() || "#f0f6fc"; 
     const cG = getComputedStyle(document.body).getPropertyValue('--border-color').trim() || "#21262d"; 
+    
+    // ⚡ NUEVO PLUGIN: Renderizador de Etiquetas Flotantes
+    const labelsPlugin = {
+        id: 'labelsPlugin',
+        afterDatasetsDraw(chart) {
+            const ctx = chart.ctx;
+            ctx.font = 'bold 10px monospace';
+            ctx.fillStyle = '#ffffff';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'bottom';
+            
+            if (chart.config.type === 'bar') {
+                // Lógica Barras: Suma la pila y pone el total arriba
+                const datasets = chart.data.datasets;
+                chart.data.labels.forEach((_, index) => {
+                    let total = 0; let lastY = null; let xPos = null;
+                    datasets.forEach((dataset, i) => {
+                        const meta = chart.getDatasetMeta(i);
+                        if (!meta.hidden && dataset.data[index] > 0) {
+                            total += dataset.data[index];
+                            lastY = meta.data[index].y;
+                            xPos = meta.data[index].x;
+                        }
+                    });
+                    if (total > 0 && lastY !== null) {
+                        ctx.fillText(Math.round(total / 1000) + 'k', xPos, lastY - 4);
+                    }
+                });
+            } else if (chart.config.type === 'line') {
+                // Lógica Líneas: Pone el valor sobre cada nodo
+                chart.data.datasets.forEach((dataset, i) => {
+                    const meta = chart.getDatasetMeta(i);
+                    meta.data.forEach((element, index) => {
+                        const data = dataset.data[index];
+                        if (data > 0) {
+                            ctx.fillText(Math.round(data / 1000) + 'k', element.x, element.y - 8);
+                        }
+                    });
+                });
+            }
+        }
+    };
     
     let daily = Array(diasCiclo + 1).fill(0), dailyNecesario = Array(diasCiclo + 1).fill(0), dailyFugas = Array(diasCiclo + 1).fill(0); 
     let msT0 = T0.getTime();
@@ -551,7 +596,20 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0, totalFijosMes, 
                 { label: 'Proyección', data: proyeccion, borderColor: '#d29922', borderDash: [5, 5], borderWidth: 2, fill: false, pointRadius: 0, tension: 0.2 },
                 { label: 'Ideal', data: ideal, borderColor: 'rgba(46, 160, 67, 0.4)', borderDash: [5, 5], borderWidth: 2, fill: false, pointRadius: 0 }
             ]},
-            options: { maintainAspectRatio:false, plugins:{legend:{display:false}}, scales: { x: { ticks: { color: cT, font: {size: 9} }, grid:{color:cG} }, y: { grid: { color: cG }, ticks: { color: cT, callback: v => '$' + Math.round(v/1000) + 'k' } } }, layout: { padding: 0 } }
+            options: { 
+                maintainAspectRatio:false, 
+                plugins:{legend:{display:false}}, 
+                scales: { 
+                    x: { ticks: { color: cT, font: {size: 9} }, grid:{color:cG} }, 
+                    y: { 
+                        min: -500000,   // ⚡ Límite Inferior solicitado
+                        max: 500000,    // ⚡ Límite Superior solicitado
+                        grid: { color: cG }, 
+                        ticks: { color: cT, callback: v => '$' + Math.round(v/1000) + 'k' } 
+                    } 
+                }, 
+                layout: { padding: 0 } 
+            }
         });
     }
 
@@ -582,7 +640,11 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0, totalFijosMes, 
                 { label: 'Fuga (Dopamina)', data: dailyFugas.slice(startDayForBars, lastDayWithData + 1), backgroundColor: 'rgba(255, 82, 82, 0.9)', borderRadius: 2 }
             ]},
             options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { stacked: true, ticks: { color: cT, font:{size:8} }, grid: { display:false } }, y: { stacked: true, ticks: { color: cT, callback: v => '$' + Math.round(v / 1000) + 'k' }, grid: { color: cG } } } },
-            plugins: [{ id: 'limiteDiarioPlugin', afterDraw: (chart) => { if(limiteDiarioIdeal <= 0) return; const ctx = chart.ctx, xAxis = chart.scales.x, yAxis = chart.scales.y, yPos = yAxis.getPixelForValue(limiteDiarioIdeal); if(yPos >= yAxis.top && yPos <= yAxis.bottom) { ctx.save(); ctx.beginPath(); ctx.moveTo(xAxis.left, yPos); ctx.lineTo(xAxis.right, yPos); ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(210, 153, 34, 0.8)'; ctx.setLineDash([4, 4]); ctx.stroke(); ctx.restore(); } } }]
+            // ⚡ PLUGIN INYECTADO AQUÍ
+            plugins: [
+                { id: 'limiteDiarioPlugin', afterDraw: (chart) => { if(limiteDiarioIdeal <= 0) return; const ctx = chart.ctx, xAxis = chart.scales.x, yAxis = chart.scales.y, yPos = yAxis.getPixelForValue(limiteDiarioIdeal); if(yPos >= yAxis.top && yPos <= yAxis.bottom) { ctx.save(); ctx.beginPath(); ctx.moveTo(xAxis.left, yPos); ctx.lineTo(xAxis.right, yPos); ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(210, 153, 34, 0.8)'; ctx.setLineDash([4, 4]); ctx.stroke(); ctx.restore(); } } },
+                labelsPlugin 
+            ]
         });
     }
 
@@ -598,25 +660,14 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0, totalFijosMes, 
         chartRadar = new Chart(ctxProyeccion, {
             type: 'line', data: { labels: mesesLabels, datasets: [{ label: 'Deuda TC', data: montosProyectados, backgroundColor: grad, borderColor: '#ff5252', borderWidth: 3, fill: true, tension: 0.4, pointRadius: 4, pointBackgroundColor: '#030508', pointBorderColor: '#ff5252' }] },
             options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { color: cT, callback: v => '$' + Math.round(v/1000) + 'k' }, grid: { color: cG } }, x: { ticks: { color: cT, font: {size: 10, weight: 'bold'} }, grid: { display: false } } } },
-            plugins: [{ id: 'setpointTCPlugin', afterDraw: (chart) => { const ctx = chart.ctx, xAxis = chart.scales.x, yAxis = chart.scales.y, umbralSeguridad = sueldo * 0.15; if(yAxis.max > umbralSeguridad) { const yPos = yAxis.getPixelForValue(umbralSeguridad); ctx.save(); ctx.beginPath(); ctx.moveTo(xAxis.left, yPos); ctx.lineTo(xAxis.right, yPos); ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(255, 82, 82, 0.8)'; ctx.setLineDash([5, 5]); ctx.stroke(); ctx.fillStyle = '#ff5252'; ctx.font = 'bold 10px monospace'; ctx.fillText('MAX (15%)', xAxis.left + 5, yPos - 5); ctx.restore(); } } }]
+            // ⚡ PLUGIN INYECTADO AQUÍ
+            plugins: [
+                { id: 'setpointTCPlugin', afterDraw: (chart) => { const ctx = chart.ctx, xAxis = chart.scales.x, yAxis = chart.scales.y, umbralSeguridad = sueldo * 0.15; if(yAxis.max > umbralSeguridad) { const yPos = yAxis.getPixelForValue(umbralSeguridad); ctx.save(); ctx.beginPath(); ctx.moveTo(xAxis.left, yPos); ctx.lineTo(xAxis.right, yPos); ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(255, 82, 82, 0.8)'; ctx.setLineDash([5, 5]); ctx.stroke(); ctx.fillStyle = '#ff5252'; ctx.font = 'bold 10px monospace'; ctx.fillText('MAX (15%)', xAxis.left + 5, yPos - 5); ctx.restore(); } } },
+                labelsPlugin
+            ]
         });
     }
 }
-
-function calcularFechasCiclo(mesConceptual, anio) {
-    let mesInicio = mesConceptual - 1; let anioInicio = anio; if (mesInicio < 0) { mesInicio = 11; anioInicio--; }
-    let T0 = new Date(anioInicio, mesInicio, 30); if (T0.getMonth() !== mesInicio) T0 = new Date(anioInicio, mesInicio + 1, 0); 
-    let TFinal = new Date(anio, mesConceptual, 30); if (TFinal.getMonth() !== mesConceptual) TFinal = new Date(anio, mesConceptual + 1, 0);
-    return { T0, TFinal, fechaFinVisual: new Date(TFinal.getTime() - 86400000) };
-}
-
-window.navegarMes = function(direccion) {
-    const navMes = document.getElementById('navMesConceptual'), navAnio = document.getElementById('navAnio');
-    if(!navMes || !navAnio) return;
-    let m = parseInt(navMes.value), a = parseInt(navAnio.value);
-    m += direccion; if(m > 11) { m = 0; a++; } else if(m < 0) { m = 11; a--; }
-    navMes.value = m; navAnio.value = a; aplicarCicloAlSistema();
-};
 
 function aplicarCicloAlSistema() {
     const navMes = document.getElementById('navMesConceptual'), navAnio = document.getElementById('navAnio');
