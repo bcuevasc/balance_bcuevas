@@ -563,47 +563,45 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0, totalFijosMes, 
     const cT = getComputedStyle(document.body).getPropertyValue('--text-main').trim() || "#f0f6fc"; 
     const cG = getComputedStyle(document.body).getPropertyValue('--border-color').trim() || "#21262d"; 
     
-    // ⚡ FIX: Plugin de etiquetas blindado con controles de nulidad estrictos
+    // ⚡ PLUGIN ETIQUETAS BLANCAS (Restaurado a la versión original estable)
     const labelsPlugin = {
         id: 'labelsPlugin',
         afterDatasetsDraw(chart) {
-            try {
-                const ctx = chart.ctx;
-                ctx.font = 'bold 10px monospace';
-                ctx.fillStyle = '#ffffff'; 
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'bottom';
-                
-                if (chart.config.type === 'bar' && chart.data && chart.data.labels) {
-                    const datasets = chart.data.datasets;
-                    chart.data.labels.forEach((_, index) => {
-                        let total = 0; let lastY = null; let xPos = null;
-                        datasets.forEach((dataset, i) => {
-                            const meta = chart.getDatasetMeta(i);
-                            if (!meta.hidden && dataset.data[index] > 0 && meta.data[index]) {
-                                total += dataset.data[index];
-                                lastY = meta.data[index].y;
-                                xPos = meta.data[index].x;
+            const ctx = chart.ctx;
+            ctx.font = 'bold 10px monospace';
+            ctx.fillStyle = '#ffffff'; 
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'bottom';
+            
+            if (chart.config.type === 'bar') {
+                const datasets = chart.data.datasets;
+                chart.data.labels.forEach((_, index) => {
+                    let total = 0; let lastY = null; let xPos = null;
+                    datasets.forEach((dataset, i) => {
+                        const meta = chart.getDatasetMeta(i);
+                        if (!meta.hidden && dataset.data[index] > 0 && meta.data[index]) {
+                            total += dataset.data[index];
+                            lastY = meta.data[index].y;
+                            xPos = meta.data[index].x;
+                        }
+                    });
+                    if (total > 0 && lastY !== null && xPos !== null) {
+                        ctx.fillText(Math.round(total / 1000) + 'k', xPos, lastY - 4);
+                    }
+                });
+            } else if (chart.config.type === 'line') {
+                chart.data.datasets.forEach((dataset, i) => {
+                    const meta = chart.getDatasetMeta(i);
+                    if (!meta.hidden && meta.data) {
+                        meta.data.forEach((element, index) => {
+                            const data = dataset.data[index];
+                            if (data > 0 && element && typeof element.x === 'number' && typeof element.y === 'number') {
+                                ctx.fillText(Math.round(data / 1000) + 'k', element.x, element.y - 6);
                             }
                         });
-                        if (total > 0 && lastY !== null && xPos !== null) {
-                            ctx.fillText(Math.round(total / 1000) + 'k', xPos, lastY - 4);
-                        }
-                    });
-                } else if (chart.config.type === 'line' && chart.data && chart.data.datasets) {
-                    chart.data.datasets.forEach((dataset, i) => {
-                        const meta = chart.getDatasetMeta(i);
-                        if (!meta.hidden && meta.data) {
-                            meta.data.forEach((element, index) => {
-                                const data = dataset.data[index];
-                                if (data > 0 && element && typeof element.x === 'number' && typeof element.y === 'number') {
-                                    ctx.fillText(Math.round(data / 1000) + 'k', element.x, element.y - 6);
-                                }
-                            });
-                        }
-                    });
-                }
-            } catch (e) { console.warn("Aviso en labelsPlugin:", e); }
+                    }
+                });
+            }
         }
     };
     
@@ -687,38 +685,30 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0, totalFijosMes, 
         });
     }
 
-    // ⚡ FIX EXTREMO: GRÁFICA DE PROYECCIÓN TC
+    // 📈 4. RADAR TC (Corregido y Restaurado)
     const ctxProyeccion = document.getElementById('chartRadar');
     if(ctxProyeccion) {
-        let mesesLabels = [], montosProyectados = [];
-        let fechaHoy = new Date();
-        // Generación rígida de etiquetas para que toLocaleString no falle en el Eje X
-        const nombresMesesCorto = ["MAY.", "JUN.", "JUL.", "AGO.", "SEP.", "OCT.", "NOV.", "DIC.", "ENE.", "FEB.", "MAR.", "ABR."];
-        
+        let mesesLabels = [], montosProyectados = [], fechaHoy = new Date();
         for(let i=1; i<=6; i++) {
-            let dTemp = new Date(fechaHoy.getFullYear(), fechaHoy.getMonth() + i, 1);
-            let mIndex = dTemp.getMonth();
-            let anioCalc = dTemp.getFullYear();
+            let f = new Date(fechaHoy.getFullYear(), fechaHoy.getMonth() + i, 1);
             
-            mesesLabels.push(nombresMesesCorto[mIndex] || "N/A");
+            // Extracción nativa, segura y probada (ej: "ABR", "MAY")
+            let nombreMes = f.toLocaleString('es-CL', { month: 'short' }).toUpperCase().replace('.', '');
+            mesesLabels.push(nombreMes);
             
+            // Suma segura de montos
             let sumaMes = datosTCGlobal.filter(d => { 
                 if (!d.mesCobro) return false;
                 let fC = new Date(d.mesCobro); 
-                return fC.getMonth() === mIndex && fC.getFullYear() === anioCalc; 
+                return fC.getMonth() === f.getMonth() && fC.getFullYear() === f.getFullYear(); 
             }).reduce((a, c) => a + (Number(c.monto) || 0), 0);
             
             montosProyectados.push(sumaMes);
         }
         
-        // Seguro de color base por si el gradiente crashea en el Canvas
-        let bgFill = 'rgba(255, 82, 82, 0.15)';
-        try {
-            let grad = ctxProyeccion.getContext('2d').createLinearGradient(0, 0, 0, 300); 
-            grad.addColorStop(0, 'rgba(255, 82, 82, 0.6)'); 
-            grad.addColorStop(1, 'rgba(255, 82, 82, 0.05)');
-            bgFill = grad;
-        } catch(e) {}
+        let grad = ctxProyeccion.getContext('2d').createLinearGradient(0, 0, 0, 300); 
+        grad.addColorStop(0, 'rgba(255, 82, 82, 0.6)'); 
+        grad.addColorStop(1, 'rgba(255, 82, 82, 0.05)');
         
         chartRadar = new Chart(ctxProyeccion, {
             type: 'line', 
@@ -727,7 +717,7 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0, totalFijosMes, 
                 datasets: [{ 
                     label: 'Deuda TC', 
                     data: montosProyectados, 
-                    backgroundColor: bgFill, 
+                    backgroundColor: grad, 
                     borderColor: '#ff5252', 
                     borderWidth: 3, 
                     fill: true, 
@@ -749,17 +739,15 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0, totalFijosMes, 
                 { 
                     id: 'setpointTCPlugin', 
                     afterDraw: (chart) => { 
-                        try {
-                            const ctx = chart.ctx, xAxis = chart.scales.x, yAxis = chart.scales.y;
-                            const umbralSeguridad = (Number(sueldo) || 0) * 0.15; 
-                            if(yAxis && yAxis.max !== undefined && yAxis.max > umbralSeguridad) { 
-                                const yPos = yAxis.getPixelForValue(umbralSeguridad); 
-                                ctx.save(); ctx.beginPath(); ctx.moveTo(xAxis.left, yPos); ctx.lineTo(xAxis.right, yPos); 
-                                ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(255, 82, 82, 0.8)'; ctx.setLineDash([5, 5]); ctx.stroke(); 
-                                ctx.fillStyle = '#ff5252'; ctx.font = 'bold 10px monospace'; ctx.fillText('MAX (15%)', xAxis.left + 5, yPos - 5); 
-                                ctx.restore(); 
-                            } 
-                        } catch (e) { console.warn("Aviso en setpointTCPlugin:", e); }
+                        const ctx = chart.ctx, xAxis = chart.scales.x, yAxis = chart.scales.y;
+                        const umbralSeguridad = (Number(sueldo) || 0) * 0.15; 
+                        if(yAxis && yAxis.max !== undefined && yAxis.max > umbralSeguridad) { 
+                            const yPos = yAxis.getPixelForValue(umbralSeguridad); 
+                            ctx.save(); ctx.beginPath(); ctx.moveTo(xAxis.left, yPos); ctx.lineTo(xAxis.right, yPos); 
+                            ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(255, 82, 82, 0.8)'; ctx.setLineDash([5, 5]); ctx.stroke(); 
+                            ctx.fillStyle = '#ff5252'; ctx.font = 'bold 10px monospace'; ctx.fillText('MAX (15%)', xAxis.left + 5, yPos - 5); 
+                            ctx.restore(); 
+                        } 
                     } 
                 },
                 labelsPlugin
@@ -767,21 +755,6 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0, totalFijosMes, 
         });
     }
 }
-
-function calcularFechasCiclo(mesConceptual, anio) {
-    let mesInicio = mesConceptual - 1; let anioInicio = anio; if (mesInicio < 0) { mesInicio = 11; anioInicio--; }
-    let T0 = new Date(anioInicio, mesInicio, 30); if (T0.getMonth() !== mesInicio) T0 = new Date(anioInicio, mesInicio + 1, 0); 
-    let TFinal = new Date(anio, mesConceptual, 30); if (TFinal.getMonth() !== mesConceptual) TFinal = new Date(anio, mesConceptual + 1, 0);
-    return { T0, TFinal, fechaFinVisual: new Date(TFinal.getTime() - 86400000) };
-}
-
-window.navegarMes = function(direccion) {
-    const navMes = document.getElementById('navMesConceptual'), navAnio = document.getElementById('navAnio');
-    if(!navMes || !navAnio) return;
-    let m = parseInt(navMes.value), a = parseInt(navAnio.value);
-    m += direccion; if(m > 11) { m = 0; a++; } else if(m < 0) { m = 11; a--; }
-    navMes.value = m; navAnio.value = a; aplicarCicloAlSistema();
-};
 
 function inicializarListenerTC() {
     db.collection("deuda_tc").orderBy("mesCobro", "asc").onSnapshot(snapshot => {
