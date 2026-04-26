@@ -180,12 +180,12 @@ h2 { color: var(--text-main); margin: 0; font-size: 1.3rem; font-weight: 900; le
 
     <div style="display: flex; gap: 10px; flex-shrink: 0;">
         <div class="time-navigator-panel">
-    <div style="display: flex; gap: 8px;">
-        <select id="navAnio" class="nav-select" onchange="aplicarCicloAlSistema()"><option value="2025">2025</option><option value="2026" selected>2026</option></select>
-        <select id="navMesConceptual" class="nav-select" onchange="aplicarCicloAlSistema()" style="color: var(--color-ingresos);"><option value="0">Enero</option><option value="1">Febrero</option><option value="2">Marzo</option><option value="3" selected>Abril</option><option value="4">Mayo</option><option value="5">Junio</option><option value="6">Julio</option><option value="7">Agosto</option><option value="8">Septiembre</option><option value="9">Octubre</option><option value="10">Noviembre</option><option value="11">Diciembre</option></select>
-    </div>
-    <div id="navRangoBadge" class="nav-badge" style="margin-left: 10px;">--/-- al --/--</div>
-</div>
+            <div style="display: flex; gap: 8px;">
+                <select id="navAnio" class="nav-select" onchange="actualizarDashboard()"><option value="2025">2025</option><option value="2026" selected>2026</option></select>
+                <select id="navMesConceptual" class="nav-select" onchange="actualizarDashboard()" style="color: var(--color-ingresos);"><option value="0">Enero</option><option value="1">Febrero</option><option value="2">Marzo</option><option value="3" selected>Abril</option><option value="4">Mayo</option><option value="5">Junio</option><option value="6">Julio</option><option value="7">Agosto</option><option value="8">Septiembre</option><option value="9">Octubre</option><option value="10">Noviembre</option><option value="11">Diciembre</option></select>
+            </div>
+            <div id="navRangoBadge" class="nav-badge" style="margin-left: 10px;">--/-- al --/--</div>
+        </div>
 
         <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px; padding-right: 10px; border-right: 1px solid var(--border-color); margin-right: 10px; justify-content: center;">
             <span id="lblPeriodoViendo" style="font-size:0.55rem; color:var(--text-muted); font-weight:900; text-transform:uppercase; letter-spacing:1px;" data-en="FULL PERIOD">PERIODO COMPLETO</span>
@@ -199,13 +199,8 @@ h2 { color: var(--text-main); margin: 0; font-size: 1.3rem; font-weight: 900; le
             </div>
         </div>
 
-       <div class="kpi-card" style="border-top-color: #d29922;">
-    <h4 data-en="Monthly Budget">Presupuesto Mensual</h4>
-    <div class="value">
-        <span>$</span>
-        <input type="text" id="inputSueldo" placeholder="NO ASIGNADO" style="background:transparent; border:none; color:var(--text-main); font-weight:900; width:100%; font-size:1.15rem; outline:none; font-family: monospace; padding:0; flex-grow:1;">
-    </div>
-</div>
+        <div class="kpi-row" style="flex: 1;">
+            <div class="kpi-card" style="border-top-color: var(--border-color);"><h4 data-en="Base Salary">Sueldo Base</h4><div class="value"><span>$</span><input type="text" id="inputSueldo" oninput="formatearEntradaNumerica(this); actualizarDashboard();" onchange="guardarSueldoEnNube()" style="background:transparent; border:none; color:var(--text-main); font-weight:900; width:100%; font-size:1.15rem; outline:none; font-family: monospace; padding:0; flex-grow:1;"></div></div>
             <div class="kpi-card" style="border-top-color: var(--border-color);"><h4 data-en="Extra Income">Ingresos Extra</h4><div class="value" style="color:var(--color-ingresos);">$<span id="txtTotalIngresos">0</span></div></div>
             <div class="kpi-card" style="border-top-color: var(--color-infra);"><h4 style="color:var(--color-infra);" data-en="Real Estate">Infraestructura</h4><div class="value">$<span id="txtTotalInfra">0</span></div></div>
             <div class="kpi-card" style="border-top-color: var(--color-flota);"><h4 style="color:var(--color-flota);" data-en="Fleet & Mobility">Flota / Auto</h4><div class="value">$<span id="txtTotalFlota">0</span></div></div>
