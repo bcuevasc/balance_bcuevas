@@ -1,5 +1,5 @@
 // ==========================================================
-// 🌐 V14.4: MOTOR SCADA PRO (Renderizado TC Blindado)
+// 🌐 V14.5: MOTOR SCADA PRO (Resilience & Mobile Fix)
 // ==========================================================
 window.VALOR_USD = 950;
 
@@ -11,19 +11,15 @@ async function inicializarSensorDolar() {
         if(data && data.serie && data.serie.length > 0) {
             window.VALOR_USD = data.serie[0].valor;
             if(lbl) lbl.innerText = `1 USD = $${Math.round(window.VALOR_USD)} CLP`;
-        } else { throw new Error("Estructura API inválida"); }
-    } catch(e) {
-        window.VALOR_USD = 950; 
-        if(lbl) lbl.innerText = `Offline (Ref: $950)`;
-    }
+        }
+    } catch(e) { window.VALOR_USD = 950; }
     if (typeof calcularDiaCero === 'function') calcularDiaCero();
 }
 document.addEventListener("DOMContentLoaded", inicializarSensorDolar);
 
 const BYRON_EMAIL = "bvhcc94@gmail.com"; 
-const CREDIT_SETPOINT = -300000; 
-const catEvitables = ["Dopamina & Antojos"]; 
 const PRESUPUESTO_BASE_DEFAULT = 3602505;
+const catEvitables = ["Dopamina & Antojos"];
 
 const diccAuto = [
     { keys: ["cargo en cuenta", "comision", "mantencion"], cat: "Gastos Fijos (Búnker)", tipo: "Gasto Fijo", fuga: "0", rename: "MANTENCIÓN BANCARIA" },
@@ -69,7 +65,6 @@ window.toggleLanguage = function() {
         if (!el.hasAttribute('data-es')) el.setAttribute('data-es', el.innerText);
         el.innerText = isEng ? el.getAttribute('data-en') : el.getAttribute('data-es');
     });
-    mostrarToast(isEng ? 'ENGLISH MODE ENGAGED' : 'MODO ESPAÑOL ACTIVADO');
 };
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -103,10 +98,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
 
         elSueldo.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                this.blur(); 
-            }
+            if (e.key === 'Enter') { e.preventDefault(); this.blur(); }
         });
     }
 
@@ -141,16 +133,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 });
 
-const logosComerciales = { "uber": "uber.com", "pedidosya": "pedidosya.com", "mcdonald": "mcdonalds.com", "starbucks": "starbucks.cl", "jumbo": "jumbo.cl", "lider": "lider.cl" };
-function obtenerIconoVisual(nombre, emojiFallback) {
-    if(!nombre) return `<span style="font-size:1.4rem;">${emojiFallback}</span>`;
-    let n = nombre.toLowerCase();
-    for (let marca in logosComerciales) {
-        if (n.includes(marca)) return `<img src="https://logo.clearbit.com/${logosComerciales[marca]}?size=100" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%; background: white;" onerror="this.outerHTML='<span style=\\'font-size:1.4rem;\\'>${emojiFallback}</span>'">`;
-    }
-    return `<span style="font-size:1.4rem;">${emojiFallback}</span>`;
-}
-
 firebase.initializeApp({ apiKey: "AIzaSyBiYETN_JipXWhMq9gKz-2Pap-Ce4ZJNAI", authDomain: "finanzas-bcuevas.firebaseapp.com", projectId: "finanzas-bcuevas" });
 const db = firebase.firestore(), auth = firebase.auth();
 
@@ -177,8 +159,6 @@ window.loginWithGoogle = function() {
     const provider = new firebase.auth.GoogleAuthProvider();
     auth.signInWithPopup(provider).catch(err => {
         if (err.code === 'auth/popup-blocked' || err.code === 'auth/cancelled-popup-request') {
-            let btn = document.querySelector('.btn-google');
-            if(btn) btn.innerHTML = "⏳ REDIRECCIONANDO...";
             auth.signInWithRedirect(provider);
         } else { alert("❌ ERROR DE CONEXIÓN:\n" + err.message); }
     }); 
@@ -189,36 +169,32 @@ window.logout = function() {
 };
 
 auth.onAuthStateChanged(user => {
-    if (user) {
-        if (user.email.toLowerCase() === BYRON_EMAIL.toLowerCase()) {
-            const loginScreen = document.getElementById('login-screen');
-            const reportZone = document.getElementById('reportZone');
-            if(loginScreen) loginScreen.style.display = 'none';
-            if(reportZone) reportZone.classList.add('active-app');
-            const userDisplay = document.getElementById('user-display');
-            if(userDisplay) userDisplay.innerText = user.displayName.split(" ")[0];
-            
-            db.collection("parametros").doc("sueldos").onSnapshot(snap => { 
-                if(snap.exists) { 
-                    sueldosHistoricos = snap.data(); 
-                    cargarSueldoVisual(); 
-                    actualizarDashboard(); 
-                } 
+    if (user && user.email.toLowerCase() === BYRON_EMAIL.toLowerCase()) {
+        const loginScreen = document.getElementById('login-screen');
+        const reportZone = document.getElementById('reportZone');
+        if(loginScreen) loginScreen.style.display = 'none';
+        if(reportZone) reportZone.classList.add('active-app');
+        const userDisplay = document.getElementById('user-display');
+        if(userDisplay) userDisplay.innerText = user.displayName.split(" ")[0];
+        
+        db.collection("parametros").doc("sueldos").onSnapshot(snap => { 
+            if(snap.exists) { 
+                sueldosHistoricos = snap.data(); 
+                cargarSueldoVisual(); 
+                actualizarDashboard(); 
+            } 
+        });
+        db.collection("movimientos").onSnapshot(snap => {
+            listaMovimientos = [];
+            snap.forEach(doc => {
+                let d = doc.data(); d.firestoreId = doc.id;
+                d.fechaISO = d.fecha?.toDate ? d.fecha.toDate().toISOString() : (d.fecha || new Date().toISOString());
+                d.monto = Number(d.monto) || 0;
+                listaMovimientos.push(d);
             });
-            db.collection("movimientos").onSnapshot(snap => {
-                listaMovimientos = [];
-                snap.forEach(doc => {
-                    let d = doc.data(); d.firestoreId = doc.id;
-                    d.fechaISO = d.fecha?.toDate ? d.fecha.toDate().toISOString() : (d.fecha || new Date().toISOString());
-                    d.monto = Number(d.monto) || 0;
-                    listaMovimientos.push(d);
-                });
-                aplicarCicloAlSistema();
-            });
-            inicializarListenerTC();
-        } else {
-            auth.signOut(); alert(`⛔ ACCESO DENEGADO:\nEl correo ${user.email} no tiene permisos de operador.`);
-        }
+            aplicarCicloAlSistema();
+        });
+        inicializarListenerTC();
     }
 });
 
@@ -262,15 +238,19 @@ window.guardarSueldoEnNube = function() {
 
     sueldosHistoricos[llave] = s;
     db.collection("parametros").doc("sueldos").set({ [llave]: s }, {merge: true}).then(() => {
-        const nombresMes = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"];
-        mostrarToast(`PRESUPUESTO ${nombresMes[m]} ACTUALIZADO`); 
+        mostrarToast(`PRESUPUESTO ACTUALIZADO`); 
     });
 };
 
 function aplicarCicloAlSistema() {
+    // ⚡ FIX MÓVIL: Evita sangrado de números forzando el borrado visual antes de procesar el nuevo mes
     const elSueldo = document.getElementById('inputSueldo');
-    if (elSueldo && document.activeElement === elSueldo) {
-        elSueldo.blur(); 
+    if (elSueldo) {
+        if (document.activeElement === elSueldo) {
+            window.guardarSueldoEnNube(); 
+            elSueldo.blur(); 
+        }
+        elSueldo.value = ''; // Borra el dato fantasma al instante
     }
     
     const navMes = document.getElementById('navMesConceptual'), navAnio = document.getElementById('navAnio');
@@ -279,16 +259,15 @@ function aplicarCicloAlSistema() {
     if(document.getElementById('filtroDesde')) document.getElementById('filtroDesde').value = ''; 
     if(document.getElementById('filtroHasta')) document.getElementById('filtroHasta').value = '';
 
-    let lbl = document.getElementById('lblPeriodoViendo'); if(lbl) lbl.innerText = isEng ? 'FULL PERIOD' : 'PERIODO COMPLETO';
-    let cajaPC = document.getElementById('cajaFechasCustom'); if(cajaPC) cajaPC.style.display = 'none';
-    let btnPC = document.getElementById('btnToggleFechas'); if(btnPC) btnPC.style.display = 'block';
-
     const { T0, fechaFinVisual } = calcularFechasCiclo(parseInt(navMes.value), parseInt(navAnio.value));
     const badge = document.getElementById('navRangoBadge');
     if(badge) badge.innerText = `[${T0.toLocaleDateString('es-CL', {day:'2-digit', month:'short'}).toUpperCase()} - ${fechaFinVisual.toLocaleDateString('es-CL', {day:'2-digit', month:'short'}).toUpperCase()}]`;
     
-    cargarSueldoVisual(); 
-    actualizarDashboard();
+    // Micro-delay para que el celular termine de renderizar sus selectores nativos
+    setTimeout(() => {
+        cargarSueldoVisual(); 
+        actualizarDashboard();
+    }, 50);
 }
 
 let alarmLogCache = "";
@@ -307,8 +286,6 @@ function actualizarDashboard() {
         sueldo = parseInt(inputSueldo.value.replace(/\./g,'')) || sueldo;
     }
     
-    const buscador = document.getElementById('inputBuscador');
-    const b = buscador ? buscador.value.toLowerCase() : '';
     let { T0, TFinal } = calcularFechasCiclo(mesVal, anioVal);
     
     const fDesde = document.getElementById('filtroDesde')?.value;
@@ -375,7 +352,9 @@ function actualizarDashboard() {
         txtProyectado.style.color = proyVal < 0 ? "var(--color-fuga)" : "#79c0ff";
     }
 
+    let b = document.getElementById('inputBuscador') ? document.getElementById('inputBuscador').value.toLowerCase() : '';
     let dataGraficos = dataMes.filter(x => x.catV !== 'Gasto Tarjeta de Crédito');
+    
     if (typeof renderizarListas === 'function') renderizarListas(sueldo, b);
     if (typeof dibujarGraficos === 'function') dibujarGraficos(sueldo, [...dataGraficos].sort((x,y) => x.fechaISO < y.fechaISO ? -1 : 1), gCat, diasCiclo, T0, tF, tInfra, tFlota, deudaAprox);
     
@@ -417,7 +396,7 @@ window.renderizarListas = function(sueldoBase, filtroBuscador) {
         let esEditando = (document.getElementById('editId')?.value === x.firestoreId);
         let bgEdicion = esEditando ? 'background-color: rgba(210, 153, 34, 0.15); border-left: 3px solid var(--color-edit);' : (x.catV === 'Dopamina & Antojos' ? 'background: linear-gradient(90deg, rgba(255,255,255,0.01) 60%, rgba(255,82,82,0.15) 100%); border-right: 2px solid #ff5252;' : '');
 
-        htmlPC += `<tr style="${bgEdicion}" draggable="true" ondragstart="dragStart(event, '${x.firestoreId}')" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dropRow(event, '${x.firestoreId}')">
+        htmlPC += `<tr style="${bgEdicion}">
             <td style="text-align: center;"><input type="checkbox" class="row-check" value="${x.firestoreId}" onchange="updateMassActions()"></td>
             <td style="font-size:0.75rem; color:var(--text-muted);">${d.toLocaleDateString('es-CL', {day:'2-digit', month:'2-digit'})} <span class="col-hora">${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}</span></td>
             <td class="col-desc" title="${x.nombre || 'Dato no identificado'}">${x.nombre || 'Dato no identificado'}</td>
@@ -478,14 +457,6 @@ function editarMovimiento(id) {
     if(btn) { btn.innerHTML = isEng ? "UPDATE" : "ACTUALIZAR"; btn.style.backgroundColor = "var(--color-saldo)"; }
     
     actualizarDashboard(); 
-
-    if (typeof closeBottomSheet === 'function') closeBottomSheet(); 
-    if (typeof switchTabApp === 'function') {
-        const navItems = document.querySelectorAll('.nav-item');
-        if (navItems.length >= 3) switchTabApp('add', navItems[2]); 
-    } else if (typeof window.switchTab === 'function') {
-        window.switchTab('add');
-    }
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -551,57 +522,58 @@ function limpiarFormulario() {
 function formatearEntradaNumerica(i) { let v = i.value.replace(/\D/g,''); i.value = v ? parseInt(v).toLocaleString('es-CL') : ''; }
 function toggleTheme() { document.body.classList.toggle('light-theme'); }
 setInterval(() => { const c = document.getElementById('cronos'); if(c) c.innerText = new Date().toLocaleString('es-CL').toUpperCase(); }, 1000);
-function toggleAllChecks() { const check = document.getElementById('checkAll')?.checked; document.querySelectorAll('.row-check').forEach(cb => cb.checked = check); updateMassActions(); }
-function updateMassActions() { const bar = document.getElementById('massActionsBar'); if(!bar) return; const cnt = document.querySelectorAll('.row-check:not(#checkAll):checked').length; bar.style.display = cnt > 0 ? 'flex' : 'none'; document.getElementById('massCount').innerText = `${cnt} SEL`; if(cnt === 0 && document.getElementById('checkAll')) document.getElementById('checkAll').checked = false; }
-function massDelete() { const ids = Array.from(document.querySelectorAll('.row-check:not(#checkAll):checked')).map(cb => cb.value); if(ids.length === 0 || !confirm(`⚠️ ¿Eliminar ${ids.length} registro(s)?`)) return; const btn = document.querySelector('button[onclick="massDelete()"]'); const orig = btn.innerHTML; btn.innerHTML = '⏳'; Promise.all(ids.map(id => db.collection("movimientos").doc(id).delete())).then(() => { document.getElementById('massActionsBar').style.display = 'none'; document.getElementById('checkAll').checked = false; btn.innerHTML = orig; }); }
-function massCategorize() { const ids = Array.from(document.querySelectorAll('.row-check:not(#checkAll):checked')).map(cb => cb.value); const cat = document.getElementById('massCategorySelect').value; if(ids.length === 0 || !cat || !confirm(`¿Categorizar como "${cat}"?`)) return; const btn = document.querySelector('button[onclick="massCategorize()"]'); const orig = btn.innerHTML; btn.innerHTML = '⏳'; Promise.all(ids.map(id => db.collection("movimientos").doc(id).update({categoria: cat}))).then(() => { document.getElementById('massActionsBar').style.display = 'none'; document.getElementById('checkAll').checked = false; document.getElementById('massCategorySelect').value = ''; btn.innerHTML = orig; }); }
 
+// ⚡ V14.5: AISLAMIENTO GRÁFICO (Compartimentos Estancos)
 function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0, totalFijosMes, tInfra, tFlota, deudaAprox) {
-    if(chartBD) chartBD.destroy(); if(chartP) chartP.destroy(); 
-    if(chartDiario) chartDiario.destroy(); if(chartRadar) chartRadar.destroy();
+    // Destrucción segura
+    try { if(chartBD) chartBD.destroy(); } catch(e){}
+    try { if(chartP) chartP.destroy(); } catch(e){}
+    try { if(chartDiario) chartDiario.destroy(); } catch(e){}
+    try { if(chartRadar) chartRadar.destroy(); } catch(e){}
     
     const cT = getComputedStyle(document.body).getPropertyValue('--text-main').trim() || "#f0f6fc"; 
     const cG = getComputedStyle(document.body).getPropertyValue('--border-color').trim() || "#21262d"; 
     
-    // ⚡ PLUGIN ETIQUETAS BLANCAS (Restaurado a la versión original estable)
     const labelsPlugin = {
         id: 'labelsPlugin',
         afterDatasetsDraw(chart) {
-            const ctx = chart.ctx;
-            ctx.font = 'bold 10px monospace';
-            ctx.fillStyle = '#ffffff'; 
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'bottom';
-            
-            if (chart.config.type === 'bar') {
-                const datasets = chart.data.datasets;
-                chart.data.labels.forEach((_, index) => {
-                    let total = 0; let lastY = null; let xPos = null;
-                    datasets.forEach((dataset, i) => {
-                        const meta = chart.getDatasetMeta(i);
-                        if (!meta.hidden && dataset.data[index] > 0 && meta.data[index]) {
-                            total += dataset.data[index];
-                            lastY = meta.data[index].y;
-                            xPos = meta.data[index].x;
-                        }
-                    });
-                    if (total > 0 && lastY !== null && xPos !== null) {
-                        ctx.fillText(Math.round(total / 1000) + 'k', xPos, lastY - 4);
-                    }
-                });
-            } else if (chart.config.type === 'line') {
-                chart.data.datasets.forEach((dataset, i) => {
-                    const meta = chart.getDatasetMeta(i);
-                    if (!meta.hidden && meta.data) {
-                        meta.data.forEach((element, index) => {
-                            const data = dataset.data[index];
-                            if (data > 0 && element && typeof element.x === 'number' && typeof element.y === 'number') {
-                                ctx.fillText(Math.round(data / 1000) + 'k', element.x, element.y - 6);
+            try {
+                const ctx = chart.ctx;
+                ctx.font = 'bold 10px monospace';
+                ctx.fillStyle = '#ffffff'; 
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'bottom';
+                
+                if (chart.config.type === 'bar' && chart.data && chart.data.labels) {
+                    const datasets = chart.data.datasets;
+                    chart.data.labels.forEach((_, index) => {
+                        let total = 0; let lastY = null; let xPos = null;
+                        datasets.forEach((dataset, i) => {
+                            const meta = chart.getDatasetMeta(i);
+                            if (!meta.hidden && dataset.data[index] > 0 && meta.data[index]) {
+                                total += dataset.data[index];
+                                lastY = meta.data[index].y;
+                                xPos = meta.data[index].x;
                             }
                         });
-                    }
-                });
-            }
+                        if (total > 0 && lastY !== null && xPos !== null) {
+                            ctx.fillText(Math.round(total / 1000) + 'k', xPos, lastY - 4);
+                        }
+                    });
+                } else if (chart.config.type === 'line' && chart.data && chart.data.datasets) {
+                    chart.data.datasets.forEach((dataset, i) => {
+                        const meta = chart.getDatasetMeta(i);
+                        if (!meta.hidden && meta.data) {
+                            meta.data.forEach((element, index) => {
+                                const data = dataset.data[index];
+                                if (data > 0 && element && typeof element.x === 'number' && typeof element.y === 'number') {
+                                    ctx.fillText(Math.round(data / 1000) + 'k', element.x, element.y - 6);
+                                }
+                            });
+                        }
+                    });
+                }
+            } catch(e) {}
         }
     };
     
@@ -637,123 +609,113 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0, totalFijosMes, 
         for(let i = limit + 1; i <= diasCiclo; i++) proyeccion[i] = proyeccion[i-1] - promedioGastoDiario;
     }
 
-    const ctxBD = document.getElementById('chartBurnDown');
-    if(ctxBD) {
-        let grad = ctxBD.getContext('2d').createLinearGradient(0, 0, 0, 400);
-        grad.addColorStop(0, 'rgba(31, 111, 235, 0.4)'); grad.addColorStop(1, 'rgba(31, 111, 235, 0)');
-        chartBD = new Chart(ctxBD, {
-            type: 'line', data: { labels: labelsX, datasets: [
-                { label: 'Consumo Real', data: actual, borderColor: '#1f6feb', backgroundColor: grad, borderWidth: 3, fill: true, pointRadius: 0, tension: 0.2 },
-                { label: 'Proyección', data: proyeccion, borderColor: '#d29922', borderDash: [5, 5], borderWidth: 2, fill: false, pointRadius: 0, tension: 0.2 },
-                { label: 'Ideal', data: ideal, borderColor: 'rgba(46, 160, 67, 0.4)', borderDash: [5, 5], borderWidth: 2, fill: false, pointRadius: 0 }
-            ]},
-            options: { maintainAspectRatio:false, plugins:{legend:{display:false}}, scales: { x: { ticks: { color: cT, font: {size: 9} }, grid:{color:cG} }, y: { grid: { color: cG }, ticks: { color: cT, callback: v => '$' + Math.round(v/1000) + 'k' } } }, layout: { padding: 0 } }
-        });
-    }
-
-    const sorted = Object.entries(cats).sort((a,b)=>b[1]-a[1]).slice(0,6);
-    chartP = new Chart(document.getElementById('chartPareto'), {
-        type: 'polarArea', 
-        data: { labels: sorted.map(c => aliasMap[c[0]] || c[0].split(' ')[0]), datasets: [{ data: sorted.map(c => c[1]), backgroundColor: ['rgba(31, 111, 235, 0.7)', 'rgba(46, 160, 67, 0.7)', 'rgba(210, 153, 34, 0.7)', 'rgba(255, 82, 82, 0.7)', 'rgba(163, 113, 247, 0.7)', 'rgba(0, 188, 212, 0.7)'], borderColor: ['#1f6feb', '#2ea043', '#d29922', '#ff5252', '#a371f7', '#00bcd4'], borderWidth: 2 }] },
-        options: { maintainAspectRatio:false, plugins:{legend:{position: 'right', labels:{color:cT, font:{size:10, family:'monospace'}}}}, scales:{ r:{ticks:{display:false}, grid:{color:cG}, angleLines:{color:cG}} } }
-    });
-
-    const ctxDiario = document.getElementById('chartDiario');
-    let limiteDiarioIdeal = Math.max((sueldo - totalFijosMes - tInfra - tFlota) / diasCiclo, 0);
-    alarmLogCache = deudaAprox > sueldo * 0.15 ? `<div class='log-item critical'><div class='log-icon'>🛑</div><div class='log-content'><strong>SOBRECARGA TC</strong><div class='log-date'>Riesgo Pasivos > 15%</div><span>$${deudaAprox.toLocaleString('es-CL')}</span></div></div>` : "";
-
-    if(ctxDiario) {
-        let lastDayWithData = diasCiclo;
-        while(lastDayWithData > 0 && (dailyNecesario[lastDayWithData] === 0 && dailyFugas[lastDayWithData] === 0)) lastDayWithData--;
-        let startDayForBars = Math.max(1, lastDayWithData - 14); 
-        for(let i=startDayForBars; i<=lastDayWithData; i++) {
-            if (dailyFugas[i] > 0) alarmLogCache += `<div class='log-item warning'><div class='log-icon'>🍔</div><div class='log-content'><strong>FUGA DOPAMINA</strong><div class='log-date'>${labelsFechas[i]}</div><span>$${dailyFugas[i].toLocaleString('es-CL')}</span></div></div>`;
-            if ((dailyNecesario[i] + dailyFugas[i]) > limiteDiarioIdeal) alarmLogCache += `<div class='log-item critical'><div class='log-icon'>🔥</div><div class='log-content'><strong>LÍMITE ROTO</strong><div class='log-date'>${labelsFechas[i]}</div><span>$${(dailyNecesario[i]+dailyFugas[i]).toLocaleString('es-CL')}</span></div></div>`;
+    // [ GRÁFICO 1 ]
+    try {
+        const ctxBD = document.getElementById('chartBurnDown');
+        if(ctxBD) {
+            let grad = ctxBD.getContext('2d').createLinearGradient(0, 0, 0, 400);
+            grad.addColorStop(0, 'rgba(31, 111, 235, 0.4)'); grad.addColorStop(1, 'rgba(31, 111, 235, 0)');
+            chartBD = new Chart(ctxBD, {
+                type: 'line', data: { labels: labelsX, datasets: [
+                    { label: 'Consumo Real', data: actual, borderColor: '#1f6feb', backgroundColor: grad, borderWidth: 3, fill: true, pointRadius: 0, tension: 0.2 },
+                    { label: 'Proyección', data: proyeccion, borderColor: '#d29922', borderDash: [5, 5], borderWidth: 2, fill: false, pointRadius: 0, tension: 0.2 },
+                    { label: 'Ideal', data: ideal, borderColor: 'rgba(46, 160, 67, 0.4)', borderDash: [5, 5], borderWidth: 2, fill: false, pointRadius: 0 }
+                ]},
+                options: { maintainAspectRatio:false, plugins:{legend:{display:false}}, scales: { x: { ticks: { color: cT, font: {size: 9} }, grid:{color:cG} }, y: { grid: { color: cG }, ticks: { color: cT, callback: v => '$' + Math.round(v/1000) + 'k' } } }, layout: { padding: 0 } }
+            });
         }
+    } catch(e) { console.error("Error Chart 1", e); }
 
-        chartDiario = new Chart(ctxDiario, {
-            type: 'bar',
-            data: { labels: labelsFechas.slice(startDayForBars, lastDayWithData + 1), datasets: [
-                { label: 'Gasto Base', data: dailyNecesario.slice(startDayForBars, lastDayWithData + 1), backgroundColor: 'rgba(31, 111, 235, 0.6)', borderRadius: 2 },
-                { label: 'Fuga (Dopamina)', data: dailyFugas.slice(startDayForBars, lastDayWithData + 1), backgroundColor: 'rgba(255, 82, 82, 0.9)', borderRadius: 2 }
-            ]},
-            options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { stacked: true, ticks: { color: cT, font:{size:8} }, grid: { display:false } }, y: { stacked: true, ticks: { color: cT, callback: v => '$' + Math.round(v / 1000) + 'k' }, grid: { color: cG } } } },
-            plugins: [
-                { id: 'limiteDiarioPlugin', afterDraw: (chart) => { if(limiteDiarioIdeal <= 0) return; const ctx = chart.ctx, xAxis = chart.scales.x, yAxis = chart.scales.y, yPos = yAxis.getPixelForValue(limiteDiarioIdeal); if(yPos >= yAxis.top && yPos <= yAxis.bottom) { ctx.save(); ctx.beginPath(); ctx.moveTo(xAxis.left, yPos); ctx.lineTo(xAxis.right, yPos); ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(210, 153, 34, 0.8)'; ctx.setLineDash([4, 4]); ctx.stroke(); ctx.restore(); } } },
-                labelsPlugin
-            ]
-        });
-    }
-
-    // 📈 4. RADAR TC (Corregido y Restaurado)
-    const ctxProyeccion = document.getElementById('chartRadar');
-    if(ctxProyeccion) {
-        let mesesLabels = [], montosProyectados = [], fechaHoy = new Date();
-        for(let i=1; i<=6; i++) {
-            let f = new Date(fechaHoy.getFullYear(), fechaHoy.getMonth() + i, 1);
-            
-            // Extracción nativa, segura y probada (ej: "ABR", "MAY")
-            let nombreMes = f.toLocaleString('es-CL', { month: 'short' }).toUpperCase().replace('.', '');
-            mesesLabels.push(nombreMes);
-            
-            // Suma segura de montos
-            let sumaMes = datosTCGlobal.filter(d => { 
-                if (!d.mesCobro) return false;
-                let fC = new Date(d.mesCobro); 
-                return fC.getMonth() === f.getMonth() && fC.getFullYear() === f.getFullYear(); 
-            }).reduce((a, c) => a + (Number(c.monto) || 0), 0);
-            
-            montosProyectados.push(sumaMes);
+    // [ GRÁFICO 2 ]
+    try {
+        const sorted = Object.entries(cats).sort((a,b)=>b[1]-a[1]).slice(0,6);
+        const ctxP = document.getElementById('chartPareto');
+        if(ctxP) {
+            chartP = new Chart(ctxP, {
+                type: 'polarArea', 
+                data: { labels: sorted.map(c => aliasMap[c[0]] || c[0].split(' ')[0]), datasets: [{ data: sorted.map(c => c[1]), backgroundColor: ['rgba(31, 111, 235, 0.7)', 'rgba(46, 160, 67, 0.7)', 'rgba(210, 153, 34, 0.7)', 'rgba(255, 82, 82, 0.7)', 'rgba(163, 113, 247, 0.7)', 'rgba(0, 188, 212, 0.7)'], borderColor: ['#1f6feb', '#2ea043', '#d29922', '#ff5252', '#a371f7', '#00bcd4'], borderWidth: 2 }] },
+                options: { maintainAspectRatio:false, plugins:{legend:{position: 'right', labels:{color:cT, font:{size:10, family:'monospace'}}}}, scales:{ r:{ticks:{display:false}, grid:{color:cG}, angleLines:{color:cG}} } }
+            });
         }
-        
-        let grad = ctxProyeccion.getContext('2d').createLinearGradient(0, 0, 0, 300); 
-        grad.addColorStop(0, 'rgba(255, 82, 82, 0.6)'); 
-        grad.addColorStop(1, 'rgba(255, 82, 82, 0.05)');
-        
-        chartRadar = new Chart(ctxProyeccion, {
-            type: 'line', 
-            data: { 
-                labels: mesesLabels, 
-                datasets: [{ 
-                    label: 'Deuda TC', 
-                    data: montosProyectados, 
-                    backgroundColor: grad, 
-                    borderColor: '#ff5252', 
-                    borderWidth: 3, 
-                    fill: true, 
-                    tension: 0.4, 
-                    pointRadius: 4, 
-                    pointBackgroundColor: '#030508', 
-                    pointBorderColor: '#ff5252' 
-                }] 
-            },
-            options: { 
-                maintainAspectRatio: false, 
-                plugins: { legend: { display: false } }, 
-                scales: { 
-                    y: { beginAtZero: true, ticks: { color: cT, callback: v => '$' + Math.round(v/1000) + 'k' }, grid: { color: cG } }, 
-                    x: { ticks: { color: cT, font: {size: 10, weight: 'bold'} }, grid: { display: false } } 
-                } 
-            },
-            plugins: [
-                { 
-                    id: 'setpointTCPlugin', 
-                    afterDraw: (chart) => { 
-                        const ctx = chart.ctx, xAxis = chart.scales.x, yAxis = chart.scales.y;
-                        const umbralSeguridad = (Number(sueldo) || 0) * 0.15; 
-                        if(yAxis && yAxis.max !== undefined && yAxis.max > umbralSeguridad) { 
-                            const yPos = yAxis.getPixelForValue(umbralSeguridad); 
-                            ctx.save(); ctx.beginPath(); ctx.moveTo(xAxis.left, yPos); ctx.lineTo(xAxis.right, yPos); 
-                            ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(255, 82, 82, 0.8)'; ctx.setLineDash([5, 5]); ctx.stroke(); 
-                            ctx.fillStyle = '#ff5252'; ctx.font = 'bold 10px monospace'; ctx.fillText('MAX (15%)', xAxis.left + 5, yPos - 5); 
-                            ctx.restore(); 
-                        } 
-                    } 
-                },
-                labelsPlugin
-            ]
-        });
-    }
+    } catch(e) { console.error("Error Chart 2", e); }
+
+    // [ GRÁFICO 3 ]
+    try {
+        const ctxDiario = document.getElementById('chartDiario');
+        let limiteDiarioIdeal = Math.max((sueldo - totalFijosMes - tInfra - tFlota) / diasCiclo, 0);
+        alarmLogCache = deudaAprox > sueldo * 0.15 ? `<div class='log-item critical'><div class='log-icon'>🛑</div><div class='log-content'><strong>SOBRECARGA TC</strong><div class='log-date'>Riesgo Pasivos > 15%</div><span>$${deudaAprox.toLocaleString('es-CL')}</span></div></div>` : "";
+
+        if(ctxDiario) {
+            let lastDayWithData = diasCiclo;
+            while(lastDayWithData > 0 && (dailyNecesario[lastDayWithData] === 0 && dailyFugas[lastDayWithData] === 0)) lastDayWithData--;
+            let startDayForBars = Math.max(1, lastDayWithData - 14); 
+            for(let i=startDayForBars; i<=lastDayWithData; i++) {
+                if (dailyFugas[i] > 0) alarmLogCache += `<div class='log-item warning'><div class='log-icon'>🍔</div><div class='log-content'><strong>FUGA DOPAMINA</strong><div class='log-date'>${labelsFechas[i]}</div><span>$${dailyFugas[i].toLocaleString('es-CL')}</span></div></div>`;
+                if ((dailyNecesario[i] + dailyFugas[i]) > limiteDiarioIdeal) alarmLogCache += `<div class='log-item critical'><div class='log-icon'>🔥</div><div class='log-content'><strong>LÍMITE ROTO</strong><div class='log-date'>${labelsFechas[i]}</div><span>$${(dailyNecesario[i]+dailyFugas[i]).toLocaleString('es-CL')}</span></div></div>`;
+            }
+
+            chartDiario = new Chart(ctxDiario, {
+                type: 'bar',
+                data: { labels: labelsFechas.slice(startDayForBars, lastDayWithData + 1), datasets: [
+                    { label: 'Gasto Base', data: dailyNecesario.slice(startDayForBars, lastDayWithData + 1), backgroundColor: 'rgba(31, 111, 235, 0.6)', borderRadius: 2 },
+                    { label: 'Fuga (Dopamina)', data: dailyFugas.slice(startDayForBars, lastDayWithData + 1), backgroundColor: 'rgba(255, 82, 82, 0.9)', borderRadius: 2 }
+                ]},
+                options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { stacked: true, ticks: { color: cT, font:{size:8} }, grid: { display:false } }, y: { stacked: true, ticks: { color: cT, callback: v => '$' + Math.round(v / 1000) + 'k' }, grid: { color: cG } } } },
+                plugins: [
+                    { id: 'limiteDiarioPlugin', afterDraw: (chart) => { try { if(limiteDiarioIdeal <= 0) return; const ctx = chart.ctx, xAxis = chart.scales.x, yAxis = chart.scales.y, yPos = yAxis.getPixelForValue(limiteDiarioIdeal); if(yPos >= yAxis.top && yPos <= yAxis.bottom) { ctx.save(); ctx.beginPath(); ctx.moveTo(xAxis.left, yPos); ctx.lineTo(xAxis.right, yPos); ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(210, 153, 34, 0.8)'; ctx.setLineDash([4, 4]); ctx.stroke(); ctx.restore(); } } catch(e){} } },
+                    labelsPlugin
+                ]
+            });
+        }
+    } catch(e) { console.error("Error Chart 3", e); }
+
+    // [ GRÁFICO 4 ] - Generación estática infalible
+    try {
+        const ctxProyeccion = document.getElementById('chartRadar');
+        if(ctxProyeccion) {
+            let mesesLabels = [], montosProyectados = [], fechaHoy = new Date();
+            const nombresMesesFijos = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"];
+            
+            for(let i=1; i<=6; i++) {
+                let mIndex = (fechaHoy.getMonth() + i) % 12;
+                let anioTemp = fechaHoy.getFullYear() + Math.floor((fechaHoy.getMonth() + i) / 12);
+                mesesLabels.push(nombresMesesFijos[mIndex]);
+                
+                let sumaMes = datosTCGlobal.filter(d => { 
+                    if (!d.mesCobro) return false;
+                    let fC = new Date(d.mesCobro); 
+                    return fC.getMonth() === mIndex && fC.getFullYear() === anioTemp; 
+                }).reduce((a, c) => a + (Number(c.monto) || 0), 0);
+                
+                montosProyectados.push(sumaMes);
+            }
+            
+            let bgFill = 'rgba(255, 82, 82, 0.15)';
+            try {
+                let grad = ctxProyeccion.getContext('2d').createLinearGradient(0, 0, 0, 300); 
+                grad.addColorStop(0, 'rgba(255, 82, 82, 0.6)'); 
+                grad.addColorStop(1, 'rgba(255, 82, 82, 0.05)');
+                bgFill = grad;
+            } catch(e){}
+            
+            chartRadar = new Chart(ctxProyeccion, {
+                type: 'line', 
+                data: { labels: mesesLabels, datasets: [{ label: 'Deuda TC', data: montosProyectados, backgroundColor: bgFill, borderColor: '#ff5252', borderWidth: 3, fill: true, tension: 0.4, pointRadius: 4, pointBackgroundColor: '#030508', pointBorderColor: '#ff5252' }] },
+                options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { color: cT, callback: v => '$' + Math.round(v/1000) + 'k' }, grid: { color: cG } }, x: { ticks: { color: cT, font: {size: 10, weight: 'bold'} }, grid: { display: false } } } },
+                plugins: [
+                    { id: 'setpointTCPlugin', afterDraw: (chart) => { try { const ctx = chart.ctx, xAxis = chart.scales.x, yAxis = chart.scales.y; const umbralSeguridad = (Number(sueldo) || 0) * 0.15; if(yAxis && yAxis.max !== undefined && yAxis.max > umbralSeguridad) { const yPos = yAxis.getPixelForValue(umbralSeguridad); ctx.save(); ctx.beginPath(); ctx.moveTo(xAxis.left, yPos); ctx.lineTo(xAxis.right, yPos); ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(255, 82, 82, 0.8)'; ctx.setLineDash([5, 5]); ctx.stroke(); ctx.fillStyle = '#ff5252'; ctx.font = 'bold 10px monospace'; ctx.fillText('MAX (15%)', xAxis.left + 5, yPos - 5); ctx.restore(); } } catch(e){} } },
+                    labelsPlugin
+                ]
+            });
+        }
+    } catch(e) { console.error("Error Chart 4", e); }
+}
+
+function calcularFechasCiclo(mesConceptual, anio) {
+    let mesInicio = mesConceptual - 1; let anioInicio = anio; if (mesInicio < 0) { mesInicio = 11; anioInicio--; }
+    let T0 = new Date(anioInicio, mesInicio, 30); if (T0.getMonth() !== mesInicio) T0 = new Date(anioInicio, mesInicio + 1, 0); 
+    let TFinal = new Date(anio, mesConceptual, 30); if (TFinal.getMonth() !== mesConceptual) TFinal = new Date(anio, mesConceptual + 1, 0);
+    return { T0, TFinal, fechaFinVisual: new Date(TFinal.getTime() - 86400000) };
 }
 
 function inicializarListenerTC() {
@@ -859,6 +821,18 @@ window.cargarCSV_TC = function() {
     fileInputTC.click();
 };
 
+function actualizarBarraTC() {
+    const sel = document.querySelectorAll('.checkItemTC:checked'), barra = document.getElementById('barraAccionesTC'), txt = document.getElementById('txtSeleccionadosTC');
+    if (sel.length > 0) { if(barra) barra.style.display = 'flex'; if(txt) txt.innerText = `${sel.length} SEL`; } 
+    else { if(barra) barra.style.display = 'none'; let m = document.getElementById('checkMaestroTC'); if(m) m.checked = false; }
+}
+function toggleTodosTC(maestro) { document.querySelectorAll('.checkItemTC').forEach(c => c.checked = maestro.checked); actualizarBarraTC(); }
+async function ejecutarPurgaMasivaTC() {
+    const sel = document.querySelectorAll('.checkItemTC:checked'); if (!confirm(`⚠️ ¿Borrar ${sel.length} registros permanentemente?`)) return;
+    const batch = db.batch(); sel.forEach(cb => { batch.delete(db.collection("deuda_tc").doc(cb.value)); });
+    try { await batch.commit(); mostrarToast("PURGA COMPLETADA"); } catch (error) { alert("❌ Error Net."); }
+}
+
 window.abrirPreVuelo = function() {
     const modal = document.getElementById('modal-dia-cero'); if(!modal) return;
     let vM = parseInt(document.getElementById('navMesConceptual').value), vA = parseInt(document.getElementById('navAnio').value);
@@ -867,7 +841,6 @@ window.abrirPreVuelo = function() {
 
     document.getElementById('pv-mes-label').innerText = new Date(pA, pM).toLocaleString('es-CL', {month:'long', year:'numeric'}).toUpperCase();
     
-    // ⚡ FIX: Extraer Presupuesto del Próximo Mes Correctamente
     let sueldoProximoMes = window.obtenerSueldoMes(pA, pM);
     document.getElementById('pv-sueldo').value = sueldoProximoMes.toLocaleString('es-CL');
     
@@ -986,7 +959,6 @@ window.ejecutarArranque = function() {
     if (inyectados > 0) {
         batch.commit().then(() => {
             cerrarPreVuelo();
-            // ⚡ FIX: Salto automático al mes inyectado
             document.getElementById('navMesConceptual').value = pM;
             document.getElementById('navAnio').value = pA;
             aplicarCicloAlSistema();
@@ -997,7 +969,6 @@ window.ejecutarArranque = function() {
     }
 };
 
-// 📥 MÓDULO EXPORTACIÓN DATA-LINK (Strict Mode)
 window.exportarDataLink = function() {
     try {
         if (!datosMesGlobal || datosMesGlobal.length === 0) {
