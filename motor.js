@@ -834,10 +834,15 @@ window.cargarCSV_TC = function() {
 window.abrirPreVuelo = function() {
     const modal = document.getElementById('modal-dia-cero'); if(!modal) return;
     let vM = parseInt(document.getElementById('navMesConceptual').value), vA = parseInt(document.getElementById('navAnio').value);
+    
+    // Calculamos el mes y año destino (Mes + 1)
     let pM = vM + 1, pA = vA; if (pM > 11) { pM = 0; pA++; }
 
     document.getElementById('pv-mes-label').innerText = new Date(pA, pM).toLocaleString('es-CL', {month:'long', year:'numeric'}).toUpperCase();
-    document.getElementById('pv-sueldo').value = document.getElementById('inputSueldo')?.value || "3.602.505";
+    
+    // ⚡ FIX: Consultamos a la nube el presupuesto del MES SIGUIENTE
+    let sueldoProximoMes = window.obtenerSueldoMes(pA, pM);
+    document.getElementById('pv-sueldo').value = sueldoProximoMes.toLocaleString('es-CL');
     
     let sumaTCMes = 0;
     datosTCGlobal.forEach(d => { let f = new Date(d.mesCobro); if (f.getMonth() === pM && f.getFullYear() === pA) sumaTCMes += d.monto; });
@@ -897,17 +902,33 @@ window.calcularDiaCero = function() {
 
 window.ejecutarArranque = function() {
     if(!confirm("⚠️ INYECCIÓN DE PLANILLA\n\n¿Estás seguro de inyectar estos gastos en el MES SIGUIENTE?")) return;
-    const vM = parseInt(document.getElementById('navMesConceptual').value), vA = parseInt(document.getElementById('navAnio').value);
-    let pM = vM + 1, pA = vA; if (pM > 11) { pM = 0; pA++; }
-    const batch = db.batch(), fDestino = new Date(pA, pM, 1, 10, 0, 0);
+    
+    const vM = parseInt(document.getElementById('navMesConceptual').value);
+    const vA = parseInt(document.getElementById('navAnio').value);
+    
+    let pM = vM + 1;
+    let pA = vA;
+    if (pM > 11) { pM = 0; pA++; }
+
+    const batch = db.batch();
+    const fDestino = new Date(pA, pM, 1, 10, 0, 0);
     let inyectados = 0;
     
     const procesar = (id, nom, cat) => {
-        let el = document.getElementById(id); if (!el) return;
-        let estado = el.getAttribute('data-estado') || 'est'; if (estado === 'pag') return; 
+        let el = document.getElementById(id);
+        if (!el) return;
+        
+        let estado = el.getAttribute('data-estado') || 'est';
+        if (estado === 'pag') return; 
+        
         let monto = parseInt(el.value.replace(/\./g, '')) || 0;
         if (monto > 0) {
-            batch.set(db.collection("movimientos").doc(), { monto: monto, nombre: nom, categoria: cat, tipo: "Gasto Fijo", fecha: fDestino, status: estado === 'real' ? 'Real' : 'Estimado', innecesarioPct: 0, cuotas: 1 });
+            let ref = db.collection("movimientos").doc();
+            batch.set(ref, {
+                monto: monto, nombre: nom, categoria: cat, tipo: "Gasto Fijo",
+                fecha: fDestino, status: estado === 'real' ? 'Real' : 'Estimado',
+                innecesarioPct: 0, cuotas: 1
+            });
             inyectados++;
         }
     };
@@ -929,8 +950,14 @@ window.ejecutarArranque = function() {
     
     if (inyectados > 0) {
         batch.commit().then(() => {
-            cerrarPreVuelo(); document.getElementById('navMesConceptual').value = pM; document.getElementById('navAnio').value = pA;
-            aplicarCicloAlSistema(); mostrarToast(`ÉXITO: ${inyectados} REGISTROS INYECTADOS EN ${new Date(pA, pM).toLocaleString('es-CL', {month:'long'}).toUpperCase()}`);
+            cerrarPreVuelo();
+            // ⚡ FIX: Salto automático al mes inyectado
+            document.getElementById('navMesConceptual').value = pM;
+            document.getElementById('navAnio').value = pA;
+            aplicarCicloAlSistema();
+            mostrarToast(`ÉXITO: ${inyectados} REGISTROS INYECTADOS EN ${new Date(pA, pM).toLocaleString('es-CL', {month:'long'}).toUpperCase()}`);
         }).catch(err => alert("Error: " + err.message));
-    } else { alert("Nada que inyectar."); }
+    } else {
+        alert("Nada que inyectar.");
+    }
 };
