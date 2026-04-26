@@ -232,8 +232,10 @@ auth.onAuthStateChanged(user => {
 });
 
 // ==========================================================
-// MÓDULO DE PRESUPUESTO AISLADO (STRICT MODE)
+// MÓDULO DE PRESUPUESTO AISLADO (STRICT MODE + DEBOUNCE)
 // ==========================================================
+let timerPresupuesto = null; // Reloj de latido
+
 window.cargarSueldoVisual = function() {
     const elMes = document.getElementById('navMesConceptual');
     const elAnio = document.getElementById('navAnio');
@@ -246,7 +248,7 @@ window.cargarSueldoVisual = function() {
     let llave = `${a}_${m}`;
     
     if (document.activeElement !== elSueldo) {
-        if (sueldosHistoricos[llave]) {
+        if (sueldosHistoricos && sueldosHistoricos[llave]) {
             elSueldo.value = sueldosHistoricos[llave].toLocaleString('es-CL');
         } else {
             elSueldo.value = '';
@@ -257,9 +259,10 @@ window.cargarSueldoVisual = function() {
 
 window.obtenerSueldoMes = function(anio, mes) {
     let llave = `${anio}_${mes}`;
-    if (sueldosHistoricos[llave]) return sueldosHistoricos[llave];
-    return SUELDO_BASE_DEFAULT; 
+    if (sueldosHistoricos && sueldosHistoricos[llave]) return sueldosHistoricos[llave];
+    return SUELDO_BASE_DEFAULT; // Mantiene el default por seguridad matemática interna
 };
+
 window.guardarSueldoEnNube = function() {
     const elSueldo = document.getElementById('inputSueldo');
     const elMes = document.getElementById('navMesConceptual');
@@ -276,6 +279,10 @@ window.guardarSueldoEnNube = function() {
     if (isNaN(s) || s <= 0) return;
     
     let llave = `${a}_${m}`;
+    
+    // Cortafuegos: Evita escrituras redundantes en Firebase
+    if (sueldosHistoricos && sueldosHistoricos[llave] === s) return;
+
     sueldosHistoricos[llave] = s;
     
     db.collection("parametros").doc("sueldos").set({
@@ -287,6 +294,31 @@ window.guardarSueldoEnNube = function() {
     }).catch(err => {
         console.error("Error Nube:", err);
     });
+};
+
+// ⚡ LÓGICA DE AUTO-GUARDADO (Anula la condición de carrera en móviles)
+document.addEventListener("DOMContentLoaded", () => {
+    const inputSueldo = document.getElementById('inputSueldo');
+    if(inputSueldo) {
+        inputSueldo.addEventListener('input', () => {
+            clearTimeout(timerPresupuesto);
+            // El sistema guardará el dato automáticamente 800ms después de dejar de tipear
+            timerPresupuesto = setTimeout(() => {
+                window.guardarSueldoEnNube();
+            }, 800);
+        });
+    }
+});
+
+// ⚡ REGLA DE NAVEGACIÓN: En tu función aplicarCicloAlSistema() asegúrate de abortar cualquier guardado fantasma
+const originalAplicarCiclo = window.aplicarCicloAlSistema;
+window.aplicarCicloAlSistema = function() {
+    clearTimeout(timerPresupuesto); // Aborta si cambias de mes antes de los 800ms
+    const elSueldo = document.getElementById('inputSueldo');
+    if (elSueldo && document.activeElement === elSueldo) elSueldo.blur();
+    
+    // Ejecuta tu código original de ciclo
+    if (typeof originalAplicarCiclo === 'function') originalAplicarCiclo();
 };
 let alarmLogCache = "";
 window.abrirHistorian = function() {
