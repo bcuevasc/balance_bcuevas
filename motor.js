@@ -503,9 +503,6 @@ function massDelete() { const ids = Array.from(document.querySelectorAll('.row-c
 function massCategorize() { const ids = Array.from(document.querySelectorAll('.row-check:not(#checkAll):checked')).map(cb => cb.value); const cat = document.getElementById('massCategorySelect').value; if(ids.length === 0 || !cat || !confirm(`¿Categorizar como "${cat}"?`)) return; const btn = document.querySelector('button[onclick="massCategorize()"]'); const orig = btn.innerHTML; btn.innerHTML = '⏳'; Promise.all(ids.map(id => db.collection("movimientos").doc(id).update({categoria: cat}))).then(() => { document.getElementById('massActionsBar').style.display = 'none'; document.getElementById('checkAll').checked = false; document.getElementById('massCategorySelect').value = ''; btn.innerHTML = orig; }); }
 
 // =====================================================================
-// 🔮 PROYECTO ORÁCULO: TELEMETRÍA (GRÁFICOS V13.4 - DATA LABELS)
-// =====================================================================
-// =====================================================================
 // 🔮 PROYECTO ORÁCULO: TELEMETRÍA (GRÁFICOS V13.5 - FULL VISIBILITY)
 // =====================================================================
 function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0, totalFijosMes, tInfra, tFlota, deudaAprox) {
@@ -641,6 +638,52 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0, totalFijosMes, 
         data: { labels: sorted.map(c => aliasMap[c[0]] || c[0].split(' ')[0]), datasets: [{ data: sorted.map(c => c[1]), backgroundColor: ['rgba(31, 111, 235, 0.7)', 'rgba(46, 160, 67, 0.7)', 'rgba(210, 153, 34, 0.7)', 'rgba(255, 82, 82, 0.7)', 'rgba(163, 113, 247, 0.7)', 'rgba(0, 188, 212, 0.7)'], borderColor: ['#1f6feb', '#2ea043', '#d29922', '#ff5252', '#a371f7', '#00bcd4'], borderWidth: 2 }] },
         options: { maintainAspectRatio:false, plugins:{legend:{position: 'right', labels:{color:cT, font:{size:10, family:'monospace'}}}}, scales:{ r:{ticks:{display:false}, grid:{color:cG}, angleLines:{color:cG}} } }
     });
+}
+
+function calcularFechasCiclo(mesConceptual, anio) {
+    let mesInicio = mesConceptual - 1; let anioInicio = anio; if (mesInicio < 0) { mesInicio = 11; anioInicio--; }
+    let T0 = new Date(anioInicio, mesInicio, 30); if (T0.getMonth() !== mesInicio) T0 = new Date(anioInicio, mesInicio + 1, 0); 
+    let TFinal = new Date(anio, mesConceptual, 30); if (TFinal.getMonth() !== mesConceptual) TFinal = new Date(anio, mesConceptual + 1, 0);
+    return { T0, TFinal, fechaFinVisual: new Date(TFinal.getTime() - 86400000) };
+}
+
+window.navegarMes = function(direccion) {
+    const navMes = document.getElementById('navMesConceptual'), navAnio = document.getElementById('navAnio');
+    if(!navMes || !navAnio) return;
+    let m = parseInt(navMes.value), a = parseInt(navAnio.value);
+    m += direccion; if(m > 11) { m = 0; a++; } else if(m < 0) { m = 11; a--; }
+    navMes.value = m; navAnio.value = a; aplicarCicloAlSistema();
+};
+
+function aplicarCicloAlSistema() {
+    const navMes = document.getElementById('navMesConceptual'), navAnio = document.getElementById('navAnio');
+    if(!navMes || !navAnio) return;
+    if(document.getElementById('filtroDesde')) document.getElementById('filtroDesde').value = ''; 
+    if(document.getElementById('filtroHasta')) document.getElementById('filtroHasta').value = '';
+
+    let lbl = document.getElementById('lblPeriodoViendo'); if(lbl) lbl.innerText = isEng ? 'FULL PERIOD' : 'PERIODO COMPLETO';
+    let cajaPC = document.getElementById('cajaFechasCustom'); if(cajaPC) cajaPC.style.display = 'none';
+    let btnPC = document.getElementById('btnToggleFechas'); if(btnPC) btnPC.style.display = 'block';
+
+    const { T0, fechaFinVisual } = calcularFechasCiclo(parseInt(navMes.value), parseInt(navAnio.value));
+    const badge = document.getElementById('navRangoBadge');
+    if(badge) badge.innerText = `[${T0.toLocaleDateString('es-CL', {day:'2-digit', month:'short'}).toUpperCase()} - ${fechaFinVisual.toLocaleDateString('es-CL', {day:'2-digit', month:'short'}).toUpperCase()}]`;
+    cargarSueldoVisual(); actualizarDashboard();
+}
+
+let draggedRowId = null;
+window.dragStart = function(e, id) { draggedRowId = id; e.dataTransfer.effectAllowed = 'move'; setTimeout(() => e.target.style.opacity = '0.4', 0); }
+window.dragOverPanel = function(e, tipo) { e.preventDefault(); const panel = e.currentTarget; panel.style.transition = "border-color 0.2s, box-shadow 0.2s"; if (tipo === 'tc') { panel.style.borderColor = "var(--color-fuga)"; panel.style.boxShadow = "inset 0 0 20px rgba(255, 82, 82, 0.15)"; } else { panel.style.borderColor = "var(--color-saldo)"; panel.style.boxShadow = "inset 0 0 20px rgba(46, 160, 67, 0.15)"; } }
+window.dragLeavePanel = function(e, tipo) { const panel = e.currentTarget; panel.style.borderColor = tipo === 'tc' ? "rgba(255, 82, 82, 0.2)" : "var(--border-color)"; panel.style.boxShadow = "none"; }
+window.dropOnPanel = function(e, tipo) {
+    e.preventDefault(); dragLeavePanel(e, tipo); if (!draggedRowId) return;
+    const mov = listaMovimientos.find(m => m.firestoreId === draggedRowId); if (!mov) return;
+    if (tipo === 'tc' && mov.catV !== 'Gasto Tarjeta de Crédito') {
+        if(confirm("💳 ¿Transferir gasto a la Matriz TC?")) db.collection("movimientos").doc(draggedRowId).update({ categoria: "Gasto Tarjeta de Crédito", tipo: "Gasto" });
+    } else if (tipo === 'main' && mov.catV === 'Gasto Tarjeta de Crédito') {
+        if(confirm("🔄 ¿Devolver a Flujo Presente?")) db.collection("movimientos").doc(draggedRowId).update({ categoria: "Ruido de Sistema", tipo: "Gasto", cuotas: 1 });
+    }
+    draggedRowId = null;
 }
 window.dragOver = function(e) { e.preventDefault(); e.currentTarget.style.borderTop = '2px solid var(--color-saldo)'; }
 window.dragLeave = function(e) { e.currentTarget.style.borderTop = ''; }
