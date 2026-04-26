@@ -920,8 +920,18 @@ window.calcularDiaCero = function() {
 }
 
 window.ejecutarArranque = function() {
-    if(!confirm("⚠️ INYECCIÓN CRÍTICA\n\n¿Inyectar Planilla Operativa? Los gastos marcados como ✔️ PAGADO serán ignorados.")) return;
-    const batch = db.batch(), fDestino = new Date(parseInt(document.getElementById('navAnio').value), parseInt(document.getElementById('navMesConceptual').value), 1, 10, 0, 0);
+    if(!confirm("⚠️ INYECCIÓN CRÍTICA\n\n¿Inyectar Planilla Operativa en el MES SIGUIENTE? Los gastos marcados como ✔️ PAGADO serán ignorados.")) return;
+    
+    // ⚡ FIX: Cálculo estricto del mes siguiente para la inyección
+    let vM = parseInt(document.getElementById('navMesConceptual').value);
+    let vA = parseInt(document.getElementById('navAnio').value);
+    let pM = vM + 1; 
+    let pA = vA; 
+    if (pM > 11) { pM = 0; pA++; } // Salto de año si es diciembre
+
+    const batch = db.batch();
+    // Inyecta el día 1 del mes siguiente a las 10:00 AM
+    const fDestino = new Date(pA, pM, 1, 10, 0, 0); 
     let inyectados = 0;
     
     const procesar = (id, nom, cat) => {
@@ -929,10 +939,50 @@ window.ejecutarArranque = function() {
         let estado = el.getAttribute('data-estado') || 'est'; if (estado === 'pag') return; 
         let monto = parseInt(el.value.replace(/\./g, '')) || 0;
         if (monto > 0) {
-            batch.set(db.collection("movimientos").doc(), { monto: monto, nombre: nom, categoria: cat, tipo: "Gasto Fijo", fecha: fDestino, status: estado === 'real' ? 'Real' : 'Estimado', innecesarioPct: 0, cuotas: 1 });
+            batch.set(db.collection("movimientos").doc(), { 
+                monto: monto, 
+                nombre: nom, 
+                categoria: cat, 
+                tipo: "Gasto Fijo", 
+                fecha: fDestino, 
+                status: estado === 'real' ? 'Real' : 'Estimado', 
+                innecesarioPct: 0, 
+                cuotas: 1 
+            });
             inyectados++;
         }
     };
+    
+    procesar('pv-tc-nac', "PAGO TC NACIONAL (DÍA CERO)", "Gastos Fijos (Búnker)"); 
+    procesar('pv-tc-int', "PAGO TC INTERNACIONAL (DÍA CERO)", "Gastos Fijos (Búnker)"); 
+    procesar('pv-linea', "PAGO LÍNEA CRÉDITO (DÍA CERO)", "Gastos Fijos (Búnker)");
+    procesar('pv-arriendo', "ARRIENDO / DIVIDENDO", "Infraestructura (Depto)");
+    procesar('pv-udec', "PAGO UDEC 2024", "Infraestructura (Depto)");
+    procesar('pv-cae', "PAGO CAE", "Infraestructura (Depto)");
+    procesar('pv-ggcc', "GASTOS COMUNES", "Infraestructura (Depto)");
+    procesar('pv-luz', "LUZ / ELECTRICIDAD", "Infraestructura (Depto)");
+    procesar('pv-agua', "AGUA / SANEAMIENTO", "Infraestructura (Depto)");
+    procesar('pv-gas', "GAS", "Infraestructura (Depto)");
+    procesar('pv-celu', "CELU MIO PLAN", "Suscripciones");
+    procesar('pv-madre', "MOVISTAR MADRE", "Red de Apoyo (Familia)");
+    procesar('pv-subs', "PACK SUSCRIPCIONES", "Suscripciones");
+    procesar('pv-seguro', "SEGURO AUTO", "Flota & Movilidad");
+    
+    if (inyectados > 0) { 
+        batch.commit().then(() => { 
+            cerrarPreVuelo(); 
+            // Avanzamos el navegador visualmente al mes inyectado
+            document.getElementById('navMesConceptual').value = pM;
+            document.getElementById('navAnio').value = pA;
+            mostrarToast(`ARRANQUE: ${inyectados} INYECTADOS EN MES SIGUIENTE.`); 
+            aplicarCicloAlSistema(); 
+        }).catch(err => alert("Error: " + err.message)); 
+    } 
+    else { 
+        alert("No se inyectaron registros (0 o pagados)."); 
+        cerrarPreVuelo(); 
+    }
+}
     
     procesar('pv-tc-nac', "PAGO TC NACIONAL (DÍA CERO)", "Gastos Fijos (Búnker)"); 
     procesar('pv-tc-int', "PAGO TC INTERNACIONAL (DÍA CERO)", "Gastos Fijos (Búnker)"); 
