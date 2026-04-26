@@ -738,8 +738,6 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0, totalFijosMes, 
             ]
         });
     }
-}
-
 function calcularFechasCiclo(mesConceptual, anio) {
     let mesInicio = mesConceptual - 1; let anioInicio = anio; if (mesInicio < 0) { mesInicio = 11; anioInicio--; }
     let T0 = new Date(anioInicio, mesInicio, 30); if (T0.getMonth() !== mesInicio) T0 = new Date(anioInicio, mesInicio + 1, 0); 
