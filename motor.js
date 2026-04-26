@@ -1035,4 +1035,4 @@ window.ejecutarArranque = function() {
     
     if (inyectados > 0) { batch.commit().then(() => { cerrarPreVuelo(); mostrarToast(`ARRANQUE: ${inyectados} INYECTADOS.`); actualizarDashboard(); }).catch(err => alert("Error: " + err.message)); } 
     else { alert("No se inyectaron registros (0 o pagados)."); cerrarPreVuelo(); }
-}
+
