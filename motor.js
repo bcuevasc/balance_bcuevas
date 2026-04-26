@@ -694,20 +694,46 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0, totalFijosMes, 
         });
     }
 
+    // 📈 4. RADAR TC (Blindado)
     const ctxProyeccion = document.getElementById('chartRadar');
     if(ctxProyeccion) {
         let mesesLabels = [], montosProyectados = [], fechaHoy = new Date();
         for(let i=1; i<=6; i++) {
             let f = new Date(fechaHoy.getFullYear(), fechaHoy.getMonth() + i, 1);
             mesesLabels.push(f.toLocaleString('es-CL', { month: 'short' }).toUpperCase());
-            montosProyectados.push(datosTCGlobal.filter(d => { let fC = new Date(d.mesCobro); return fC.getMonth() === f.getMonth() && fC.getFullYear() === f.getFullYear(); }).reduce((a, c) => a + c.monto, 0));
+            
+            // FIX: Filtro estricto y conversión forzada a Número (Number) para evitar concatenación
+            montosProyectados.push(datosTCGlobal.filter(d => { 
+                if (!d.mesCobro) return false;
+                let fC = new Date(d.mesCobro); 
+                return fC.getMonth() === f.getMonth() && fC.getFullYear() === f.getFullYear(); 
+            }).reduce((a, c) => a + (Number(c.monto) || 0), 0));
         }
-        let grad = ctxProyeccion.getContext('2d').createLinearGradient(0, 0, 0, 300); grad.addColorStop(0, 'rgba(255, 82, 82, 0.6)'); grad.addColorStop(1, 'rgba(255, 82, 82, 0.05)');
+        
+        let grad = ctxProyeccion.getContext('2d').createLinearGradient(0, 0, 0, 300); 
+        grad.addColorStop(0, 'rgba(255, 82, 82, 0.6)'); 
+        grad.addColorStop(1, 'rgba(255, 82, 82, 0.05)');
+        
         chartRadar = new Chart(ctxProyeccion, {
-            type: 'line', data: { labels: mesesLabels, datasets: [{ label: 'Deuda TC', data: montosProyectados, backgroundColor: grad, borderColor: '#ff5252', borderWidth: 3, fill: true, tension: 0.4, pointRadius: 4, pointBackgroundColor: '#030508', pointBorderColor: '#ff5252' }] },
+            type: 'line', 
+            data: { labels: mesesLabels, datasets: [{ label: 'Deuda TC', data: montosProyectados, backgroundColor: grad, borderColor: '#ff5252', borderWidth: 3, fill: true, tension: 0.4, pointRadius: 4, pointBackgroundColor: '#030508', pointBorderColor: '#ff5252' }] },
             options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { color: cT, callback: v => '$' + Math.round(v/1000) + 'k' }, grid: { color: cG } }, x: { ticks: { color: cT, font: {size: 10, weight: 'bold'} }, grid: { display: false } } } },
             plugins: [
-                { id: 'setpointTCPlugin', afterDraw: (chart) => { const ctx = chart.ctx, xAxis = chart.scales.x, yAxis = chart.scales.y, umbralSeguridad = sueldo * 0.15; if(yAxis.max > umbralSeguridad) { const yPos = yAxis.getPixelForValue(umbralSeguridad); ctx.save(); ctx.beginPath(); ctx.moveTo(xAxis.left, yPos); ctx.lineTo(xAxis.right, yPos); ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(255, 82, 82, 0.8)'; ctx.setLineDash([5, 5]); ctx.stroke(); ctx.fillStyle = '#ff5252'; ctx.font = 'bold 10px monospace'; ctx.fillText('MAX (15%)', xAxis.left + 5, yPos - 5); ctx.restore(); } } },
+                { 
+                    id: 'setpointTCPlugin', 
+                    afterDraw: (chart) => { 
+                        const ctx = chart.ctx, xAxis = chart.scales.x, yAxis = chart.scales.y;
+                        const umbralSeguridad = (Number(sueldo) || 0) * 0.15; 
+                        // FIX: Verificación de existencia del eje Y para evitar crasheos visuales
+                        if(yAxis && yAxis.max !== undefined && yAxis.max > umbralSeguridad) { 
+                            const yPos = yAxis.getPixelForValue(umbralSeguridad); 
+                            ctx.save(); ctx.beginPath(); ctx.moveTo(xAxis.left, yPos); ctx.lineTo(xAxis.right, yPos); 
+                            ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(255, 82, 82, 0.8)'; ctx.setLineDash([5, 5]); ctx.stroke(); 
+                            ctx.fillStyle = '#ff5252'; ctx.font = 'bold 10px monospace'; ctx.fillText('MAX (15%)', xAxis.left + 5, yPos - 5); 
+                            ctx.restore(); 
+                        } 
+                    } 
+                },
                 labelsPlugin
             ]
         });
@@ -899,7 +925,44 @@ window.calcularDiaCero = function() {
     let elCer = document.getElementById('pv-certeza-pct');
     if(elCer) { elCer.innerText = cer + '%'; elCer.style.color = cer < 40 ? '#ff5252' : (cer < 80 ? '#ff9800' : '#2ea043'); }
 }
+// 📥 MÓDULO EXPORTACIÓN DATA-LINK (Strict Mode)
+window.exportarDataLink = function() {
+    try {
+        if (!datosMesGlobal || datosMesGlobal.length === 0) {
+            mostrarToast("MATRIZ VACÍA: NO HAY DATOS PARA EXPORTAR");
+            return;
+        }
 
+        let csv = "ISO_DATE,YEAR,MONTH,DAY,CATEGORY,TYPE,AMOUNT_CLP,DETAIL,ML_FLAG\n";
+        
+        datosMesGlobal.forEach(x => {
+            // FIX: Validaciones de nulidad estrictas para evitar rotura del ciclo forEach
+            let d = x.fechaISO ? new Date(x.fechaISO) : new Date();
+            let catV = x.catV || x.categoria || 'Sin Categoría';
+            let tipo = x.tipo || 'Gasto Variable';
+            let monto = Number(x.monto) || 0;
+            let nombreLimpio = (x.nombre || "Unknown").replace(/(\r\n|\n|\r)/gm, " ").replace(/"/g, '""').trim();
+            
+            let flag = catEvitables.includes(catV) ? 'DOPAMINA_LEAK' : (tipo === 'Gasto Fijo' ? 'STRUCTURAL' : 'STANDARD');
+            
+            csv += `${x.fechaISO || d.toISOString()},${d.getFullYear()},${d.getMonth()+1},${d.getDate()},"${catV}","${tipo}",${monto},"${nombreLimpio}",${flag}\n`;
+        });
+        
+        const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a"); 
+        link.href = URL.createObjectURL(blob);
+        link.download = `Bunker_DataLink_${new Date().toISOString().slice(0,10)}.csv`;
+        document.body.appendChild(link); 
+        link.click(); 
+        document.body.removeChild(link);
+        
+        mostrarToast("EXPORTACIÓN DATA-LINK EXITOSA");
+
+    } catch (error) {
+        console.error("[CRITICAL] Error en exportación Data-Link:", error);
+        mostrarToast("ERROR DE EXPORTACIÓN (Ver Consola)");
+    }
+};
 window.ejecutarArranque = function() {
     if(!confirm("⚠️ INYECCIÓN DE PLANILLA\n\n¿Estás seguro de inyectar estos gastos en el MES SIGUIENTE?")) return;
     
