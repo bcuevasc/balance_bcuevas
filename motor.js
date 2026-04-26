@@ -505,6 +505,9 @@ function massCategorize() { const ids = Array.from(document.querySelectorAll('.r
 // =====================================================================
 // 🔮 PROYECTO ORÁCULO: TELEMETRÍA (GRÁFICOS V13.5 - FULL VISIBILITY)
 // =====================================================================
+// =====================================================================
+// 🔮 PROYECTO ORÁCULO: TELEMETRÍA (GRÁFICOS V13.6 - ETIQUETAS BLANCAS)
+// =====================================================================
 function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0, totalFijosMes, tInfra, tFlota, deudaAprox) {
     if(chartBD) chartBD.destroy(); if(chartP) chartP.destroy(); 
     if(chartDiario) chartDiario.destroy(); if(chartRadar) chartRadar.destroy();
@@ -512,28 +515,45 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0, totalFijosMes, 
     const cT = getComputedStyle(document.body).getPropertyValue('--text-main').trim() || "#f0f6fc"; 
     const cG = getComputedStyle(document.body).getPropertyValue('--border-color').trim() || "#21262d"; 
     
-    // ⚡ PLUGIN: Renderizador de Etiquetas "k" en Blanco
+    // ⚡ PLUGIN: Renderizador de Etiquetas Blancas
     const labelsPlugin = {
         id: 'labelsPlugin',
         afterDatasetsDraw(chart) {
             const ctx = chart.ctx;
-            ctx.font = 'bold 10px "Roboto Mono", monospace';
-            ctx.fillStyle = '#ffffff'; // Letras blancas solicitadas
+            ctx.font = 'bold 10px monospace';
+            ctx.fillStyle = '#ffffff'; // Color Blanco
             ctx.textAlign = 'center';
             ctx.textBaseline = 'bottom';
             
-            chart.data.datasets.forEach((dataset, i) => {
-                const meta = chart.getDatasetMeta(i);
-                if (!meta.hidden) {
-                    meta.data.forEach((element, index) => {
-                        const data = dataset.data[index];
-                        if (data > 0) {
-                            let valK = Math.round(data / 1000) + 'k';
-                            ctx.fillText(valK, element.x, element.y - 5);
+            if (chart.config.type === 'bar') {
+                const datasets = chart.data.datasets;
+                chart.data.labels.forEach((_, index) => {
+                    let total = 0; let lastY = null; let xPos = null;
+                    datasets.forEach((dataset, i) => {
+                        const meta = chart.getDatasetMeta(i);
+                        if (!meta.hidden && dataset.data[index] > 0) {
+                            total += dataset.data[index];
+                            lastY = meta.data[index].y;
+                            xPos = meta.data[index].x;
                         }
                     });
-                }
-            });
+                    if (total > 0 && lastY !== null) {
+                        ctx.fillText(Math.round(total / 1000) + 'k', xPos, lastY - 4);
+                    }
+                });
+            } else if (chart.config.type === 'line') {
+                chart.data.datasets.forEach((dataset, i) => {
+                    const meta = chart.getDatasetMeta(i);
+                    if (!meta.hidden) {
+                        meta.data.forEach((element, index) => {
+                            const data = dataset.data[index];
+                            if (data > 0) {
+                                ctx.fillText(Math.round(data / 1000) + 'k', element.x, element.y - 6);
+                            }
+                        });
+                    }
+                });
+            }
         }
     };
     
@@ -569,39 +589,42 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0, totalFijosMes, 
         for(let i = limit + 1; i <= diasCiclo; i++) proyeccion[i] = proyeccion[i-1] - promedioGastoDiario;
     }
 
-    // 📈 GRÁFICO 1: BURN DOWN (Restauración de Escala)
+    // 📉 1. BURN DOWN (Sin plugin de etiquetas, escala automática)
     const ctxBD = document.getElementById('chartBurnDown');
     if(ctxBD) {
         let grad = ctxBD.getContext('2d').createLinearGradient(0, 0, 0, 400);
         grad.addColorStop(0, 'rgba(31, 111, 235, 0.4)'); grad.addColorStop(1, 'rgba(31, 111, 235, 0)');
         chartBD = new Chart(ctxBD, {
             type: 'line', data: { labels: labelsX, datasets: [
-                { label: 'Saldo Real', data: actual, borderColor: '#1f6feb', backgroundColor: grad, borderWidth: 3, fill: true, pointRadius: 0, tension: 0.2 },
+                { label: 'Consumo Real', data: actual, borderColor: '#1f6feb', backgroundColor: grad, borderWidth: 3, fill: true, pointRadius: 0, tension: 0.2 },
                 { label: 'Proyección', data: proyeccion, borderColor: '#d29922', borderDash: [5, 5], borderWidth: 2, fill: false, pointRadius: 0, tension: 0.2 },
                 { label: 'Ideal', data: ideal, borderColor: 'rgba(46, 160, 67, 0.4)', borderDash: [5, 5], borderWidth: 2, fill: false, pointRadius: 0 }
             ]},
-            options: { 
-                maintainAspectRatio:false, 
-                plugins:{legend:{display:false}}, 
-                scales: { 
-                    x: { ticks: { color: cT, font: {size: 9} }, grid:{color:cG} }, 
-                    y: { 
-                        // Eliminamos min/max fijos para evitar que la línea desaparezca
-                        grid: { color: cG }, 
-                        ticks: { color: cT, callback: v => '$' + Math.round(v/1000) + 'k' } 
-                    } 
-                }
-            }
+            options: { maintainAspectRatio:false, plugins:{legend:{display:false}}, scales: { x: { ticks: { color: cT, font: {size: 9} }, grid:{color:cG} }, y: { grid: { color: cG }, ticks: { color: cT, callback: v => '$' + Math.round(v/1000) + 'k' } } }, layout: { padding: 0 } }
         });
     }
 
-    // 📊 GRÁFICO 2: BARRAS DIARIAS (Con etiquetas blancas)
+    // 🍕 2. PARETO (Sin cambios)
+    const sorted = Object.entries(cats).sort((a,b)=>b[1]-a[1]).slice(0,6);
+    chartP = new Chart(document.getElementById('chartPareto'), {
+        type: 'polarArea', 
+        data: { labels: sorted.map(c => aliasMap[c[0]] || c[0].split(' ')[0]), datasets: [{ data: sorted.map(c => c[1]), backgroundColor: ['rgba(31, 111, 235, 0.7)', 'rgba(46, 160, 67, 0.7)', 'rgba(210, 153, 34, 0.7)', 'rgba(255, 82, 82, 0.7)', 'rgba(163, 113, 247, 0.7)', 'rgba(0, 188, 212, 0.7)'], borderColor: ['#1f6feb', '#2ea043', '#d29922', '#ff5252', '#a371f7', '#00bcd4'], borderWidth: 2 }] },
+        options: { maintainAspectRatio:false, plugins:{legend:{position: 'right', labels:{color:cT, font:{size:10, family:'monospace'}}}}, scales:{ r:{ticks:{display:false}, grid:{color:cG}, angleLines:{color:cG}} } }
+    });
+
+    // 📊 3. BARRAS DIARIAS (Con plugin de etiquetas)
     const ctxDiario = document.getElementById('chartDiario');
     let limiteDiarioIdeal = Math.max((sueldo - totalFijosMes - tInfra - tFlota) / diasCiclo, 0);
+    alarmLogCache = deudaAprox > sueldo * 0.15 ? `<div class='log-item critical'><div class='log-icon'>🛑</div><div class='log-content'><strong>SOBRECARGA TC</strong><div class='log-date'>Riesgo Pasivos > 15%</div><span>$${deudaAprox.toLocaleString('es-CL')}</span></div></div>` : "";
+
     if(ctxDiario) {
         let lastDayWithData = diasCiclo;
         while(lastDayWithData > 0 && (dailyNecesario[lastDayWithData] === 0 && dailyFugas[lastDayWithData] === 0)) lastDayWithData--;
         let startDayForBars = Math.max(1, lastDayWithData - 14); 
+        for(let i=startDayForBars; i<=lastDayWithData; i++) {
+            if (dailyFugas[i] > 0) alarmLogCache += `<div class='log-item warning'><div class='log-icon'>🍔</div><div class='log-content'><strong>FUGA DOPAMINA</strong><div class='log-date'>${labelsFechas[i]}</div><span>$${dailyFugas[i].toLocaleString('es-CL')}</span></div></div>`;
+            if ((dailyNecesario[i] + dailyFugas[i]) > limiteDiarioIdeal) alarmLogCache += `<div class='log-item critical'><div class='log-icon'>🔥</div><div class='log-content'><strong>LÍMITE ROTO</strong><div class='log-date'>${labelsFechas[i]}</div><span>$${(dailyNecesario[i]+dailyFugas[i]).toLocaleString('es-CL')}</span></div></div>`;
+        }
 
         chartDiario = new Chart(ctxDiario, {
             type: 'bar',
@@ -610,11 +633,15 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0, totalFijosMes, 
                 { label: 'Fuga (Dopamina)', data: dailyFugas.slice(startDayForBars, lastDayWithData + 1), backgroundColor: 'rgba(255, 82, 82, 0.9)', borderRadius: 2 }
             ]},
             options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { stacked: true, ticks: { color: cT, font:{size:8} }, grid: { display:false } }, y: { stacked: true, ticks: { color: cT, callback: v => '$' + Math.round(v / 1000) + 'k' }, grid: { color: cG } } } },
-            plugins: [labelsPlugin] // ⚡ Inyectado
+            // ⚡ Inyectamos ambos plugins aquí
+            plugins: [
+                { id: 'limiteDiarioPlugin', afterDraw: (chart) => { if(limiteDiarioIdeal <= 0) return; const ctx = chart.ctx, xAxis = chart.scales.x, yAxis = chart.scales.y, yPos = yAxis.getPixelForValue(limiteDiarioIdeal); if(yPos >= yAxis.top && yPos <= yAxis.bottom) { ctx.save(); ctx.beginPath(); ctx.moveTo(xAxis.left, yPos); ctx.lineTo(xAxis.right, yPos); ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(210, 153, 34, 0.8)'; ctx.setLineDash([4, 4]); ctx.stroke(); ctx.restore(); } } },
+                labelsPlugin
+            ]
         });
     }
 
-    // 📉 GRÁFICO 3: RADAR DEUDA TC (Con etiquetas blancas)
+    // 📈 4. RADAR TC (Con plugin de etiquetas)
     const ctxProyeccion = document.getElementById('chartRadar');
     if(ctxProyeccion) {
         let mesesLabels = [], montosProyectados = [], fechaHoy = new Date();
@@ -627,19 +654,14 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0, totalFijosMes, 
         chartRadar = new Chart(ctxProyeccion, {
             type: 'line', data: { labels: mesesLabels, datasets: [{ label: 'Deuda TC', data: montosProyectados, backgroundColor: grad, borderColor: '#ff5252', borderWidth: 3, fill: true, tension: 0.4, pointRadius: 4, pointBackgroundColor: '#030508', pointBorderColor: '#ff5252' }] },
             options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { color: cT, callback: v => '$' + Math.round(v/1000) + 'k' }, grid: { color: cG } }, x: { ticks: { color: cT, font: {size: 10, weight: 'bold'} }, grid: { display: false } } } },
-            plugins: [labelsPlugin] // ⚡ Inyectado
+            // ⚡ Inyectamos ambos plugins aquí
+            plugins: [
+                { id: 'setpointTCPlugin', afterDraw: (chart) => { const ctx = chart.ctx, xAxis = chart.scales.x, yAxis = chart.scales.y, umbralSeguridad = sueldo * 0.15; if(yAxis.max > umbralSeguridad) { const yPos = yAxis.getPixelForValue(umbralSeguridad); ctx.save(); ctx.beginPath(); ctx.moveTo(xAxis.left, yPos); ctx.lineTo(xAxis.right, yPos); ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(255, 82, 82, 0.8)'; ctx.setLineDash([5, 5]); ctx.stroke(); ctx.fillStyle = '#ff5252'; ctx.font = 'bold 10px monospace'; ctx.fillText('MAX (15%)', xAxis.left + 5, yPos - 5); ctx.restore(); } } },
+                labelsPlugin
+            ]
         });
     }
-    
-    // Gráfico de Pareto (Mantener igual)
-    const sorted = Object.entries(cats).sort((a,b)=>b[1]-a[1]).slice(0,6);
-    chartP = new Chart(document.getElementById('chartPareto'), {
-        type: 'polarArea', 
-        data: { labels: sorted.map(c => aliasMap[c[0]] || c[0].split(' ')[0]), datasets: [{ data: sorted.map(c => c[1]), backgroundColor: ['rgba(31, 111, 235, 0.7)', 'rgba(46, 160, 67, 0.7)', 'rgba(210, 153, 34, 0.7)', 'rgba(255, 82, 82, 0.7)', 'rgba(163, 113, 247, 0.7)', 'rgba(0, 188, 212, 0.7)'], borderColor: ['#1f6feb', '#2ea043', '#d29922', '#ff5252', '#a371f7', '#00bcd4'], borderWidth: 2 }] },
-        options: { maintainAspectRatio:false, plugins:{legend:{position: 'right', labels:{color:cT, font:{size:10, family:'monospace'}}}}, scales:{ r:{ticks:{display:false}, grid:{color:cG}, angleLines:{color:cG}} } }
-    });
 }
-
 function calcularFechasCiclo(mesConceptual, anio) {
     let mesInicio = mesConceptual - 1; let anioInicio = anio; if (mesInicio < 0) { mesInicio = 11; anioInicio--; }
     let T0 = new Date(anioInicio, mesInicio, 30); if (T0.getMonth() !== mesInicio) T0 = new Date(anioInicio, mesInicio + 1, 0); 
