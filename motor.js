@@ -1,5 +1,5 @@
 // ==========================================================
-// 🌐 V13.9: MOTOR SCADA PRO (Presupuesto Aislado & Data Labels)
+// 🌐 V14.0: MOTOR SCADA PRO (Zero-Timer Budget & Data Labels)
 // ==========================================================
 window.VALOR_USD = 950;
 
@@ -23,11 +23,8 @@ document.addEventListener("DOMContentLoaded", inicializarSensorDolar);
 const BYRON_EMAIL = "bvhcc94@gmail.com"; 
 const CREDIT_SETPOINT = -300000; 
 const catEvitables = ["Dopamina & Antojos"]; 
-const PRESUPUESTO_BASE_DEFAULT = 3602505; // ⚡ Renombrado a Presupuesto
+const PRESUPUESTO_BASE_DEFAULT = 3602505;
 
-let timerAutoGuardadoPresupuesto = null; // ⚡ Timer aislado
-
-// 🧠 DICCIONARIO COGNITIVO V13.9 (Con Auto-Renombrado)
 const diccAuto = [
     { keys: ["cargo en cuenta", "comision", "mantencion"], cat: "Gastos Fijos (Búnker)", tipo: "Gasto Fijo", fuga: "0", rename: "MANTENCIÓN BANCARIA" },
     { keys: ["prestamo", "debe", "pagar dps", "por cobrar", "cuota de"], cat: "Cuentas por Cobrar (Activos)", tipo: "Por Cobrar", fuga: "0" },
@@ -90,29 +87,20 @@ document.addEventListener("DOMContentLoaded", () => {
     const selectMass = document.getElementById('massCategorySelect');
     if (selectMass) selectMass.innerHTML = `<option value="">-- Recategorizar a --</option>` + optionsHTML;
 
-    // ⚡ EVENT LISTENER BLINDADO PARA EL PRESUPUESTO MENSUAL
+    // ⚡ V14.0 EVENT LISTENER CERO-LATENCIA PARA EL PRESUPUESTO
     const inputSueldo = document.getElementById('inputSueldo');
     if (inputSueldo) {
-        inputSueldo.addEventListener('input', (e) => {
-            let m = inputSueldo.getAttribute('data-mes-ancla');
-            let a = inputSueldo.getAttribute('data-anio-ancla');
-            let val = parseInt(inputSueldo.value.replace(/\./g, '')) || 0;
-            
-            clearTimeout(timerAutoGuardadoPresupuesto);
-            
-            // Cápsula de Memoria: Guarda en el mes EXACTO donde se tecleó
-            timerAutoGuardadoPresupuesto = setTimeout(() => {
-                if (val > 0) {
-                    let llave = `${a}_${m}`;
-                    if (sueldosHistoricos[llave] !== val) {
-                        sueldosHistoricos[llave] = val;
-                        db.collection("parametros").doc("sueldos").set({ [llave]: val }, {merge: true})
-                        .then(() => mostrarToast("PRESUPUESTO ASIGNADO"));
-                    }
-                }
-            }, 800); 
-            
+        // Guarda cuando quitas el foco de la caja
+        inputSueldo.addEventListener('blur', () => {
+            window.guardarSueldoEnNube();
             actualizarDashboard();
+        });
+        // Guarda al presionar Enter en PC/Celular
+        inputSueldo.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                inputSueldo.blur();
+            }
         });
     }
 
@@ -132,10 +120,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     document.getElementById('inputTipo').value = dict.tipo;
                     let fEl = document.getElementById('inputFuga');
                     if(fEl) fEl.value = dict.fuga;
-                    
-                    if(dict.rename && texto !== dict.rename.toLowerCase()) {
-                        e.target.value = dict.rename;
-                    }
+                    if(dict.rename && texto !== dict.rename.toLowerCase()) { e.target.value = dict.rename; }
                     inputNombre.style.borderBottom = "2px solid #2ea043";
                     setTimeout(() => inputNombre.style.borderBottom = "2px solid var(--border-color)", 1000);
                     break;
@@ -232,83 +217,58 @@ auth.onAuthStateChanged(user => {
 });
 
 // ==========================================================
-// MÓDULO DE PRESUPUESTO AISLADO (STRICT MODE + DEBOUNCE)
+// ⚡ V14.0 MÓDULO DE PRESUPUESTO BLINDADO 
 // ==========================================================
-let timerPresupuesto = null; // Reloj de latido
-
-// 1. CARGA AISLADA (Con placeholder actualizado)
 window.cargarSueldoVisual = function() {
-    const elMes = document.getElementById('navMesConceptual');
-    const elAnio = document.getElementById('navAnio');
-    const elSueldo = document.getElementById('inputSueldo');
-    
+    const elMes = document.getElementById('navMesConceptual'), elAnio = document.getElementById('navAnio'), elSueldo = document.getElementById('inputSueldo');
     if(!elMes || !elAnio || !elSueldo) return;
     
-    let m = parseInt(elMes.value); 
-    let a = parseInt(elAnio.value);
-    let llave = `${a}_${m}`;
+    let m = elMes.value, a = elAnio.value, llave = `${a}_${m}`;
     
-    // ANCLAMOS AL NUEVO MES
-    elSueldo.setAttribute('data-mes-ancla', m);
+    elSueldo.setAttribute('data-mes-ancla', m); 
     elSueldo.setAttribute('data-anio-ancla', a);
     
-    if (sueldosHistoricos && sueldosHistoricos[llave]) {
-        elSueldo.value = sueldosHistoricos[llave].toLocaleString('es-CL');
-    } else {
-        elSueldo.value = '';
-        elSueldo.placeholder = 'NO ASIGNADO'; 
+    if (sueldosHistoricos && sueldosHistoricos[llave]) { 
+        elSueldo.value = sueldosHistoricos[llave].toLocaleString('es-CL'); 
+    } else { 
+        elSueldo.value = ''; elSueldo.placeholder = 'NO ASIGNADO'; 
     }
 };
 
 window.obtenerSueldoMes = function(anio, mes) {
     let llave = `${anio}_${mes}`;
     if (sueldosHistoricos && sueldosHistoricos[llave]) return sueldosHistoricos[llave];
-    return SUELDO_BASE_DEFAULT; // Mantiene el default por seguridad matemática interna
+    return PRESUPUESTO_BASE_DEFAULT; 
 };
 
-// 2. GUARDADO ANTI-CRUCES (Lee el ancla, NUNCA el selector)
 window.guardarSueldoEnNube = function() {
     const elSueldo = document.getElementById('inputSueldo');
     if(!elSueldo) return;
     
-    // 🛑 LA CLAVE: Leemos a qué mes estaba amarrado el input, ignorando lo que diga el selector
-    let m = parseInt(elSueldo.getAttribute('data-mes-ancla'));
-    let a = parseInt(elSueldo.getAttribute('data-anio-ancla'));
-    
-    if (isNaN(m) || isNaN(a) || elSueldo.value.trim() === '') return; 
+    // Leemos estrictamente el mes al que pertenece la caja
+    let m = elSueldo.getAttribute('data-mes-ancla');
+    let a = elSueldo.getAttribute('data-anio-ancla');
+    if (!m || !a || elSueldo.value.trim() === '') return; 
 
     let s = parseInt(elSueldo.value.replace(/\./g, '')); 
     if (isNaN(s) || s <= 0) return;
     
     let llave = `${a}_${m}`;
-    if (sueldosHistoricos && sueldosHistoricos[llave] === s) return; // Evita doble guardado
+    if (sueldosHistoricos[llave] === s) return; // Evita reescritura innecesaria
 
     sueldosHistoricos[llave] = s;
-    db.collection("parametros").doc("sueldos").set({ [llave]: s }, {merge: true});
-    console.log(`[SYS] Presupuesto guardado de forma segura en: ${llave}`);
+    db.collection("parametros").doc("sueldos").set({ [llave]: s }, {merge: true}).then(() => {
+        mostrarToast("PRESUPUESTO ASIGNADO"); 
+    });
 };
 
-// ⚡ LÓGICA DE AUTO-GUARDADO (Anula la condición de carrera en móviles)
-document.addEventListener("DOMContentLoaded", () => {
-    const inputSueldo = document.getElementById('inputSueldo');
-    if(inputSueldo) {
-        inputSueldo.addEventListener('input', () => {
-            clearTimeout(timerPresupuesto);
-            // El sistema guardará el dato automáticamente 800ms después de dejar de tipear
-            timerPresupuesto = setTimeout(() => {
-                window.guardarSueldoEnNube();
-            }, 800);
-        });
-    }
-});
-
-// ⚡ REGLA DE NAVEGACIÓN: En tu función aplicarCicloAlSistema() asegúrate de abortar cualquier guardado fantasma
-const originalAplicarCiclo = window.aplicarCicloAlSistema;
-window.aplicarCicloAlSistema = function() {
+function aplicarCicloAlSistema() {
+    // ⚡ V14.0 KILL SWITCH: Guarda y mata el teclado antes de cambiar el mes
     const elSueldo = document.getElementById('inputSueldo');
-    
-    // 🛑 ANTES de cambiar al nuevo mes, disparamos el guardado del mes que dejas atrás
-    if (elSueldo) window.guardarSueldoEnNube();
+    if (elSueldo) {
+        window.guardarSueldoEnNube(); 
+        elSueldo.blur(); 
+    }
     
     const navMes = document.getElementById('navMesConceptual'), navAnio = document.getElementById('navAnio');
     if(!navMes || !navAnio) return;
@@ -326,7 +286,8 @@ window.aplicarCicloAlSistema = function() {
     
     cargarSueldoVisual(); 
     actualizarDashboard();
-};
+}
+
 let alarmLogCache = "";
 window.abrirHistorian = function() {
     document.getElementById('historian-content').innerHTML = alarmLogCache || "<div style='color:var(--color-saldo); font-weight:bold; text-align:center; padding:20px;'>SYSTEM NOMINAL.<br>NO BREACHES DETECTED.</div>";
@@ -336,15 +297,13 @@ window.abrirHistorian = function() {
 function actualizarDashboard() {
     const elMes = document.getElementById('navMesConceptual'), elAnio = document.getElementById('navAnio');
     const mesVal = parseInt(elMes.value), anioVal = parseInt(elAnio.value);
-    const inputSueldo = document.getElementById('inputSueldo');
     
-    let presupuesto = 0;
-    if (inputSueldo && document.activeElement === inputSueldo) {
-        presupuesto = parseInt(inputSueldo.value.replace(/\./g,'')) || 0;
-    } else {
-        presupuesto = obtenerSueldoMes(anioVal, mesVal);
+    // Obtenemos el presupuesto para el dashboard
+    const inputSueldo = document.getElementById('inputSueldo');
+    let sueldo = obtenerSueldoMes(anioVal, mesVal);
+    if (inputSueldo && inputSueldo.value) {
+        sueldo = parseInt(inputSueldo.value.replace(/\./g,'')) || sueldo;
     }
-    let sueldo = presupuesto; 
     
     const buscador = document.getElementById('inputBuscador');
     const b = buscador ? buscador.value.toLowerCase() : '';
@@ -759,8 +718,6 @@ window.navegarMes = function(direccion) {
 };
 
 function aplicarCicloAlSistema() {
-    // 🛡️ NO CANCELAMOS EL TIMER: Si hay un autoguardado en progreso, 
-    // el 'closure' se asegurará de enviarlo a la llave exacta donde se escribió.
     const navMes = document.getElementById('navMesConceptual'), navAnio = document.getElementById('navAnio');
     if(!navMes || !navAnio) return;
     
@@ -1072,7 +1029,7 @@ window.ejecutarArranque = function() {
     procesar('pv-gas', "GAS", "Infraestructura (Depto)");
     procesar('pv-celu', "CELU MIO PLAN", "Suscripciones");
     procesar('pv-madre', "MOVISTAR MADRE", "Red de Apoyo (Familia)");
-    procesar('pv-subs', "PACK SUSCRIPCIONES", "Suscripciones");
+    procesar('pv-subs', "PACK SUSCRripciones", "Suscripciones");
     procesar('pv-seguro', "SEGURO AUTO", "Flota & Movilidad");
     
     if (inyectados > 0) {
