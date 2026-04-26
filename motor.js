@@ -1,5 +1,5 @@
 // ==========================================================
-// 🌐 V13.3: MOTOR SCADA PRO (Auto-Traductor & Edit-Unlock)
+// 🌐 V13.3.4: MOTOR SCADA PRO (Sintaxis Limpia & Auto-Traductor)
 // ==========================================================
 window.VALOR_USD = 950;
 
@@ -105,7 +105,6 @@ document.addEventListener("DOMContentLoaded", () => {
                     let fEl = document.getElementById('inputFuga');
                     if(fEl) fEl.value = dict.fuga;
                     
-                    // ⚡ NUEVO: Inyección de Auto-Renombrado
                     if(dict.rename && texto !== dict.rename.toLowerCase()) {
                         e.target.value = dict.rename;
                     }
@@ -200,6 +199,7 @@ auth.onAuthStateChanged(user => {
     }
 });
 
+// ⚡ FIX: AISLAMIENTO Y CARGA DE SUELDO
 window.cargarSueldoVisual = function() {
     const elMes = document.getElementById('navMesConceptual');
     const elAnio = document.getElementById('navAnio');
@@ -214,11 +214,10 @@ window.cargarSueldoVisual = function() {
     elSueldo.setAttribute('data-mes-ancla', m);
     elSueldo.setAttribute('data-anio-ancla', a);
     
-    // 🛡️ Limpieza total antes de cargar para evitar que el sueldo de Abril se vea en Mayo
     if (sueldosHistoricos && sueldosHistoricos[llave]) {
         elSueldo.value = sueldosHistoricos[llave].toLocaleString('es-CL');
     } else {
-        elSueldo.value = ''; // Reset total si no hay dato
+        elSueldo.value = ''; 
         elSueldo.placeholder = 'PENDIENTE';
     }
 };
@@ -385,13 +384,10 @@ function sortTable(column) {
     actualizarDashboard();
 }
 
-// ⚡ FIX V13.3: LÓGICA DE DESBLOQUEO DE EDICIÓN
-// ⚡ FIX V13.3.1: DESBLOQUEO Y ENRUTAMIENTO MÓVIL
 function editarMovimiento(id) {
     const mov = listaMovimientos.find(m => m.firestoreId === id);
     if(!mov) return alert("Registro no encontrado.");
     
-    // Activa modo edición PRIMERO para que los event listeners del DOM no interfieran
     modoEdicionActivo = true; 
     
     if(document.getElementById('editId')) document.getElementById('editId').value = mov.firestoreId; 
@@ -399,8 +395,6 @@ function editarMovimiento(id) {
     const inputNombre = document.getElementById('inputNombre');
     if(inputNombre) {
         inputNombre.value = mov.nombre;
-        
-        // 🛡️ PARCHE MÓVIL: Evita que el teclado salte de golpe en celulares
         if (window.innerWidth > 768) {
             inputNombre.focus();
             setTimeout(() => inputNombre.select(), 50); 
@@ -431,19 +425,16 @@ function editarMovimiento(id) {
     
     actualizarDashboard(); 
 
-    // 📱 LÓGICA DE NAVEGACIÓN MÓVIL (Auto-Switch de Pestaña)
-    if (typeof closeBottomSheet === 'function') closeBottomSheet(); // Cierra el detalle si lo abriste
+    if (typeof closeBottomSheet === 'function') closeBottomSheet(); 
     if (typeof switchTabApp === 'function') {
         const navItems = document.querySelectorAll('.nav-item');
-        if (navItems.length >= 3) switchTabApp('add', navItems[2]); // Te lanza a la pestaña del formulario
+        if (navItems.length >= 3) switchTabApp('add', navItems[2]); 
     } else if (typeof window.switchTab === 'function') {
         window.switchTab('add');
     }
-    
-    // Sube la pantalla al tope suavemente
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
-// --- 💳 MOTOR DE AUTOMATIZACIÓN TC ---
+
 function procesarCompraTCManual(nombre, montoTotal, cuotas, fechaStr) {
     const batch = db.batch(); const diaCorte = 20;
     let fCompra = new Date(fechaStr); let dia = fCompra.getDate();
@@ -463,7 +454,6 @@ function procesarCompraTCManual(nombre, montoTotal, cuotas, fechaStr) {
     }).catch(e => alert("Error TC: " + e));
 }
 
-// --- 📥 INGESTADOR CENTRAL ---
 window.agregarMovimiento = function() {
     const m = parseInt(document.getElementById('inputMonto').value.replace(/\./g, ''));
     const n = document.getElementById('inputNombre').value;
@@ -476,7 +466,6 @@ window.agregarMovimiento = function() {
 
     if (!m || !n || !fInput) return alert("⚠️ Faltan parámetros en la consola.");
 
-    // Interceptor TC
     if (c === "Gasto Tarjeta de Crédito" && !modoEdicionActivo) {
         procesarCompraTCManual(n, m, cantCuotas, fInput);
         return; 
@@ -513,9 +502,6 @@ function updateMassActions() { const bar = document.getElementById('massActionsB
 function massDelete() { const ids = Array.from(document.querySelectorAll('.row-check:not(#checkAll):checked')).map(cb => cb.value); if(ids.length === 0 || !confirm(`⚠️ ¿Eliminar ${ids.length} registro(s)?`)) return; const btn = document.querySelector('button[onclick="massDelete()"]'); const orig = btn.innerHTML; btn.innerHTML = '⏳'; Promise.all(ids.map(id => db.collection("movimientos").doc(id).delete())).then(() => { document.getElementById('massActionsBar').style.display = 'none'; document.getElementById('checkAll').checked = false; btn.innerHTML = orig; }); }
 function massCategorize() { const ids = Array.from(document.querySelectorAll('.row-check:not(#checkAll):checked')).map(cb => cb.value); const cat = document.getElementById('massCategorySelect').value; if(ids.length === 0 || !cat || !confirm(`¿Categorizar como "${cat}"?`)) return; const btn = document.querySelector('button[onclick="massCategorize()"]'); const orig = btn.innerHTML; btn.innerHTML = '⏳'; Promise.all(ids.map(id => db.collection("movimientos").doc(id).update({categoria: cat}))).then(() => { document.getElementById('massActionsBar').style.display = 'none'; document.getElementById('checkAll').checked = false; document.getElementById('massCategorySelect').value = ''; btn.innerHTML = orig; }); }
 
-// =====================================================================
-// 🔮 PROYECTO ORÁCULO: TELEMETRÍA (GRAFICOS)
-// =====================================================================
 function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0, totalFijosMes, tInfra, tFlota, deudaAprox) {
     if(chartBD) chartBD.destroy(); if(chartP) chartP.destroy(); 
     if(chartDiario) chartDiario.destroy(); if(chartRadar) chartRadar.destroy();
@@ -648,7 +634,6 @@ function aplicarCicloAlSistema() {
     cargarSueldoVisual(); actualizarDashboard();
 }
 
-// --- Drag & Drop ---
 let draggedRowId = null;
 window.dragStart = function(e, id) { draggedRowId = id; e.dataTransfer.effectAllowed = 'move'; setTimeout(() => e.target.style.opacity = '0.4', 0); }
 window.dragOverPanel = function(e, tipo) { e.preventDefault(); const panel = e.currentTarget; panel.style.transition = "border-color 0.2s, box-shadow 0.2s"; if (tipo === 'tc') { panel.style.borderColor = "var(--color-fuga)"; panel.style.boxShadow = "inset 0 0 20px rgba(255, 82, 82, 0.15)"; } else { panel.style.borderColor = "var(--color-saldo)"; panel.style.boxShadow = "inset 0 0 20px rgba(46, 160, 67, 0.15)"; } }
@@ -678,7 +663,6 @@ window.dropRow = function(e, targetId) {
 }
 document.addEventListener('dragend', (e) => { if(e.target.tagName === 'TR') e.target.style.opacity = '1'; });
 
-// --- 🌐 ENLACE SYNC MANUAL SNIPER ---
 window.triggerSync = function() {
     const btn = document.querySelector('button[onclick="triggerSync()"]'); 
     if(btn) { btn.innerHTML = "⏳ SYNCING..."; btn.style.opacity = "0.5"; }
@@ -833,7 +817,7 @@ async function ejecutarPurgaMasivaTC() {
 }
 
 // ==========================================================
-// 🚀 MÓDULO DÍA CERO V13.2 (Cálculo Inmediato y Cierre Sano)
+// 🚀 MÓDULO DÍA CERO V13.3.4 (Cálculo Inmediato y Offset +1)
 // ==========================================================
 window.abrirPreVuelo = function() {
     const modal = document.getElementById('modal-dia-cero'); if(!modal) return;
@@ -853,7 +837,14 @@ window.abrirPreVuelo = function() {
     calcularDiaCero(); modal.style.display = 'flex';
 }
 
-window.cerrarPreVuelo = function() { document.getElementById('modal-dia-cero').style.display = 'none'; actualizarDashboard(); };
+window.cerrarPreVuelo = function() { 
+    const m = document.getElementById('modal-dia-cero');
+    if(m) {
+        m.style.display = 'none';
+        document.activeElement.blur(); // Limpia foco
+    }
+    actualizarDashboard(); 
+};
 
 window.toggleEstadoPV = function(btn, idInput) {
     const estados = ['est', 'real', 'pag'];
@@ -907,17 +898,14 @@ window.calcularDiaCero = function() {
 window.ejecutarArranque = function() {
     if(!confirm("⚠️ INYECCIÓN DE PLANILLA\n\n¿Estás seguro de inyectar estos gastos en el MES SIGUIENTE?")) return;
     
-    // 🎯 Capturamos lo que el usuario está VIENDO
     const vM = parseInt(document.getElementById('navMesConceptual').value);
     const vA = parseInt(document.getElementById('navAnio').value);
     
-    // 🚀 CALCULAMOS EL DESTINO REAL (Mes + 1)
     let pM = vM + 1;
     let pA = vA;
-    if (pM > 11) { pM = 0; pA++; } // Manejo de Año Nuevo
+    if (pM > 11) { pM = 0; pA++; }
 
     const batch = db.batch();
-    // Clavamos la fecha en el día 1 del mes destino a las 10:00 AM
     const fDestino = new Date(pA, pM, 1, 10, 0, 0);
     let inyectados = 0;
     
@@ -926,55 +914,20 @@ window.ejecutarArranque = function() {
         if (!el) return;
         
         let estado = el.getAttribute('data-estado') || 'est';
-        if (estado === 'pag') return; // Saltamos los que ya pagaste manualmente
+        if (estado === 'pag') return; 
         
         let monto = parseInt(el.value.replace(/\./g, '')) || 0;
         if (monto > 0) {
             let ref = db.collection("movimientos").doc();
             batch.set(ref, {
-                monto: monto,
-                nombre: nom,
-                categoria: cat,
-                tipo: "Gasto Fijo",
-                fecha: fDestino, // <--- Aquí va al mes siguiente (Mayo)
-                status: estado === 'real' ? 'Real' : 'Estimado',
-                innecesarioPct: 0,
-                cuotas: 1
+                monto: monto, nombre: nom, categoria: cat, tipo: "Gasto Fijo",
+                fecha: fDestino, status: estado === 'real' ? 'Real' : 'Estimado',
+                innecesarioPct: 0, cuotas: 1
             });
             inyectados++;
         }
     };
     
-    // Ráfaga de inyección estructural
-    procesar('pv-tc-nac', "PAGO TC NACIONAL (DÍA CERO)", "Gastos Fijos (Búnker)"); 
-    procesar('pv-linea', "PAGO LÍNEA CRÉDITO (DÍA CERO)", "Gastos Fijos (Búnker)");
-    procesar('pv-arriendo', "ARRIENDO / DIVIDENDO", "Infraestructura (Depto)");
-    procesar('pv-udec', "PAGO UDEC 2024", "Infraestructura (Depto)");
-    procesar('pv-cae', "PAGO CAE", "Infraestructura (Depto)");
-    procesar('pv-ggcc', "GASTOS COMUNES", "Infraestructura (Depto)");
-    procesar('pv-luz', "LUZ / ELECTRICIDAD", "Infraestructura (Depto)");
-    procesar('pv-agua', "AGUA / SANEAMIENTO", "Infraestructura (Depto)");
-    procesar('pv-gas', "GAS", "Infraestructura (Depto)");
-    procesar('pv-celu', "CELU MIO PLAN", "Suscripciones");
-    procesar('pv-madre', "MOVISTAR MADRE", "Red de Apoyo (Familia)");
-    procesar('pv-subs', "PACK SUSCRIPCIONES", "Suscripciones");
-    procesar('pv-seguro', "SEGURO AUTO", "Flota & Movilidad");
-    
-    if (inyectados > 0) {
-        batch.commit().then(() => {
-            cerrarPreVuelo();
-            // 🔄 Actualizamos el visor al mes donde inyectamos para que veas el resultado
-            document.getElementById('navMesConceptual').value = pM;
-            document.getElementById('navAnio').value = pA;
-            aplicarCicloAlSistema();
-            mostrarToast(`ÉXITO: ${inyectados} REGISTROS INYECTADOS EN ${new Date(pA, pM).toLocaleString('es-CL', {month:'long'}).toUpperCase()}`);
-        }).catch(err => alert("Error: " + err.message));
-    } else {
-        alert("Nada que inyectar.");
-    }
-};
-    
-    // Ejecución de ráfaga
     procesar('pv-tc-nac', "PAGO TC NACIONAL (DÍA CERO)", "Gastos Fijos (Búnker)"); 
     procesar('pv-tc-int', "PAGO TC INTERNACIONAL (DÍA CERO)", "Gastos Fijos (Búnker)"); 
     procesar('pv-linea', "PAGO LÍNEA CRÉDITO (DÍA CERO)", "Gastos Fijos (Búnker)");
@@ -993,23 +946,12 @@ window.ejecutarArranque = function() {
     if (inyectados > 0) {
         batch.commit().then(() => {
             cerrarPreVuelo();
-            // Salto visual automático al mes donde inyectamos
             document.getElementById('navMesConceptual').value = pM;
             document.getElementById('navAnio').value = pA;
             aplicarCicloAlSistema();
-            mostrarToast(`ÉXITO: ${inyectados} CARGAS EN ${new Date(pA, pM).toLocaleString('es-CL', {month:'long'}).toUpperCase()}`);
-        });
-    }
-};
-
-// ==========================================================
-// ⚡ FIX 3: CIERRE DE MODAL BLINDADO
-// ==========================================================
-window.cerrarPreVuelo = function() {
-    const m = document.getElementById('modal-dia-cero');
-    if(m) {
-        m.style.display = 'none';
-        // Limpiamos cualquier selección de input para evitar fugas de foco
-        document.activeElement.blur();
+            mostrarToast(`ÉXITO: ${inyectados} REGISTROS INYECTADOS EN ${new Date(pA, pM).toLocaleString('es-CL', {month:'long'}).toUpperCase()}`);
+        }).catch(err => alert("Error: " + err.message));
+    } else {
+        alert("Nada que inyectar.");
     }
 };
