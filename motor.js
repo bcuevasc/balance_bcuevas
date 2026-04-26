@@ -201,14 +201,25 @@ auth.onAuthStateChanged(user => {
 });
 
 window.cargarSueldoVisual = function() {
-    const elMes = document.getElementById('navMesConceptual'), elAnio = document.getElementById('navAnio'), elSueldo = document.getElementById('inputSueldo');
-    if(!elMes || !elAnio || !elSueldo) return;
-    let m = elMes.value, a = elAnio.value, llave = `${a}_${m}`;
-    elSueldo.setAttribute('data-mes-ancla', m); elSueldo.setAttribute('data-anio-ancla', a);
+    const elMes = document.getElementById('navMesConceptual');
+    const elAnio = document.getElementById('navAnio');
+    const elSueldo = document.getElementById('inputSueldo');
     
-    if (document.activeElement !== elSueldo) {
-        if (sueldosHistoricos[llave]) { elSueldo.value = sueldosHistoricos[llave].toLocaleString('es-CL'); } 
-        else { elSueldo.value = ''; elSueldo.placeholder = 'PENDIENTE'; }
+    if(!elMes || !elAnio || !elSueldo) return;
+    
+    let m = elMes.value; 
+    let a = elAnio.value;
+    let llave = `${a}_${m}`;
+    
+    elSueldo.setAttribute('data-mes-ancla', m);
+    elSueldo.setAttribute('data-anio-ancla', a);
+    
+    // 🛡️ Limpieza total antes de cargar para evitar que el sueldo de Abril se vea en Mayo
+    if (sueldosHistoricos && sueldosHistoricos[llave]) {
+        elSueldo.value = sueldosHistoricos[llave].toLocaleString('es-CL');
+    } else {
+        elSueldo.value = ''; // Reset total si no hay dato
+        elSueldo.placeholder = 'PENDIENTE';
     }
 };
 
@@ -894,20 +905,76 @@ window.calcularDiaCero = function() {
 }
 
 window.ejecutarArranque = function() {
-    if(!confirm("⚠️ INYECCIÓN CRÍTICA\n\n¿Inyectar Planilla Operativa? Los gastos marcados como ✔️ PAGADO serán ignorados.")) return;
-    const batch = db.batch(), fDestino = new Date(parseInt(document.getElementById('navAnio').value), parseInt(document.getElementById('navMesConceptual').value), 1, 10, 0, 0);
+    if(!confirm("⚠️ INYECCIÓN DE PLANILLA\n\n¿Estás seguro de inyectar estos gastos en el MES SIGUIENTE?")) return;
+    
+    // 🎯 Capturamos lo que el usuario está VIENDO
+    const vM = parseInt(document.getElementById('navMesConceptual').value);
+    const vA = parseInt(document.getElementById('navAnio').value);
+    
+    // 🚀 CALCULAMOS EL DESTINO REAL (Mes + 1)
+    let pM = vM + 1;
+    let pA = vA;
+    if (pM > 11) { pM = 0; pA++; } // Manejo de Año Nuevo
+
+    const batch = db.batch();
+    // Clavamos la fecha en el día 1 del mes destino a las 10:00 AM
+    const fDestino = new Date(pA, pM, 1, 10, 0, 0);
     let inyectados = 0;
     
     const procesar = (id, nom, cat) => {
-        let el = document.getElementById(id); if (!el) return;
-        let estado = el.getAttribute('data-estado') || 'est'; if (estado === 'pag') return; 
+        let el = document.getElementById(id);
+        if (!el) return;
+        
+        let estado = el.getAttribute('data-estado') || 'est';
+        if (estado === 'pag') return; // Saltamos los que ya pagaste manualmente
+        
         let monto = parseInt(el.value.replace(/\./g, '')) || 0;
         if (monto > 0) {
-            batch.set(db.collection("movimientos").doc(), { monto: monto, nombre: nom, categoria: cat, tipo: "Gasto Fijo", fecha: fDestino, status: estado === 'real' ? 'Real' : 'Estimado', innecesarioPct: 0, cuotas: 1 });
+            let ref = db.collection("movimientos").doc();
+            batch.set(ref, {
+                monto: monto,
+                nombre: nom,
+                categoria: cat,
+                tipo: "Gasto Fijo",
+                fecha: fDestino, // <--- Aquí va al mes siguiente (Mayo)
+                status: estado === 'real' ? 'Real' : 'Estimado',
+                innecesarioPct: 0,
+                cuotas: 1
+            });
             inyectados++;
         }
     };
     
+    // Ráfaga de inyección estructural
+    procesar('pv-tc-nac', "PAGO TC NACIONAL (DÍA CERO)", "Gastos Fijos (Búnker)"); 
+    procesar('pv-linea', "PAGO LÍNEA CRÉDITO (DÍA CERO)", "Gastos Fijos (Búnker)");
+    procesar('pv-arriendo', "ARRIENDO / DIVIDENDO", "Infraestructura (Depto)");
+    procesar('pv-udec', "PAGO UDEC 2024", "Infraestructura (Depto)");
+    procesar('pv-cae', "PAGO CAE", "Infraestructura (Depto)");
+    procesar('pv-ggcc', "GASTOS COMUNES", "Infraestructura (Depto)");
+    procesar('pv-luz', "LUZ / ELECTRICIDAD", "Infraestructura (Depto)");
+    procesar('pv-agua', "AGUA / SANEAMIENTO", "Infraestructura (Depto)");
+    procesar('pv-gas', "GAS", "Infraestructura (Depto)");
+    procesar('pv-celu', "CELU MIO PLAN", "Suscripciones");
+    procesar('pv-madre', "MOVISTAR MADRE", "Red de Apoyo (Familia)");
+    procesar('pv-subs', "PACK SUSCRIPCIONES", "Suscripciones");
+    procesar('pv-seguro', "SEGURO AUTO", "Flota & Movilidad");
+    
+    if (inyectados > 0) {
+        batch.commit().then(() => {
+            cerrarPreVuelo();
+            // 🔄 Actualizamos el visor al mes donde inyectamos para que veas el resultado
+            document.getElementById('navMesConceptual').value = pM;
+            document.getElementById('navAnio').value = pA;
+            aplicarCicloAlSistema();
+            mostrarToast(`ÉXITO: ${inyectados} REGISTROS INYECTADOS EN ${new Date(pA, pM).toLocaleString('es-CL', {month:'long'}).toUpperCase()}`);
+        }).catch(err => alert("Error: " + err.message));
+    } else {
+        alert("Nada que inyectar.");
+    }
+};
+    
+    // Ejecución de ráfaga
     procesar('pv-tc-nac', "PAGO TC NACIONAL (DÍA CERO)", "Gastos Fijos (Búnker)"); 
     procesar('pv-tc-int', "PAGO TC INTERNACIONAL (DÍA CERO)", "Gastos Fijos (Búnker)"); 
     procesar('pv-linea', "PAGO LÍNEA CRÉDITO (DÍA CERO)", "Gastos Fijos (Búnker)");
@@ -923,6 +990,26 @@ window.ejecutarArranque = function() {
     procesar('pv-subs', "PACK SUSCRIPCIONES", "Suscripciones");
     procesar('pv-seguro', "SEGURO AUTO", "Flota & Movilidad");
     
-    if (inyectados > 0) { batch.commit().then(() => { cerrarPreVuelo(); mostrarToast(`ARRANQUE: ${inyectados} INYECTADOS.`); actualizarDashboard(); }).catch(err => alert("Error: " + err.message)); } 
-    else { alert("No se inyectaron registros (0 o pagados)."); cerrarPreVuelo(); }
-}
+    if (inyectados > 0) {
+        batch.commit().then(() => {
+            cerrarPreVuelo();
+            // Salto visual automático al mes donde inyectamos
+            document.getElementById('navMesConceptual').value = pM;
+            document.getElementById('navAnio').value = pA;
+            aplicarCicloAlSistema();
+            mostrarToast(`ÉXITO: ${inyectados} CARGAS EN ${new Date(pA, pM).toLocaleString('es-CL', {month:'long'}).toUpperCase()}`);
+        });
+    }
+};
+
+// ==========================================================
+// ⚡ FIX 3: CIERRE DE MODAL BLINDADO
+// ==========================================================
+window.cerrarPreVuelo = function() {
+    const m = document.getElementById('modal-dia-cero');
+    if(m) {
+        m.style.display = 'none';
+        // Limpiamos cualquier selección de input para evitar fugas de foco
+        document.activeElement.blur();
+    }
+};
