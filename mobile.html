@@ -291,7 +291,7 @@
         <button onclick="let b=this; b.innerHTML='🚀 TRANSMITIENDO...'; b.style.opacity='0.7'; enviarReporteTelegram(); setTimeout(()=>{b.innerHTML='🚀 TRANSMITIR TELEGRAM'; b.style.opacity='1';}, 2500)" style="width:100%; padding:22px; border-radius:16px; background:rgba(0,136,204,0.1); color:#0088cc; border:1px solid rgba(0,136,204,0.3); font-weight:900; margin-bottom:15px; box-shadow: 0 10px 25px rgba(0,136,204,0.15); letter-spacing: 1px; transition: all 0.2s;">🚀 TRANSMITIR TELEGRAM</button>
     </div>
 
-    <div id="tab-settings" class="tab-content">
+   <div id="tab-settings" class="tab-content">
     <h3 style="font-weight:900; text-align:center; letter-spacing:2px; color:var(--text-dim);" data-en="[ SYSTEM CONFIG ]">[ SISTEMA ]</h3>
     <div style="background:var(--bg-card); border-radius: 16px; padding:20px; border:1px solid var(--border-subtle); margin-bottom:15px; box-shadow: 0 8px 20px rgba(0,0,0,0.3);">
         <label style="font-size:0.75rem; font-weight:800; color:var(--text-dim); margin-bottom:10px; display:block; text-transform:uppercase;" data-en="Monthly Budget">Presupuesto Mensual</label>
@@ -307,7 +307,6 @@
     </div>
     <button onclick="logout()" style="width:100%; padding:20px; border-radius:16px; background:rgba(255,82,82,0.1); color:var(--accent-red); border:1px solid rgba(255,82,82,0.3); font-weight:900; text-transform:uppercase; box-shadow: 0 4px 15px rgba(255,82,82,0.15); letter-spacing: 1px;" data-en="🚪 LOGOUT">🚪 DESCONECTAR MATRIZ</button>
 </div>
-
     <div class="bottom-nav">
         <div class="nav-item active" onclick="switchTabApp('dash', this)"><i>📡</i><span data-en="Radar">Radar</span></div>
         <div class="nav-item" onclick="switchTabApp('trend', this)"><i>📈</i><span data-en="Oracle">Oráculo</span></div>
