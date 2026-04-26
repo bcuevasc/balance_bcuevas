@@ -1,5 +1,5 @@
 // ==========================================================
-// 🌐 V13.9: MOTOR SCADA PRO (Presupuesto Aislado & Data Labels)
+// 🌐 V14.2: MOTOR SCADA PRO (Zero-Lag & Strict Budget)
 // ==========================================================
 window.VALOR_USD = 950;
 
@@ -23,11 +23,8 @@ document.addEventListener("DOMContentLoaded", inicializarSensorDolar);
 const BYRON_EMAIL = "bvhcc94@gmail.com"; 
 const CREDIT_SETPOINT = -300000; 
 const catEvitables = ["Dopamina & Antojos"]; 
-const PRESUPUESTO_BASE_DEFAULT = 3602505; // ⚡ Renombrado a Presupuesto
+const PRESUPUESTO_BASE_DEFAULT = 3602505;
 
-let timerAutoGuardadoPresupuesto = null; // ⚡ Timer aislado
-
-// 🧠 DICCIONARIO COGNITIVO V13.9 (Con Auto-Renombrado)
 const diccAuto = [
     { keys: ["cargo en cuenta", "comision", "mantencion"], cat: "Gastos Fijos (Búnker)", tipo: "Gasto Fijo", fuga: "0", rename: "MANTENCIÓN BANCARIA" },
     { keys: ["prestamo", "debe", "pagar dps", "por cobrar", "cuota de"], cat: "Cuentas por Cobrar (Activos)", tipo: "Por Cobrar", fuga: "0" },
@@ -90,29 +87,31 @@ document.addEventListener("DOMContentLoaded", () => {
     const selectMass = document.getElementById('massCategorySelect');
     if (selectMass) selectMass.innerHTML = `<option value="">-- Recategorizar a --</option>` + optionsHTML;
 
-    // ⚡ EVENT LISTENER BLINDADO PARA EL PRESUPUESTO MENSUAL
-    const inputSueldo = document.getElementById('inputSueldo');
-    if (inputSueldo) {
-        inputSueldo.addEventListener('input', (e) => {
-            let m = inputSueldo.getAttribute('data-mes-ancla');
-            let a = inputSueldo.getAttribute('data-anio-ancla');
-            let val = parseInt(inputSueldo.value.replace(/\./g, '')) || 0;
-            
-            clearTimeout(timerAutoGuardadoPresupuesto);
-            
-            // Cápsula de Memoria: Guarda en el mes EXACTO donde se tecleó
-            timerAutoGuardadoPresupuesto = setTimeout(() => {
-                if (val > 0) {
-                    let llave = `${a}_${m}`;
-                    if (sueldosHistoricos[llave] !== val) {
-                        sueldosHistoricos[llave] = val;
-                        db.collection("parametros").doc("sueldos").set({ [llave]: val }, {merge: true})
-                        .then(() => mostrarToast("PRESUPUESTO ASIGNADO"));
-                    }
-                }
-            }, 800); 
-            
-            actualizarDashboard();
+    // ⚡ V14.2: PURGA DE EVENTOS NATIVOS Y LISTENERS BLINDADOS (ZERO LAG)
+    const elSueldo = document.getElementById('inputSueldo');
+    if(elSueldo) {
+        // Matamos eventos intrusos en el HTML
+        elSueldo.removeAttribute('onchange');
+        elSueldo.removeAttribute('onblur');
+        elSueldo.removeAttribute('oninput');
+
+        // Formateo visual ultraligero mientras tecleas (SIN redibujar gráficos)
+        elSueldo.addEventListener('input', function() {
+            let v = this.value.replace(/\D/g,'');
+            this.value = v ? parseInt(v).toLocaleString('es-CL') : '';
+        });
+
+        // Guardado único al quitar el foco o cambiar de mes
+        elSueldo.addEventListener('blur', function() {
+            window.guardarSueldoEnNube();
+        });
+
+        // Guardado al presionar Enter
+        elSueldo.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                this.blur(); 
+            }
         });
     }
 
@@ -132,10 +131,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     document.getElementById('inputTipo').value = dict.tipo;
                     let fEl = document.getElementById('inputFuga');
                     if(fEl) fEl.value = dict.fuga;
-                    
-                    if(dict.rename && texto !== dict.rename.toLowerCase()) {
-                        e.target.value = dict.rename;
-                    }
+                    if(dict.rename && texto !== dict.rename.toLowerCase()) { e.target.value = dict.rename; }
                     inputNombre.style.borderBottom = "2px solid #2ea043";
                     setTimeout(() => inputNombre.style.borderBottom = "2px solid var(--border-color)", 1000);
                     break;
@@ -232,83 +228,63 @@ auth.onAuthStateChanged(user => {
 });
 
 // ==========================================================
-// MÓDULO DE PRESUPUESTO AISLADO (STRICT MODE + DEBOUNCE)
+// ⚡ V14.2 NÚCLEO DE PRESUPUESTO AISLADO Y ROBUSTO
 // ==========================================================
-let timerPresupuesto = null; // Reloj de latido
 
-// 1. CARGA AISLADA (Con placeholder actualizado)
 window.cargarSueldoVisual = function() {
-    const elMes = document.getElementById('navMesConceptual');
-    const elAnio = document.getElementById('navAnio');
-    const elSueldo = document.getElementById('inputSueldo');
-    
+    const elMes = document.getElementById('navMesConceptual'), elAnio = document.getElementById('navAnio'), elSueldo = document.getElementById('inputSueldo');
     if(!elMes || !elAnio || !elSueldo) return;
     
-    let m = parseInt(elMes.value); 
-    let a = parseInt(elAnio.value);
-    let llave = `${a}_${m}`;
+    let m = parseInt(elMes.value), a = parseInt(elAnio.value), llave = `${a}_${m}`;
     
-    // ANCLAMOS AL NUEVO MES
-    elSueldo.setAttribute('data-mes-ancla', m);
+    // Siempre anclamos la caja de texto al nuevo mes
+    elSueldo.setAttribute('data-mes-ancla', m); 
     elSueldo.setAttribute('data-anio-ancla', a);
     
-    if (sueldosHistoricos && sueldosHistoricos[llave]) {
-        elSueldo.value = sueldosHistoricos[llave].toLocaleString('es-CL');
-    } else {
-        elSueldo.value = '';
-        elSueldo.placeholder = 'NO ASIGNADO'; 
+    // SOLO actualizamos visualmente si el usuario NO está escribiendo ahí
+    if (document.activeElement !== elSueldo) {
+        if (sueldosHistoricos && sueldosHistoricos[llave]) { 
+            elSueldo.value = sueldosHistoricos[llave].toLocaleString('es-CL'); 
+        } else { 
+            elSueldo.value = ''; elSueldo.placeholder = 'NO ASIGNADO'; 
+        }
     }
 };
 
 window.obtenerSueldoMes = function(anio, mes) {
     let llave = `${anio}_${mes}`;
     if (sueldosHistoricos && sueldosHistoricos[llave]) return sueldosHistoricos[llave];
-    return SUELDO_BASE_DEFAULT; // Mantiene el default por seguridad matemática interna
+    return PRESUPUESTO_BASE_DEFAULT; 
 };
 
-// 2. GUARDADO ANTI-CRUCES (Lee el ancla, NUNCA el selector)
 window.guardarSueldoEnNube = function() {
     const elSueldo = document.getElementById('inputSueldo');
     if(!elSueldo) return;
     
-    // 🛑 LA CLAVE: Leemos a qué mes estaba amarrado el input, ignorando lo que diga el selector
+    // Leemos el mes EXACTO donde el usuario estaba escribiendo
     let m = parseInt(elSueldo.getAttribute('data-mes-ancla'));
     let a = parseInt(elSueldo.getAttribute('data-anio-ancla'));
-    
     if (isNaN(m) || isNaN(a) || elSueldo.value.trim() === '') return; 
 
     let s = parseInt(elSueldo.value.replace(/\./g, '')); 
     if (isNaN(s) || s <= 0) return;
     
     let llave = `${a}_${m}`;
-    if (sueldosHistoricos && sueldosHistoricos[llave] === s) return; // Evita doble guardado
+    if (sueldosHistoricos[llave] === s) return; // Evita gastos de red innecesarios
 
     sueldosHistoricos[llave] = s;
-    db.collection("parametros").doc("sueldos").set({ [llave]: s }, {merge: true});
-    console.log(`[SYS] Presupuesto guardado de forma segura en: ${llave}`);
+    db.collection("parametros").doc("sueldos").set({ [llave]: s }, {merge: true}).then(() => {
+        const nombresMes = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"];
+        mostrarToast(`PRESUPUESTO ${nombresMes[m]} ACTUALIZADO`); 
+    });
 };
 
-// ⚡ LÓGICA DE AUTO-GUARDADO (Anula la condición de carrera en móviles)
-document.addEventListener("DOMContentLoaded", () => {
-    const inputSueldo = document.getElementById('inputSueldo');
-    if(inputSueldo) {
-        inputSueldo.addEventListener('input', () => {
-            clearTimeout(timerPresupuesto);
-            // El sistema guardará el dato automáticamente 800ms después de dejar de tipear
-            timerPresupuesto = setTimeout(() => {
-                window.guardarSueldoEnNube();
-            }, 800);
-        });
-    }
-});
-
-// ⚡ REGLA DE NAVEGACIÓN: En tu función aplicarCicloAlSistema() asegúrate de abortar cualquier guardado fantasma
-const originalAplicarCiclo = window.aplicarCicloAlSistema;
-window.aplicarCicloAlSistema = function() {
+function aplicarCicloAlSistema() {
+    // ⚡ V14.2 KILL SWITCH: Si estaba editando y giró la rueda, guardamos y matamos el foco antes del salto
     const elSueldo = document.getElementById('inputSueldo');
-    
-    // 🛑 ANTES de cambiar al nuevo mes, disparamos el guardado del mes que dejas atrás
-    if (elSueldo) window.guardarSueldoEnNube();
+    if (elSueldo && document.activeElement === elSueldo) {
+        elSueldo.blur(); 
+    }
     
     const navMes = document.getElementById('navMesConceptual'), navAnio = document.getElementById('navAnio');
     if(!navMes || !navAnio) return;
@@ -326,7 +302,8 @@ window.aplicarCicloAlSistema = function() {
     
     cargarSueldoVisual(); 
     actualizarDashboard();
-};
+}
+
 let alarmLogCache = "";
 window.abrirHistorian = function() {
     document.getElementById('historian-content').innerHTML = alarmLogCache || "<div style='color:var(--color-saldo); font-weight:bold; text-align:center; padding:20px;'>SYSTEM NOMINAL.<br>NO BREACHES DETECTED.</div>";
@@ -336,15 +313,9 @@ window.abrirHistorian = function() {
 function actualizarDashboard() {
     const elMes = document.getElementById('navMesConceptual'), elAnio = document.getElementById('navAnio');
     const mesVal = parseInt(elMes.value), anioVal = parseInt(elAnio.value);
-    const inputSueldo = document.getElementById('inputSueldo');
     
-    let presupuesto = 0;
-    if (inputSueldo && document.activeElement === inputSueldo) {
-        presupuesto = parseInt(inputSueldo.value.replace(/\./g,'')) || 0;
-    } else {
-        presupuesto = obtenerSueldoMes(anioVal, mesVal);
-    }
-    let sueldo = presupuesto; 
+    // Obtenemos el presupuesto consolidado
+    let sueldo = obtenerSueldoMes(anioVal, mesVal);
     
     const buscador = document.getElementById('inputBuscador');
     const b = buscador ? buscador.value.toLowerCase() : '';
@@ -758,92 +729,6 @@ window.navegarMes = function(direccion) {
     navMes.value = m; navAnio.value = a; aplicarCicloAlSistema();
 };
 
-function aplicarCicloAlSistema() {
-    // 🛡️ NO CANCELAMOS EL TIMER: Si hay un autoguardado en progreso, 
-    // el 'closure' se asegurará de enviarlo a la llave exacta donde se escribió.
-    const navMes = document.getElementById('navMesConceptual'), navAnio = document.getElementById('navAnio');
-    if(!navMes || !navAnio) return;
-    
-    if(document.getElementById('filtroDesde')) document.getElementById('filtroDesde').value = ''; 
-    if(document.getElementById('filtroHasta')) document.getElementById('filtroHasta').value = '';
-
-    let lbl = document.getElementById('lblPeriodoViendo'); if(lbl) lbl.innerText = isEng ? 'FULL PERIOD' : 'PERIODO COMPLETO';
-    let cajaPC = document.getElementById('cajaFechasCustom'); if(cajaPC) cajaPC.style.display = 'none';
-    let btnPC = document.getElementById('btnToggleFechas'); if(btnPC) btnPC.style.display = 'block';
-
-    const { T0, fechaFinVisual } = calcularFechasCiclo(parseInt(navMes.value), parseInt(navAnio.value));
-    const badge = document.getElementById('navRangoBadge');
-    if(badge) badge.innerText = `[${T0.toLocaleDateString('es-CL', {day:'2-digit', month:'short'}).toUpperCase()} - ${fechaFinVisual.toLocaleDateString('es-CL', {day:'2-digit', month:'short'}).toUpperCase()}]`;
-    
-    cargarSueldoVisual(); 
-    actualizarDashboard();
-}
-
-let draggedRowId = null;
-window.dragStart = function(e, id) { draggedRowId = id; e.dataTransfer.effectAllowed = 'move'; setTimeout(() => e.target.style.opacity = '0.4', 0); }
-window.dragOverPanel = function(e, tipo) { e.preventDefault(); const panel = e.currentTarget; panel.style.transition = "border-color 0.2s, box-shadow 0.2s"; if (tipo === 'tc') { panel.style.borderColor = "var(--color-fuga)"; panel.style.boxShadow = "inset 0 0 20px rgba(255, 82, 82, 0.15)"; } else { panel.style.borderColor = "var(--color-saldo)"; panel.style.boxShadow = "inset 0 0 20px rgba(46, 160, 67, 0.15)"; } }
-window.dragLeavePanel = function(e, tipo) { const panel = e.currentTarget; panel.style.borderColor = tipo === 'tc' ? "rgba(255, 82, 82, 0.2)" : "var(--border-color)"; panel.style.boxShadow = "none"; }
-window.dropOnPanel = function(e, tipo) {
-    e.preventDefault(); dragLeavePanel(e, tipo); if (!draggedRowId) return;
-    const mov = listaMovimientos.find(m => m.firestoreId === draggedRowId); if (!mov) return;
-    if (tipo === 'tc' && mov.catV !== 'Gasto Tarjeta de Crédito') {
-        if(confirm("💳 ¿Transferir gasto a la Matriz TC?")) db.collection("movimientos").doc(draggedRowId).update({ categoria: "Gasto Tarjeta de Crédito", tipo: "Gasto" });
-    } else if (tipo === 'main' && mov.catV === 'Gasto Tarjeta de Crédito') {
-        if(confirm("🔄 ¿Devolver a Flujo Presente?")) db.collection("movimientos").doc(draggedRowId).update({ categoria: "Ruido de Sistema", tipo: "Gasto", cuotas: 1 });
-    }
-    draggedRowId = null;
-}
-window.dragOver = function(e) { e.preventDefault(); e.currentTarget.style.borderTop = '2px solid var(--color-saldo)'; }
-window.dragLeave = function(e) { e.currentTarget.style.borderTop = ''; }
-window.dropRow = function(e, targetId) {
-    e.preventDefault(); e.stopPropagation(); e.currentTarget.style.borderTop = '';
-    if (!draggedRowId || draggedRowId === targetId || currentSort.column !== 'fechaISO') return;
-    let vistaActual = [...datosMesGlobal].sort((a, b) => { if (a.fechaISO < b.fechaISO) return currentSort.direction === 'asc' ? -1 : 1; if (a.fechaISO > b.fechaISO) return currentSort.direction === 'asc' ? 1 : -1; return 0; });
-    let draggedIdx = vistaActual.findIndex(x => x.firestoreId === draggedRowId), targetIdx = vistaActual.findIndex(x => x.firestoreId === targetId);
-    let t1_idx = targetIdx > draggedIdx ? targetIdx : targetIdx - 1, t2_idx = targetIdx > draggedIdx ? targetIdx + 1 : targetIdx;
-    let t1_ms = t1_idx >= 0 ? new Date(vistaActual[t1_idx].fechaISO).getTime() : null, t2_ms = t2_idx < vistaActual.length ? new Date(vistaActual[t2_idx].fechaISO).getTime() : null;
-    let newTimeMs = (t1_ms && t2_ms) ? t1_ms + (t2_ms - t1_ms) / 2 : (!t1_ms ? t2_ms + (currentSort.direction === 'desc' ? 60000 : -60000) : t1_ms + (currentSort.direction === 'desc' ? -60000 : 60000));
-    if(confirm("⚙️ ¿Forzar Timestamp?")) db.collection("movimientos").doc(draggedRowId).update({ fecha: new Date(newTimeMs) });
-    draggedRowId = null;
-}
-document.addEventListener('dragend', (e) => { if(e.target.tagName === 'TR') e.target.style.opacity = '1'; });
-
-window.triggerSync = function() {
-    const btn = document.querySelector('button[onclick="triggerSync()"]'); 
-    if(btn) { btn.innerHTML = "⏳ SYNCING..."; btn.style.opacity = "0.5"; }
-    fetch("https://script.google.com/macros/s/AKfycbwKlub0qrv8_d24ZuyKKNryqOw1E68xv1_JvPOoEUc6W8TICllFfodNcwkigQE_7AuoNg/exec", {mode:'no-cors'})
-    .then(() => { 
-        mostrarToast("TELEMETRÍA ACTUALIZADA"); 
-        if(btn) { btn.innerHTML = "🌐 SYNC"; btn.style.opacity = "1"; } 
-        actualizarDashboard(); 
-    }).catch(e => { if(btn) btn.innerHTML = "⚠️ ERROR"; });
-};
-
-window.exportarDataLink = function() {
-    let csv = "ISO_DATE,YEAR,MONTH,DAY,CATEGORY,TYPE,AMOUNT_CLP,DETAIL,ML_FLAG\n";
-    datosMesGlobal.forEach(x => {
-        let d = new Date(x.fechaISO), flag = catEvitables.includes(x.catV) ? 'DOPAMINA_LEAK' : (x.tipo === 'Gasto Fijo' ? 'STRUCTURAL' : 'STANDARD');
-        csv += `${x.fechaISO},${d.getFullYear()},${d.getMonth()+1},${d.getDate()},"${x.catV}","${x.tipo}",${x.monto},"${(x.nombre || "Unknown").replace(/(\r\n|\n|\r)/gm, " ").replace(/"/g, '""').trim()}",${flag}\n`;
-    });
-    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement("a"); link.href = URL.createObjectURL(blob);
-    link.download = `Bunker_DataLink_${new Date().toISOString().slice(0,10)}.csv`;
-    document.body.appendChild(link); link.click(); document.body.removeChild(link);
-};
-
-window.exportarTablaBunker = function(idTabla, nombreArchivo) {
-    const tabla = document.getElementById(idTabla); if (!tabla) return;
-    let csv = ''; tabla.querySelectorAll("tr").forEach(fila => {
-        let celdas = Array.from(fila.querySelectorAll("th, td")).filter(c => !c.classList.contains('col-check') && !c.querySelector('button'));
-        const datosFila = celdas.map(celda => `"${celda.innerText.replace(/(\r\n|\n|\r)/gm, " - ").replace(/"/g, '""').trim()}"`);
-        if (datosFila.length > 0) csv += datosFila.join(";") + "\n";
-    });
-    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement("a"); link.href = URL.createObjectURL(blob);
-    link.download = `${nombreArchivo}_${new Date().toISOString().slice(0,10)}.csv`;
-    document.body.appendChild(link); link.click(); document.body.removeChild(link);
-};
-
 function inicializarListenerTC() {
     db.collection("deuda_tc").orderBy("mesCobro", "asc").onSnapshot(snapshot => {
         datosTCGlobal = []; let totalDeuda = 0;
@@ -886,9 +771,9 @@ if (typeof window.renderizarTablaTC === 'undefined') {
             });
         });
 
-        let fHoy = new Date(), pMes = fHoy.getMonth() + 1, pAnio = fHoy.getFullYear();
-        if (pMes > 11) { pMes = 0; pAnio++; }
-        let kProx = pAnio + "-" + String(pMes).padStart(2, '0');
+        let fHoy = new Date(), pHoyMes = fHoy.getMonth() + 1, pHoyAnio = fHoy.getFullYear();
+        if (pHoyMes > 11) { pHoyMes = 0; pHoyAnio++; }
+        let kProx = pHoyAnio + "-" + String(pHoyMes).padStart(2, '0');
         let bImp = document.getElementById('boxImpactoTC');
         if (bImp) {
             if (agrupado[kProx]) { bImp.style.display = 'flex'; document.getElementById('lblImpactoMes').innerText = agrupado[kProx].label; document.getElementById('txtImpactoMonto').innerText = `$${agrupado[kProx].total.toLocaleString('es-CL')}`; } 
@@ -946,25 +831,12 @@ window.cargarCSV_TC = function() {
     fileInputTC.click();
 };
 
-function actualizarBarraTC() {
-    const sel = document.querySelectorAll('.checkItemTC:checked'), barra = document.getElementById('barraAccionesTC'), txt = document.getElementById('txtSeleccionadosTC');
-    if (sel.length > 0) { if(barra) barra.style.display = 'flex'; if(txt) txt.innerText = `${sel.length} SEL`; } 
-    else { if(barra) barra.style.display = 'none'; let m = document.getElementById('checkMaestroTC'); if(m) m.checked = false; }
-}
-function toggleTodosTC(maestro) { document.querySelectorAll('.checkItemTC').forEach(c => c.checked = maestro.checked); actualizarBarraTC(); }
-async function ejecutarPurgaMasivaTC() {
-    const sel = document.querySelectorAll('.checkItemTC:checked'); if (!confirm(`⚠️ ¿Borrar ${sel.length} registros permanentemente?`)) return;
-    const batch = db.batch(); sel.forEach(cb => { batch.delete(db.collection("deuda_tc").doc(cb.value)); });
-    try { await batch.commit(); mostrarToast("PURGA COMPLETADA"); } catch (error) { alert("❌ Error Net."); }
-}
-
 window.abrirPreVuelo = function() {
     const modal = document.getElementById('modal-dia-cero'); if(!modal) return;
     let vM = parseInt(document.getElementById('navMesConceptual').value), vA = parseInt(document.getElementById('navAnio').value);
     let pM = vM + 1, pA = vA; if (pM > 11) { pM = 0; pA++; }
 
     document.getElementById('pv-mes-label').innerText = new Date(pA, pM).toLocaleString('es-CL', {month:'long', year:'numeric'}).toUpperCase();
-    
     document.getElementById('pv-sueldo').value = document.getElementById('inputSueldo')?.value || "3.602.505";
     
     let sumaTCMes = 0;
@@ -999,11 +871,9 @@ window.calcularDiaCero = function() {
     const valSiNoPagado = (id) => { let el = document.getElementById(id); return (el && el.getAttribute('data-estado') !== 'pag') ? (parseInt(el.value.replace(/\./g, '')) || 0) : 0; };
     let sueldo = parseInt((document.getElementById('pv-sueldo').value || "0").replace(/\./g, '')) || 0;
     let tcNac = valSiNoPagado('pv-tc-nac');
-    
     let elTcInt = document.getElementById('pv-tc-int');
     let tcIntUSD = (elTcInt && elTcInt.getAttribute('data-estado') !== 'pag') ? (parseInt(elTcInt.value.replace(/\./g, '')) || 0) : 0;
     let tcIntCLP = Math.round(tcIntUSD * (isNaN(window.VALOR_USD) ? 950 : window.VALOR_USD)); 
-    
     let elTcIntCLP = document.getElementById('pv-tc-int-clp');
     if (elTcIntCLP) {
         if (elTcInt && elTcInt.getAttribute('data-estado') === 'pag') { elTcIntCLP.innerText = "✔️ PAGADO"; elTcIntCLP.style.color = "var(--color-saldo)"; } 
@@ -1014,12 +884,10 @@ window.calcularDiaCero = function() {
     let estructural = valSiNoPagado('pv-arriendo') + valSiNoPagado('pv-udec') + valSiNoPagado('pv-cae') + valSiNoPagado('pv-ggcc') + valSiNoPagado('pv-luz') + valSiNoPagado('pv-agua') + valSiNoPagado('pv-gas') + valSiNoPagado('pv-celu') + valSiNoPagado('pv-madre') + valSiNoPagado('pv-subs') + valSiNoPagado('pv-seguro');
     
     document.getElementById('pv-txt-liquidez').innerText = (sueldo - deudasDuras - estructural).toLocaleString('es-CL');
-    
     if (sueldo > 0) {
         let pR = Math.min((deudasDuras / sueldo) * 100, 100), pN = Math.min((estructural / sueldo) * 100, 100 - pR), pV = Math.max(100 - pR - pN, 0);
         document.getElementById('pv-barra-roja').style.width = pR + '%'; document.getElementById('pv-barra-naranja').style.width = pN + '%'; document.getElementById('pv-barra-verde').style.width = pV + '%';
     }
-
     let tgls = document.querySelectorAll('.btn-estado'), conf = 0;
     tgls.forEach(b => { if(b.classList.contains('real') || b.classList.contains('pag')) conf++; });
     let cer = tgls.length > 0 ? Math.round((conf / tgls.length) * 100) : 0;
@@ -1029,33 +897,17 @@ window.calcularDiaCero = function() {
 
 window.ejecutarArranque = function() {
     if(!confirm("⚠️ INYECCIÓN DE PLANILLA\n\n¿Estás seguro de inyectar estos gastos en el MES SIGUIENTE?")) return;
-    
-    const vM = parseInt(document.getElementById('navMesConceptual').value);
-    const vA = parseInt(document.getElementById('navAnio').value);
-    
-    let pM = vM + 1;
-    let pA = vA;
-    if (pM > 11) { pM = 0; pA++; }
-
-    const batch = db.batch();
-    const fDestino = new Date(pA, pM, 1, 10, 0, 0);
+    const vM = parseInt(document.getElementById('navMesConceptual').value), vA = parseInt(document.getElementById('navAnio').value);
+    let pM = vM + 1, pA = vA; if (pM > 11) { pM = 0; pA++; }
+    const batch = db.batch(), fDestino = new Date(pA, pM, 1, 10, 0, 0);
     let inyectados = 0;
     
     const procesar = (id, nom, cat) => {
-        let el = document.getElementById(id);
-        if (!el) return;
-        
-        let estado = el.getAttribute('data-estado') || 'est';
-        if (estado === 'pag') return; 
-        
+        let el = document.getElementById(id); if (!el) return;
+        let estado = el.getAttribute('data-estado') || 'est'; if (estado === 'pag') return; 
         let monto = parseInt(el.value.replace(/\./g, '')) || 0;
         if (monto > 0) {
-            let ref = db.collection("movimientos").doc();
-            batch.set(ref, {
-                monto: monto, nombre: nom, categoria: cat, tipo: "Gasto Fijo",
-                fecha: fDestino, status: estado === 'real' ? 'Real' : 'Estimado',
-                innecesarioPct: 0, cuotas: 1
-            });
+            batch.set(db.collection("movimientos").doc(), { monto: monto, nombre: nom, categoria: cat, tipo: "Gasto Fijo", fecha: fDestino, status: estado === 'real' ? 'Real' : 'Estimado', innecesarioPct: 0, cuotas: 1 });
             inyectados++;
         }
     };
@@ -1077,13 +929,8 @@ window.ejecutarArranque = function() {
     
     if (inyectados > 0) {
         batch.commit().then(() => {
-            cerrarPreVuelo();
-            document.getElementById('navMesConceptual').value = pM;
-            document.getElementById('navAnio').value = pA;
-            aplicarCicloAlSistema();
-            mostrarToast(`ÉXITO: ${inyectados} REGISTROS INYECTADOS EN ${new Date(pA, pM).toLocaleString('es-CL', {month:'long'}).toUpperCase()}`);
+            cerrarPreVuelo(); document.getElementById('navMesConceptual').value = pM; document.getElementById('navAnio').value = pA;
+            aplicarCicloAlSistema(); mostrarToast(`ÉXITO: ${inyectados} REGISTROS INYECTADOS EN ${new Date(pA, pM).toLocaleString('es-CL', {month:'long'}).toUpperCase()}`);
         }).catch(err => alert("Error: " + err.message));
-    } else {
-        alert("Nada que inyectar.");
-    }
+    } else { alert("Nada que inyectar."); }
 };
