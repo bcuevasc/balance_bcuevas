@@ -1,5 +1,5 @@
 // ==========================================================
-// 🌐 V13.7: MOTOR SCADA PRO (Anti-Ghost Focus & Data Labels)
+// 🌐 V13.8: MOTOR SCADA PRO (Iron-Clad Anti-Ghost Focus)
 // ==========================================================
 window.VALOR_USD = 950;
 
@@ -25,15 +25,15 @@ const CREDIT_SETPOINT = -300000;
 const catEvitables = ["Dopamina & Antojos"]; 
 const SUELDO_BASE_DEFAULT = 3602505;
 
-// 🧠 DICCIONARIO COGNITIVO V13.6 (Con Auto-Renombrado)
+// 🧠 DICCIONARIO COGNITIVO V13.8
 const diccAuto = [
     { keys: ["cargo en cuenta", "comision", "mantencion"], cat: "Gastos Fijos (Búnker)", tipo: "Gasto Fijo", fuga: "0", rename: "MANTENCIÓN BANCARIA" },
     { keys: ["prestamo", "debe", "pagar dps", "por cobrar", "cuota de"], cat: "Cuentas por Cobrar (Activos)", tipo: "Por Cobrar", fuga: "0" },
     { keys: ["uber", "didi", "cabify", "pasaje", "buses", "turbus", "metro"], cat: "Transporte & Logística", tipo: "Gasto", fuga: "0" },
     { keys: ["copec", "shell", "autopase", "revision tecnica", "lavado auto", "mecanico", "peaje", "seguro auto", "permiso circulacion"], cat: "Flota & Movilidad", tipo: "Gasto Fijo", fuga: "0" },
     { keys: ["dividendo", "arriendo", "gastos comunes", "ggcc", "contribuciones", "hipotecario", "departamento", "luz", "agua", "gas", "internet", "udec", "cae"], cat: "Infraestructura (Depto)", tipo: "Gasto Fijo", fuga: "0" },
-    { keys: ["pedidosya", "mcdonalds", "burger king", "starbucks", "rappi", "helado", "cine", "concierto", "fother muckers", "mall plaza", "los angeles"], cat: "Dopamina & Antojos", tipo: "Gasto", fuga: "100" },
-    { keys: ["netflix", "spotify", "hbo", "prime", "icloud", "google", "vtr", "wom", "entel", "movistar", "celu mio plan", "movistar madre", "pack suscripciones"], cat: "Suscripciones", tipo: "Gasto Fijo", fuga: "0" },
+    { keys: ["pedidosya", "mcdonalds", "burger king", "starbucks", "rappi", "helado", "cine", "concierto", "mall plaza"], cat: "Dopamina & Antojos", tipo: "Gasto", fuga: "100" },
+    { keys: ["netflix", "spotify", "hbo", "prime", "icloud", "google", "vtr", "wom", "entel", "movistar"], cat: "Suscripciones", tipo: "Gasto Fijo", fuga: "0" },
     { keys: ["jumbo", "lider", "unimarc", "santa isabel", "panaderia", "carniceria", "feria", "minimarket", "tottus"], cat: "Alimentación & Supermercado", tipo: "Gasto", fuga: "0" },
     { keys: ["farmacia", "cruz verde", "salcobrand", "doctor", "consulta", "integramedica", "medico", "ahumada"], cat: "Mantenimiento Hardware (Salud)", tipo: "Gasto", fuga: "0" },
     { keys: ["ahorro", "inversion", "fintual", "deposito", "traspaso"], cat: "Transferencia Propia / Ahorro", tipo: "Ahorro", fuga: "0" }
@@ -104,7 +104,10 @@ document.addEventListener("DOMContentLoaded", () => {
                     document.getElementById('inputTipo').value = dict.tipo;
                     let fEl = document.getElementById('inputFuga');
                     if(fEl) fEl.value = dict.fuga;
-                    if(dict.rename && texto !== dict.rename.toLowerCase()) { e.target.value = dict.rename; }
+                    
+                    if(dict.rename && texto !== dict.rename.toLowerCase()) {
+                        e.target.value = dict.rename;
+                    }
                     inputNombre.style.borderBottom = "2px solid #2ea043";
                     setTimeout(() => inputNombre.style.borderBottom = "2px solid var(--border-color)", 1000);
                     break;
@@ -112,7 +115,6 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
     }
-    
     if(inputMonto) {
         inputMonto.addEventListener('keypress', e => {
             if(e.key === 'Enter') { e.preventDefault(); if(inputNombre && !inputNombre.value) inputNombre.focus(); else document.getElementById('btnGuardar').click(); }
@@ -138,6 +140,7 @@ let chartBD = null, chartP = null, chartDiario = null, chartRadar = null;
 let currentSort = { column: 'fechaISO', direction: 'desc' }; 
 let modoEdicionActivo = false, sueldosHistoricos = {}; 
 let datosTCGlobal = [];
+let timerAutoGuardadoSueldo = null;
 
 window.mostrarToast = function(mensaje) {
     let toast = document.getElementById('toast-notif');
@@ -178,11 +181,11 @@ auth.onAuthStateChanged(user => {
             if(userDisplay) userDisplay.innerText = user.displayName.split(" ")[0];
             
             db.collection("parametros").doc("sueldos").onSnapshot(snap => { 
-                if(snap.exists) {
-                    sueldosHistoricos = snap.data();
-                    cargarSueldoVisual();
-                    actualizarDashboard();
-                }
+                if(snap.exists) { 
+                    sueldosHistoricos = snap.data(); 
+                    cargarSueldoVisual(); 
+                    actualizarDashboard(); 
+                } 
             });
             db.collection("movimientos").onSnapshot(snap => {
                 listaMovimientos = [];
@@ -202,32 +205,43 @@ auth.onAuthStateChanged(user => {
 });
 
 // ==========================================================
-// ⚡ FIX V13.7: AISLAMIENTO DE SUELDO Y AUTO-GUARDADO SEGURO
+// ⚡ FIX V13.8: AISLAMIENTO 100% HERMÉTICO DE SUELDO
 // ==========================================================
-let timerAutoGuardadoSueldo = null;
+window.guardarSueldoEnNube = function() {
+    const elSueldo = document.getElementById('inputSueldo'); if(!elSueldo) return;
+    
+    // Leemos el mes EXACTO donde el input fue anclado (No el mes visual dinámico)
+    let m = elSueldo.getAttribute('data-mes-ancla');
+    let a = elSueldo.getAttribute('data-anio-ancla');
+    if (!m || !a || elSueldo.value.trim() === '') return; 
+    
+    let s = parseInt(elSueldo.value.replace(/\./g, '')); if (isNaN(s) || s <= 0) return;
+    let llave = `${a}_${m}`; 
+    
+    // Evita llamadas de red redundantes
+    if (sueldosHistoricos[llave] === s) return; 
+
+    sueldosHistoricos[llave] = s;
+    db.collection("parametros").doc("sueldos").set({ [llave]: s }, {merge: true}).then(() => {
+        mostrarToast(`SUELDO GUARDADO`); 
+    });
+};
 
 window.cargarSueldoVisual = function() {
-    const elMes = document.getElementById('navMesConceptual');
-    const elAnio = document.getElementById('navAnio');
-    const elSueldo = document.getElementById('inputSueldo');
-    
+    const elMes = document.getElementById('navMesConceptual'), elAnio = document.getElementById('navAnio'), elSueldo = document.getElementById('inputSueldo');
     if(!elMes || !elAnio || !elSueldo) return;
     
-    // 🛡️ PARCHE iOS: Forzar pérdida de foco al cambiar de mes
-    if (document.activeElement === elSueldo) elSueldo.blur();
+    let m = elMes.value, a = elAnio.value, llave = `${a}_${m}`;
     
-    let m = elMes.value; 
-    let a = elAnio.value;
-    let llave = `${a}_${m}`;
-    
-    elSueldo.setAttribute('data-mes-ancla', m);
+    // 1. Anclamos el Input al nuevo mes
+    elSueldo.setAttribute('data-mes-ancla', m); 
     elSueldo.setAttribute('data-anio-ancla', a);
     
-    if (sueldosHistoricos && sueldosHistoricos[llave]) {
-        elSueldo.value = sueldosHistoricos[llave].toLocaleString('es-CL');
-    } else {
-        elSueldo.value = ''; 
-        elSueldo.placeholder = 'PENDIENTE';
+    // 2. Forzamos el valor (Sobrescribiendo cualquier Foco Fantasma de Safari)
+    if (sueldosHistoricos && sueldosHistoricos[llave]) { 
+        elSueldo.value = sueldosHistoricos[llave].toLocaleString('es-CL'); 
+    } else { 
+        elSueldo.value = ''; elSueldo.placeholder = 'PENDIENTE'; 
     }
 };
 
@@ -237,45 +251,18 @@ window.obtenerSueldoMes = function(anio, mes) {
     return SUELDO_BASE_DEFAULT;
 };
 
-// Desvinculamos el evento onchange nativo que genera problemas en celulares
-window.guardarSueldoEnNube = function() {
-    ejecutarGuardadoSueldo();
-};
-
-function ejecutarGuardadoSueldo() {
-    const elSueldo = document.getElementById('inputSueldo'); if(!elSueldo) return;
-    let m = parseInt(elSueldo.getAttribute('data-mes-ancla')), a = parseInt(elSueldo.getAttribute('data-anio-ancla'));
-    if (isNaN(m) || isNaN(a) || elSueldo.value.trim() === '') return; 
-    
-    let s = parseInt(elSueldo.value.replace(/\./g, '')); if (isNaN(s) || s <= 0) return;
-    let llave = `${a}_${m}`; 
-    
-    if (sueldosHistoricos[llave] === s) return; // Cortafuegos anti-bucles
-
-    sueldosHistoricos[llave] = s;
-    db.collection("parametros").doc("sueldos").set({ [llave]: s }, {merge: true}).then(() => {
-        mostrarToast(`SUELDO GUARDADO`); 
-    });
-}
-
-let alarmLogCache = "";
-window.abrirHistorian = function() {
-    document.getElementById('historian-content').innerHTML = alarmLogCache || "<div style='color:var(--color-saldo); font-weight:bold; text-align:center; padding:20px;'>SYSTEM NOMINAL.<br>NO BREACHES DETECTED.</div>";
-    document.getElementById('modal-historian').style.display = 'flex';
-};
-
 function actualizarDashboard() {
     const elMes = document.getElementById('navMesConceptual'), elAnio = document.getElementById('navAnio');
     const mesVal = parseInt(elMes.value), anioVal = parseInt(elAnio.value);
-    
     const inputSueldo = document.getElementById('inputSueldo');
+    
     let sueldo = 0;
     
-    // 🛡️ Lógica de Auto-Guardado en Tiempo Real (Debounce)
     if (inputSueldo && document.activeElement === inputSueldo) {
         sueldo = parseInt(inputSueldo.value.replace(/\./g,'')) || 0;
+        // Auto-guardado seguro a los 1.5s de escribir
         clearTimeout(timerAutoGuardadoSueldo);
-        timerAutoGuardadoSueldo = setTimeout(() => { ejecutarGuardadoSueldo(); }, 1200);
+        timerAutoGuardadoSueldo = setTimeout(() => { window.guardarSueldoEnNube(); }, 1500);
     } else {
         sueldo = obtenerSueldoMes(anioVal, mesVal);
     }
@@ -529,6 +516,9 @@ function updateMassActions() { const bar = document.getElementById('massActionsB
 function massDelete() { const ids = Array.from(document.querySelectorAll('.row-check:not(#checkAll):checked')).map(cb => cb.value); if(ids.length === 0 || !confirm(`⚠️ ¿Eliminar ${ids.length} registro(s)?`)) return; const btn = document.querySelector('button[onclick="massDelete()"]'); const orig = btn.innerHTML; btn.innerHTML = '⏳'; Promise.all(ids.map(id => db.collection("movimientos").doc(id).delete())).then(() => { document.getElementById('massActionsBar').style.display = 'none'; document.getElementById('checkAll').checked = false; btn.innerHTML = orig; }); }
 function massCategorize() { const ids = Array.from(document.querySelectorAll('.row-check:not(#checkAll):checked')).map(cb => cb.value); const cat = document.getElementById('massCategorySelect').value; if(ids.length === 0 || !cat || !confirm(`¿Categorizar como "${cat}"?`)) return; const btn = document.querySelector('button[onclick="massCategorize()"]'); const orig = btn.innerHTML; btn.innerHTML = '⏳'; Promise.all(ids.map(id => db.collection("movimientos").doc(id).update({categoria: cat}))).then(() => { document.getElementById('massActionsBar').style.display = 'none'; document.getElementById('checkAll').checked = false; document.getElementById('massCategorySelect').value = ''; btn.innerHTML = orig; }); }
 
+// =====================================================================
+// 🔮 PROYECTO ORÁCULO: TELEMETRÍA (GRÁFICOS V13.6 - ETIQUETAS BLANCAS)
+// =====================================================================
 function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0, totalFijosMes, tInfra, tFlota, deudaAprox) {
     if(chartBD) chartBD.destroy(); if(chartP) chartP.destroy(); 
     if(chartDiario) chartDiario.destroy(); if(chartRadar) chartRadar.destroy();
@@ -536,7 +526,6 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0, totalFijosMes, 
     const cT = getComputedStyle(document.body).getPropertyValue('--text-main').trim() || "#f0f6fc"; 
     const cG = getComputedStyle(document.body).getPropertyValue('--border-color').trim() || "#21262d"; 
     
-    // ⚡ PLUGIN: Renderizador de Etiquetas Blancas
     const labelsPlugin = {
         id: 'labelsPlugin',
         afterDatasetsDraw(chart) {
@@ -610,7 +599,7 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0, totalFijosMes, 
         for(let i = limit + 1; i <= diasCiclo; i++) proyeccion[i] = proyeccion[i-1] - promedioGastoDiario;
     }
 
-    const ctxBD = document.getElementById('chartBurnDown');
+    let ctxBD = document.getElementById('chartBurnDown');
     if(ctxBD) {
         let grad = ctxBD.getContext('2d').createLinearGradient(0, 0, 0, 400);
         grad.addColorStop(0, 'rgba(31, 111, 235, 0.4)'); grad.addColorStop(1, 'rgba(31, 111, 235, 0)');
@@ -624,14 +613,14 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0, totalFijosMes, 
         });
     }
 
-    const sorted = Object.entries(cats).sort((a,b)=>b[1]-a[1]).slice(0,6);
+    let sorted = Object.entries(cats).sort((a,b)=>b[1]-a[1]).slice(0,6);
     chartP = new Chart(document.getElementById('chartPareto'), {
         type: 'polarArea', 
         data: { labels: sorted.map(c => aliasMap[c[0]] || c[0].split(' ')[0]), datasets: [{ data: sorted.map(c => c[1]), backgroundColor: ['rgba(31, 111, 235, 0.7)', 'rgba(46, 160, 67, 0.7)', 'rgba(210, 153, 34, 0.7)', 'rgba(255, 82, 82, 0.7)', 'rgba(163, 113, 247, 0.7)', 'rgba(0, 188, 212, 0.7)'], borderColor: ['#1f6feb', '#2ea043', '#d29922', '#ff5252', '#a371f7', '#00bcd4'], borderWidth: 2 }] },
         options: { maintainAspectRatio:false, plugins:{legend:{position: 'right', labels:{color:cT, font:{size:10, family:'monospace'}}}}, scales:{ r:{ticks:{display:false}, grid:{color:cG}, angleLines:{color:cG}} } }
     });
 
-    const ctxDiario = document.getElementById('chartDiario');
+    let ctxDiario = document.getElementById('chartDiario');
     let limiteDiarioIdeal = Math.max((sueldo - totalFijosMes - tInfra - tFlota) / diasCiclo, 0);
     alarmLogCache = deudaAprox > sueldo * 0.15 ? `<div class='log-item critical'><div class='log-icon'>🛑</div><div class='log-content'><strong>SOBRECARGA TC</strong><div class='log-date'>Riesgo Pasivos > 15%</div><span>$${deudaAprox.toLocaleString('es-CL')}</span></div></div>` : "";
 
@@ -658,7 +647,7 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0, totalFijosMes, 
         });
     }
 
-    const ctxProyeccion = document.getElementById('chartRadar');
+    let ctxProyeccion = document.getElementById('chartRadar');
     if(ctxProyeccion) {
         let mesesLabels = [], montosProyectados = [], fechaHoy = new Date();
         for(let i=1; i<=6; i++) {
@@ -694,7 +683,15 @@ window.navegarMes = function(direccion) {
 };
 
 function aplicarCicloAlSistema() {
-    clearTimeout(timerAutoGuardadoSueldo); // 🛡️ Evita guardados fantasma del mes anterior
+    // 🛡️ ANTI-GHOST FOCUS: Quitamos el foco del input de sueldo ANTES de saltar
+    const elSueldo = document.getElementById('inputSueldo');
+    if (elSueldo && document.activeElement === elSueldo) {
+        window.guardarSueldoEnNube(); 
+        elSueldo.blur(); 
+    }
+    
+    clearTimeout(timerAutoGuardadoSueldo); // Aborta guardados en progreso
+    
     const navMes = document.getElementById('navMesConceptual'), navAnio = document.getElementById('navAnio');
     if(!navMes || !navAnio) return;
     if(document.getElementById('filtroDesde')) document.getElementById('filtroDesde').value = ''; 
