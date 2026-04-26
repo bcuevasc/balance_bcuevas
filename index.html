@@ -52,7 +52,13 @@ h2 { color: var(--text-main); margin: 0; font-size: 1.3rem; font-weight: 900; le
 .kpi-proyectado h4 { color: #79c0ff; }
 
 /* 🟢 PARCHE 2: Altura mínima y desbordamiento limpio para Gráficos 🟢 */
-.charts-panorama { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; flex-shrink: 0; min-height: 240px; }
+.charts-panorama { 
+    display: grid; 
+    grid-template-columns: repeat(4, 1fr); 
+    gap: 10px; 
+    flex-shrink: 0; 
+    min-height: 200px; /* ⚡ Reducido de 240px a 200px para ganar espacio */
+}
 .chart-box { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px 12px 6px 12px; display: flex; flex-direction: column; position: relative; box-shadow: 0 4px 15px rgba(0,0,0,0.2);}
 .chart-box h5 { margin: 0 0 8px 0; font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; font-weight: 900; z-index: 10; text-align: center;}
 .canvas-container { position: relative; flex-grow: 1; min-height: 0; width: 100%; }
@@ -181,8 +187,13 @@ h2 { color: var(--text-main); margin: 0; font-size: 1.3rem; font-weight: 900; le
     <div style="display: flex; gap: 10px; flex-shrink: 0;">
         <div class="time-navigator-panel">
     <div style="display: flex; gap: 8px;">
-        <select id="navAnio" class="nav-select" onchange="aplicarCicloAlSistema()"><option value="2025">2025</option><option value="2026" selected>2026</option></select>
-        <select id="navMesConceptual" class="nav-select" onchange="aplicarCicloAlSistema()" style="color: var(--color-ingresos);"><option value="0">Enero</option><option value="1">Febrero</option><option value="2">Marzo</option><option value="3" selected>Abril</option><option value="4">Mayo</option><option value="5">Junio</option><option value="6">Julio</option><option value="7">Agosto</option><option value="8">Septiembre</option><option value="9">Octubre</option><option value="10">Noviembre</option><option value="11">Diciembre</option></select>
+        <select id="navAnio" class="nav-select" onchange="aplicarCicloAlSistema()">
+    <option value="2025">2025</option>
+    <option value="2026" selected>2026</option>
+</select>
+<select id="navMesConceptual" class="nav-select" onchange="aplicarCicloAlSistema()" style="color: var(--color-ingresos);">
+    <option value="0">Enero</option>
+    </select>
     </div>
     <div id="navRangoBadge" class="nav-badge" style="margin-left: 10px;">--/-- al --/--</div>
 </div>
