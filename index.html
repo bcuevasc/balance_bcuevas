@@ -11,7 +11,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
     
-   <style>
+    <style>
 /* Paleta HMI Alto Desempeño: Neutros para lo normal, vivos para alarmas */
 :root { 
     --bg-body: #0d1117; 
@@ -22,13 +22,16 @@
     --border-color: #30363d; 
     --input-bg: #010409; 
     --item-hover: #1f2428; 
-    --color-guardar: #238636; /* Verde HMI */
+    --color-guardar: #238636; 
     --color-ingresos: #238636; 
     --color-gastos: #da3633;  
     --color-saldo: #2ea043; 
-    --color-edit: #d29922; /* Warning/Edit */
-    --color-fuga: #f85149; /* Alarma Crítica */
+    --color-edit: #d29922; 
+    --color-fuga: #f85149; 
     --color-proyectado: #58a6ff; 
+    --color-telegram: #0088cc; 
+    --color-infra: #a371f7; 
+    --color-flota: #00bcd4; 
 }
 body.light-theme { --bg-body: #f0f2f5; --bg-panel: #ffffff; --bg-subpanel: #f8f9fa; --text-main: #24292e; --text-muted: #57606a; --border-color: #d0d7de; --input-bg: #ffffff; --item-hover: #e1e4e8; }
 * { box-sizing: border-box; transition: background-color 0.3s, border-color 0.3s; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
@@ -59,26 +62,19 @@ h2 { color: var(--text-main); margin: 0; font-size: 1.3rem; font-weight: 900; le
 @keyframes fadeSlideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
 .kpi-row { display: grid; gap: 10px; flex-shrink: 0; }
-.kpi-card { 
-    padding: 12px 15px; 
-    border-radius: 6px; 
-    border: 1px solid var(--border-color); 
-    background: var(--bg-panel); 
-    border-top: 4px solid var(--border-color); 
-    box-shadow: none; /* Diseño plano HMI */
-}
+.kpi-card { padding: 12px 15px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-panel); border-top: 4px solid var(--border-color); position: relative; overflow: hidden; box-shadow: none;}
 .kpi-card h4 { margin: 0 0 4px 0; font-size: 0.6rem; text-transform: uppercase; color: var(--text-muted); font-weight: 800; letter-spacing: 0.5px;}
 .kpi-card .value { margin: 0; font-size: 1.15rem; font-weight: 900; color: var(--text-main); font-family: monospace; display: flex; align-items: center; white-space: nowrap; overflow: hidden;}
 .kpi-card .value span { color: var(--text-muted); font-size: 0.95rem; margin-right: 2px;}
-.kpi-saldo { border-top: 4px solid var(--color-saldo); background: rgba(46, 160, 67, 0.02); }
+.kpi-saldo { background: rgba(46, 160, 67, 0.02); border-color: rgba(46, 160, 67, 0.4); border-top: 4px solid var(--color-saldo);}
 .kpi-saldo h4 { color: var(--color-saldo); }
 .kpi-saldo .value { text-shadow: 0 0 15px rgba(46, 160, 67, 0.4); }
-.kpi-proyectado { background: rgba(121, 192, 255, 0.05); border-color: rgba(121, 192, 255, 0.4); border-top: 3px solid #79c0ff;}
-.kpi-proyectado h4 { color: #79c0ff; }
+.kpi-proyectado { background: rgba(88, 166, 255, 0.05); border-color: rgba(88, 166, 255, 0.4); border-top: 4px solid #58a6ff;}
+.kpi-proyectado h4 { color: #58a6ff; }
 
 .context-charts { display: grid; gap: 15px; padding: 15px; border-bottom: 1px solid var(--border-color); flex-shrink: 0;}
 .context-charts.flujo { grid-template-columns: repeat(3, 1fr); background: rgba(31, 111, 235, 0.03); }
-.context-charts.tc { grid-template-columns: repeat(2, 1fr); background: rgba(255, 82, 82, 0.03); }
+.context-charts.tc { grid-template-columns: repeat(2, 1fr); background: rgba(248, 81, 73, 0.03); }
 
 .chart-box { background: var(--bg-subpanel); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; position: relative; box-shadow: inset 0 0 20px rgba(0,0,0,0.5);}
 .chart-box h5 { margin: 0 0 8px 0; font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; font-weight: 900; z-index: 10; text-align: center;}
@@ -105,24 +101,9 @@ h2 { color: var(--text-main); margin: 0; font-size: 1.3rem; font-weight: 900; le
 .core-title { font-size: 0.95rem; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; gap: 8px;}
 .core-body { flex: 1 1 0px; overflow-y: auto; overflow-x: hidden; padding: 0; scrollbar-width: thin; scrollbar-color: var(--border-color) var(--bg-body); display: flex; flex-direction: column;}
 
-/* Mejora UX: Tablas con mayor respiro visual (Padding incrementado) */
-.data-grid { width: 100%; border-collapse: collapse; text-align: left; font-family: 'Segoe UI', sans-serif; }
-.data-grid th { 
-    position: sticky; top: 0; 
-    background: var(--bg-subpanel); 
-    padding: 12px 15px; /* Mayor área de click y lectura */
-    font-size: 0.70rem; 
-    color: var(--text-muted); 
-    text-transform: uppercase; 
-    z-index: 10; 
-    border-bottom: 2px solid var(--border-color); 
-}
-.data-grid td { 
-    padding: 10px 15px; /* Aumento de padding vertical/horizontal */
-    font-size: 0.80rem; 
-    border-bottom: 1px solid var(--border-color); 
-    vertical-align: middle; 
-}
+.data-grid { width: 100%; border-collapse: collapse; text-align: left; font-family: 'Segoe UI', sans-serif;}
+.data-grid th { position: sticky; top: 0; background: var(--bg-subpanel); padding: 12px 15px; font-size: 0.70rem; color: var(--text-muted); text-transform: uppercase; z-index: 10; border-bottom: 2px solid var(--border-color); letter-spacing: 0.5px; cursor: pointer; }
+.data-grid td { padding: 10px 15px; font-size: 0.80rem; border-bottom: 1px solid var(--border-color); vertical-align: middle; }
 .data-grid tbody tr:nth-child(odd) { background-color: rgba(255,255,255,0.01); }
 .data-grid tbody tr:hover { background-color: var(--item-hover); }
 .col-monto { text-align: right; font-family: monospace; font-weight: bold; font-size: 0.9rem; }
@@ -133,16 +114,16 @@ h2 { color: var(--text-main); margin: 0; font-size: 1.3rem; font-weight: 900; le
 
 .fugas-mini-kpi { display: flex; align-items: center; gap: 10px; background: var(--input-bg); border: 1px solid var(--border-color); padding: 6px 12px; border-radius: 20px; box-shadow: inset 0 0 10px rgba(0,0,0,0.5);}
 .fugas-mini-kpi span { font-size: 0.7rem; font-weight: 800; color: var(--text-muted); }
-.fugas-mini-kpi strong { font-size: 0.85rem; font-weight: 900; color: var(--color-fuga); font-family: monospace; text-shadow: 0 0 10px rgba(255, 82, 82, 0.4);}
+.fugas-mini-kpi strong { font-size: 0.85rem; font-weight: 900; color: var(--color-fuga); font-family: monospace; text-shadow: 0 0 10px rgba(248, 81, 73, 0.4);}
 
-.tc-impact-box { background: rgba(255, 82, 82, 0.1); border: 1px solid rgba(255, 82, 82, 0.4); border-radius: 6px; padding: 6px 15px; display: flex; gap: 15px; align-items: center; box-shadow: 0 0 15px rgba(255, 82, 82, 0.15); border-left: 4px solid var(--color-fuga);}
+.tc-impact-box { background: rgba(248, 81, 73, 0.1); border: 1px solid rgba(248, 81, 73, 0.4); border-radius: 6px; padding: 6px 15px; display: flex; gap: 15px; align-items: center; box-shadow: 0 0 15px rgba(248, 81, 73, 0.15); border-left: 4px solid var(--color-fuga);}
 .tc-impact-box span { font-size: 0.75rem; font-weight: 900; color: var(--color-fuga); text-transform: uppercase; letter-spacing: 1px;}
-.tc-impact-box strong { font-size: 1.1rem; font-family: monospace; font-weight: 900; color: var(--color-fuga); text-shadow: 0 0 10px rgba(255, 82, 82, 0.4);}
+.tc-impact-box strong { font-size: 1.1rem; font-family: monospace; font-weight: 900; color: var(--color-fuga); text-shadow: 0 0 10px rgba(248, 81, 73, 0.4);}
 
 .floating-mass-actions { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #1c2128; border: 1px solid var(--color-edit); border-radius: 50px; padding: 8px 20px; display: flex; align-items: center; gap: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); z-index: 9999; }
 
 #modal-historian { position: fixed; inset: 0; background: rgba(3, 5, 8, 0.95); z-index: 25000; display: none; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(10px); padding: 20px; }
-.hist-box { position: relative; background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 12px; width: 100%; max-width: 600px; box-shadow: 0 0 40px rgba(255, 82, 82, 0.2); overflow: hidden; border-top: 4px solid #ff5252; display: flex; flex-direction: column; max-height: 85vh;}
+.hist-box { position: relative; background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 12px; width: 100%; max-width: 600px; box-shadow: 0 0 40px rgba(248, 81, 73, 0.2); overflow: hidden; border-top: 4px solid var(--color-fuga); display: flex; flex-direction: column; max-height: 85vh;}
 .hist-header { padding: 15px 20px; background: rgba(0,0,0,0.3); border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;}
 .hist-body { padding: 20px; overflow-y: auto; flex-grow: 1;}
 
@@ -152,8 +133,8 @@ h2 { color: var(--text-main); margin: 0; font-size: 1.3rem; font-weight: 900; le
 .log-content strong { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; }
 .log-content div.log-date { font-size: 0.75rem; color: var(--text-muted); margin-bottom: 4px; }
 .log-content span { font-family: monospace; font-size: 1.2rem; font-weight: 900; }
-.log-item.critical { border-color: rgba(255,82,82,0.4); background: linear-gradient(90deg, rgba(255,82,82,0.05), transparent); }
-.log-item.critical strong, .log-item.critical span { color: #ff5252; }
+.log-item.critical { border-color: rgba(248,81,73,0.4); background: linear-gradient(90deg, rgba(248,81,73,0.05), transparent); }
+.log-item.critical strong, .log-item.critical span { color: var(--color-fuga); }
 .log-item.warning { border-color: rgba(255,152,0,0.4); background: linear-gradient(90deg, rgba(255,152,0,0.05), transparent); }
 .log-item.warning strong, .log-item.warning span { color: #ff9800; }
 
@@ -165,9 +146,9 @@ h2 { color: var(--text-main); margin: 0; font-size: 1.3rem; font-weight: 900; le
 .pv-tank-wrapper { padding: 15px 20px; border-bottom: 1px solid var(--border-color); flex-shrink:0;}
 .pv-tank-label { display: flex; justify-content: space-between; font-weight: 900; font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px; }
 .pv-tank { width: 100%; height: 35px; background: rgba(255,255,255,0.05); border-radius: 20px; overflow: hidden; display: flex; border: 1px solid var(--border-color); box-shadow: inset 0 0 15px rgba(0,0,0,0.5); }
-.pv-fill-rojo { background: linear-gradient(90deg, #b71c1c, #ff5252); height: 100%; transition: width 0.4s ease; }
+.pv-fill-rojo { background: linear-gradient(90deg, #b71c1c, var(--color-fuga)); height: 100%; transition: width 0.4s ease; }
 .pv-fill-naranja { background: linear-gradient(90deg, #e65100, #ff9800); height: 100%; transition: width 0.4s ease; }
-.pv-fill-verde { background: linear-gradient(90deg, #1b5e20, #2ea043); height: 100%; transition: width 0.4s ease; box-shadow: 0 0 20px rgba(46, 160, 67, 0.5); }
+.pv-fill-verde { background: linear-gradient(90deg, #1b5e20, var(--color-saldo)); height: 100%; transition: width 0.4s ease; box-shadow: 0 0 20px rgba(46, 160, 67, 0.5); }
 .pv-liquidez-text { text-align: center; font-size: 2.5rem; font-weight: 900; color: var(--color-saldo); font-family: monospace; margin-top: 10px; text-shadow: 0 0 15px rgba(46, 160, 67, 0.4); }
 .pv-certeza { font-size: 0.7rem; font-weight: bold; color: var(--text-muted); text-align: center; margin-top: 8px; text-transform: uppercase; letter-spacing: 1px;}
 .pv-body { padding: 15px 20px; overflow-y: auto; flex-grow:1;}
@@ -182,8 +163,8 @@ h2 { color: var(--text-main); margin: 0; font-size: 1.3rem; font-weight: 900; le
 
 .btn-estado { width: 28px; height: 28px; border-radius: 4px; border: 1px solid var(--border-color); background: var(--bg-panel); color: var(--text-muted); font-size: 0.7rem; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; font-weight: bold; flex-shrink: 0;}
 .btn-estado.est { border-color: rgba(255, 152, 0, 0.4); color: #ff9800; background: rgba(255, 152, 0, 0.1); }
-.btn-estado.real { border-color: rgba(31, 111, 235, 0.6); color: #79c0ff; background: rgba(31, 111, 235, 0.2); box-shadow: 0 0 8px rgba(31, 111, 235, 0.3);}
-.btn-estado.pag { border-color: rgba(46, 160, 67, 0.6); color: #2ea043; background: rgba(46, 160, 67, 0.2); box-shadow: 0 0 8px rgba(46, 160, 67, 0.3);}
+.btn-estado.real { border-color: rgba(31, 111, 235, 0.6); color: #58a6ff; background: rgba(31, 111, 235, 0.2); box-shadow: 0 0 8px rgba(31, 111, 235, 0.3);}
+.btn-estado.pag { border-color: rgba(46, 160, 67, 0.6); color: var(--color-saldo); background: rgba(46, 160, 67, 0.2); box-shadow: 0 0 8px rgba(46, 160, 67, 0.3);}
 
 .pv-footer { padding: 15px 20px; display: flex; gap: 15px; background: rgba(0,0,0,0.3); border-top: 1px solid var(--border-color); flex-shrink:0;}
 .btn-pv-close { flex: 1; padding: 12px; background: transparent; border: 1px solid var(--text-muted); color: var(--text-muted); border-radius: 8px; font-weight: 900; cursor: pointer; text-transform: uppercase; font-size:0.9rem;}
@@ -209,11 +190,11 @@ h2 { color: var(--text-main); margin: 0; font-size: 1.3rem; font-weight: 900; le
         </div>
         <div class="system-btns">
             <div id="cronos" class="cronos">--:--:--</div>
-            <button class="btn-sys" onclick="toggleLanguage()" style="color:#79c0ff; border-color:rgba(121,192,255,0.4);">🌐 ENG</button>
-            <button class="btn-sys" onclick="abrirHistorian()" style="color:#ff5252; border-color:rgba(255,82,82,0.4);">⚠️ LOG</button>
+            <button class="btn-sys" onclick="toggleLanguage()" style="color:#58a6ff; border-color:rgba(88,166,255,0.4);">🌐 ENG</button>
+            <button class="btn-sys" onclick="abrirHistorian()" style="color:var(--color-fuga); border-color:rgba(248,81,73,0.4);">⚠️ LOG</button>
             <button class="btn-sys" onclick="abrirPreVuelo()" style="color:#ff9800; border-color:rgba(255,152,0,0.4); background:rgba(255,152,0,0.1);" data-en="🚀 PRE-FLIGHT">🚀 PRE-VUELO</button>
             <button class="btn-sys" onclick="toggleTheme()">☀️/🌙</button>
-            <button class="btn-sys" onclick="logout()" style="color:var(--color-fuga); border-color:rgba(255,82,82,0.3);" data-en="🚪 LOGOUT">🚪 SALIR</button>
+            <button class="btn-sys" onclick="logout()" style="color:var(--color-fuga); border-color:rgba(248,81,73,0.3);" data-en="🚪 LOGOUT">🚪 SALIR</button>
         </div>
     </div>
 
@@ -245,22 +226,22 @@ h2 { color: var(--text-main); margin: 0; font-size: 1.3rem; font-weight: 900; le
 
         <div class="kpi-row" style="flex: 1; grid-template-columns: repeat(6, 1fr);">
             <div class="kpi-card">
-                <h4 data-en="Operating Base">Sueldo Base</h4>
+                <h4 data-en="Monthly Budget">Presupuesto Mensual</h4>
                 <div class="value"><span>$</span><input type="text" id="inputSueldo" placeholder="NO ASIGNADO" style="background:transparent; border:none; color:var(--text-main); font-weight:900; width:100%; font-size:1.15rem; outline:none; font-family: monospace; padding:0; flex-grow:1;"></div>
             </div>
-            <div class="kpi-card" id="cardArrastre" style="border-top-color: var(--accent-red); display:none;">
-                <h4 style="color:var(--accent-red);">Arrastre Línea (M-1)</h4>
-                <div class="value" style="color:var(--accent-red);">$<span id="txtArrastreLinea">0</span></div>
+            <div class="kpi-card" id="cardArrastre" style="border-top-color: var(--color-fuga); display:none;">
+                <h4 style="color:var(--color-fuga);">Arrastre Línea (M-1)</h4>
+                <div class="value" style="color:var(--color-fuga);">$<span id="txtArrastreLinea">0</span></div>
             </div>
-            <div class="kpi-card" style="border-top-color: var(--accent-red);">
+            <div class="kpi-card" style="border-top-color: var(--color-fuga);">
                 <h4>Carga Fija</h4>
                 <div class="value">$<span id="txtTotalFijos">0</span></div>
             </div>
-            <div class="kpi-card" style="border-top-color: var(--accent-orange);">
+            <div class="kpi-card" style="border-top-color: #ff9800;">
                 <h4>Carga Variable</h4>
                 <div class="value">$<span id="txtTotalOtros">0</span></div>
             </div>
-            <div class="kpi-card kpi-saldo" style="border-top-width: 4px;">
+            <div class="kpi-card kpi-saldo">
                 <div style="display:flex; justify-content:space-between; align-items:center;">
                     <h4 data-en="Net Balance">Balance Real</h4>
                     <div id="badgeDias" style="font-size: 0.6rem; background: rgba(0,0,0,0.4); padding: 2px 4px; border-radius: 4px; font-weight: 800; color: var(--color-saldo); border: 1px solid rgba(46,160,67,0.3);">-- DÍAS</div>
@@ -345,22 +326,22 @@ h2 { color: var(--text-main); margin: 0; font-size: 1.3rem; font-weight: 900; le
             </div>
         </div>
 
-        <div class="core-panel hidden" id="panelTC" style="border-color: rgba(255, 82, 82, 0.2); box-shadow: inset 0 0 30px rgba(255, 82, 82, 0.02);" ondragover="dragOverPanel(event, 'tc')" ondragleave="dragLeavePanel(event, 'tc')" ondrop="dropOnPanel(event, 'tc')">
-            <div class="core-header" style="background: rgba(255, 82, 82, 0.08); border-bottom-color: rgba(255, 82, 82, 0.2);">
+        <div class="core-panel hidden" id="panelTC" style="border-color: rgba(248, 81, 73, 0.2); box-shadow: inset 0 0 30px rgba(248, 81, 73, 0.02);" ondragover="dragOverPanel(event, 'tc')" ondragleave="dragLeavePanel(event, 'tc')" ondrop="dropOnPanel(event, 'tc')">
+            <div class="core-header" style="background: rgba(248, 81, 73, 0.08); border-bottom-color: rgba(248, 81, 73, 0.2);">
                 <div class="core-title"><span style="color:var(--color-fuga); text-shadow: 0 0 8px var(--color-fuga);">●</span> <span>MATRIZ DE DEUDA TC</span></div>
                 <div style="display: flex; gap: 12px; align-items: center;">
-                    <div style="font-size:1.2rem; font-weight:900; color:var(--color-fuga); font-family: monospace; text-shadow: 0 0 10px rgba(255, 82, 82, 0.3);">$<span id="txtTotalTC">0</span></div>
-                    <button class="btn-sys" onclick="cargarCSV_TC()" style="background-color: var(--color-fuga); color: white; border: none; box-shadow: 0 0 10px rgba(255, 82, 82, 0.4);">💳 INGESTAR</button>
+                    <div style="font-size:1.2rem; font-weight:900; color:var(--color-fuga); font-family: monospace; text-shadow: 0 0 10px rgba(248, 81, 73, 0.3);">$<span id="txtTotalTC">0</span></div>
+                    <button class="btn-sys" onclick="cargarCSV_TC()" style="background-color: var(--color-fuga); color: white; border: none; box-shadow: 0 0 10px rgba(248, 81, 73, 0.4);">💳 INGESTAR</button>
                 </div>
             </div>
             
             <div class="core-body">
                 <div class="context-charts tc">
-                    <div class="chart-box" style="border-color: rgba(255, 82, 82, 0.3);"><h5 style="color:var(--color-fuga);">HORIZONTE DE DEUDA TC (6M)</h5><div class="canvas-container"><canvas id="chartRadar"></canvas></div></div>
-                    <div class="chart-box" style="border-color: rgba(255, 82, 82, 0.3);"><h5 style="color:var(--color-fuga);">COMPOSICIÓN POR COMERCIO</h5><div class="canvas-container"><canvas id="chartTCDist"></canvas></div></div>
+                    <div class="chart-box" style="border-color: rgba(248, 81, 73, 0.3);"><h5 style="color:var(--color-fuga);">HORIZONTE DE DEUDA TC (6M)</h5><div class="canvas-container"><canvas id="chartRadar"></canvas></div></div>
+                    <div class="chart-box" style="border-color: rgba(248, 81, 73, 0.3);"><h5 style="color:var(--color-fuga);">COMPOSICIÓN POR COMERCIO</h5><div class="canvas-container"><canvas id="chartTCDist"></canvas></div></div>
                 </div>
 
-                <div style="padding: 12px; border-bottom: 1px solid rgba(255, 82, 82, 0.2); border-top: 1px solid rgba(255, 82, 82, 0.2); background: rgba(0,0,0,0.2); position: sticky; top: 0; z-index: 30;">
+                <div style="padding: 12px; border-bottom: 1px solid rgba(248, 81, 73, 0.2); border-top: 1px solid rgba(248, 81, 73, 0.2); background: rgba(0,0,0,0.2); position: sticky; top: 0; z-index: 30;">
                     <div id="boxImpactoTC" class="tc-impact-box" style="display:none;">
                         <span id="lblImpactoMes">⚠️ ALARMA DE IMPACTO PRÓX. MES</span>
                         <strong id="txtImpactoMonto">$0</strong>
@@ -374,9 +355,9 @@ h2 { color: var(--text-main); margin: 0; font-size: 1.3rem; font-weight: 900; le
                 </div>
 
                 <table id="tablaCuotas" class="data-grid">
-                    <thead style="background: rgba(255, 82, 82, 0.05);">
+                    <thead style="background: rgba(248, 81, 73, 0.05);">
                         <tr>
-                            <th style="width: 30px; text-align: center;"><input type="checkbox" id="checkMaestroTC" onclick="toggleTodosTC(this)" style="accent-color: #ff5252;"></th>
+                            <th style="width: 30px; text-align: center;"><input type="checkbox" id="checkMaestroTC" onclick="toggleTodosTC(this)" style="accent-color: var(--color-fuga);"></th>
                             <th>Ciclo/Cuota</th><th>Comercio Asociado</th><th style="text-align: right;">Cuota ($)</th>
                         </tr>
                     </thead>
@@ -390,16 +371,16 @@ h2 { color: var(--text-main); margin: 0; font-size: 1.3rem; font-weight: 900; le
         <span id="massCount" style="font-weight:900; font-size:0.85rem; letter-spacing: 0.5px;">0 SEL</span>
         <select id="massCategorySelect" class="form-control" style="width:220px; height: 30px; border-color:var(--color-edit);"></select>
         <button class="btn-sys" style="background:var(--color-edit); color:#000; font-weight:900;" onclick="massCategorize()">MUTE/CAT</button>
-        <button class="btn-sys" style="background:rgba(255,82,82,0.2); border-color:var(--color-fuga); font-size:1.1rem; color:var(--color-fuga);" onclick="massDelete()">🗑️</button>
+        <button class="btn-sys" style="background:rgba(248,81,73,0.2); border-color:var(--color-fuga); font-size:1.1rem; color:var(--color-fuga);" onclick="massDelete()">🗑️</button>
     </div>
 </div>
 
 <div id="modal-historian" style="display:none; position:fixed; inset:0; background:rgba(3, 5, 8, 0.95); z-index:25000; flex-direction:column; align-items:center; justify-content:center; backdrop-filter:blur(10px); padding:20px;">
     <div class="hist-box" style="position: relative;">
-        <button onclick="document.getElementById('modal-historian').style.display='none'" style="position:absolute; top:12px; right:15px; background:var(--bg-panel); border:1px solid var(--border-color); color:var(--text-muted); border-radius:50%; width:32px; height:32px; cursor:pointer; font-weight:bold; z-index:100; display:flex; align-items:center; justify-content:center; box-shadow: 0 4px 10px rgba(0,0,0,0.3); transition: color 0.2s, border-color 0.2s;" onmouseover="this.style.color='#ff5252'; this.style.borderColor='#ff5252';" onmouseout="this.style.color='var(--text-muted)'; this.style.borderColor='var(--border-color)';">✕</button>
+        <button onclick="document.getElementById('modal-historian').style.display='none'" style="position:absolute; top:12px; right:15px; background:var(--bg-panel); border:1px solid var(--border-color); color:var(--text-muted); border-radius:50%; width:32px; height:32px; cursor:pointer; font-weight:bold; z-index:100; display:flex; align-items:center; justify-content:center; box-shadow: 0 4px 10px rgba(0,0,0,0.3); transition: color 0.2s, border-color 0.2s;" onmouseover="this.style.color='var(--color-fuga)'; this.style.borderColor='var(--color-fuga)';" onmouseout="this.style.color='var(--text-muted)'; this.style.borderColor='var(--border-color)';">✕</button>
         
         <div class="hist-header">
-            <h3 style="color:#ff5252; margin:0; display:flex; align-items:center; gap:10px;"><span style="font-size:1.5rem;">⚠️</span> HISTORIAN LOG</h3>
+            <h3 style="color:var(--color-fuga); margin:0; display:flex; align-items:center; gap:10px;"><span style="font-size:1.5rem;">⚠️</span> HISTORIAN LOG</h3>
         </div>
         <div class="hist-body" id="historian-content"></div>
     </div>
@@ -407,7 +388,7 @@ h2 { color: var(--text-main); margin: 0; font-size: 1.3rem; font-weight: 900; le
 
 <div id="modal-dia-cero" style="display:none; position:fixed; inset:0; background: rgba(3, 5, 8, 0.95); z-index: 20000; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(10px); padding: 10px;">
     <div class="pv-container">
-        <button onclick="cerrarPreVuelo()" style="position:absolute; top:15px; right:15px; background:var(--bg-panel); border:1px solid var(--border-color); color:var(--text-muted); border-radius:50%; width:32px; height:32px; cursor:pointer; font-weight:bold; z-index:100; display:flex; align-items:center; justify-content:center; box-shadow: 0 4px 10px rgba(0,0,0,0.3); transition: color 0.2s, border-color 0.2s;" onmouseover="this.style.color='#ff5252'; this.style.borderColor='#ff5252';" onmouseout="this.style.color='var(--text-muted)'; this.style.borderColor='var(--border-color)';">✕</button>
+        <button onclick="cerrarPreVuelo()" style="position:absolute; top:15px; right:15px; background:var(--bg-panel); border:1px solid var(--border-color); color:var(--text-muted); border-radius:50%; width:32px; height:32px; cursor:pointer; font-weight:bold; z-index:100; display:flex; align-items:center; justify-content:center; box-shadow: 0 4px 10px rgba(0,0,0,0.3); transition: color 0.2s, border-color 0.2s;" onmouseover="this.style.color='var(--color-fuga)'; this.style.borderColor='var(--color-fuga)';" onmouseout="this.style.color='var(--text-muted)'; this.style.borderColor='var(--border-color)';">✕</button>
 
         <div class="pv-header">
             <h2 class="pv-title" data-en="DAY ZERO SIMULATOR">SIMULADOR DÍA CERO</h2>
@@ -425,13 +406,13 @@ h2 { color: var(--text-main); margin: 0; font-size: 1.3rem; font-weight: 900; le
                 <div id="pv-barra-verde" class="pv-fill-verde" style="width: 100%;"></div>
             </div>
             <div class="pv-liquidez-text">$<span id="pv-txt-liquidez">0</span></div>
-            <div class="pv-certeza" id="pv-certeza-container">CERTEZA DEL CÁLCULO: <span id="pv-certeza-pct" style="color:#ff5252;">0%</span></div>
+            <div class="pv-certeza" id="pv-certeza-container">CERTEZA DEL CÁLCULO: <span id="pv-certeza-pct" style="color:var(--color-fuga);">0%</span></div>
         </div>
 
         <div class="pv-body">
             <div class="pv-grid">
                 <div class="pv-section">
-                    <div class="pv-section-title" style="color:#ff5252;"><span style="font-size:1rem;">💳</span> Deducciones Críticas</div>
+                    <div class="pv-section-title" style="color:var(--color-fuga);"><span style="font-size:1rem;">💳</span> Deducciones Críticas</div>
                     <div class="pv-input-group" style="background:rgba(46,160,67,0.1); border-color:var(--color-saldo);">
                         <label style="color:var(--color-saldo);">Sueldo (Ingreso)</label>
                         <input type="text" id="pv-sueldo" class="pv-input" style="color:var(--color-saldo); border-color:var(--color-saldo);" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();">
@@ -439,23 +420,23 @@ h2 { color: var(--text-main); margin: 0; font-size: 1.3rem; font-weight: 900; le
                     <div class="pv-input-group">
                         <label>TC Nacional</label>
                         <button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-tc-nac')">EST</button>
-                        <input type="text" id="pv-tc-nac" class="pv-input" style="color:#ff5252;" placeholder="0" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();">
+                        <input type="text" id="pv-tc-nac" class="pv-input" style="color:var(--color-fuga);" placeholder="0" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();">
                     </div>
-                    <div style="display:flex; flex-direction:column; width:100%; background: var(--bg-card); border-radius: 12px; border: 1px solid rgba(255,82,82,0.3); margin-bottom: 10px; padding: 12px 14px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+                    <div style="display:flex; flex-direction:column; width:100%; background: var(--bg-card); border-radius: 12px; border: 1px solid rgba(248,81,73,0.3); margin-bottom: 10px; padding: 12px 14px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
                         <div style="display: flex; align-items: center; justify-content: space-between; gap:10px;">
                             <div style="flex:1;">
                                 <label style="font-size: 0.8rem; font-weight: 900; color: var(--text-main); text-transform: uppercase;">TC Internacional</label>
                                 <span id="lbl-dolar-actual" style="display:block; font-size:0.65rem; color:var(--text-muted); font-family:monospace; margin-top:4px;">Consultando USD...</span>
                             </div>
                             <button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-tc-int')">EST</button>
-                            <input type="text" id="pv-tc-int" class="pv-input" style="color:#ff5252; width:100px;" placeholder="US$ 0" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();">
+                            <input type="text" id="pv-tc-int" class="pv-input" style="color:var(--color-fuga); width:100px;" placeholder="US$ 0" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();">
                         </div>
-                        <div id="pv-tc-int-clp" style="text-align:right; font-size:0.85rem; color:#ff5252; font-family:monospace; font-weight:900; margin-top:10px; border-top: 1px dashed rgba(255,82,82,0.3); padding-top: 10px;">~ $0 CLP</div>
+                        <div id="pv-tc-int-clp" style="text-align:right; font-size:0.85rem; color:var(--color-fuga); font-family:monospace; font-weight:900; margin-top:10px; border-top: 1px dashed rgba(248,81,73,0.3); padding-top: 10px;">~ $0 CLP</div>
                     </div>
                     <div class="pv-input-group">
                         <label>Línea de Crédito</label>
                         <button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-linea')">EST</button>
-                        <input type="text" id="pv-linea" class="pv-input" style="color:#ff5252;" placeholder="0" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();">
+                        <input type="text" id="pv-linea" class="pv-input" style="color:var(--color-fuga);" placeholder="0" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();">
                     </div>
                 </div>
 
@@ -475,7 +456,7 @@ h2 { color: var(--text-main); margin: 0; font-size: 1.3rem; font-weight: 900; le
                 </div>
 
                 <div class="pv-section">
-                    <div class="pv-section-title" style="color:#79c0ff;"><span style="font-size:1rem;">📱</span> Op. Complementaria</div>
+                    <div class="pv-section-title" style="color:#58a6ff;"><span style="font-size:1rem;">📱</span> Op. Complementaria</div>
                     <div class="pv-input-group"><label>Celu Mio</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-celu')">EST</button><input type="text" id="pv-celu" class="pv-input" value="13.990" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
                     <div class="pv-input-group"><label>Movistar Madre</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-madre')">EST</button><input type="text" id="pv-madre" class="pv-input" value="19.290" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
                     <div class="pv-input-group" title="YT Premium, Disney, Icloud, Google, Spotify, HBO"><label>Pack Subs</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-subs')">EST</button><input type="text" id="pv-subs" class="pv-input" value="20.540" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
@@ -503,7 +484,7 @@ h2 { color: var(--text-main); margin: 0; font-size: 1.3rem; font-weight: 900; le
             document.getElementById('tabBtnFlujo').style.background = 'rgba(31, 111, 235, 0.1)'; document.getElementById('tabBtnFlujo').style.color = 'white'; document.getElementById('tabBtnFlujo').style.borderColor = 'var(--color-guardar)';
         } else if(viewId === 'tc') {
             document.getElementById('panelTC').classList.remove('hidden');
-            document.getElementById('tabBtnTC').style.background = 'rgba(255, 82, 82, 0.1)'; document.getElementById('tabBtnTC').style.color = 'white'; document.getElementById('tabBtnTC').style.borderColor = 'var(--color-fuga)';
+            document.getElementById('tabBtnTC').style.background = 'rgba(248, 81, 73, 0.1)'; document.getElementById('tabBtnTC').style.color = 'white'; document.getElementById('tabBtnTC').style.borderColor = 'var(--color-fuga)';
         }
     }
 </script>
