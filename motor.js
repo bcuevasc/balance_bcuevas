@@ -78,30 +78,6 @@ document.addEventListener("DOMContentLoaded", () => {
             const boxC = document.getElementById('boxCuotas');
             if(boxC) boxC.style.display = (e.target.value === "Gasto Tarjeta de Crédito") ? "block" : "none";
         });
-    // ⚡ FIX 1: PROTECCIÓN DE SUELDO ANTI-LAG
-    const elSueldo = document.getElementById('inputSueldo');
-    if(elSueldo) {
-        // Purgamos los eventos que causan lag y sobrescritura
-        elSueldo.removeAttribute('onchange');
-        elSueldo.removeAttribute('onblur');
-        elSueldo.removeAttribute('oninput');
-        
-        // Formateo visual ultraligero
-        elSueldo.addEventListener('input', function() {
-            let v = this.value.replace(/\D/g,'');
-            this.value = v ? parseInt(v).toLocaleString('es-CL') : '';
-        });
-        
-        // Guardado maestro solo cuando quitas el dedo (blur)
-        elSueldo.addEventListener('blur', function() {
-            if(typeof window.guardarSueldoEnNube === 'function') window.guardarSueldoEnNube();
-            if(typeof actualizarDashboard === 'function') actualizarDashboard();
-        });
-        
-        elSueldo.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') { e.preventDefault(); this.blur(); }
-        });
-    }
     }
     const selectMass = document.getElementById('massCategorySelect');
     if (selectMass) selectMass.innerHTML = `<option value="">-- Recategorizar a --</option>` + optionsHTML;
@@ -603,42 +579,34 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0, totalFijosMes, 
     } catch(e) {}
 
     try {
-        // ⚡ FIX 2: ANCLAJE TEMPORAL DEL RADAR TC
-    const ctxProyeccion = document.getElementById('chartRadar');
-    if(ctxProyeccion) {
-        let mesesLabels = []; let montosProyectados = []; 
-        
-        // Leemos el tiempo del Navegador, NO del reloj del celular
-        let elMes = document.getElementById('navMesConceptual');
-        let elAnio = document.getElementById('navAnio');
-        let mAct = elMes ? parseInt(elMes.value) : new Date().getMonth();
-        let aAct = elAnio ? parseInt(elAnio.value) : new Date().getFullYear();
-        let fechaAncla = new Date(aAct, mAct, 1);
-
-        for(let i=1; i<=6; i++) {
-            let f = new Date(fechaAncla.getFullYear(), fechaAncla.getMonth() + i, 1);
-            mesesLabels.push(f.toLocaleString('es-CL', { month: 'short' }).toUpperCase());
+        const ctxProyeccion = document.getElementById('chartRadar');
+        if(ctxProyeccion) {
+            let mesesLabels = [], montosProyectados = [], fechaHoy = new Date();
+            const nombresMesesFijos = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"];
             
-            let sumaMes = datosTCGlobal.filter(d => { 
-                if(!d.mesCobro) return false;
-                let fC = new Date(d.mesCobro); 
-                return fC.getMonth() === f.getMonth() && fC.getFullYear() === f.getFullYear(); 
-            }).reduce((a, c) => a + (Number(c.monto) || 0), 0);
+            for(let i=1; i<=6; i++) {
+                let mIndex = (fechaHoy.getMonth() + i) % 12;
+                let anioTemp = fechaHoy.getFullYear() + Math.floor((fechaHoy.getMonth() + i) / 12);
+                mesesLabels.push(nombresMesesFijos[mIndex]);
+                
+                let sumaMes = datosTCGlobal.filter(d => { 
+                    if (!d.mesCobro) return false;
+                    let fC = new Date(d.mesCobro); 
+                    return fC.getMonth() === mIndex && fC.getFullYear() === anioTemp; 
+                }).reduce((a, c) => a + (Number(c.monto) || 0), 0);
+                montosProyectados.push(sumaMes);
+            }
             
-            montosProyectados.push(sumaMes);
+            let bgFill = 'rgba(255, 82, 82, 0.15)';
+            try { let grad = ctxProyeccion.getContext('2d').createLinearGradient(0, 0, 0, 300); grad.addColorStop(0, 'rgba(255, 82, 82, 0.6)'); grad.addColorStop(1, 'rgba(255, 82, 82, 0.05)'); bgFill = grad; } catch(e){}
+            
+            chartRadar = new Chart(ctxProyeccion, {
+                type: 'line', 
+                data: { labels: mesesLabels, datasets: [{ label: 'Deuda TC', data: montosProyectados, backgroundColor: bgFill, borderColor: '#ff5252', borderWidth: 3, fill: true, tension: 0.4, pointRadius: 4, pointBackgroundColor: '#030508', pointBorderColor: '#ff5252' }] },
+                options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { color: cT, callback: v => '$' + Math.round(v/1000) + 'k' }, grid: { color: cG } }, x: { ticks: { color: cT, font: {size: 10, weight: 'bold'} }, grid: { display: false } } } },
+                plugins: [ { id: 'setpointTCPlugin', afterDraw: (chart) => { try { const ctx = chart.ctx, xAxis = chart.scales.x, yAxis = chart.scales.y; const umbralSeguridad = (Number(sueldo) || 0) * 0.15; if(yAxis && yAxis.max !== undefined && yAxis.max > umbralSeguridad) { const yPos = yAxis.getPixelForValue(umbralSeguridad); ctx.save(); ctx.beginPath(); ctx.moveTo(xAxis.left, yPos); ctx.lineTo(xAxis.right, yPos); ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(255, 82, 82, 0.8)'; ctx.setLineDash([5, 5]); ctx.stroke(); ctx.fillStyle = '#ff5252'; ctx.font = 'bold 10px monospace'; ctx.fillText('MAX (15%)', xAxis.left + 5, yPos - 5); ctx.restore(); } } catch(e){} } }, labelsPlugin ]
+            });
         }
-        
-        let grad = ctxProyeccion.getContext('2d').createLinearGradient(0, 0, 0, 300);
-        grad.addColorStop(0, 'rgba(255, 82, 82, 0.6)'); grad.addColorStop(1, 'rgba(255, 82, 82, 0.05)');
-
-        chartRadar = new Chart(ctxProyeccion, {
-            type: 'line',
-            data: { labels: mesesLabels, datasets: [{ label: 'Deuda TC', data: montosProyectados, backgroundColor: grad, borderColor: '#ff5252', borderWidth: 3, fill: true, tension: 0.4, pointRadius: 4, pointBackgroundColor: '#030508', pointBorderColor: '#ff5252' }] },
-            options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { color: cT, callback: v => '$' + Math.round(v/1000) + 'k' }, grid: { color: cG } }, x: { ticks: { color: cT, font: {size: 10, weight: 'bold'} }, grid: { display: false } } } },
-            // Si tienes setpointTCPlugin arriba, déjalo. Si no, borra la línea de abajo.
-            plugins: typeof setpointTCPlugin !== 'undefined' ? [setpointTCPlugin] : []
-        });
-    }
     } catch(e) {}
 }
 
@@ -780,43 +748,50 @@ async function ejecutarPurgaMasivaTC() {
 // ==========================================
 // 🚀 SIMULADOR DÍA CERO (PROYECCIÓN MES + 1)
 // ==========================================
-// ⚡ FIX 3: PRE-VUELO PROYECTADO A MES + 1
 window.abrirPreVuelo = function() {
-    const modal = document.getElementById('modal-dia-cero');
-    if(!modal) return;
+    const modal = document.getElementById('modal-dia-cero'); if(!modal) return;
     
+    // ⚡ FIX: Proyección Temporal Mes + 1
     let vM = parseInt(document.getElementById('navMesConceptual').value);
     let vA = parseInt(document.getElementById('navAnio').value);
     
-    // Calculamos Mes + 1
-    let pM = vM + 1;
-    let pA = vA;
+    let pM = vM + 1; let pA = vA; 
     if (pM > 11) { pM = 0; pA++; }
 
     const nombresMes = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
     document.getElementById('pv-mes-label').innerText = `${nombresMes[pM]} ${pA}`.toUpperCase();
     
-    let sueldoProximoMes = typeof window.obtenerSueldoMes === 'function' ? window.obtenerSueldoMes(pA, pM) : 3602505;
-    const sueldoInput = document.getElementById('pv-sueldo');
-    if(sueldoInput) sueldoInput.value = sueldoProximoMes.toLocaleString('es-CL');
+    let sueldoProximoMes = window.obtenerSueldoMes(pA, pM);
+    document.getElementById('pv-sueldo').value = sueldoProximoMes.toLocaleString('es-CL');
     
     let sumaTCMes = 0;
-    datosTCGlobal.forEach(doc => {
-        if(!doc.mesCobro) return;
-        let fCobro = new Date(doc.mesCobro);
-        if (fCobro.getMonth() === pM && fCobro.getFullYear() === pA) { 
-            sumaTCMes += Number(doc.monto) || 0;
-        }
+    datosTCGlobal.forEach(d => { 
+        if(!d.mesCobro) return;
+        let f = new Date(d.mesCobro); 
+        if (f.getMonth() === pM && f.getFullYear() === pA) sumaTCMes += (Number(d.monto) || 0); 
     });
     
     let elTcNac = document.getElementById('pv-tc-nac');
-    if(elTcNac && elTcNac.getAttribute('data-estado') !== 'pag') {
-        elTcNac.value = sumaTCMes > 0 ? sumaTCMes.toLocaleString('es-CL') : "0";
-    }
+    if(elTcNac && elTcNac.getAttribute('data-estado') !== 'pag') { elTcNac.value = sumaTCMes > 0 ? sumaTCMes.toLocaleString('es-CL') : "0"; }
     
-    if(typeof calcularDiaCero === 'function') calcularDiaCero();
-    modal.style.display = 'flex';
+    calcularDiaCero(); modal.style.display = 'flex';
 }
+
+window.cerrarPreVuelo = function() { document.getElementById('modal-dia-cero').style.display = 'none'; actualizarDashboard(); };
+
+window.toggleEstadoPV = function(btn, idInput) {
+    const estados = ['est', 'real', 'pag'];
+    let curr = btn.getAttribute('data-estado') || 'est';
+    let next = estados[(estados.indexOf(curr) + 1) % estados.length];
+
+    btn.classList.remove('est', 'real', 'pag'); btn.classList.add(next); btn.innerText = next.toUpperCase(); btn.setAttribute('data-estado', next);
+    
+    const input = document.getElementById(idInput);
+    if (next === 'pag') { input.classList.add('pagado'); input.disabled = true; } 
+    else { input.classList.remove('pagado'); input.disabled = false; }
+    calcularDiaCero(); 
+};
+
 window.calcularDiaCero = function() {
     const valSiNoPagado = (id) => { let el = document.getElementById(id); return (el && el.getAttribute('data-estado') !== 'pag') ? (parseInt(el.value.replace(/\./g, '')) || 0) : 0; };
     let sueldo = parseInt((document.getElementById('pv-sueldo').value || "0").replace(/\./g, '')) || 0;
@@ -853,14 +828,15 @@ window.ejecutarArranque = function() {
     const elMes = document.getElementById('navMesConceptual');
     const elAnio = document.getElementById('navAnio');
     
-    // Inyectar en el Mes + 1
-    let vM = parseInt(elMes.value);
-    let vA = parseInt(elAnio.value);
-    let pM = vM + 1; let pA = vA;
+    // ⚡ FIX: Inyectar en el Mes + 1 y saltar
+    let pM = parseInt(elMes.value) + 1;
+    let pA = parseInt(elAnio.value);
     if (pM > 11) { pM = 0; pA++; }
 
     let fechaDestino = new Date(pA, pM, 1, 10, 0, 0);
-    const batch = db.batch(); let inyectados = 0;
+    
+    const batch = db.batch();
+    let inyectados = 0;
     
     const procesarInyeccion = (idInput, nombre, cat) => {
         let el = document.getElementById(idInput);
@@ -873,7 +849,9 @@ window.ejecutarArranque = function() {
             let tcIntUSD = parseInt(el.value.replace(/\./g, '')) || 0;
             let valorDolarSeguro = isNaN(window.VALOR_USD) ? 950 : window.VALOR_USD;
             monto = Math.round(tcIntUSD * valorDolarSeguro);
-        } else { monto = parseInt(el.value.replace(/\./g, '')) || 0; }
+        } else {
+            monto = parseInt(el.value.replace(/\./g, '')) || 0;
+        }
         
         if (monto > 0) {
             let ref = db.collection("movimientos").doc();
@@ -882,7 +860,6 @@ window.ejecutarArranque = function() {
         }
     };
     
-    // Replicar tus procesarInyeccion aquí...
     procesarInyeccion('pv-tc-nac', "PAGO TC NACIONAL (DÍA CERO)", "Gastos Fijos (Búnker)"); 
     procesarInyeccion('pv-tc-int', "PAGO TC INTERNACIONAL (DÍA CERO)", "Gastos Fijos (Búnker)"); 
     procesarInyeccion('pv-linea', "PAGO LÍNEA CRÉDITO (DÍA CERO)", "Gastos Fijos (Búnker)");
@@ -900,17 +877,15 @@ window.ejecutarArranque = function() {
     
     if (inyectados > 0) {
         batch.commit().then(() => { 
-            if(typeof cerrarPreVuelo === 'function') cerrarPreVuelo(); 
-            // Salto Automático Visual
+            cerrarPreVuelo(); 
+            // ⚡ FIX: Salto Automático Visual
             document.getElementById('navMesConceptual').value = pM;
             document.getElementById('navAnio').value = pA;
-            if(typeof aplicarCicloAlSistema === 'function') aplicarCicloAlSistema();
-            if(typeof actualizarDashboard === 'function') actualizarDashboard();
+            aplicarCicloAlSistema();
             mostrarToast(`ARRANQUE COMPLETADO: ${inyectados} REG. INYECTADOS.`); 
         }).catch(err => { alert("❌ Error: " + err.message); });
     } else {
-        alert("No se inyectaron registros."); 
-        if(typeof cerrarPreVuelo === 'function') cerrarPreVuelo();
+        alert("No se inyectaron registros."); cerrarPreVuelo();
     }
 }
 
