@@ -1,7 +1,7 @@
 // ==========================================================
-// 🌐 V13.1: SENSOR DE DIVISAS BLINDADO (API MINDICADOR)
+// 🌐 V15.2: MOTOR SCADA PRO (Restauración Matriz TC)
 // ==========================================================
-window.VALOR_USD = 950; 
+window.VALOR_USD = 950;
 
 async function inicializarSensorDolar() {
     let lbl = document.getElementById('lbl-dolar-actual');
@@ -10,32 +10,25 @@ async function inicializarSensorDolar() {
         let data = await response.json();
         if(data && data.serie && data.serie.length > 0) {
             window.VALOR_USD = data.serie[0].valor;
-            console.log("[SYS] DÓLAR SINCRONIZADO: $" + window.VALOR_USD);
             if(lbl) lbl.innerText = `1 USD = $${Math.round(window.VALOR_USD)} CLP`;
-        } else { throw new Error("Estructura API inválida"); }
-    } catch(e) {
-        console.warn("[SYS] Fallo API Dólar, usando fallback: $950");
-        window.VALOR_USD = 950; 
-        if(lbl) lbl.innerText = `Offline (Ref: $950)`;
-    }
+        }
+    } catch(e) { window.VALOR_USD = 950; }
     if (typeof calcularDiaCero === 'function') calcularDiaCero();
 }
 document.addEventListener("DOMContentLoaded", inicializarSensorDolar);
 
-// ==========================================================
-// 🧠 BÚNKER SCADA ORACLE - MOTOR LÓGICO COMPLETO V14.4
-// ==========================================================
 const BYRON_EMAIL = "bvhcc94@gmail.com"; 
-const catEvitables = ["Dopamina & Antojos"]; 
-const SUELDO_BASE_DEFAULT = 3602505;
+const PRESUPUESTO_BASE_DEFAULT = 3602505;
+const catEvitables = ["Dopamina & Antojos"];
 
 const diccAuto = [
+    { keys: ["cargo en cuenta", "comision", "mantencion"], cat: "Gastos Fijos (Búnker)", tipo: "Gasto Fijo", fuga: "0", rename: "MANTENCIÓN BANCARIA" },
     { keys: ["prestamo", "debe", "pagar dps", "por cobrar", "cuota de"], cat: "Cuentas por Cobrar (Activos)", tipo: "Por Cobrar", fuga: "0" },
     { keys: ["uber", "didi", "cabify", "pasaje", "buses", "turbus", "metro"], cat: "Transporte & Logística", tipo: "Gasto", fuga: "0" },
     { keys: ["copec", "shell", "autopase", "revision tecnica", "lavado auto", "mecanico", "peaje", "seguro auto", "permiso circulacion"], cat: "Flota & Movilidad", tipo: "Gasto Fijo", fuga: "0" },
     { keys: ["dividendo", "arriendo", "gastos comunes", "ggcc", "contribuciones", "hipotecario", "departamento", "luz", "agua", "gas", "internet", "udec", "cae"], cat: "Infraestructura (Depto)", tipo: "Gasto Fijo", fuga: "0" },
-    { keys: ["pedidosya", "mcdonalds", "burger king", "starbucks", "rappi", "helado", "cine", "concierto", "fother muckers", "mall plaza", "los angeles"], cat: "Dopamina & Antojos", tipo: "Gasto", fuga: "100" },
-    { keys: ["netflix", "spotify", "hbo", "prime", "icloud", "google", "vtr", "wom", "entel", "movistar", "celu mio plan", "movistar madre", "pack suscripciones"], cat: "Suscripciones", tipo: "Gasto Fijo", fuga: "0" },
+    { keys: ["pedidosya", "mcdonalds", "burger king", "starbucks", "rappi", "helado", "cine", "concierto", "mall plaza"], cat: "Dopamina & Antojos", tipo: "Gasto", fuga: "100" },
+    { keys: ["netflix", "spotify", "hbo", "prime", "icloud", "google", "vtr", "wom", "entel", "movistar"], cat: "Suscripciones", tipo: "Gasto Fijo", fuga: "0" },
     { keys: ["jumbo", "lider", "unimarc", "santa isabel", "panaderia", "carniceria", "feria", "minimarket", "tottus"], cat: "Alimentación & Supermercado", tipo: "Gasto", fuga: "0" },
     { keys: ["farmacia", "cruz verde", "salcobrand", "doctor", "consulta", "integramedica", "medico", "ahumada"], cat: "Mantenimiento Hardware (Salud)", tipo: "Gasto", fuga: "0" },
     { keys: ["ahorro", "inversion", "fintual", "deposito", "traspaso"], cat: "Transferencia Propia / Ahorro", tipo: "Ahorro", fuga: "0" }
@@ -62,8 +55,8 @@ const catMaestras = [
     { id: "Sin Categoría", em: "❓", label: "Sin Categoría" }
 ];
 
-const catEmojis = {}; const aliasMap = {}; 
-catMaestras.forEach(c => { catEmojis[c.id] = c.em; aliasMap[c.id] = c.label; });
+const aliasMap = {}; 
+catMaestras.forEach(c => { aliasMap[c.id] = c.label; });
 
 let isEng = false;
 window.toggleLanguage = function() {
@@ -72,7 +65,6 @@ window.toggleLanguage = function() {
         if (!el.hasAttribute('data-es')) el.setAttribute('data-es', el.innerText);
         el.innerText = isEng ? el.getAttribute('data-en') : el.getAttribute('data-es');
     });
-    mostrarToast(isEng ? 'ENGLISH MODE ENGAGED' : 'MODO ESPAÑOL ACTIVADO');
 };
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -90,9 +82,27 @@ document.addEventListener("DOMContentLoaded", () => {
     const selectMass = document.getElementById('massCategorySelect');
     if (selectMass) selectMass.innerHTML = `<option value="">-- Recategorizar a --</option>` + optionsHTML;
 
+    const elSueldo = document.getElementById('inputSueldo');
+    if(elSueldo) {
+        elSueldo.removeAttribute('onchange');
+        elSueldo.removeAttribute('onblur');
+        elSueldo.removeAttribute('oninput');
+        
+        elSueldo.addEventListener('input', function() {
+            let v = this.value.replace(/\D/g,'');
+            this.value = v ? parseInt(v).toLocaleString('es-CL') : '';
+        });
+        elSueldo.addEventListener('blur', function() {
+            window.guardarSueldoEnNube();
+            actualizarDashboard();
+        });
+        elSueldo.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') { e.preventDefault(); this.blur(); }
+        });
+    }
+
     const inputNombre = document.getElementById('inputNombre');
     const inputMonto = document.getElementById('inputMonto');
-    
     if(inputNombre) {
         inputNombre.addEventListener('keypress', e => {
             if(e.key === 'Enter') { e.preventDefault(); if(inputMonto && !inputMonto.value) inputMonto.focus(); else document.getElementById('btnGuardar').click(); }
@@ -108,59 +118,25 @@ document.addEventListener("DOMContentLoaded", () => {
                     if(fEl) fEl.value = dict.fuga;
                     if(dict.rename && texto !== dict.rename.toLowerCase()) { e.target.value = dict.rename; }
                     inputNombre.style.borderBottom = "2px solid #2ea043";
-                    setTimeout(() => inputNombre.style.borderBottom = "2px solid var(--accent-blue)", 1000);
+                    setTimeout(() => inputNombre.style.borderBottom = "2px solid var(--border-color)", 1000);
                     break;
                 }
             }
         });
     }
-    
     if(inputMonto) {
         inputMonto.addEventListener('keypress', e => {
             if(e.key === 'Enter') { e.preventDefault(); if(inputNombre && !inputNombre.value) inputNombre.focus(); else document.getElementById('btnGuardar').click(); }
         });
     }
-
-    // ⚡ PROTECCIÓN DE SUELDO ANTI-LAG
-    const elSueldo = document.getElementById('inputSueldo');
-    if(elSueldo) {
-        elSueldo.removeAttribute('onchange');
-        elSueldo.removeAttribute('onblur');
-        elSueldo.removeAttribute('oninput');
-        
-        elSueldo.addEventListener('input', function() {
-            let v = this.value.replace(/\D/g,'');
-            this.value = v ? parseInt(v).toLocaleString('es-CL') : '';
-        });
-        elSueldo.addEventListener('blur', function() {
-            if(typeof window.guardarSueldoEnNube === 'function') window.guardarSueldoEnNube();
-            if(typeof actualizarDashboard === 'function') actualizarDashboard();
-        });
-        elSueldo.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') { e.preventDefault(); this.blur(); }
-        });
-    }
 });
 
-const logosComerciales = { "uber": "uber.com", "pedidosya": "pedidosya.com", "mcdonald": "mcdonalds.com", "starbucks": "starbucks.cl", "jumbo": "jumbo.cl", "lider": "lider.cl" };
-function obtenerIconoVisual(nombre, emojiFallback) {
-    if(!nombre) return `<span style="font-size:1.4rem;">${emojiFallback}</span>`;
-    let n = nombre.toLowerCase();
-    for (let marca in logosComerciales) {
-        if (n.includes(marca)) return `<img src="https://logo.clearbit.com/${logosComerciales[marca]}?size=100" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%; background: white;" onerror="this.outerHTML='<span style=\\'font-size:1.4rem;\\'>${emojiFallback}</span>'">`;
-    }
-    return `<span style="font-size:1.4rem;">${emojiFallback}</span>`;
-}
-
-let bdDataMaster = null; 
 firebase.initializeApp({ apiKey: "AIzaSyBiYETN_JipXWhMq9gKz-2Pap-Ce4ZJNAI", authDomain: "finanzas-bcuevas.firebaseapp.com", projectId: "finanzas-bcuevas" });
 const db = firebase.firestore(), auth = firebase.auth();
 
-let listaMovimientos = [], datosMesGlobal = []; 
-let chartBD = null, chartP = null, chartDiario = null, chartRadar = null, chartTCDist = null;
-let currentSort = { column: 'fechaISO', direction: 'desc' }; 
-let modoEdicionActivo = false, sueldosHistoricos = {}; 
-let datosPatrimonio = { inyectado: 0, tir: 8, auto: 0, otrosActivos: 0, cae: 0, hipotecario: 0, otrosPasivos: 0 };
+let listaMovimientos = [], datosMesGlobal = [], sueldosHistoricos = {}, datosTCGlobal = [];
+let chartBD = null, chartP = null, chartDiario = null, chartRadar = null;
+let currentSort = { column: 'fechaISO', direction: 'desc' }, modoEdicionActivo = false; 
 
 window.mostrarToast = function(mensaje) {
     let toast = document.getElementById('toast-notif');
@@ -169,88 +145,51 @@ window.mostrarToast = function(mensaje) {
         toast.style.cssText = 'position:fixed; bottom:110px; left:50%; transform:translateX(-50%); background:rgba(46, 160, 67, 0.95); color:#fff; padding:12px 28px; border-radius:30px; font-weight:900; font-size:0.85rem; font-family:monospace; z-index:99999; transition:all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow:0 10px 30px rgba(0,0,0,0.5); text-transform:uppercase; letter-spacing:1px; opacity:0; pointer-events:none; white-space:nowrap; border: 2px solid #2ea043;';
         document.body.appendChild(toast);
     }
-    toast.innerHTML = '⚡ ' + mensaje;
-    toast.style.opacity = '1';
-    toast.style.bottom = '130px'; 
+    toast.innerHTML = '⚡ ' + mensaje; toast.style.opacity = '1'; toast.style.bottom = '130px'; 
     setTimeout(() => { toast.style.opacity = '0'; toast.style.bottom = '110px'; }, 3000);
 };
 
-window.loginWithGoogle = function() { 
-    const provider = new firebase.auth.GoogleAuthProvider();
-    auth.signInWithPopup(provider).catch(err => {
-        if (err.code === 'auth/popup-blocked' || err.code === 'auth/cancelled-popup-request') {
-            let btn = document.querySelector('.btn-google') || document.querySelector('button[onclick="loginWithGoogle()"]');
-            if(btn) btn.innerHTML = "⏳ REDIRECCIONANDO...";
-            auth.signInWithRedirect(provider);
-        } else {
-            console.error("Falla en Auth:", err);
-            alert("❌ ERROR DE CONEXIÓN:\n" + err.message);
-        }
-    }); 
-};
-
-window.logout = function() { 
-    auth.signOut().then(() => {
-        localStorage.clear(); sessionStorage.clear(); window.location.reload();
-    }); 
-};
+window.loginWithGoogle = () => { auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()).catch(err => { if (err.code === 'auth/popup-blocked' || err.code === 'auth/cancelled-popup-request') auth.signInWithRedirect(new firebase.auth.GoogleAuthProvider()); }); };
+window.logout = () => { auth.signOut().then(() => location.reload()); };
 
 auth.onAuthStateChanged(user => {
-    if (user) {
-        if (user.email.toLowerCase() === BYRON_EMAIL.toLowerCase()) {
-            console.log("%c[ORACLE V14.4] MATRIX ONLINE", "color: #2ea043; font-weight: bold; font-size: 14px;");
-            const loginScreen = document.getElementById('login-screen'), reportZone = document.getElementById('reportZone');
-            if(loginScreen) loginScreen.style.display = 'none';
-            if(reportZone) reportZone.classList.add('active-app');
-            
-            const userDisplay = document.getElementById('user-display');
-            if(userDisplay) userDisplay.innerText = user.displayName.split(" ")[0];
-            
-            db.collection("parametros").doc("sueldos").onSnapshot(snap => { if(snap.exists) sueldosHistoricos = snap.data(); });
-            
-            db.collection("parametros").doc("patrimonio").onSnapshot(snap => { 
-                if(snap.exists) {
-                    datosPatrimonio = snap.data();
-                    if(typeof renderizarPatrimonioVisual === 'function') renderizarPatrimonioVisual();
-                }
+    if (user && user.email.toLowerCase() === BYRON_EMAIL.toLowerCase()) {
+        const loginScreen = document.getElementById('login-screen'), reportZone = document.getElementById('reportZone');
+        if(loginScreen) loginScreen.style.display = 'none';
+        if(reportZone) reportZone.classList.add('active-app');
+        const userDisplay = document.getElementById('user-display');
+        if(userDisplay) userDisplay.innerText = user.displayName.split(" ")[0];
+        
+        db.collection("parametros").doc("sueldos").onSnapshot(snap => { if(snap.exists) { sueldosHistoricos = snap.data(); cargarSueldoVisual(); actualizarDashboard(); } });
+        db.collection("movimientos").onSnapshot(snap => {
+            listaMovimientos = [];
+            snap.forEach(doc => {
+                let d = doc.data(); d.firestoreId = doc.id;
+                d.fechaISO = d.fecha?.toDate ? d.fecha.toDate().toISOString() : (d.fecha || new Date().toISOString());
+                d.monto = Number(d.monto) || 0;
+                listaMovimientos.push(d);
             });
-
-            db.collection("movimientos").onSnapshot(snap => {
-                listaMovimientos = [];
-                snap.forEach(doc => {
-                    let d = doc.data(); d.firestoreId = doc.id;
-                    d.fechaISO = d.fecha?.toDate ? d.fecha.toDate().toISOString() : (d.fecha || new Date().toISOString());
-                    d.monto = Number(d.monto) || 0;
-                    listaMovimientos.push(d);
-                });
-                aplicarCicloAlSistema();
-            });
-            inicializarListenerTC();
-            if(typeof iniciarRelojRendimiento === 'function') iniciarRelojRendimiento(); 
-        } else {
-            auth.signOut(); alert(`⛔ DENEGADO:\nEl correo ${user.email} no tiene permisos.`);
-        }
+            aplicarCicloAlSistema();
+        });
+        inicializarListenerTC();
     }
 });
 
-// ==========================================
-// 💰 GESTIÓN DE SUELDOS AISLADOS
-// ==========================================
+// 💰 GESTIÓN PRESUPUESTO
 window.cargarSueldoVisual = function() {
     const elMes = document.getElementById('navMesConceptual'), elAnio = document.getElementById('navAnio'), elSueldo = document.getElementById('inputSueldo');
     if(!elMes || !elAnio || !elSueldo) return;
-    let m = elMes.value, a = elAnio.value, llave = `${a}_${m}`;
+    let m = parseInt(elMes.value), a = parseInt(elAnio.value), llave = `${a}_${m}`;
     elSueldo.setAttribute('data-mes-ancla', m); elSueldo.setAttribute('data-anio-ancla', a);
     if (document.activeElement !== elSueldo) {
-        if (sueldosHistoricos[llave]) elSueldo.value = sueldosHistoricos[llave].toLocaleString('es-CL');
-        else { elSueldo.value = ''; elSueldo.placeholder = 'PENDIENTE'; }
+        if (sueldosHistoricos[llave]) elSueldo.value = sueldosHistoricos[llave].toLocaleString('es-CL'); 
+        else { elSueldo.value = ''; elSueldo.placeholder = 'NO ASIGNADO'; }
     }
 };
 
 window.obtenerSueldoMes = function(anio, mes) {
     let llave = `${anio}_${mes}`;
-    if (sueldosHistoricos[llave]) return sueldosHistoricos[llave];
-    return SUELDO_BASE_DEFAULT;
+    return sueldosHistoricos[llave] || PRESUPUESTO_BASE_DEFAULT; 
 };
 
 window.guardarSueldoEnNube = function() {
@@ -261,91 +200,38 @@ window.guardarSueldoEnNube = function() {
     let s = parseInt(elSueldo.value.replace(/\./g, '')); 
     if (isNaN(s) || s <= 0) return;
     let llave = `${a}_${m}`;
+    if (sueldosHistoricos[llave] === s) return; 
     sueldosHistoricos[llave] = s;
-    db.collection("parametros").doc("sueldos").set({ [llave]: s }, {merge: true}).then(() => {
-        mostrarToast(`SUELDO GUARDADO`); actualizarDashboard();
-    });
+    db.collection("parametros").doc("sueldos").set({ [llave]: s }, {merge: true}).then(()=>mostrarToast(`PRESUPUESTO ACTUALIZADO`));
 };
 
-// ==========================================
-// 🏛️ GESTIÓN DE PATRIMONIO
-// ==========================================
-function renderizarPatrimonioVisual() {
-    const s = (id, val) => { const el = document.getElementById(id); if(el && document.activeElement !== el) el.value = (val||0).toLocaleString('es-CL'); };
-    s('ptr-inversion', datosPatrimonio.inyectado); s('ptr-tir', datosPatrimonio.tir); s('ptr-auto', datosPatrimonio.auto);
-    s('ptr-otros-act', datosPatrimonio.otrosActivos); s('ptr-cae', datosPatrimonio.cae); s('ptr-hipo', datosPatrimonio.hipotecario); s('ptr-otros-pas', datosPatrimonio.otrosPasivos);
-    calcularPatrimonioGlobal();
-}
-
-window.guardarPatrimonioEnNube = function() {
-    const g = (id) => parseInt((document.getElementById(id).value || "0").replace(/\./g, '')) || 0;
-    datosPatrimonio = { inyectado: g('ptr-inversion'), tir: g('ptr-tir'), auto: g('ptr-auto'), otrosActivos: g('ptr-otros-act'), cae: g('ptr-cae'), hipotecario: g('ptr-hipo'), otrosPasivos: g('ptr-otros-pas') };
-    db.collection("parametros").doc("patrimonio").set(datosPatrimonio).then(() => { mostrarToast("ESTADO PATRIMONIAL ACTUALIZADO"); calcularPatrimonioGlobal(); });
-}
-
-let tickerRendimiento = 0;
-function iniciarRelojRendimiento() {
-    setInterval(() => {
-        let inv = datosPatrimonio.inyectado || 0; let tir = (datosPatrimonio.tir || 8) / 100;
-        let gananciaPorSegundo = (inv * tir) / 31536000; 
-        tickerRendimiento += gananciaPorSegundo;
-        
-        const elTicker = document.getElementById('live-yield-counter');
-        const elDiario = document.getElementById('live-yield-daily');
-        if(elTicker) { elTicker.innerText = `+ $${tickerRendimiento.toFixed(4)}`; }
-        if(elDiario && inv > 0) { let diario = (inv * tir) / 365; elDiario.innerText = `($${Math.round(diario).toLocaleString('es-CL')} / día en Automático)`; }
-    }, 1000);
-}
-
-function calcularPatrimonioGlobal() {
-    let liquidezBanco = 0; 
-    const elSaldo = document.getElementById('txtSaldo');
-    if(elSaldo) liquidezBanco = parseInt(elSaldo.innerText.replace(/\./g, '')) || 0;
+window.aplicarCicloAlSistema = function() {
+    const elSueldo = document.getElementById('inputSueldo');
+    if (elSueldo && document.activeElement === elSueldo) { window.guardarSueldoEnNube(); elSueldo.blur(); elSueldo.value = ''; }
     
-    let totalActivos = liquidezBanco + (datosPatrimonio.inyectado || 0) + (datosPatrimonio.auto || 0) + (datosPatrimonio.otrosActivos || 0);
-    let totalDeudaTC = window.totalTC || 0;
-    let totalPasivos = totalDeudaTC + (datosPatrimonio.cae || 0) + (datosPatrimonio.hipotecario || 0) + (datosPatrimonio.otrosPasivos || 0);
-    let patrimonioNeto = totalActivos - totalPasivos;
+    const navMes = document.getElementById('navMesConceptual'), navAnio = document.getElementById('navAnio');
+    if(!navMes || !navAnio) return;
     
-    const setT = (id, val) => { const el = document.getElementById(id); if(el) el.innerText = val.toLocaleString('es-CL'); };
-    setT('hud-patrimonio-neto', patrimonioNeto); setT('hud-activos', totalActivos); setT('hud-pasivos', totalPasivos);
-    
-    const elPN = document.getElementById('hud-patrimonio-neto');
-    if(elPN) elPN.style.color = patrimonioNeto < 0 ? "var(--color-fuga)" : "#79c0ff";
-    
-    const barraA = document.getElementById('ptr-bar-activos');
-    const barraP = document.getElementById('ptr-bar-pasivos');
-    if(barraA && barraP) {
-        let max = totalActivos + totalPasivos;
-        if (max > 0) { barraA.style.width = (totalActivos / max * 100) + "%"; barraP.style.width = (totalPasivos / max * 100) + "%"; }
-    }
-}
+    if(document.getElementById('filtroDesde')) document.getElementById('filtroDesde').value = ''; 
+    if(document.getElementById('filtroHasta')) document.getElementById('filtroHasta').value = '';
 
-// ==========================================
-// ⚠️ HISTORIAN
-// ==========================================
-let alarmLogCache = "";
-window.abrirHistorian = function() {
-    document.getElementById('historian-content').innerHTML = alarmLogCache || "<div style='color:var(--color-saldo); font-weight:bold; text-align:center; padding:20px;'>SYSTEM NOMINAL.<br>NO BREACHES DETECTED.</div>";
-    document.getElementById('modal-historian').style.display = 'flex';
+    const { T0, fechaFinVisual } = calcularFechasCiclo(parseInt(navMes.value), parseInt(navAnio.value));
+    const badge = document.getElementById('navRangoBadge');
+    if(badge) badge.innerText = `[${T0.toLocaleDateString('es-CL', {day:'2-digit', month:'short'}).toUpperCase()} - ${fechaFinVisual.toLocaleDateString('es-CL', {day:'2-digit', month:'short'}).toUpperCase()}]`;
+    
+    setTimeout(() => { cargarSueldoVisual(); actualizarDashboard(); }, 50);
 };
 
-// ==========================================
-// 📊 DASHBOARD GLOBAL
-// ==========================================
 function actualizarDashboard() {
     const elMes = document.getElementById('navMesConceptual'), elAnio = document.getElementById('navAnio');
     const mesVal = parseInt(elMes.value), anioVal = parseInt(elAnio.value);
-    
     const inputSueldo = document.getElementById('inputSueldo');
-    const sueldo = inputSueldo && document.activeElement === inputSueldo ? parseInt(inputSueldo.value.replace(/\./g,'')) : obtenerSueldoMes(anioVal, mesVal);
     
-    const buscador = document.getElementById('inputBuscador');
-    const b = buscador ? buscador.value.toLowerCase() : '';
+    let sueldo = obtenerSueldoMes(anioVal, mesVal);
+    if (inputSueldo && inputSueldo.value) { sueldo = parseInt(inputSueldo.value.replace(/\./g,'')) || sueldo; }
+    
     let { T0, TFinal } = calcularFechasCiclo(mesVal, anioVal);
-    
-    const fDesde = document.getElementById('filtroDesde') ? document.getElementById('filtroDesde').value : '';
-    const fHasta = document.getElementById('filtroHasta') ? document.getElementById('filtroHasta').value : '';
+    const fDesde = document.getElementById('filtroDesde')?.value, fHasta = document.getElementById('filtroHasta')?.value;
     if(fDesde) { let [y,m,d] = fDesde.split('-'); T0 = new Date(y, m-1, d); }
     if(fHasta) { let [y,m,d] = fHasta.split('-'); TFinal = new Date(y, m-1, d, 23, 59, 59); }
     
@@ -366,11 +252,10 @@ function actualizarDashboard() {
             else if (x.tipo === 'Por Cobrar' || x.categoria === 'Cuentas por Cobrar (Activos)') tC += x.monto;
             else if (!x.esNeutro) {
                 saldoAcc -= x.monto;
-                if (x.catV === 'Infraestructura (Depto)') { tInfra += x.monto; }
-                else if (x.catV === 'Flota & Movilidad') { tFlota += x.monto; }
-                else if (x.tipo === 'Gasto Fijo') { tF += x.monto; } 
-                else { tO += x.monto; }
-                
+                if (x.catV === 'Infraestructura (Depto)') tInfra += x.monto;
+                else if (x.catV === 'Flota & Movilidad') tFlota += x.monto;
+                else if (x.tipo === 'Gasto Fijo') tF += x.monto; 
+                else tO += x.monto; 
                 gCat[x.catV] = (gCat[x.catV] || 0) + x.monto;
                 let pctFuga = x.innecesarioPct !== undefined ? x.innecesarioPct : (catEvitables.includes(x.catV) ? 100 : 0);
                 tEvitable += (x.monto * (pctFuga / 100));
@@ -380,8 +265,7 @@ function actualizarDashboard() {
 
     const setTxt = (id, val) => { const el = document.getElementById(id); if(el) el.innerText = val.toLocaleString('es-CL'); };
     setTxt('txtTotalFijos', tF); setTxt('txtTotalOtros', tO); setTxt('txtTotalIngresos', tI);
-    setTxt('txtCxC', tC); setTxt('txtSaldo', saldoAcc);
-    setTxt('txtTotalInfra', tInfra); setTxt('txtTotalFlota', tFlota); 
+    setTxt('txtCxC', tC); setTxt('txtSaldo', saldoAcc); setTxt('txtTotalInfra', tInfra); setTxt('txtTotalFlota', tFlota); 
     
     const diasCiclo = Math.max(1, Math.round((TFinal - T0) / 86400000));
     const hoy = new Date();
@@ -412,14 +296,16 @@ function actualizarDashboard() {
         txtProyectado.style.color = proyVal < 0 ? "var(--color-fuga)" : "#79c0ff";
     }
 
+    let b = document.getElementById('inputBuscador') ? document.getElementById('inputBuscador').value.toLowerCase() : '';
     let dataGraficos = dataMes.filter(x => x.catV !== 'Gasto Tarjeta de Crédito');
-    if (typeof renderizarListas === 'function') renderizarListas(sueldo, b);
-    if (typeof dibujarGraficosFlujo === 'function') dibujarGraficosFlujo(sueldo, [...dataGraficos].sort((x,y) => x.fechaISO < y.fechaISO ? -1 : 1), gCat, diasCiclo, T0, tF, tInfra, tFlota);
     
+    if (typeof renderizarListas === 'function') renderizarListas(sueldo, b);
+    if (typeof dibujarGraficos === 'function') dibujarGraficos(sueldo, [...dataGraficos].sort((x,y) => x.fechaISO < y.fechaISO ? -1 : 1), gCat, diasCiclo, T0, tF, tInfra, tFlota, deudaAprox);
+    
+    const kpiSalida = document.getElementById('txtGastoTotalPeriodo');
+    if (kpiSalida) kpiSalida.innerText = '$' + (tO + tF).toLocaleString('es-CL');
     setTxt('txtGastoTramo', tO + tF);
     setTxt('txtPromedioZoom', Math.round((tO + tF) / diasCiclo));
-    
-    if(typeof calcularPatrimonioGlobal === 'function') calcularPatrimonioGlobal(); 
 }
 
 // ==========================================
@@ -499,8 +385,12 @@ function sortTable(column) {
 function editarMovimiento(id) {
     const mov = listaMovimientos.find(m => m.firestoreId === id);
     if(!mov) return alert("Registro no encontrado.");
+    modoEdicionActivo = true; 
     if(document.getElementById('editId')) document.getElementById('editId').value = mov.firestoreId; 
-    if(document.getElementById('inputNombre')) document.getElementById('inputNombre').value = mov.nombre;
+    if(document.getElementById('inputNombre')) {
+        document.getElementById('inputNombre').value = mov.nombre;
+        if (window.innerWidth > 768) { document.getElementById('inputNombre').focus(); setTimeout(() => document.getElementById('inputNombre').select(), 50); }
+    }
     if(document.getElementById('inputMonto')) document.getElementById('inputMonto').value = mov.monto.toLocaleString('es-CL');
     if(document.getElementById('inputCategoria')) {
         document.getElementById('inputCategoria').value = mov.categoria || 'Sin Categoría';
@@ -514,277 +404,212 @@ function editarMovimiento(id) {
     if (mov.catV === 'Transferencia Recibida' || mov.catV === 'Ingreso Adicional') tipoC = 'Ingreso';
     if (mov.catV === 'Transferencia Propia / Ahorro') tipoC = 'Ahorro';
     if(document.getElementById('inputTipo')) document.getElementById('inputTipo').value = tipoC;
+    
     try {
         let d = new Date(mov.fechaISO);
         let dLocal = new Date(d.getTime() - (d.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
         if(document.getElementById('inputFecha')) document.getElementById('inputFecha').value = dLocal;
-    } catch(e) { console.error(e); }
+    } catch(e) {}
+    
     const btn = document.getElementById('btnGuardar');
     if(btn) { btn.innerHTML = isEng ? "UPDATE" : "ACTUALIZAR"; btn.style.backgroundColor = "var(--color-saldo)"; }
-    modoEdicionActivo = true;
-    actualizarDashboard(); 
+    actualizarDashboard(); window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-function agregarMovimiento() {
+function procesarCompraTCManual(nombre, montoTotal, cuotas, fechaStr) {
+    const batch = db.batch(); const diaCorte = 20;
+    let fCompra = new Date(fechaStr); let dia = fCompra.getDate();
+    let montoCuota = Math.round(montoTotal / cuotas);
+
+    for (let i = 1; i <= cuotas; i++) {
+        let mesesDesfase = (dia > diaCorte || cuotas > 1) ? 2 : 1; 
+        let fCobro = new Date(fCompra.getFullYear(), fCompra.getMonth() + mesesDesfase + (i - 1), 15);
+        batch.set(db.collection("deuda_tc").doc(), {
+            nombre: `${nombre.toUpperCase()} (MANUAL)`, monto: montoCuota, cuota: `${i}/${cuotas}`,
+            mesCobro: fCobro.toISOString(), status: "Proyectado"
+        });
+    }
+    batch.commit().then(() => {
+        mostrarToast(`TC: ${cuotas} CUOTAS DESPLEGADAS`);
+        limpiarFormulario();
+    }).catch(e => alert("Error TC: " + e));
+}
+
+window.agregarMovimiento = function() {
     const m = parseInt(document.getElementById('inputMonto').value.replace(/\./g, ''));
     const n = document.getElementById('inputNombre').value;
     const c = document.getElementById('inputCategoria').value;
     const t = document.getElementById('inputTipo').value;
     const fInput = document.getElementById('inputFecha').value;
     const editId = document.getElementById('editId').value;
-    
-    const iFugaEl = document.getElementById('inputFuga');
-    const pctFuga = iFugaEl ? parseInt(iFugaEl.value) : (catEvitables.includes(c) ? 100 : 0);
-    const cuotasEl = document.getElementById('inputCuotas');
-    const cantCuotas = (cuotasEl && c === "Gasto Tarjeta de Crédito") ? parseInt(cuotasEl.value) : 1;
+    const cantCuotas = parseInt(document.getElementById('inputCuotas')?.value || 1);
+    const pctFuga = parseInt(document.getElementById('inputFuga')?.value || (catEvitables.includes(c) ? 100 : 0));
 
     if (!m || !n || !fInput) return alert("⚠️ Faltan parámetros en la consola.");
+
+    if (c === "Gasto Tarjeta de Crédito" && !modoEdicionActivo) {
+        procesarCompraTCManual(n, m, cantCuotas, fInput); return; 
+    }
+
     const btn = document.getElementById('btnGuardar');
     btn.innerHTML = isEng ? "INJECTING..." : "INYECTANDO..."; btn.disabled = true;
-    const dataPayload = { nombre: n, monto: m, categoria: c, tipo: t, fecha: new Date(fInput), status: 'Manual', innecesarioPct: pctFuga, cuotas: cantCuotas };
+    const payload = { nombre: n, monto: m, categoria: c, tipo: t, fecha: new Date(fInput), status: 'Manual', innecesarioPct: pctFuga, cuotas: cantCuotas };
     
-    let op = (modoEdicionActivo && editId) ? db.collection("movimientos").doc(editId).update(dataPayload) : db.collection("movimientos").add(dataPayload);
+    let op = (modoEdicionActivo && editId) ? db.collection("movimientos").doc(editId).update(payload) : db.collection("movimientos").add(payload);
     op.then(() => {
-        document.getElementById('editId').value = ''; document.getElementById('inputNombre').value = ''; document.getElementById('inputMonto').value = '';
-        btn.innerHTML = isEng ? "INJECT" : "INYECTAR"; btn.style.backgroundColor = "var(--color-edit)"; btn.disabled = false; modoEdicionActivo = false;
-        mostrarToast("REGISTRO CONFIRMADO");
-    }).catch(err => { alert("❌ Error de Matriz: " + err.message); btn.innerHTML = "ERROR"; btn.disabled = false; });
+        limpiarFormulario(); mostrarToast("REGISTRO CONFIRMADO");
+    }).catch(err => { alert("Error: " + err.message); btn.innerHTML = "ERROR"; btn.disabled = false; });
+}
+
+function limpiarFormulario() {
+    document.getElementById('editId').value = ''; document.getElementById('inputNombre').value = ''; document.getElementById('inputMonto').value = '';
+    const btn = document.getElementById('btnGuardar');
+    btn.innerHTML = isEng ? "INJECT" : "INYECTAR"; btn.style.backgroundColor = "var(--color-edit)"; btn.disabled = false; modoEdicionActivo = false;
+    actualizarDashboard();
 }
 
 function formatearEntradaNumerica(i) { let v = i.value.replace(/\D/g,''); i.value = v ? parseInt(v).toLocaleString('es-CL') : ''; }
 function toggleTheme() { document.body.classList.toggle('light-theme'); }
 setInterval(() => { const c = document.getElementById('cronos'); if(c) c.innerText = new Date().toLocaleString('es-CL').toUpperCase(); }, 1000);
-function toggleAllChecks() { const checkEl = document.getElementById('checkAll'); if(!checkEl) return; const check = checkEl.checked; document.querySelectorAll('.row-check').forEach(cb => cb.checked = check); updateMassActions(); }
-function updateMassActions() { const bar = document.getElementById('massActionsBar'); if(!bar) return; const cnt = document.querySelectorAll('.row-check:not(#checkAll):checked').length; bar.style.display = cnt > 0 ? 'flex' : 'none'; document.getElementById('massCount').innerText = `${cnt} SEL`; if(cnt === 0) document.getElementById('checkAll').checked = false; }
+function toggleAllChecks() { const check = document.getElementById('checkAll')?.checked; document.querySelectorAll('.row-check').forEach(cb => cb.checked = check); updateMassActions(); }
+function updateMassActions() { const bar = document.getElementById('massActionsBar'); if(!bar) return; const cnt = document.querySelectorAll('.row-check:not(#checkAll):checked').length; bar.style.display = cnt > 0 ? 'flex' : 'none'; document.getElementById('massCount').innerText = `${cnt} SEL`; if(cnt === 0 && document.getElementById('checkAll')) document.getElementById('checkAll').checked = false; }
 function massDelete() { const ids = Array.from(document.querySelectorAll('.row-check:not(#checkAll):checked')).map(cb => cb.value); if(ids.length === 0 || !confirm(`⚠️ ¿Eliminar ${ids.length} registro(s)?`)) return; const btn = document.querySelector('button[onclick="massDelete()"]'); const orig = btn.innerHTML; btn.innerHTML = '⏳'; Promise.all(ids.map(id => db.collection("movimientos").doc(id).delete())).then(() => { document.getElementById('massActionsBar').style.display = 'none'; document.getElementById('checkAll').checked = false; btn.innerHTML = orig; }); }
 function massCategorize() { const ids = Array.from(document.querySelectorAll('.row-check:not(#checkAll):checked')).map(cb => cb.value); const cat = document.getElementById('massCategorySelect').value; if(ids.length === 0 || !cat || !confirm(`¿Categorizar como "${cat}"?`)) return; const btn = document.querySelector('button[onclick="massCategorize()"]'); const orig = btn.innerHTML; btn.innerHTML = '⏳'; Promise.all(ids.map(id => db.collection("movimientos").doc(id).update({categoria: cat}))).then(() => { document.getElementById('massActionsBar').style.display = 'none'; document.getElementById('checkAll').checked = false; document.getElementById('massCategorySelect').value = ''; btn.innerHTML = orig; }); }
 
 // =====================================================================
-// 📈 GRÁFICOS FLUJO + ⚡ DATA LABELS
+// 📊 GRÁFICOS (ETIQUETAS VISUALES INTEGRADAS)
 // =====================================================================
-function dibujarGraficosFlujo(sueldo, chronData, cats, diasCiclo, T0, totalFijosMes, tInfra, tFlota) {
-    if(chartBD) chartBD.destroy(); if(chartP) chartP.destroy(); if(chartDiario) chartDiario.destroy(); 
+function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0, totalFijosMes, tInfra, tFlota, deudaAprox) {
+    try { if(chartBD) chartBD.destroy(); } catch(e){}
+    try { if(chartP) chartP.destroy(); } catch(e){}
+    try { if(chartDiario) chartDiario.destroy(); } catch(e){}
+    try { if(chartRadar) chartRadar.destroy(); } catch(e){}
+    
     const cT = getComputedStyle(document.body).getPropertyValue('--text-main').trim() || "#f0f6fc"; 
     const cG = getComputedStyle(document.body).getPropertyValue('--border-color').trim() || "#21262d"; 
-
-    // ⚡ ETIQUETAS VISUALES PARA GRÁFICOS
+    
     const labelsPlugin = {
         id: 'labelsPlugin',
         afterDatasetsDraw(chart) {
-            const ctx = chart.ctx; ctx.font = 'bold 10px monospace'; ctx.fillStyle = '#ffffff'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
-            chart.data.datasets.forEach((dataset, i) => {
-                const meta = chart.getDatasetMeta(i);
-                if (meta.hidden) return;
-                meta.data.forEach((element, index) => {
-                    const data = dataset.data[index];
-                    if (data > 0 && element.x && element.y) {
-                        ctx.fillText('$' + Math.round(data / 1000) + 'k', element.x, element.y - 4);
-                    }
+            try {
+                const ctx = chart.ctx; ctx.font = 'bold 10px monospace'; ctx.fillStyle = '#ffffff'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+                chart.data.datasets.forEach((dataset, i) => {
+                    const meta = chart.getDatasetMeta(i);
+                    if (meta.hidden) return;
+                    meta.data.forEach((element, index) => {
+                        const dataVal = dataset.data[index];
+                        if (dataVal && dataVal > 0 && element && typeof element.x === 'number' && typeof element.y === 'number') {
+                            ctx.fillText('$' + Math.round(dataVal / 1000) + 'k', element.x, element.y - 5);
+                        }
+                    });
                 });
-            });
+            } catch(e) {}
         }
     };
     
-    let daily = Array(diasCiclo + 1).fill(0), dailyNecesario = Array(diasCiclo + 1).fill(0), dailyFugas = Array(diasCiclo + 1).fill(0), msT0 = T0.getTime();
+    let daily = Array(diasCiclo + 1).fill(0), dailyNecesario = Array(diasCiclo + 1).fill(0), dailyFugas = Array(diasCiclo + 1).fill(0); 
+    let msT0 = T0.getTime();
 
     chronData.forEach(m => {
-        let d = new Date(m.fechaISO);
-        let diff = Math.floor((d.getTime() - msT0) / 86400000) + 1;
+        let diff = Math.floor((new Date(m.fechaISO).getTime() - msT0) / 86400000) + 1;
         if(diff >= 1 && diff <= diasCiclo) { 
             if(m.esIn) daily[diff] += m.monto; 
             else if(!m.esNeutro) { 
                 daily[diff] -= m.monto; 
-                if(m.catV !== 'Infraestructura (Depto)' && m.catV !== 'Flota & Movilidad' && m.tipo !== 'Gasto Fijo') {
-                    if(catEvitables.includes(m.catV)) dailyFugas[diff] += m.monto;
-                    else dailyNecesario[diff] += m.monto;
+                if(!['Infraestructura (Depto)', 'Flota & Movilidad'].includes(m.catV) && m.tipo !== 'Gasto Fijo') {
+                    if(catEvitables.includes(m.catV)) dailyFugas[diff] += m.monto; else dailyNecesario[diff] += m.monto;
                 }
             } 
         }
     });
 
     let actual = [sueldo], ideal = [sueldo], proyeccion = Array(diasCiclo + 1).fill(null);
-    let labelsX = ["INI"], labelsFechas = ["INI"]; 
-    let acc = sueldo, limit = Math.floor((Date.now() - msT0) / 86400000) + 1;
+    let labelsX = ["INI"], labelsFechas = ["INI"], acc = sueldo, limit = Math.floor((Date.now() - msT0) / 86400000) + 1;
     const nombresMes = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"];
 
     for(let i=1; i<=diasCiclo; i++) {
         ideal.push(sueldo - (sueldo/diasCiclo)*i); acc += daily[i]; actual.push(i > limit ? null : acc);
-        let f = new Date(msT0 + (i-1)*86400000), dia = String(f.getDate()).padStart(2, '0'), mesStr = nombresMes[f.getMonth()];
-        labelsFechas.push(`${dia} ${mesStr}`); labelsX.push(f.getDate() === 1 ? `${dia} ${mesStr}` : dia); 
+        let f = new Date(msT0 + (i-1)*86400000); let dia = String(f.getDate()).padStart(2, '0');
+        labelsFechas.push(`${dia} ${nombresMes[f.getMonth()]}`); labelsX.push(f.getDate() === 1 ? `${dia} ${nombresMes[f.getMonth()]}` : dia); 
     }
 
     if(limit > 1 && limit <= diasCiclo) {
-        let gastoAcumulado = sueldo - actual[limit];
-        let promedioGastoDiario = gastoAcumulado / limit;
+        let promedioGastoDiario = (sueldo - actual[limit]) / limit;
         proyeccion[limit] = actual[limit];
         for(let i = limit + 1; i <= diasCiclo; i++) proyeccion[i] = proyeccion[i-1] - promedioGastoDiario;
     }
 
-    const ctxBD = document.getElementById('chartBurnDown');
-    if(ctxBD) {
-        let grad = ctxBD.getContext('2d').createLinearGradient(0, 0, 0, 400);
-        grad.addColorStop(0, 'rgba(31, 111, 235, 0.4)'); grad.addColorStop(1, 'rgba(31, 111, 235, 0)');
-        chartBD = new Chart(ctxBD, {
-            type: 'line', 
-            data: { labels: labelsX, datasets: [
-                { label: 'Consumo Real', data: actual, borderColor: '#1f6feb', backgroundColor: grad, borderWidth: 3, fill: true, pointRadius: 0, tension: 0.2 },
-                { label: 'Proyección (Oráculo)', data: proyeccion, borderColor: '#d29922', borderDash: [5, 5], borderWidth: 2, fill: false, pointRadius: 0, tension: 0.2 },
-                { label: 'Ideal', data: ideal, borderColor: 'rgba(46, 160, 67, 0.4)', borderDash: [5, 5], borderWidth: 2, fill: false, pointRadius: 0 }
-            ]},
-            options: { maintainAspectRatio:false, plugins:{legend:{display:false}}, scales: { x: { ticks: { color: cT, font: {size: 9} }, grid:{color:cG} }, y: { grid: { color: cG }, ticks: { color: cT, callback: v => '$' + Math.round(v/1000) + 'k' } } }, layout: { padding: 0 } },
-            plugins: [labelsPlugin] // ⚡ Inyección de plugin
-        });
-    }
-
-    const sorted = Object.entries(cats).sort((a,b)=>b[1]-a[1]).slice(0,6);
-    const bgColors = ['rgba(31, 111, 235, 0.7)', 'rgba(46, 160, 67, 0.7)', 'rgba(210, 153, 34, 0.7)', 'rgba(255, 82, 82, 0.7)', 'rgba(163, 113, 247, 0.7)', 'rgba(0, 188, 212, 0.7)'];
-    const borderColors = ['#1f6feb', '#2ea043', '#d29922', '#ff5252', '#a371f7', '#00bcd4'];
-    
-    const ctxPareto = document.getElementById('chartPareto');
-    if(ctxPareto) {
-        chartP = new Chart(ctxPareto, {
-            type: 'polarArea', 
-            data: { labels: sorted.map(c => aliasMap[c[0]] || c[0].split(' ')[0]), datasets: [{ data: sorted.map(c => c[1]), backgroundColor: bgColors, borderColor: borderColors, borderWidth: 2 }] },
-            options: { maintainAspectRatio:false, plugins:{legend:{position: 'right', labels:{color:cT, font:{size:10, family:'monospace'}}}}, scales:{ r:{ticks:{display:false}, grid:{color:cG}, angleLines:{color:cG}} } }
-        });
-    }
-
-    const ctxDiario = document.getElementById('chartDiario');
-    let limiteDiarioIdeal = Math.max((sueldo - totalFijosMes - tInfra - tFlota) / diasCiclo, 0);
-    
-    alarmLogCache = "";
-    if ((window.totalTC || 0) > sueldo * 0.15) {
-        alarmLogCache += `<div class='log-item critical'><div class='log-icon'>🛑</div><div class='log-content'><strong>SOBRECARGA TC</strong><div class='log-date'>Riesgo Pasivos > 15%</div><span>$${(window.totalTC||0).toLocaleString('es-CL')}</span></div></div>`;
-    }
-
-    if(ctxDiario) {
-        let lastDayWithData = diasCiclo;
-        while(lastDayWithData > 0 && (dailyNecesario[lastDayWithData] === 0 && dailyFugas[lastDayWithData] === 0)) lastDayWithData--;
-        let startDayForBars = Math.max(1, lastDayWithData - 14); 
-        let barLabels = labelsFechas.slice(startDayForBars, lastDayWithData + 1); 
-        let barNecesario = dailyNecesario.slice(startDayForBars, lastDayWithData + 1);
-        let barFugas = dailyFugas.slice(startDayForBars, lastDayWithData + 1);
-        
-        for(let i=startDayForBars; i<=lastDayWithData; i++) {
-            if (dailyFugas[i] > 0) {
-                alarmLogCache += `<div class='log-item warning'><div class='log-icon'>🍔</div><div class='log-content'><strong>FUGA DOPAMINA</strong><div class='log-date'>${labelsFechas[i]}</div><span>$${dailyFugas[i].toLocaleString('es-CL')}</span></div></div>`;
-            }
-            if ((dailyNecesario[i] + dailyFugas[i]) > limiteDiarioIdeal) {
-                alarmLogCache += `<div class='log-item critical'><div class='log-icon'>🔥</div><div class='log-content'><strong>LÍMITE ROTO</strong><div class='log-date'>${labelsFechas[i]}</div><span>$${(dailyNecesario[i]+dailyFugas[i]).toLocaleString('es-CL')}</span></div></div>`;
-            }
+    try {
+        const ctxBD = document.getElementById('chartBurnDown');
+        if(ctxBD) {
+            let grad = ctxBD.getContext('2d').createLinearGradient(0, 0, 0, 400); grad.addColorStop(0, 'rgba(31, 111, 235, 0.4)'); grad.addColorStop(1, 'rgba(31, 111, 235, 0)');
+            chartBD = new Chart(ctxBD, {
+                type: 'line', data: { labels: labelsX, datasets: [ { label: 'Consumo Real', data: actual, borderColor: '#1f6feb', backgroundColor: grad, borderWidth: 3, fill: true, pointRadius: 0, tension: 0.2 }, { label: 'Proyección', data: proyeccion, borderColor: '#d29922', borderDash: [5, 5], borderWidth: 2, fill: false, pointRadius: 0, tension: 0.2 }, { label: 'Ideal', data: ideal, borderColor: 'rgba(46, 160, 67, 0.4)', borderDash: [5, 5], borderWidth: 2, fill: false, pointRadius: 0 } ]},
+                options: { maintainAspectRatio:false, plugins:{legend:{display:false}}, scales: { x: { ticks: { color: cT, font: {size: 9} }, grid:{color:cG} }, y: { grid: { color: cG }, ticks: { color: cT, callback: v => '$' + Math.round(v/1000) + 'k' } } }, layout: { padding: 0 } }
+            });
         }
+    } catch(e) {}
 
-        const diarioEnhancementsPlugin = {
-            id: 'diarioEnhancementsPlugin',
-            afterDraw: (chart) => {
-                const ctx = chart.ctx; const xAxis = chart.scales.x; const yAxis = chart.scales.y;
+    try {
+        const sorted = Object.entries(cats).sort((a,b)=>b[1]-a[1]).slice(0,6);
+        const ctxP = document.getElementById('chartPareto');
+        if(ctxP) {
+            chartP = new Chart(ctxP, {
+                type: 'polarArea', 
+                data: { labels: sorted.map(c => aliasMap[c[0]] || c[0].split(' ')[0]), datasets: [{ data: sorted.map(c => c[1]), backgroundColor: ['rgba(31, 111, 235, 0.7)', 'rgba(46, 160, 67, 0.7)', 'rgba(210, 153, 34, 0.7)', 'rgba(255, 82, 82, 0.7)', 'rgba(163, 113, 247, 0.7)', 'rgba(0, 188, 212, 0.7)'], borderColor: ['#1f6feb', '#2ea043', '#d29922', '#ff5252', '#a371f7', '#00bcd4'], borderWidth: 2 }] },
+                options: { maintainAspectRatio:false, plugins:{legend:{position: 'right', labels:{color:cT, font:{size:10, family:'monospace'}}}}, scales:{ r:{ticks:{display:false}, grid:{color:cG}, angleLines:{color:cG}} } }
+            });
+        }
+    } catch(e) {}
+
+    try {
+        const ctxDiario = document.getElementById('chartDiario');
+        let limiteDiarioIdeal = Math.max((sueldo - totalFijosMes - tInfra - tFlota) / diasCiclo, 0);
+
+        if(ctxDiario) {
+            let lastDayWithData = diasCiclo; while(lastDayWithData > 0 && (dailyNecesario[lastDayWithData] === 0 && dailyFugas[lastDayWithData] === 0)) lastDayWithData--; let startDayForBars = Math.max(1, lastDayWithData - 14); 
+            
+            chartDiario = new Chart(ctxDiario, {
+                type: 'bar',
+                data: { labels: labelsFechas.slice(startDayForBars, lastDayWithData + 1), datasets: [ { label: 'Gasto Base', data: dailyNecesario.slice(startDayForBars, lastDayWithData + 1), backgroundColor: 'rgba(31, 111, 235, 0.6)', borderRadius: 2 }, { label: 'Fuga', data: dailyFugas.slice(startDayForBars, lastDayWithData + 1), backgroundColor: 'rgba(255, 82, 82, 0.9)', borderRadius: 2 } ]},
+                options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { stacked: true, ticks: { color: cT, font:{size:8} }, grid: { display:false } }, y: { stacked: true, ticks: { color: cT, callback: v => '$' + Math.round(v / 1000) + 'k' }, grid: { color: cG } } } },
+                plugins: [ { id: 'limiteDiarioPlugin', afterDraw: (chart) => { try { if(limiteDiarioIdeal <= 0) return; const ctx = chart.ctx, xAxis = chart.scales.x, yAxis = chart.scales.y, yPos = yAxis.getPixelForValue(limiteDiarioIdeal); if(yPos >= yAxis.top && yPos <= yAxis.bottom) { ctx.save(); ctx.beginPath(); ctx.moveTo(xAxis.left, yPos); ctx.lineTo(xAxis.right, yPos); ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(210, 153, 34, 0.8)'; ctx.setLineDash([4, 4]); ctx.stroke(); ctx.restore(); } } catch(e){} } }, labelsPlugin ]
+            });
+        }
+    } catch(e) {}
+
+    try {
+        const ctxProyeccion = document.getElementById('chartRadar');
+        if(ctxProyeccion) {
+            let mesesLabels = [], montosProyectados = [], fechaHoy = new Date();
+            const nombresMesesFijos = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"];
+            
+            for(let i=1; i<=6; i++) {
+                let mIndex = (fechaHoy.getMonth() + i) % 12;
+                let anioTemp = fechaHoy.getFullYear() + Math.floor((fechaHoy.getMonth() + i) / 12);
+                mesesLabels.push(nombresMesesFijos[mIndex]);
                 
-                if(limiteDiarioIdeal > 0) {
-                    const yPos = yAxis.getPixelForValue(limiteDiarioIdeal);
-                    if(yPos >= yAxis.top && yPos <= yAxis.bottom) {
-                        ctx.save(); ctx.beginPath(); ctx.moveTo(xAxis.left, yPos); ctx.lineTo(xAxis.right, yPos);
-                        ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(210, 153, 34, 0.8)'; ctx.setLineDash([4, 4]); ctx.stroke(); ctx.restore();
-                    }
-                }
+                let sumaMes = datosTCGlobal.filter(d => { 
+                    if (!d.mesCobro) return false;
+                    let fC = new Date(d.mesCobro); 
+                    return fC.getMonth() === mIndex && fC.getFullYear() === anioTemp; 
+                }).reduce((a, c) => a + (Number(c.monto) || 0), 0);
+                montosProyectados.push(sumaMes);
             }
-        };
-
-        chartDiario = new Chart(ctxDiario, {
-            type: 'bar',
-            data: { labels: barLabels, datasets: [
-                { label: 'Gasto Base', data: barNecesario, backgroundColor: 'rgba(31, 111, 235, 0.6)', borderRadius: 2 },
-                { label: 'Fuga (Dopamina)', data: barFugas, backgroundColor: 'rgba(255, 82, 82, 0.9)', borderRadius: 2 }
-            ]},
-            options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { stacked: true, ticks: { color: cT, font:{size:8} }, grid: { display:false } }, y: { stacked: true, ticks: { color: cT, callback: v => '$' + Math.round(v / 1000) + 'k' }, grid: { color: cG } } } },
-            plugins: [diarioEnhancementsPlugin, labelsPlugin] // ⚡ Inyección
-        });
-    }
+            
+            let bgFill = 'rgba(255, 82, 82, 0.15)';
+            try { let grad = ctxProyeccion.getContext('2d').createLinearGradient(0, 0, 0, 300); grad.addColorStop(0, 'rgba(255, 82, 82, 0.6)'); grad.addColorStop(1, 'rgba(255, 82, 82, 0.05)'); bgFill = grad; } catch(e){}
+            
+            chartRadar = new Chart(ctxProyeccion, {
+                type: 'line', 
+                data: { labels: mesesLabels, datasets: [{ label: 'Deuda TC', data: montosProyectados, backgroundColor: bgFill, borderColor: '#ff5252', borderWidth: 3, fill: true, tension: 0.4, pointRadius: 4, pointBackgroundColor: '#030508', pointBorderColor: '#ff5252' }] },
+                options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { color: cT, callback: v => '$' + Math.round(v/1000) + 'k' }, grid: { color: cG } }, x: { ticks: { color: cT, font: {size: 10, weight: 'bold'} }, grid: { display: false } } } },
+                plugins: [ { id: 'setpointTCPlugin', afterDraw: (chart) => { try { const ctx = chart.ctx, xAxis = chart.scales.x, yAxis = chart.scales.y; const umbralSeguridad = (Number(sueldo) || 0) * 0.15; if(yAxis && yAxis.max !== undefined && yAxis.max > umbralSeguridad) { const yPos = yAxis.getPixelForValue(umbralSeguridad); ctx.save(); ctx.beginPath(); ctx.moveTo(xAxis.left, yPos); ctx.lineTo(xAxis.right, yPos); ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(255, 82, 82, 0.8)'; ctx.setLineDash([5, 5]); ctx.stroke(); ctx.fillStyle = '#ff5252'; ctx.font = 'bold 10px monospace'; ctx.fillText('MAX (15%)', xAxis.left + 5, yPos - 5); ctx.restore(); } } catch(e){} } }, labelsPlugin ]
+            });
+        }
+    } catch(e) {}
 }
 
-// =====================================================================
-// 💳 GRÁFICOS TC (Incluye Etiquetas)
-// =====================================================================
-function dibujarGraficosTC(sueldo) {
-    if(chartRadar) chartRadar.destroy(); 
-    if(chartTCDist) chartTCDist.destroy();
-    const cT = getComputedStyle(document.body).getPropertyValue('--text-main').trim() || "#f0f6fc"; 
-    const cG = getComputedStyle(document.body).getPropertyValue('--border-color').trim() || "#21262d"; 
-    
-    const ctxProyeccion = document.getElementById('chartRadar');
-    if(ctxProyeccion) {
-        let mesesLabels = []; let montosProyectados = []; let fechaHoy = new Date();
-        for(let i=1; i<=6; i++) {
-            let f = new Date(fechaHoy.getFullYear(), fechaHoy.getMonth() + i, 1);
-            mesesLabels.push(f.toLocaleString('es-CL', { month: 'short' }).toUpperCase());
-            let sumaMes = datosTCGlobal.filter(d => { let fCobro = new Date(d.mesCobro); return fCobro.getMonth() === f.getMonth() && fCobro.getFullYear() === f.getFullYear(); }).reduce((acc, curr) => acc + curr.monto, 0);
-            montosProyectados.push(sumaMes);
-        }
-        
-        let grad = ctxProyeccion.getContext('2d').createLinearGradient(0, 0, 0, 300);
-        grad.addColorStop(0, 'rgba(255, 82, 82, 0.6)'); grad.addColorStop(1, 'rgba(255, 82, 82, 0.05)');
-
-        const tcEnhancementsPlugin = {
-            id: 'tcEnhancementsPlugin',
-            afterDraw: (chart) => {
-                const ctx = chart.ctx; const xAxis = chart.scales.x; const yAxis = chart.scales.y;
-                const umbralSeguridad = sueldo * 0.15;
-                
-                if(yAxis.max > umbralSeguridad) {
-                    const yPos = yAxis.getPixelForValue(umbralSeguridad);
-                    ctx.save(); ctx.beginPath(); ctx.moveTo(xAxis.left, yPos); ctx.lineTo(xAxis.right, yPos);
-                    ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(255, 82, 82, 0.8)'; ctx.setLineDash([5, 5]); ctx.stroke();
-                    ctx.fillStyle = '#ff5252'; ctx.font = 'bold 10px monospace'; ctx.textAlign = 'left'; ctx.textBaseline='bottom'; ctx.fillText('MAX (15%)', xAxis.left + 5, yPos - 5); ctx.restore();
-                }
-
-                // ⚡ Etiquetas flotantes sobre la línea
-                ctx.save();
-                ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
-                ctx.font = 'bold 10px monospace'; ctx.fillStyle = '#ffffff'; // Color modificado a blanco para ser consistente
-
-                const dataset = chart.data.datasets[0];
-                const meta = chart.getDatasetMeta(0);
-
-                meta.data.forEach((point, index) => {
-                    let val = dataset.data[index];
-                    if (val > 0) {
-                        let text = '$' + Math.round(val / 1000) + 'k';
-                        ctx.fillText(text, point.x, point.y - 8);
-                    }
-                });
-                ctx.restore();
-            }
-        };
-
-        chartRadar = new Chart(ctxProyeccion, {
-            type: 'line',
-            data: { labels: mesesLabels, datasets: [{ label: 'Deuda TC', data: montosProyectados, backgroundColor: grad, borderColor: '#ff5252', borderWidth: 3, fill: true, tension: 0.4, pointRadius: 4, pointBackgroundColor: '#030508', pointBorderColor: '#ff5252' }] },
-            options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { color: cT, callback: v => '$' + Math.round(v/1000) + 'k' }, grid: { color: cG } }, x: { ticks: { color: cT, font: {size: 10, weight: 'bold'} }, grid: { display: false } } } },
-            plugins: [tcEnhancementsPlugin]
-        });
-    }
-
-    const ctxDist = document.getElementById('chartTCDist');
-    if(ctxDist) {
-        let tcComercios = {};
-        datosTCGlobal.forEach(d => {
-            let n = d.nombre.split(' ')[0]; 
-            tcComercios[n] = (tcComercios[n] || 0) + d.monto;
-        });
-        
-        let sortedTC = Object.entries(tcComercios).sort((a,b)=>b[1]-a[1]).slice(0,5); 
-        const bgColorsTC = ['rgba(255, 82, 82, 0.8)', 'rgba(255, 152, 0, 0.8)', 'rgba(210, 153, 34, 0.8)', 'rgba(163, 113, 247, 0.8)', 'rgba(31, 111, 235, 0.8)'];
-        
-        chartTCDist = new Chart(ctxDist, {
-            type: 'doughnut',
-            data: { labels: sortedTC.map(c => c[0]), datasets: [{ data: sortedTC.map(c => c[1]), backgroundColor: bgColorsTC, borderWidth: 1, borderColor: '#030508' }] },
-            options: { maintainAspectRatio: false, cutout: '60%', plugins: { legend: { position: 'right', labels: { color: cT, font: { size: 9, family: 'monospace' } } } } }
-        });
-    }
-}
-
-// ==========================================
-// 📅 NAVEGACIÓN TIEMPO
-// ==========================================
 function calcularFechasCiclo(mesConceptual, anio) {
     let mesInicio = mesConceptual - 1; let anioInicio = anio; if (mesInicio < 0) { mesInicio = 11; anioInicio--; }
     let T0 = new Date(anioInicio, mesInicio, 30); if (T0.getMonth() !== mesInicio) T0 = new Date(anioInicio, mesInicio + 1, 0); 
@@ -792,340 +617,218 @@ function calcularFechasCiclo(mesConceptual, anio) {
     return { T0, TFinal, fechaFinVisual: new Date(TFinal.getTime() - 86400000) };
 }
 
-window.navegarMes = function(direccion) {
-    const navMes = document.getElementById('navMesConceptual'), navAnio = document.getElementById('navAnio');
-    if(!navMes || !navAnio) return;
-    let m = parseInt(navMes.value), a = parseInt(navAnio.value);
-    m += direccion;
-    if(m > 11) { m = 0; a++; } else if(m < 0) { m = 11; a--; }
-    navMes.value = m; navAnio.value = a;
-    aplicarCicloAlSistema();
-};
-
-function aplicarCicloAlSistema() {
-    const navMes = document.getElementById('navMesConceptual'), navAnio = document.getElementById('navAnio');
-    if(!navMes || !navAnio) return;
-    const fD = document.getElementById('filtroDesde'), fH = document.getElementById('filtroHasta');
-    if(fD) fD.value = ''; if(fH) fH.value = '';
-
-    let lbl = document.getElementById('lblPeriodoViendo'); if(lbl) lbl.innerText = isEng ? 'FULL PERIOD' : 'PERIODO COMPLETO';
-    let cajaPC = document.getElementById('cajaFechasCustom'); if(cajaPC) cajaPC.style.display = 'none';
-    let btnPC = document.getElementById('btnToggleFechas'); if(btnPC) btnPC.style.display = 'block';
-    let cajaMovil = document.getElementById('cajaFechasCustomMovil'); if(cajaMovil) cajaMovil.style.display = 'none';
-    let btnMovil = document.getElementById('btnToggleFechasMovil'); if(btnMovil) btnMovil.style.display = 'block';
-
-    const { T0, fechaFinVisual } = calcularFechasCiclo(parseInt(navMes.value), parseInt(navAnio.value));
-    const badge = document.getElementById('navRangoBadge');
-    if(badge) badge.innerText = `[${T0.toLocaleDateString('es-CL', {day:'2-digit', month:'short'}).toUpperCase()} - ${fechaFinVisual.toLocaleDateString('es-CL', {day:'2-digit', month:'short'}).toUpperCase()}]`;
-    cargarSueldoVisual(); actualizarDashboard();
-}
-
 // ==========================================
-// 🖱️ DRAG & DROP
+// 💳 LÓGICA MATRIZ TC (RESTAURADA CON AGRUPACIÓN)
 // ==========================================
-let draggedRowId = null;
-window.dragStart = function(e, id) { draggedRowId = id; e.dataTransfer.effectAllowed = 'move'; setTimeout(() => e.target.style.opacity = '0.4', 0); }
-window.dragOverPanel = function(e, tipo) { e.preventDefault(); const panel = e.currentTarget; panel.style.transition = "border-color 0.2s, box-shadow 0.2s"; if (tipo === 'tc') { panel.style.borderColor = "var(--color-fuga)"; panel.style.boxShadow = "inset 0 0 20px rgba(255, 82, 82, 0.15)"; } else { panel.style.borderColor = "var(--color-saldo)"; panel.style.boxShadow = "inset 0 0 20px rgba(46, 160, 67, 0.15)"; } }
-window.dragLeavePanel = function(e, tipo) { const panel = e.currentTarget; if (tipo === 'tc') { panel.style.borderColor = "rgba(255, 82, 82, 0.2)"; } else { panel.style.borderColor = "var(--border-color)"; } panel.style.boxShadow = "none"; }
-window.dropOnPanel = function(e, tipo) {
-    e.preventDefault(); dragLeavePanel(e, tipo); if (!draggedRowId) return;
-    const mov = listaMovimientos.find(m => m.firestoreId === draggedRowId); if (!mov) return;
-    if (tipo === 'tc' && mov.catV !== 'Gasto Tarjeta de Crédito') {
-        if(confirm("💳 INYECCIÓN TÁCTICA:\n¿Transferir gasto a la Matriz TC?")) {
-            db.collection("movimientos").doc(draggedRowId).update({ categoria: "Gasto Tarjeta de Crédito", tipo: "Gasto" });
-            mostrarToast("TRANSFERIDO A TC");
-        }
-    } else if (tipo === 'main' && mov.catV === 'Gasto Tarjeta de Crédito') {
-        if(confirm("🔄 EXTRACCIÓN TÁCTICA:\n¿Devolver a Flujo Presente?")) {
-            db.collection("movimientos").doc(draggedRowId).update({ categoria: "Ruido de Sistema", tipo: "Gasto", cuotas: 1 });
-            mostrarToast("DEVUELTO A FLUJO");
-        }
-    }
-    draggedRowId = null;
-}
-window.dragOver = function(e) { e.preventDefault(); e.currentTarget.style.borderTop = '2px solid var(--color-saldo)'; }
-window.dragLeave = function(e) { e.currentTarget.style.borderTop = ''; }
-window.dropRow = function(e, targetId) {
-    e.preventDefault(); e.stopPropagation(); e.currentTarget.style.borderTop = '';
-    if (!draggedRowId || draggedRowId === targetId) return;
-    if (currentSort.column !== 'fechaISO') return alert("⚠️ ALERTA: Ordena por fecha para calibrar tiempo.");
-    
-    let vistaActual = [...datosMesGlobal].sort((a, b) => { if (a.fechaISO < b.fechaISO) return currentSort.direction === 'asc' ? -1 : 1; if (a.fechaISO > b.fechaISO) return currentSort.direction === 'asc' ? 1 : -1; return 0; });
-    let draggedIdx = vistaActual.findIndex(x => x.firestoreId === draggedRowId);
-    let targetIdx = vistaActual.findIndex(x => x.firestoreId === targetId);
-    let t1_idx = targetIdx > draggedIdx ? targetIdx : targetIdx - 1;
-    let t2_idx = targetIdx > draggedIdx ? targetIdx + 1 : targetIdx;
-    let t1_ms = t1_idx >= 0 ? new Date(vistaActual[t1_idx].fechaISO).getTime() : null;
-    let t2_ms = t2_idx < vistaActual.length ? new Date(vistaActual[t2_idx].fechaISO).getTime() : null;
-    let newTimeMs; let dir = currentSort.direction;
-    
-    if (t1_ms && t2_ms) newTimeMs = t1_ms + (t2_ms - t1_ms) / 2;
-    else if (!t1_ms) newTimeMs = t2_ms + (dir === 'desc' ? 60000 : -60000); 
-    else if (!t2_ms) newTimeMs = t1_ms + (dir === 'desc' ? -60000 : 60000);
-    
-    if(confirm("⚙️ ¿Forzar nuevo Timestamp para el registro?")) { db.collection("movimientos").doc(draggedRowId).update({ fecha: new Date(newTimeMs) }); }
-    draggedRowId = null;
-}
-document.addEventListener('dragend', (e) => { if(e.target.tagName === 'TR') e.target.style.opacity = '1'; });
-
-// ==========================================
-// ☁️ SINC Y EXPORT
-// ==========================================
-window.triggerSync = function() {
-    fetch("https://script.google.com/macros/s/AKfycbwKlub0qrv8_d24ZuyKKNryqOw1E68xv1_JvPOoEUc6W8TICllFfodNcwkigQE_7AuoNg/exec", {mode:'no-cors'})
-    .then(()=>mostrarToast("SYNC COMPLETADA"))
-    .catch(e => alert("Error Net: " + e));
-};
-
-window.exportarDataLink = function() {
-    let csv = "ISO_DATE,YEAR,MONTH,DAY,CATEGORY,TYPE,AMOUNT_CLP,DETAIL,ML_FLAG\n";
-    datosMesGlobal.forEach(x => {
-        let d = new Date(x.fechaISO);
-        let flag = catEvitables.includes(x.catV) ? 'DOPAMINA_LEAK' : (x.tipo === 'Gasto Fijo' ? 'STRUCTURAL' : 'STANDARD');
-        let detailSafe = (x.nombre || "Unknown").replace(/(\r\n|\n|\r)/gm, " ").replace(/"/g, '""').trim();
-        csv += `${x.fechaISO},${d.getFullYear()},${d.getMonth()+1},${d.getDate()},"${x.catV}","${x.tipo}",${x.monto},"${detailSafe}",${flag}\n`;
-    });
-    try {
-        const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement("a"); link.href = URL.createObjectURL(blob);
-        link.download = `Bunker_DataLink_${new Date().toISOString().slice(0,10)}.csv`;
-        document.body.appendChild(link); link.click(); document.body.removeChild(link);
-    } catch (e) { console.error("Error Export:", e); }
-};
-
-window.exportarTablaBunker = function(idTabla, nombreArchivo) {
-    const tabla = document.getElementById(idTabla);
-    if (!tabla) return alert("Error SYS: Tabla no hallada.");
-    let csv = ''; const filas = tabla.querySelectorAll("tr");
-    filas.forEach(fila => {
-        let celdas = Array.from(fila.querySelectorAll("th, td"));
-        celdas = celdas.filter(c => !c.classList.contains('col-check') && !c.classList.contains('col-drag') && !c.querySelector('button'));
-        const datosFila = celdas.map(celda => `"${celda.innerText.replace(/(\r\n|\n|\r)/gm, " - ").replace(/"/g, '""').trim()}"`);
-        if (datosFila.length > 0) csv += datosFila.join(";") + "\n";
-    });
-    try {
-        const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement("a"); link.href = URL.createObjectURL(blob);
-        link.download = `${nombreArchivo}_${new Date().toISOString().slice(0,10)}.csv`;
-        document.body.appendChild(link); link.click(); document.body.removeChild(link);
-    } catch (e) { console.error("Error Export:", e); }
-};
-
-// ==========================================
-// 💳 LÓGICA MATRIZ TC
-// ==========================================
-let datosTCGlobal = [];
-
 function inicializarListenerTC() {
     db.collection("deuda_tc").orderBy("mesCobro", "asc").onSnapshot(snapshot => {
         datosTCGlobal = []; let totalDeuda = 0;
-        snapshot.forEach(doc => { let data = doc.data(); data.id = doc.id; datosTCGlobal.push(data); totalDeuda += data.monto; });
+        snapshot.forEach(doc => { let data = doc.data(); data.id = doc.id; datosTCGlobal.push(data); totalDeuda += (Number(data.monto) || 0); });
         const txtTotalTC = document.getElementById("txtTotalTC");
         if(txtTotalTC) txtTotalTC.innerText = totalDeuda.toLocaleString('es-CL');
         if(typeof renderizarTablaTC === 'function') renderizarTablaTC();
-        
-        const elAnio = document.getElementById('navAnio');
-        const elMes = document.getElementById('navMesConceptual');
-        let sueldo = 3602505;
-        if(elAnio && elMes) sueldo = obtenerSueldoMes(parseInt(elAnio.value), parseInt(elMes.value));
-        if(typeof dibujarGraficosTC === 'function') dibujarGraficosTC(sueldo); 
-        
         window.totalTC = totalDeuda; 
         if(typeof actualizarDashboard === 'function') actualizarDashboard();
-    }, error => { console.error("🛑 FIREWALL TC:", error); });
+    });
 }
 
-function cargarCSV_TC() {
+if (typeof window.renderizarTablaTC === 'undefined') {
+    window.renderizarTablaTC = function() {
+        const tbody = document.getElementById("listaDetalleTC"); if (!tbody) return;
+        
+        if (datosTCGlobal.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:20px; color:var(--text-muted); font-family:monospace;">MATRIZ SIN DATOS</td></tr>`;
+            let bImp = document.getElementById('boxImpactoTC'); if (bImp) bImp.style.display = 'none';
+            return;
+        }
+
+        let agrupado = {};
+        datosTCGlobal.forEach(doc => {
+            if(!doc.mesCobro) return;
+            let f = new Date(doc.mesCobro), key = f.getFullYear() + "-" + String(f.getMonth() + 1).padStart(2, '0');
+            if (!agrupado[key]) agrupado[key] = { label: f.toLocaleString('es-CL', { month: 'long', year: 'numeric' }).toUpperCase(), total: 0, items: [] };
+            agrupado[key].items.push(doc); agrupado[key].total += (Number(doc.monto) || 0);
+        });
+
+        let htmlString = "";
+        Object.keys(agrupado).sort().forEach(key => {
+            let g = agrupado[key];
+            htmlString += `<tr style="background:rgba(255,82,82,0.15); border-top:2px solid rgba(255,82,82,0.5);">
+                <td></td><td colspan="2" style="font-weight:900; color:#ff5252; font-size:0.85rem; letter-spacing:1px;">🗓️ ${g.label}</td>
+                <td class="col-monto" style="color:#ff5252; font-weight:900;">$${g.total.toLocaleString('es-CL')}</td>
+            </tr>`;
+            g.items.forEach(doc => {
+                let op = (doc.nombre && (doc.nombre.includes("PROYECCIÓN") || doc.nombre.includes("FACTURADA"))) ? "1" : "0.7";
+                htmlString += `<tr>
+                    <td style="text-align: center;"><input type="checkbox" class="checkItemTC" value="${doc.id}" onclick="actualizarBarraTC()" style="accent-color: #ff5252;"></td>
+                    <td style="font-size: 0.7rem; color: #79c0ff; opacity:${op};">Cuota: ${doc.cuota || '1/1'}</td>
+                    <td class="col-desc" title="${doc.nombre || 'N/A'}" style="opacity:${op}; font-size:0.75rem;">${doc.nombre || 'N/A'}</td>
+                    <td class="col-monto" style="opacity:${op};">$${(Number(doc.monto)||0).toLocaleString('es-CL')}</td>
+                </tr>`;
+            });
+        });
+        tbody.innerHTML = htmlString;
+
+        let fHoy = new Date(), pM = fHoy.getMonth() + 2, pA = fHoy.getFullYear();
+        if (pM > 12) { pM = 1; pA++; }
+        let kProx = pA + "-" + String(pM).padStart(2, '0');
+
+        let bImp = document.getElementById('boxImpactoTC');
+        if (bImp) {
+            if (agrupado[kProx]) {
+                bImp.style.display = 'flex';
+                document.getElementById('lblImpactoMes').innerText = agrupado[kProx].label;
+                document.getElementById('txtImpactoMonto').innerText = `$${agrupado[kProx].total.toLocaleString('es-CL')}`;
+            } else { bImp.style.display = 'none'; }
+        }
+        if(typeof actualizarBarraTC === 'function') actualizarBarraTC(); 
+    }
+}
+
+window.cargarCSV_TC = function() {
     let fileInputTC = document.createElement('input'); fileInputTC.type = 'file'; fileInputTC.accept = '.csv';
     fileInputTC.onchange = e => {
         let file = e.target.files[0];
-        let esFacturado = confirm("💳 PARÁMETRO DE INGESTA\n\n¿Corresponde a movimientos FACTURADOS?\n\n[OK] = Sí, se cobra este ciclo.\n[Cancelar] = No, es proyección futura.");
+        let montoFacturado = parseInt(prompt("💰 ANCLA DE FACTURACIÓN:\nMonto Total FACTURADO a pagar el próximo mes (ej: 441332).\nPon 0 si no hay boleta aún.", "0").replace(/[^0-9]/g, '')) || 0;
+        let diaCorte = parseInt(prompt("📅 CORTAFUEGOS:\nDÍA DE CIERRE de tarjeta (ej: 20).", "20")) || 20;
+
         let reader = new FileReader();
         reader.onload = async ev => {
             try {
-                let text = ev.target.result; let lineas = text.split('\n'); let batch = db.batch(); let cuotasProcesadas = 0;
+                let text = ev.target.result, lineas = text.split('\n'), batch = db.batch(), cuotasProcesadas = 0;
+                
+                if (montoFacturado > 0) {
+                    let mVisor = parseInt(document.getElementById('navMesConceptual').value), aVisor = parseInt(document.getElementById('navAnio').value);
+                    let mPago = mVisor + 1, aPago = aVisor; if (mPago > 11) { mPago = 0; aPago++; }
+                    batch.set(db.collection("deuda_tc").doc("FACTURADO_BASE_OFICIAL"), { nombre: "⚠️ BOLETA FACTURADA OFICIAL", monto: montoFacturado, cuota: "1/1", mesCobro: new Date(aPago, mPago, 15).toISOString(), status: "Facturado" });
+                }
+                
                 for(let i = 1; i < lineas.length; i++) {
                     if(lineas[i].trim() === '') continue; 
-                    let separador = lineas[i].includes(';') ? ';' : ',';
-                    let cols = lineas[i].split(separador); if(cols.length < 4) continue; 
-                    let fecha = cols[0].trim(); let nombre = cols[1].trim().replace(/\s+/g, ' ').toUpperCase(); 
-                    let colCuotas = cols.find(c => c.includes('/') && c.length <= 5) || "01/01";
-                    let cuotasInfo = colCuotas.trim().split('/'); 
-                    let montoStr = cols[cols.length - 1].replace(/[^0-9-]/g, '');
-                    if(!montoStr && cols.length > 1) montoStr = cols[cols.length - 2].replace(/[^0-9-]/g, '');
-                    let montoTotal = parseInt(montoStr);
-
-                    if(isNaN(montoTotal) || montoTotal <= 0) continue;
-                    if(nombre.includes("REV.COMPRAS") || nombre.includes("PAGO PESOS") || nombre.includes("TEF") || nombre.includes("PAGO EN LINEA")) continue;
-
-                    let cuotaActual = parseInt(cuotasInfo[0]) || 1; let totalCuotas = parseInt(cuotasInfo[1]) || 1;
+                    let cols = lineas[i].split(lineas[i].includes(';') ? ';' : ','); if(cols.length < 4) continue; 
+                    let fecha = cols[0].trim(); let nombre = cols[1] ? cols[1].trim().replace(/\s+/g, ' ').toUpperCase() : "DESCONOCIDO"; 
+                    let cuotasInfo = (cols.find(c => c.includes('/') && c.length <= 5 && c !== fecha) || "01/01").trim().split('/'); 
+                    
+                    let montoTotal = 0;
+                    for (let j = cols.length - 1; j >= 2; j--) { let numStr = cols[j].replace(/[^0-9]/g, ''); if (numStr.length > 0) { montoTotal = parseInt(numStr); break; } }
+                    if(isNaN(montoTotal) || montoTotal <= 0 || ["REV.COMPRAS", "PAGO PESOS", "TEF", "PAGO EN LINEA"].some(x => nombre.includes(x))) continue;
+                    
+                    let cuotaActual = parseInt(cuotasInfo[0]) || 1, totalCuotas = parseInt(cuotasInfo[1]) || 1; 
                     let montoMensual = totalCuotas > 1 ? Math.round(montoTotal / totalCuotas) : montoTotal;
                     let partesF = fecha.replace(/-/g, '/').split('/'); if (partesF.length !== 3) continue; 
-                    let fechaCompra = new Date(partesF[2], partesF[1] - 1, partesF[0]); let hoy = new Date();
-
+                    
                     for(let c = cuotaActual; c <= totalCuotas; c++) {
-                        let fechaCobro;
-                        if (esFacturado) fechaCobro = new Date(hoy.getFullYear(), hoy.getMonth() + (c - cuotaActual), 15);
-                        else { let mesesDesfase = totalCuotas > 1 ? 2 : 1; fechaCobro = new Date(fechaCompra); fechaCobro.setMonth(fechaCobro.getMonth() + mesesDesfase + (c - cuotaActual)); }
-                        let docId = `${fecha.replace(/[^0-9]/g, '')}-${nombre.replace(/[^A-Z0-9]/g, '').substring(0,10)}-C${c}de${totalCuotas}`;
-                        let ref = db.collection("deuda_tc").doc(docId);
-                        batch.set(ref, { nombre: nombre, monto: montoMensual, cuota: `${c}/${totalCuotas}`, mesCobro: fechaCobro.toISOString(), status: esFacturado ? "Facturado" : "Proyectado" });
+                        let mesesDesfase = (parseInt(partesF[0]) > diaCorte || totalCuotas > 1) ? 2 : 1;
+                        let fCobro = new Date(parseInt(partesF[2]), parseInt(partesF[1]) - 1 + mesesDesfase + (c - cuotaActual), 15);
+                        batch.set(db.collection("deuda_tc").doc(`${fecha.replace(/[^0-9]/g, '')}-${nombre.replace(/[^A-Z0-9]/g, '').substring(0,10)}-C${c}de${totalCuotas}`), { nombre: nombre, monto: montoMensual, cuota: `${c}/${totalCuotas}`, mesCobro: fCobro.toISOString(), status: "Proyectado" });
                         cuotasProcesadas++;
                     }
                 }
-                if (cuotasProcesadas === 0) alert("⚠️ RECHAZO:\nNo hay cuotas válidas.");
-                else { await batch.commit(); mostrarToast(`${cuotasProcesadas} INYECTADAS`); }
-            } catch (error) { console.error("Error:", error); alert("❌ SYS ERROR: " + error.message); }
+                await batch.commit(); mostrarToast(`ANCLA FIJADA Y ${cuotasProcesadas} CUOTAS INYECTADAS`); 
+            } catch (error) { alert("❌ ERROR DE CÁLCULO: " + error.message); }
         };
         reader.readAsText(file, 'UTF-8');
     };
     fileInputTC.click();
-}
+};
 
 function actualizarBarraTC() {
-    const seleccionados = document.querySelectorAll('.checkItemTC:checked');
-    const barra = document.getElementById('barraAccionesTC');
-    const txt = document.getElementById('txtSeleccionadosTC');
-    if (seleccionados.length > 0) { if(barra) barra.style.display = 'flex'; if(txt) txt.innerText = `${seleccionados.length} SEL`; } 
-    else { if(barra) barra.style.display = 'none'; let maestro = document.getElementById('checkMaestroTC'); if(maestro) maestro.checked = false; }
+    const sel = document.querySelectorAll('.checkItemTC:checked'), barra = document.getElementById('barraAccionesTC'), txt = document.getElementById('txtSeleccionadosTC');
+    if (sel.length > 0) { if(barra) barra.style.display = 'flex'; if(txt) txt.innerText = `${sel.length} SEL`; } 
+    else { if(barra) barra.style.display = 'none'; let m = document.getElementById('checkMaestroTC'); if(m) m.checked = false; }
 }
 
 function toggleTodosTC(maestro) { document.querySelectorAll('.checkItemTC').forEach(c => c.checked = maestro.checked); actualizarBarraTC(); }
-
 async function ejecutarPurgaMasivaTC() {
-    const seleccionados = document.querySelectorAll('.checkItemTC:checked');
-    if (!confirm(`⚠️ WARNING: Borrar ${seleccionados.length} registros permanentemente?`)) return;
-    const batch = db.batch(); seleccionados.forEach(cb => { batch.delete(db.collection("deuda_tc").doc(cb.value)); });
+    const sel = document.querySelectorAll('.checkItemTC:checked'); if (!confirm(`⚠️ ¿Borrar ${sel.length} registros permanentemente?`)) return;
+    const batch = db.batch(); sel.forEach(cb => { batch.delete(db.collection("deuda_tc").doc(cb.value)); });
     try { await batch.commit(); mostrarToast("PURGA COMPLETADA"); } catch (error) { alert("❌ Error Net."); }
 }
 
 // ==========================================
-// 🚀 DÍA CERO (PROYECCIÓN MES + 1)
+// 🚀 SIMULADOR DÍA CERO (PROYECCIÓN MES + 1)
 // ==========================================
-function abrirPreVuelo() {
-    const modal = document.getElementById('modal-dia-cero');
-    if(!modal) return;
+window.abrirPreVuelo = function() {
+    const modal = document.getElementById('modal-dia-cero'); if(!modal) return;
     
-    const elMes = document.getElementById('navMesConceptual');
-    const elAnio = document.getElementById('navAnio');
+    // ⚡ FIX: Proyección Temporal Mes + 1
+    let vM = parseInt(document.getElementById('navMesConceptual').value);
+    let vA = parseInt(document.getElementById('navAnio').value);
     
-    // ⚡ FIX: Proyección al mes siguiente (+1)
-    let pM = parseInt(elMes.value) + 1;
-    let pA = parseInt(elAnio.value);
+    let pM = vM + 1; let pA = vA; 
     if (pM > 11) { pM = 0; pA++; }
 
     const nombresMes = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
     document.getElementById('pv-mes-label').innerText = `${nombresMes[pM]} ${pA}`.toUpperCase();
     
-    // ⚡ FIX: Obtener sueldo del mes proyectado
     let sueldoProximoMes = window.obtenerSueldoMes(pA, pM);
-    const sueldoInput = document.getElementById('pv-sueldo');
-    if(sueldoInput) sueldoInput.value = sueldoProximoMes.toLocaleString('es-CL');
+    document.getElementById('pv-sueldo').value = sueldoProximoMes.toLocaleString('es-CL');
     
     let sumaTCMes = 0;
-    datosTCGlobal.forEach(doc => {
-        let fCobro = new Date(doc.mesCobro);
-        if (fCobro.getMonth() === pM && fCobro.getFullYear() === pA) { // Lee cuotas del mes + 1
-            sumaTCMes += doc.monto;
-        }
+    datosTCGlobal.forEach(d => { 
+        if(!d.mesCobro) return;
+        let f = new Date(d.mesCobro); 
+        if (f.getMonth() === pM && f.getFullYear() === pA) sumaTCMes += (Number(d.monto) || 0); 
     });
     
     let elTcNac = document.getElementById('pv-tc-nac');
-    if(elTcNac && elTcNac.getAttribute('data-estado') === 'est') {
-        elTcNac.value = sumaTCMes > 0 ? sumaTCMes.toLocaleString('es-CL') : "";
-    }
+    if(elTcNac && elTcNac.getAttribute('data-estado') !== 'pag') { elTcNac.value = sumaTCMes > 0 ? sumaTCMes.toLocaleString('es-CL') : "0"; }
     
-    calcularDiaCero();
-    modal.style.display = 'flex';
+    calcularDiaCero(); modal.style.display = 'flex';
 }
 
-function cerrarPreVuelo() {
-    const modal = document.getElementById('modal-dia-cero');
-    if(modal) modal.style.display = 'none';
-}
+window.cerrarPreVuelo = function() { document.getElementById('modal-dia-cero').style.display = 'none'; actualizarDashboard(); };
 
-window.toggleEstadoPV = function(btn, inputId) {
-    const input = document.getElementById(inputId);
-    if(!input) return;
-    if (navigator.vibrate) navigator.vibrate(15); 
+window.toggleEstadoPV = function(btn, idInput) {
+    const estados = ['est', 'real', 'pag'];
+    let curr = btn.getAttribute('data-estado') || 'est';
+    let next = estados[(estados.indexOf(curr) + 1) % estados.length];
+
+    btn.classList.remove('est', 'real', 'pag'); btn.classList.add(next); btn.innerText = next.toUpperCase(); btn.setAttribute('data-estado', next);
     
-    let estadoActual = input.getAttribute('data-estado') || 'est';
-    if (estadoActual === 'est') {
-        input.setAttribute('data-estado', 'real'); btn.className = "btn-estado real"; btn.innerText = "📄"; input.classList.remove('pagado'); input.readOnly = false;
-    } else if (estadoActual === 'real') {
-        input.setAttribute('data-estado', 'pag'); btn.className = "btn-estado pag"; btn.innerText = "✔️"; input.classList.add('pagado'); input.readOnly = true;
-    } else {
-        input.setAttribute('data-estado', 'est'); btn.className = "btn-estado est"; btn.innerText = "EST"; input.classList.remove('pagado'); input.readOnly = false;
-    }
+    const input = document.getElementById(idInput);
+    if (next === 'pag') { input.classList.add('pagado'); input.disabled = true; } 
+    else { input.classList.remove('pagado'); input.disabled = false; }
     calcularDiaCero(); 
-}
+};
 
-function calcularDiaCero() {
-    const valSiNoPagado = (id) => {
-        let el = document.getElementById(id);
-        if (!el) return 0;
-        if (el.getAttribute('data-estado') === 'pag') return 0; 
-        return parseInt(el.value.replace(/\./g, '')) || 0;
-    };
-
+window.calcularDiaCero = function() {
+    const valSiNoPagado = (id) => { let el = document.getElementById(id); return (el && el.getAttribute('data-estado') !== 'pag') ? (parseInt(el.value.replace(/\./g, '')) || 0) : 0; };
     let sueldo = parseInt((document.getElementById('pv-sueldo').value || "0").replace(/\./g, '')) || 0;
     let tcNac = valSiNoPagado('pv-tc-nac');
-    
     let elTcInt = document.getElementById('pv-tc-int');
-    let tcIntUSD = 0;
-    if (elTcInt && elTcInt.getAttribute('data-estado') !== 'pag') {
-        tcIntUSD = parseInt(elTcInt.value.replace(/\./g, '')) || 0;
-    }
-    let valorDolarSeguro = isNaN(window.VALOR_USD) ? 950 : window.VALOR_USD;
-    let tcIntCLP = Math.round(tcIntUSD * valorDolarSeguro); 
-    
+    let tcIntUSD = (elTcInt && elTcInt.getAttribute('data-estado') !== 'pag') ? (parseInt(elTcInt.value.replace(/\./g, '')) || 0) : 0;
+    let tcIntCLP = Math.round(tcIntUSD * (isNaN(window.VALOR_USD) ? 950 : window.VALOR_USD)); 
     let elTcIntCLP = document.getElementById('pv-tc-int-clp');
     if (elTcIntCLP) {
-        if (elTcInt && elTcInt.getAttribute('data-estado') === 'pag') {
-            elTcIntCLP.innerText = "✔️ PAGADO"; elTcIntCLP.style.color = "var(--color-saldo)";
-        } else {
-            elTcIntCLP.innerText = `~ $${tcIntCLP.toLocaleString('es-CL')} CLP`; elTcIntCLP.style.color = "var(--accent-red)";
-        }
+        if (elTcInt && elTcInt.getAttribute('data-estado') === 'pag') { elTcIntCLP.innerText = "✔️ PAGADO"; elTcIntCLP.style.color = "var(--color-saldo)"; } 
+        else { elTcIntCLP.innerText = `~ $${tcIntCLP.toLocaleString('es-CL')} CLP`; elTcIntCLP.style.color = "var(--accent-red)"; }
     }
-    let tcInt = tcIntCLP; 
-
-    let linea = valSiNoPagado('pv-linea'), arr = valSiNoPagado('pv-arriendo'), udec = valSiNoPagado('pv-udec'), cae = valSiNoPagado('pv-cae');
-    let ggcc = valSiNoPagado('pv-ggcc'), luz = valSiNoPagado('pv-luz'), agua = valSiNoPagado('pv-agua'), gas = valSiNoPagado('pv-gas');
-    let celu = valSiNoPagado('pv-celu'), madre = valSiNoPagado('pv-madre'), subs = valSiNoPagado('pv-subs'), seguro = valSiNoPagado('pv-seguro');
     
-    let deudasDuras = tcNac + tcInt + linea;
-    let estructural = arr + udec + cae + ggcc + luz + agua + gas + celu + madre + subs + seguro;
-    let liquidez = sueldo - deudasDuras - estructural;
+    let deudasDuras = tcNac + tcIntCLP + valSiNoPagado('pv-linea');
+    let estructural = valSiNoPagado('pv-arriendo') + valSiNoPagado('pv-udec') + valSiNoPagado('pv-cae') + valSiNoPagado('pv-ggcc') + valSiNoPagado('pv-luz') + valSiNoPagado('pv-agua') + valSiNoPagado('pv-gas') + valSiNoPagado('pv-celu') + valSiNoPagado('pv-madre') + valSiNoPagado('pv-subs') + valSiNoPagado('pv-seguro');
     
-    document.getElementById('pv-txt-liquidez').innerText = liquidez.toLocaleString('es-CL');
+    document.getElementById('pv-txt-liquidez').innerText = (sueldo - deudasDuras - estructural).toLocaleString('es-CL');
     
     if (sueldo > 0) {
-        let pctRojo = Math.min((deudasDuras / sueldo) * 100, 100);
-        let pctNaranja = Math.min((estructural / sueldo) * 100, 100 - pctRojo);
-        let pctVerde = Math.max(100 - pctRojo - pctNaranja, 0);
-        document.getElementById('pv-barra-roja').style.width = pctRojo + '%';
-        document.getElementById('pv-barra-naranja').style.width = pctNaranja + '%';
-        document.getElementById('pv-barra-verde').style.width = pctVerde + '%';
+        let pR = Math.min((deudasDuras / sueldo) * 100, 100), pN = Math.min((estructural / sueldo) * 100, 100 - pR), pV = Math.max(100 - pR - pN, 0);
+        document.getElementById('pv-barra-roja').style.width = pR + '%'; document.getElementById('pv-barra-naranja').style.width = pN + '%'; document.getElementById('pv-barra-verde').style.width = pV + '%';
     }
 
-    let toggles = document.querySelectorAll('.btn-estado');
-    let confirmados = 0;
-    toggles.forEach(btn => { if(btn.classList.contains('real') || btn.classList.contains('pag')) confirmados++; });
-    let certeza = toggles.length > 0 ? Math.round((confirmados / toggles.length) * 100) : 0;
-    let elCertezaPct = document.getElementById('pv-certeza-pct');
-    if(elCertezaPct) {
-        elCertezaPct.innerText = certeza + '%';
-        elCertezaPct.style.color = certeza < 40 ? '#ff5252' : (certeza < 80 ? '#ff9800' : '#2ea043');
-    }
+    let tgls = document.querySelectorAll('.btn-estado'), conf = 0;
+    tgls.forEach(b => { if(b.classList.contains('real') || b.classList.contains('pag')) conf++; });
+    let cer = tgls.length > 0 ? Math.round((conf / tgls.length) * 100) : 0;
+    let elCer = document.getElementById('pv-certeza-pct');
+    if(elCer) { elCer.innerText = cer + '%'; elCer.style.color = cer < 40 ? '#ff5252' : (cer < 80 ? '#ff9800' : '#2ea043'); }
 }
 
-function ejecutarArranque() {
+window.ejecutarArranque = function() {
     if(!confirm("⚠️ INYECCIÓN CRÍTICA\n\n¿Estás seguro de inyectar toda tu Planilla Operativa en la Matriz del mes seleccionado?")) return;
     
     const elMes = document.getElementById('navMesConceptual');
     const elAnio = document.getElementById('navAnio');
     
-    // ⚡ FIX: Inyectar en el Mes + 1
+    // ⚡ FIX: Inyectar en el Mes + 1 y saltar
     let pM = parseInt(elMes.value) + 1;
     let pA = parseInt(elAnio.value);
     if (pM > 11) { pM = 0; pA++; }
@@ -1186,15 +889,45 @@ function ejecutarArranque() {
     }
 }
 
-// ==========================================
-// 🛑 LISTENER DE EVASIÓN GLOBAL (TECLA ESC)
-// ==========================================
-document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-        if(typeof cerrarPreVuelo === 'function') cerrarPreVuelo();
-        const hist = document.getElementById('modal-historian');
-        if(hist) hist.style.display = 'none';
-        if(typeof closeBottomSheet === 'function') closeBottomSheet();
-        console.log("%c[SYS] COMANDO ESCAPE DETECTADO: CERRANDO VENTANAS", "color: #ff5252;");
-    }
-});
+// ☁️ SINC Y EXPORTACIÓN LEGACY
+window.triggerSync = function() {
+    fetch("https://script.google.com/macros/s/AKfycbwKlub0qrv8_d24ZuyKKNryqOw1E68xv1_JvPOoEUc6W8TICllFfodNcwkigQE_7AuoNg/exec", {mode:'no-cors'})
+    .then(()=>mostrarToast("SYNC COMPLETADA"))
+    .catch(e => alert("Error Net: " + e));
+};
+
+window.exportarDataLink = function() {
+    try {
+        if (!datosMesGlobal || datosMesGlobal.length === 0) { mostrarToast("MATRIZ VACÍA: NO HAY DATOS PARA EXPORTAR"); return; }
+        let csv = "ISO_DATE,YEAR,MONTH,DAY,CATEGORY,TYPE,AMOUNT_CLP,DETAIL,ML_FLAG\n";
+        datosMesGlobal.forEach(x => {
+            let d = x.fechaISO ? new Date(x.fechaISO) : new Date();
+            let catV = x.catV || x.categoria || 'Sin Categoría';
+            let tipo = x.tipo || 'Gasto Variable';
+            let monto = Number(x.monto) || 0;
+            let nombreLimpio = (x.nombre || "Unknown").replace(/(\r\n|\n|\r)/gm, " ").replace(/"/g, '""').trim();
+            let flag = catEvitables.includes(catV) ? 'DOPAMINA_LEAK' : (tipo === 'Gasto Fijo' ? 'STRUCTURAL' : 'STANDARD');
+            csv += `${x.fechaISO || d.toISOString()},${d.getFullYear()},${d.getMonth()+1},${d.getDate()},"${catV}","${tipo}",${monto},"${nombreLimpio}",${flag}\n`;
+        });
+        const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = `Bunker_DataLink_${new Date().toISOString().slice(0,10)}.csv`;
+        document.body.appendChild(link); link.click(); document.body.removeChild(link);
+        mostrarToast("EXPORTACIÓN DATA-LINK EXITOSA");
+    } catch (error) { console.error("Error Export:", error); }
+};
+
+window.exportarTablaBunker = function(idTabla, nombreArchivo) {
+    const tabla = document.getElementById(idTabla); if (!tabla) return alert("Error SYS: Tabla no hallada.");
+    let csv = ''; const filas = tabla.querySelectorAll("tr");
+    filas.forEach(fila => {
+        let celdas = Array.from(fila.querySelectorAll("th, td"));
+        celdas = celdas.filter(c => !c.classList.contains('col-check') && !c.classList.contains('col-drag') && !c.querySelector('button'));
+        const datosFila = celdas.map(celda => `"${celda.innerText.replace(/(\r\n|\n|\r)/gm, " - ").replace(/"/g, '""').trim()}"`);
+        if (datosFila.length > 0) csv += datosFila.join(";") + "\n";
+    });
+    try {
+        const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = `${nombreArchivo}_${new Date().toISOString().slice(0,10)}.csv`;
+        document.body.appendChild(link); link.click(); document.body.removeChild(link);
+    } catch (e) { console.error("Error Export:", e); }
+};
