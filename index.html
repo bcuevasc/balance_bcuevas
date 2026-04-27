@@ -11,8 +11,25 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
     
-    <style>
-:root { --bg-body: #030508; --bg-panel: #0d1117; --bg-subpanel: #161b22; --text-main: #e6edf3; --text-muted: #7d8590; --border-color: #21262d; --input-bg: #010409; --item-hover: #1c2128; --color-guardar: #1f6feb; --color-ingresos: #238636; --color-gastos: #da3633;  --color-saldo: #2ea043; --color-edit: #d29922; --color-fuga: #ff5252; --color-proyectado: #79c0ff; --color-telegram: #0088cc; --color-infra: #a371f7; --color-flota: #00bcd4; }
+   <style>
+/* Paleta HMI Alto Desempeño: Neutros para lo normal, vivos para alarmas */
+:root { 
+    --bg-body: #0d1117; 
+    --bg-panel: #161b22; 
+    --bg-subpanel: #21262d; 
+    --text-main: #c9d1d9; 
+    --text-muted: #8b949e; 
+    --border-color: #30363d; 
+    --input-bg: #010409; 
+    --item-hover: #1f2428; 
+    --color-guardar: #238636; /* Verde HMI */
+    --color-ingresos: #238636; 
+    --color-gastos: #da3633;  
+    --color-saldo: #2ea043; 
+    --color-edit: #d29922; /* Warning/Edit */
+    --color-fuga: #f85149; /* Alarma Crítica */
+    --color-proyectado: #58a6ff; 
+}
 body.light-theme { --bg-body: #f0f2f5; --bg-panel: #ffffff; --bg-subpanel: #f8f9fa; --text-main: #24292e; --text-muted: #57606a; --border-color: #d0d7de; --input-bg: #ffffff; --item-hover: #e1e4e8; }
 * { box-sizing: border-box; transition: background-color 0.3s, border-color 0.3s; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
 
@@ -42,11 +59,18 @@ h2 { color: var(--text-main); margin: 0; font-size: 1.3rem; font-weight: 900; le
 @keyframes fadeSlideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
 .kpi-row { display: grid; gap: 10px; flex-shrink: 0; }
-.kpi-card { padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-panel); border-top: 3px solid var(--border-color); position: relative; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.2);}
+.kpi-card { 
+    padding: 12px 15px; 
+    border-radius: 6px; 
+    border: 1px solid var(--border-color); 
+    background: var(--bg-panel); 
+    border-top: 4px solid var(--border-color); 
+    box-shadow: none; /* Diseño plano HMI */
+}
 .kpi-card h4 { margin: 0 0 4px 0; font-size: 0.6rem; text-transform: uppercase; color: var(--text-muted); font-weight: 800; letter-spacing: 0.5px;}
 .kpi-card .value { margin: 0; font-size: 1.15rem; font-weight: 900; color: var(--text-main); font-family: monospace; display: flex; align-items: center; white-space: nowrap; overflow: hidden;}
 .kpi-card .value span { color: var(--text-muted); font-size: 0.95rem; margin-right: 2px;}
-.kpi-saldo { background: rgba(46, 160, 67, 0.05); border-color: rgba(46, 160, 67, 0.4); border-top: 4px solid var(--color-saldo);}
+.kpi-saldo { border-top: 4px solid var(--color-saldo); background: rgba(46, 160, 67, 0.02); }
 .kpi-saldo h4 { color: var(--color-saldo); }
 .kpi-saldo .value { text-shadow: 0 0 15px rgba(46, 160, 67, 0.4); }
 .kpi-proyectado { background: rgba(121, 192, 255, 0.05); border-color: rgba(121, 192, 255, 0.4); border-top: 3px solid #79c0ff;}
@@ -81,9 +105,24 @@ h2 { color: var(--text-main); margin: 0; font-size: 1.3rem; font-weight: 900; le
 .core-title { font-size: 0.95rem; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; gap: 8px;}
 .core-body { flex: 1 1 0px; overflow-y: auto; overflow-x: hidden; padding: 0; scrollbar-width: thin; scrollbar-color: var(--border-color) var(--bg-body); display: flex; flex-direction: column;}
 
-.data-grid { width: 100%; border-collapse: collapse; text-align: left; }
-.data-grid th { position: sticky; top: 0; background: var(--bg-subpanel); padding: 5px 10px; font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; z-index: 10; border-bottom: 2px solid var(--border-color); letter-spacing: 0.5px; cursor: pointer; }
-.data-grid td { padding: 4px 10px; font-size: 0.75rem; border-bottom: 1px solid var(--border-color); vertical-align: middle; }
+/* Mejora UX: Tablas con mayor respiro visual (Padding incrementado) */
+.data-grid { width: 100%; border-collapse: collapse; text-align: left; font-family: 'Segoe UI', sans-serif; }
+.data-grid th { 
+    position: sticky; top: 0; 
+    background: var(--bg-subpanel); 
+    padding: 12px 15px; /* Mayor área de click y lectura */
+    font-size: 0.70rem; 
+    color: var(--text-muted); 
+    text-transform: uppercase; 
+    z-index: 10; 
+    border-bottom: 2px solid var(--border-color); 
+}
+.data-grid td { 
+    padding: 10px 15px; /* Aumento de padding vertical/horizontal */
+    font-size: 0.80rem; 
+    border-bottom: 1px solid var(--border-color); 
+    vertical-align: middle; 
+}
 .data-grid tbody tr:nth-child(odd) { background-color: rgba(255,255,255,0.01); }
 .data-grid tbody tr:hover { background-color: var(--item-hover); }
 .col-monto { text-align: right; font-family: monospace; font-weight: bold; font-size: 0.9rem; }
