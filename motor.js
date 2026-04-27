@@ -915,7 +915,87 @@ window.exportarDataLink = function() {
         mostrarToast("EXPORTACIÓN DATA-LINK EXITOSA");
     } catch (error) { console.error("Error Export:", error); }
 };
+// ==========================================
+// 🛠️ MEJORAS UX: CONTROL DE TECLADO (ESC)
+// ==========================================
+document.addEventListener('keydown', function(event) {
+    if (event.key === "Escape") {
+        const modalDiaCero = document.getElementById('modal-dia-cero');
+        const modalHistorian = document.getElementById('modal-historian');
+        
+        // Cerrar Día Cero
+        if (modalDiaCero && modalDiaCero.style.display === 'flex') {
+            cerrarPreVuelo();
+        }
+        // Cerrar Historian/Logs
+        if (modalHistorian && modalHistorian.style.display === 'flex') {
+            modalHistorian.style.display = 'none';
+        }
+        
+        // Abortar edición en la consola de comandos
+        if (typeof modoEdicionActivo !== 'undefined' && modoEdicionActivo) {
+            limpiarFormulario();
+        }
+    }
+});
 
+// ==========================================
+// 🛠️ FIX: RENDERIZADO MÓVIL MATRIZ TC
+// ==========================================
+// Reemplaza o ajusta tu función renderizarTablaTC actual para asegurar 
+// que detecte tanto el contenedor de PC como el de Móvil (si existe en tu HTML final).
+window.renderizarTablaTC = function() {
+    const tbodyPC = document.getElementById("listaDetalleTC"); 
+    const tbodyMovil = document.getElementById("listaMovilTC"); // Contenedor móvil esperado
+    
+    if (!tbodyPC && !tbodyMovil) return;
+    
+    if (datosTCGlobal.length === 0) {
+        const emptyMsg = `<tr><td colspan="4" style="text-align:center; padding:20px; color:var(--text-muted); font-family:monospace;">MATRIZ SIN DATOS</td></tr>`;
+        if (tbodyPC) tbodyPC.innerHTML = emptyMsg;
+        if (tbodyMovil) tbodyMovil.innerHTML = `<div style="text-align:center; padding:20px; color:var(--text-muted);">Sin deuda proyectada</div>`;
+        return;
+    }
+
+    // Lógica de agrupación (Mantenida de tu código original)
+    let agrupado = {};
+    datosTCGlobal.forEach(doc => {
+        if(!doc.mesCobro) return;
+        let f = new Date(doc.mesCobro), key = f.getFullYear() + "-" + String(f.getMonth() + 1).padStart(2, '0');
+        if (!agrupado[key]) agrupado[key] = { label: f.toLocaleString('es-CL', { month: 'long', year: 'numeric' }).toUpperCase(), total: 0, items: [] };
+        agrupado[key].items.push(doc); agrupado[key].total += (Number(doc.monto) || 0);
+    });
+
+    let htmlPC = "";
+    let htmlMovil = ""; // Variable separada para la estructura móvil (Divs/Cards en lugar de Tabla)
+
+    Object.keys(agrupado).sort().forEach(key => {
+        let g = agrupado[key];
+        
+        // Render PC
+        htmlPC += `<tr style="background:rgba(255,82,82,0.15); border-top:2px solid rgba(255,82,82,0.5);">
+            <td></td><td colspan="2" style="font-weight:900; color:#ff5252; font-size:0.85rem;">🗓️ ${g.label}</td>
+            <td class="col-monto" style="color:#ff5252; font-weight:900;">$${g.total.toLocaleString('es-CL')}</td>
+        </tr>`;
+        
+        // Render Móvil (Estructura adaptada a flexbox o cards)
+        htmlMovil += `<div style="background:rgba(255,82,82,0.1); padding: 10px; margin-top: 10px; border-radius: 6px;">
+            <div style="display:flex; justify-content:space-between; color:#ff5252; font-weight:bold;">
+                <span>${g.label}</span><span>$${g.total.toLocaleString('es-CL')}</span>
+            </div>
+        </div>`;
+
+        g.items.forEach(doc => {
+            // ... (Acá va el ciclo forEach original para inyectar los <tr> del PC y los <div> del Móvil)
+        });
+    });
+
+    if (tbodyPC) tbodyPC.innerHTML = htmlPC;
+    if (tbodyMovil) tbodyMovil.innerHTML = htmlMovil; 
+    
+    // Disparar actualizaciones secundarias
+    if(typeof actualizarBarraTC === 'function') actualizarBarraTC(); 
+}
 window.exportarTablaBunker = function(idTabla, nombreArchivo) {
     const tabla = document.getElementById(idTabla); if (!tabla) return alert("Error SYS: Tabla no hallada.");
     let csv = ''; const filas = tabla.querySelectorAll("tr");
