@@ -33,16 +33,7 @@ const diccAuto = [
     { keys: ["farmacia", "cruz verde", "salcobrand", "doctor", "consulta", "integramedica", "medico", "ahumada"], cat: "Mantenimiento Hardware (Salud)", tipo: "Gasto", fuga: "0" },
     { keys: ["ahorro", "inversion", "fintual", "deposito", "traspaso"], cat: "Transferencia Propia / Ahorro", tipo: "Ahorro", fuga: "0" }
 ];
-// 🛠️ PARCHE 1: Sincronización Temporal de Arranque
-    // Forzamos al navegador de tiempo a igualarse al reloj del sistema
-    const hoy = new Date();
-    const navAnio = document.getElementById('navAnio');
-    const navMes = document.getElementById('navMesConceptual');
 
-    if (navAnio && navMes) {
-        navAnio.value = hoy.getFullYear().toString();
-        navMes.value = hoy.getMonth().toString(); // En JS, los meses van de 0 a 11
-    }
 const catMaestras = [
     { id: "Gastos Fijos (Búnker)", em: "🏠", label: "Carga Fija (Base)" },
     { id: "Infraestructura (Depto)", em: "🏢", label: "Infraestructura (Depto)" },
@@ -77,6 +68,16 @@ window.toggleLanguage = function() {
 };
 
 document.addEventListener("DOMContentLoaded", () => {
+    // 🛠️ PARCHE 1: Sincronización Temporal de Arranque
+    const hoy = new Date();
+    const navAnio = document.getElementById('navAnio');
+    const navMes = document.getElementById('navMesConceptual');
+
+    if (navAnio && navMes) {
+        navAnio.value = hoy.getFullYear().toString();
+        navMes.value = hoy.getMonth().toString(); // En JS, los meses van de 0 a 11
+    }
+
     const optionsHTML = catMaestras.map(c => `<option value="${c.id}">${c.em} ${c.label}</option>`).join('');
     const selectManual = document.getElementById('inputCategoria');
     if (selectManual) {
@@ -120,7 +121,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 if(inputMonto && !inputMonto.value) {
                     inputMonto.focus(); 
                 } else { 
-                    inputNombre.blur(); // Baja el teclado virtual
+                    inputNombre.blur(); 
                     document.getElementById('btnGuardar').click(); 
                 }
             }
@@ -151,7 +152,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 if(inputNombre && !inputNombre.value) {
                     inputNombre.focus(); 
                 } else { 
-                    inputMonto.blur(); // Baja el teclado virtual
+                    inputMonto.blur(); 
                     document.getElementById('btnGuardar').click(); 
                 }
             }
@@ -362,6 +363,7 @@ function actualizarDashboard() {
     // 🛠️ Gatillo del Widget Lateral
     if (typeof sincronizarWidgetPreVuelo === 'function') sincronizarWidgetPreVuelo();
 }
+
 // ==========================================
 // 📝 RENDERIZAR LISTAS PC
 // ==========================================
@@ -521,9 +523,7 @@ function editarMovimiento(id) {
         if(document.getElementById('inputFecha')) document.getElementById('inputFecha').value = dLocal;
     } catch(e) {}
 
-    
     // Ajustar Botón de Guardado
-   // Ajustar Botón de Guardado
     const btn = document.getElementById('btnGuardar');
     if(btn) { 
         btn.innerHTML = isEng ? "UPDATE DATA" : "ACTUALIZAR DATOS"; 
@@ -1111,35 +1111,7 @@ window.ejecutarArranque = function() {
     } else {
         alert("No se procesaron registros."); cerrarPreVuelo();
     }
-};    
-    procesarInyeccion('pv-tc-nac', "PAGO TC NACIONAL (DÍA CERO)", "Gastos Fijos (Búnker)"); 
-    procesarInyeccion('pv-tc-int', "PAGO TC INTERNACIONAL (DÍA CERO)", "Gastos Fijos (Búnker)"); 
-    procesarInyeccion('pv-linea', "PAGO LÍNEA CRÉDITO (DÍA CERO)", "Gastos Fijos (Búnker)");
-    procesarInyeccion('pv-arriendo', "ARRIENDO / DIVIDENDO", "Infraestructura (Depto)");
-    procesarInyeccion('pv-udec', "PAGO UDEC 2024", "Infraestructura (Depto)");
-    procesarInyeccion('pv-cae', "PAGO CAE", "Infraestructura (Depto)");
-    procesarInyeccion('pv-ggcc', "GASTOS COMUNES", "Infraestructura (Depto)");
-    procesarInyeccion('pv-luz', "LUZ / ELECTRICIDAD", "Infraestructura (Depto)");
-    procesarInyeccion('pv-agua', "AGUA / SANEAMIENTO", "Infraestructura (Depto)");
-    procesarInyeccion('pv-gas', "GAS", "Infraestructura (Depto)");
-    procesarInyeccion('pv-celu', "CELU MIO PLAN", "Suscripciones");
-    procesarInyeccion('pv-madre', "MOVISTAR MADRE", "Red de Apoyo (Familia)");
-    procesarInyeccion('pv-subs', "PACK SUSCRIPCIONES (YT, Disney, etc)", "Suscripciones");
-    procesarInyeccion('pv-seguro', "SEGURO AUTO", "Flota & Movilidad");
-    
-    if (inyectados > 0) {
-        batch.commit().then(() => { 
-            cerrarPreVuelo(); 
-            // Salto Automático Visual
-            document.getElementById('navMesConceptual').value = pM;
-            document.getElementById('navAnio').value = pA;
-            aplicarCicloAlSistema();
-            mostrarToast(`ARRANQUE COMPLETADO: ${inyectados} REGISTROS PROCESADOS.`); 
-        }).catch(err => { alert("❌ Error: " + err.message); });
-    } else {
-        alert("No se procesaron registros."); cerrarPreVuelo();
-    }
-}
+};
 
 // ☁️ SINC Y EXPORTACIÓN LEGACY
 window.triggerSync = function() {
