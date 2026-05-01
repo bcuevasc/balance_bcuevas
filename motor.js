@@ -356,7 +356,11 @@ function actualizarDashboard() {
     const kpiSalida = document.getElementById('txtGastoTotalPeriodo');
     if (kpiSalida) kpiSalida.innerText = '$' + (tO + tF).toLocaleString('es-CL');
     setTxt('txtGastoTramo', tO + tF);
+    // (Añadir al final de actualizarDashboard)
     setTxt('txtPromedioZoom', Math.round((tO + tF) / diasCiclo));
+    
+    // 🛠️ Gatillo del Widget Lateral
+    if (typeof sincronizarWidgetPreVuelo === 'function') sincronizarWidgetPreVuelo();
 }
 // ==========================================
 // 📝 RENDERIZAR LISTAS PC
@@ -998,15 +1002,18 @@ window.calcularDiaCero = function() {
     
     if (sueldo > 0) {
         let pR = Math.min((deudasDuras / sueldo) * 100, 100), pN = Math.min((estructural / sueldo) * 100, 100 - pR), pV = Math.max(100 - pR - pN, 0);
-        document.getElementById('pv-barra-roja').style.width = pR + '%'; document.getElementById('pv-barra-naranja').style.width = pN + '%'; document.getElementById('pv-barra-verde').style.width = pV + '%';
+        document.getElementById('pv-barra-roja').style.width = pR + '%'; 
+        document.getElementById('pv-barra-naranja').style.width = pN + '%'; 
+        document.getElementById('pv-barra-verde').style.width = pV + '%';
+        
+        // 🛠️ Sincronización visual del Widget
+        if (document.getElementById('widget-txt-liquidez')) {
+            document.getElementById('widget-txt-liquidez').innerText = (sueldo - deudasDuras - estructural).toLocaleString('es-CL');
+            document.getElementById('widget-barra-roja').style.width = pR + '%'; 
+            document.getElementById('widget-barra-naranja').style.width = pN + '%'; 
+            document.getElementById('widget-barra-verde').style.width = pV + '%';
+        }
     }
-
-    let tgls = document.querySelectorAll('.btn-estado'), conf = 0;
-    tgls.forEach(b => { if(b.classList.contains('real') || b.classList.contains('pag')) conf++; });
-    let cer = tgls.length > 0 ? Math.round((conf / tgls.length) * 100) : 0;
-    let elCer = document.getElementById('pv-certeza-pct');
-    if(elCer) { elCer.innerText = cer + '%'; elCer.style.color = cer < 40 ? '#ff5252' : (cer < 80 ? '#ff9800' : '#2ea043'); }
-}
 
 // 🛠️ PARCHE 3: Upsert Determinista en Arranque Día Cero
 window.ejecutarArranque = function() {
@@ -1263,7 +1270,37 @@ window.ejecutarSimulacionTC = function() {
     actualizarDashboard();
     mostrarToast("SIMULACIÓN WHAT-IF APLICADA");
 };
+// 🛠️ MÓDULO DE SINCRONIZACIÓN SILENCIOSA WIDGET PRE-VUELO
+window.sincronizarWidgetPreVuelo = function() {
+    const navMes = document.getElementById('navMesConceptual');
+    const navAnio = document.getElementById('navAnio');
+    if (!navMes || !navAnio) return;
 
+    let vM = parseInt(navMes.value);
+    let vA = parseInt(navAnio.value);
+    let pM = vM + 1; let pA = vA; 
+    if (pM > 11) { pM = 0; pA++; }
+
+    let sueldoProximoMes = window.obtenerSueldoMes(pA, pM);
+    let elSueldo = document.getElementById('pv-sueldo');
+    if (elSueldo) elSueldo.value = sueldoProximoMes.toLocaleString('es-CL');
+
+    let sumaTCMes = 0;
+    datosTCGlobal.forEach(d => { 
+        if(!d.mesCobro) return;
+        let f = new Date(d.mesCobro); 
+        if (f.getMonth() === pM && f.getFullYear() === pA) sumaTCMes += (Number(d.monto) || 0); 
+    });
+    
+    let elTcNac = document.getElementById('pv-tc-nac');
+    if(elTcNac && elTcNac.getAttribute('data-estado') !== 'pag') { 
+        elTcNac.value = sumaTCMes > 0 ? sumaTCMes.toLocaleString('es-CL') : "0"; 
+    }
+
+    if (typeof window.calcularDiaCero === 'function') {
+        window.calcularDiaCero();
+    }
+};
 window.resetearSimulacionTC = function() {
     const inputEl = document.getElementById('inputSimuladorTC');
     if (inputEl) inputEl.value = '';
