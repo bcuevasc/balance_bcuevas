@@ -340,24 +340,28 @@ h2 { color: var(--text-main); margin: 0; font-size: 1.3rem; font-weight: 900; le
                     <div class="chart-box"><h5 data-en="CATEGORICAL SPECTRUM">ESPECTRO CATEGÓRICO</h5><div class="canvas-container"><canvas id="chartPareto"></canvas></div></div>
                 </div>
 
-                <div style="padding: 6px 12px; background: rgba(0,0,0,0.3); border-bottom: 1px solid var(--border-color); border-top: 1px solid var(--border-color); position: sticky; top: 0; z-index: 30;">
-                    <input type="text" id="inputBuscador" class="form-control" placeholder="🔍 Buscar en la matriz diaria..." autocomplete="off" oninput="actualizarDashboard()" style="width: 100%; max-width: 350px; height: 28px; background: var(--bg-panel);">
+                <!-- 🛠️ VIEWPORT SCADA: Constricción central para monitores ultrawide -->
+                <div style="width: 100%; max-width: 1400px; margin: 0 auto; display: flex; flex-direction: column; flex-grow: 1;">
+                    <div style="padding: 6px 12px; background: rgba(0,0,0,0.3); border-bottom: 1px solid var(--border-color); border-top: 1px solid var(--border-color); position: sticky; top: 0; z-index: 30;">
+                        <input type="text" id="inputBuscador" class="form-control" placeholder="🔍 Buscar en la matriz diaria..." autocomplete="off" oninput="actualizarDashboard()" style="width: 100%; max-width: 350px; height: 28px; background: var(--bg-panel);">
+                    </div>
+                    
+                    <table id="tablaGastos" class="data-grid">
+                        <thead>
+                            <tr>
+                                <th style="width: 30px; text-align: center;"><input type="checkbox" id="checkAll" onchange="toggleAllChecks()"></th>
+                                <th onclick="sortTable('fechaISO')" style="width: 10%;">Fecha</th>
+                                <th onclick="sortTable('nombre')" style="width: 35%;">Descripción</th>
+                                <th onclick="sortTable('catV')" style="width: 25%;">Categoría & Telemetría</th>
+                                <th onclick="sortTable('monto')" style="text-align: right; width: 12%;">Monto ($)</th>
+                                <th style="text-align: right; width: 13%;">Saldo Hist.</th>
+                                <th style="text-align: center; width: 5%;">CMD</th>
+                            </tr>
+                        </thead>
+                        <tbody id="listaDetalle"></tbody>
+                    </table>
                 </div>
                 
-                <table id="tablaGastos" class="data-grid">
-                    <thead>
-                        <tr>
-                            <th style="width: 30px; text-align: center;"><input type="checkbox" id="checkAll" onchange="toggleAllChecks()"></th>
-                            <th onclick="sortTable('fechaISO')">Fecha</th>
-                            <th onclick="sortTable('nombre')">Descripción</th>
-                            <th onclick="sortTable('catV')">Categoría</th>
-                            <th onclick="sortTable('monto')" style="text-align: right;">Monto ($)</th>
-                            <th style="text-align: right;">Saldo Hist.</th>
-                            <th style="text-align: center; width: 40px;">CMD</th>
-                        </tr>
-                    </thead>
-                    <tbody id="listaDetalle"></tbody>
-                </table>
             </div>
         </div>
 
