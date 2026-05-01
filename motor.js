@@ -412,18 +412,44 @@ if (typeof window.renderizarListas === 'undefined') {
             let editIdVal = document.getElementById('editId') ? document.getElementById('editId').value : '';
             let esEditando = (editIdVal === x.firestoreId);
             
-            let cssFuga = x.catV === 'Dopamina & Antojos' && !esEditando ? 'background: linear-gradient(90deg, rgba(255,255,255,0.01) 60%, rgba(255,82,82,0.15) 100%); border-right: 2px solid #ff5252;' : '';
+            let cssFuga = x.catV === 'Dopamina & Antojos' && !esEditando ? 'background: linear-gradient(90deg, rgba(255,255,255,0.01) 60%, rgba(248, 81, 73, 0.08) 100%); border-right: 3px solid var(--color-fuga);' : '';
             let bgEdicion = esEditando ? 'background-color: rgba(210, 153, 34, 0.15); border-left: 3px solid var(--color-edit);' : cssFuga;
 
-            // 🛠️ MEJORA 1: Implementación del Icono (${getEmoji(x.catV)}) en la fila
+            // 🛠️ EXPANSIÓN DE TELEMETRÍA: Sparklines de Eficiencia
+            let pctFuga = x.innecesarioPct !== undefined ? x.innecesarioPct : (catEvitables.includes(x.catV) ? 100 : 0);
+            let visualSparkline = '';
+            
+            if (pctFuga > 0 && !x.esIn && !x.esNeutro) {
+                // Barra de Fuga (Roja)
+                visualSparkline = `
+                <div style="display:flex; align-items:center; gap:8px; margin-top:6px;">
+                    <div style="flex:1; background:rgba(255,255,255,0.05); height:4px; border-radius:2px; overflow:hidden; border: 1px solid var(--border-color);">
+                        <div style="width:${pctFuga}%; background:var(--color-fuga); height:100%; box-shadow:0 0 8px var(--color-fuga);"></div>
+                    </div>
+                    <span style="font-size:0.6rem; color:var(--color-fuga); font-weight:900; font-family:monospace;">${pctFuga}% FUGA</span>
+                </div>`;
+            } else if (x.tipo === 'Ahorro' || x.esIn) {
+                // Barra de Optimización (Verde)
+                visualSparkline = `
+                <div style="display:flex; align-items:center; gap:8px; margin-top:6px;">
+                    <div style="flex:1; background:rgba(255,255,255,0.05); height:4px; border-radius:2px; overflow:hidden; border: 1px solid var(--border-color);">
+                        <div style="width:100%; background:var(--color-saldo); height:100%; box-shadow:0 0 8px var(--color-saldo);"></div>
+                    </div>
+                    <span style="font-size:0.6rem; color:var(--color-saldo); font-weight:900; font-family:monospace;">ACTIVO</span>
+                </div>`;
+            }
+
             htmlPC += `<tr style="${bgEdicion}" draggable="true" ondragstart="dragStart(event, '${x.firestoreId}')" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dropRow(event, '${x.firestoreId}')">
                 <td style="text-align: center;"><input type="checkbox" class="row-check" value="${x.firestoreId}" onchange="updateMassActions()"></td>
-                <td style="font-size:0.75rem; color:var(--text-muted);">${dateStr} <span class="col-hora">${timeStr}</span></td>
-                <td class="col-desc" title="${nombreSeguro}">${nombreSeguro}</td>
-                <td style="font-size:0.7rem;"><span class="cat-badge">${getEmoji(x.catV)} ${x.catV.replace(' & ','&')}</span></td>
-                <td class="col-monto" style="color:${colorMonto};">${iconImpacto}$${montoSeguro.toLocaleString('es-CL')}</td>
-                <td class="col-monto hide-mobile" style="color:${colorSaldo}; font-size:0.75rem;">$${x.saldoCalculadoVista.toLocaleString('es-CL')}</td>
-                <td style="text-align:center;"><button class="btn-sys" style="padding:2px 6px; border:none; background:transparent; font-size:1rem;" onclick="editarMovimiento('${x.firestoreId}')">✏️</button></td>
+                <td style="font-size:0.75rem; color:var(--text-muted); font-weight:bold;">${dateStr} <span class="col-hora">${timeStr}</span></td>
+                <td class="col-desc" title="${nombreSeguro}" style="font-size: 0.85rem;">${nombreSeguro}</td>
+                <td style="font-size:0.75rem; padding-top: 12px; padding-bottom: 12px;">
+                    <span class="cat-badge">${getEmoji(x.catV)} ${x.catV.replace(' & ','&')}</span>
+                    ${visualSparkline}
+                </td>
+                <td class="col-monto" style="color:${colorMonto}; font-size: 1rem;">${iconImpacto}$${montoSeguro.toLocaleString('es-CL')}</td>
+                <td class="col-monto hide-mobile" style="color:${colorSaldo}; font-size:0.8rem;">$${x.saldoCalculadoVista.toLocaleString('es-CL')}</td>
+                <td style="text-align:center;"><button class="btn-sys" style="padding:4px 8px; border:none; background:transparent; font-size:1.1rem;" onclick="editarMovimiento('${x.firestoreId}')">✏️</button></td>
             </tr>`;
         });
         contenedorPC.innerHTML = htmlPC;
