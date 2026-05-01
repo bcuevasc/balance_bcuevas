@@ -404,38 +404,71 @@ function sortTable(column) {
     actualizarDashboard();
 }
 
+// ==========================================
+// ✏️ EDICIÓN Y GUARDADO (CON SOPORTE MÓVIL)
+// ==========================================
 function editarMovimiento(id) {
     const mov = listaMovimientos.find(m => m.firestoreId === id);
     if(!mov) return alert("Registro no encontrado.");
+    
+    // Activar modo edición y cargar ID
     modoEdicionActivo = true; 
     if(document.getElementById('editId')) document.getElementById('editId').value = mov.firestoreId; 
+    
+    // Cargar Nombre
     if(document.getElementById('inputNombre')) {
         document.getElementById('inputNombre').value = mov.nombre;
-        if (window.innerWidth > 768) { document.getElementById('inputNombre').focus(); setTimeout(() => document.getElementById('inputNombre').select(), 50); }
+        if (window.innerWidth > 768) { 
+            document.getElementById('inputNombre').focus(); 
+            setTimeout(() => document.getElementById('inputNombre').select(), 50); 
+        }
     }
-    if(document.getElementById('inputMonto')) document.getElementById('inputMonto').value = mov.monto.toLocaleString('es-CL');
+    
+    // Cargar Monto
+    if(document.getElementById('inputMonto')) {
+        document.getElementById('inputMonto').value = mov.monto.toLocaleString('es-CL');
+    }
+    
+    // Cargar Categoría y gestionar display de Cuotas
     if(document.getElementById('inputCategoria')) {
         document.getElementById('inputCategoria').value = mov.categoria || 'Sin Categoría';
         const boxC = document.getElementById('boxCuotas');
         if(boxC) boxC.style.display = (mov.categoria === "Gasto Tarjeta de Crédito") ? "block" : "none";
     }
+    
+    // Cargar Fuga y Cuotas
     if(document.getElementById('inputFuga')) document.getElementById('inputFuga').value = mov.innecesarioPct !== undefined ? mov.innecesarioPct : "0";
     if(document.getElementById('inputCuotas')) document.getElementById('inputCuotas').value = mov.cuotas !== undefined ? mov.cuotas : "1";
 
+    // Cargar Tipo de Flujo
     let tipoC = mov.tipo || 'Gasto';
     if (mov.catV === 'Transferencia Recibida' || mov.catV === 'Ingreso Adicional') tipoC = 'Ingreso';
     if (mov.catV === 'Transferencia Propia / Ahorro') tipoC = 'Ahorro';
     if(document.getElementById('inputTipo')) document.getElementById('inputTipo').value = tipoC;
     
+    // Cargar Fecha
     try {
         let d = new Date(mov.fechaISO);
         let dLocal = new Date(d.getTime() - (d.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
         if(document.getElementById('inputFecha')) document.getElementById('inputFecha').value = dLocal;
     } catch(e) {}
     
+    // Ajustar Botón de Guardado
     const btn = document.getElementById('btnGuardar');
-    if(btn) { btn.innerHTML = isEng ? "UPDATE" : "ACTUALIZAR"; btn.style.backgroundColor = "var(--color-saldo)"; }
-    actualizarDashboard(); window.scrollTo({ top: 0, behavior: 'smooth' });
+    if(btn) { 
+        btn.innerHTML = isEng ? "UPDATE DATA" : "ACTUALIZAR DATOS"; 
+        btn.style.backgroundColor = "var(--color-saldo)"; 
+    }
+    
+    actualizarDashboard(); 
+    
+    // 🛠️ PARCHE MÓVIL: Forzar cambio a pestaña de inyección si estamos en mobile.html
+    if (typeof switchTabApp === 'function') {
+        const addTabButton = document.querySelectorAll('.nav-item')[2]; // El botón "+" en el medio
+        switchTabApp('add', addTabButton);
+    } else {
+        window.scrollTo({ top: 0, behavior: 'smooth' }); // Comportamiento original para PC
+    }
 }
 
 function procesarCompraTCManual(nombre, montoTotal, cuotas, fechaStr) {
