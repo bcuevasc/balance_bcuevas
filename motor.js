@@ -734,12 +734,41 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0, totalFijosMes, 
                 montosProyectados.push(sumaMes);
             }
             
-            let bgFill = 'rgba(255, 82, 82, 0.15)';
-            try { let grad = ctxProyeccion.getContext('2d').createLinearGradient(0, 0, 0, 300); grad.addColorStop(0, 'rgba(255, 82, 82, 0.6)'); grad.addColorStop(1, 'rgba(255, 82, 82, 0.05)'); bgFill = grad; } catch(e){}
+            let bgFill = 'rgba(248, 81, 73, 0.15)'; // Ajustado a paleta roja
+            try { let grad = ctxProyeccion.getContext('2d').createLinearGradient(0, 0, 0, 300); grad.addColorStop(0, 'rgba(248, 81, 73, 0.6)'); grad.addColorStop(1, 'rgba(248, 81, 73, 0.05)'); bgFill = grad; } catch(e){}
+            
+            // 🛠️ Módulo de Inyección Dual de Datasets (Real vs Simulación)
+            let datasetsRadar = [{ 
+                label: 'Deuda TC', 
+                data: montosProyectados, 
+                backgroundColor: bgFill, 
+                borderColor: '#ff5252', 
+                borderWidth: 3, 
+                fill: true, 
+                tension: 0.4, 
+                pointRadius: 4, 
+                pointBackgroundColor: '#030508', 
+                pointBorderColor: '#ff5252' 
+            }];
+
+            if (window.simulacionTC) {
+                datasetsRadar.push({
+                    label: 'Trayectoria Simulada (What-If)',
+                    data: window.simulacionTC,
+                    borderColor: '#2ea043', // Verde Saldo
+                    borderDash: [5, 5],
+                    borderWidth: 3,
+                    fill: false,
+                    tension: 0.4,
+                    pointRadius: 5,
+                    pointBackgroundColor: '#030508',
+                    pointBorderColor: '#2ea043'
+                });
+            }
             
             chartRadar = new Chart(ctxProyeccion, {
                 type: 'line', 
-                data: { labels: mesesLabels, datasets: [{ label: 'Deuda TC', data: montosProyectados, backgroundColor: bgFill, borderColor: '#ff5252', borderWidth: 3, fill: true, tension: 0.4, pointRadius: 4, pointBackgroundColor: '#030508', pointBorderColor: '#ff5252' }] },
+                data: { labels: mesesLabels, datasets: datasetsRadar },
                 options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { color: cT, callback: v => '$' + Math.round(v/1000) + 'k' }, grid: { color: cG } }, x: { ticks: { color: cT, font: {size: 10, weight: 'bold'} }, grid: { display: false } } } },
                 plugins: [ { id: 'setpointTCPlugin', afterDraw: (chart) => { try { const ctx = chart.ctx, xAxis = chart.scales.x, yAxis = chart.scales.y; const umbralSeguridad = (Number(sueldo) || 0) * 0.15; if(yAxis && yAxis.max !== undefined && yAxis.max > umbralSeguridad) { const yPos = yAxis.getPixelForValue(umbralSeguridad); ctx.save(); ctx.beginPath(); ctx.moveTo(xAxis.left, yPos); ctx.lineTo(xAxis.right, yPos); ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(255, 82, 82, 0.8)'; ctx.setLineDash([5, 5]); ctx.stroke(); ctx.fillStyle = '#ff5252'; ctx.font = 'bold 10px monospace'; ctx.fillText('MAX (15%)', xAxis.left + 5, yPos - 5); ctx.restore(); } } catch(e){} } }, labelsPlugin ]
             });
@@ -1162,4 +1191,63 @@ window.exportarTablaBunker = function(idTabla, nombreArchivo) {
         const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = `${nombreArchivo}_${new Date().toISOString().slice(0,10)}.csv`;
         document.body.appendChild(link); link.click(); document.body.removeChild(link);
     } catch (e) { console.error("Error Export:", e); }
+};
+// ==========================================
+// 🧠 MÓDULO DE CONTROL PREDICTIVO (WHAT-IF)
+// ==========================================
+window.simulacionTC = null;
+
+window.ejecutarSimulacionTC = function() {
+    const inputEl = document.getElementById('inputSimuladorTC');
+    if (!inputEl || !inputEl.value) return;
+    
+    let capitalPrepago = parseInt(inputEl.value.replace(/\./g, '')) || 0;
+    if (capitalPrepago <= 0) return;
+
+    // 1. Extraer la proyección actual de la Matriz TC a 6 meses
+    let montosOriginales = [];
+    let fechaHoy = new Date();
+    
+    for(let i=1; i<=6; i++) {
+        let mIndex = (fechaHoy.getMonth() + i) % 12;
+        let anioTemp = fechaHoy.getFullYear() + Math.floor((fechaHoy.getMonth() + i) / 12);
+        
+        let sumaMes = datosTCGlobal.filter(d => { 
+            if (!d.mesCobro) return false;
+            let fC = new Date(d.mesCobro); 
+            return fC.getMonth() === mIndex && fC.getFullYear() === anioTemp; 
+        }).reduce((a, c) => a + (Number(c.monto) || 0), 0);
+        
+        montosOriginales.push(sumaMes);
+    }
+
+    // 2. Lógica de Prepago en Cascada (Mata la deuda del mes más cercano al más lejano)
+    let trayectoriaSimulada = [...montosOriginales];
+    let capitalRestante = capitalPrepago;
+
+    for(let i = 0; i < trayectoriaSimulada.length; i++) {
+        if (capitalRestante <= 0) break;
+        if (trayectoriaSimulada[i] > 0) {
+            if (capitalRestante >= trayectoriaSimulada[i]) {
+                capitalRestante -= trayectoriaSimulada[i];
+                trayectoriaSimulada[i] = 0;
+            } else {
+                trayectoriaSimulada[i] -= capitalRestante;
+                capitalRestante = 0;
+            }
+        }
+    }
+
+    // 3. Guardar vector simulado en memoria global y repintar HMI
+    window.simulacionTC = trayectoriaSimulada;
+    actualizarDashboard();
+    mostrarToast("SIMULACIÓN WHAT-IF APLICADA");
+};
+
+window.resetearSimulacionTC = function() {
+    const inputEl = document.getElementById('inputSimuladorTC');
+    if (inputEl) inputEl.value = '';
+    window.simulacionTC = null;
+    actualizarDashboard();
+    mostrarToast("MATRIZ RESTAURADA A CONDICIÓN BASE");
 };
