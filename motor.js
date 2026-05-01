@@ -1111,7 +1111,7 @@ window.ejecutarArranque = function() {
     } else {
         alert("No se procesaron registros."); cerrarPreVuelo();
     }
-}; 
+};    
     procesarInyeccion('pv-tc-nac', "PAGO TC NACIONAL (DÍA CERO)", "Gastos Fijos (Búnker)"); 
     procesarInyeccion('pv-tc-int', "PAGO TC INTERNACIONAL (DÍA CERO)", "Gastos Fijos (Búnker)"); 
     procesarInyeccion('pv-linea', "PAGO LÍNEA CRÉDITO (DÍA CERO)", "Gastos Fijos (Búnker)");
