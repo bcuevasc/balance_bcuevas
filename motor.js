@@ -113,8 +113,12 @@ document.addEventListener("DOMContentLoaded", () => {
     const inputNombre = document.getElementById('inputNombre');
     const inputMonto = document.getElementById('inputMonto');
     if(inputNombre) {
-        inputNombre.addEventListener('keypress', e => {
-            if(e.key === 'Enter') { e.preventDefault(); if(inputMonto && !inputMonto.value) inputMonto.focus(); else document.getElementById('btnGuardar').click(); }
+        inputNombre.addEventListener('keydown', e => {
+            if(e.key === 'Enter') { 
+                e.preventDefault(); 
+                inputNombre.blur(); // Oculta el teclado virtual
+                document.getElementById('btnGuardar').click(); 
+            }
         });
         inputNombre.addEventListener('input', (e) => {
             if(modoEdicionActivo) return; 
@@ -134,11 +138,18 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
     if(inputMonto) {
-        inputMonto.addEventListener('keypress', e => {
-            if(e.key === 'Enter') { e.preventDefault(); if(inputNombre && !inputNombre.value) inputNombre.focus(); else document.getElementById('btnGuardar').click(); }
+        inputMonto.addEventListener('keydown', e => {
+            if(e.key === 'Enter') { 
+                e.preventDefault(); 
+                if(inputNombre && !inputNombre.value) {
+                    inputNombre.focus(); 
+                } else {
+                    inputMonto.blur();
+                    document.getElementById('btnGuardar').click(); 
+                }
+            }
         });
     }
-});
 
 firebase.initializeApp({ apiKey: "AIzaSyBiYETN_JipXWhMq9gKz-2Pap-Ce4ZJNAI", authDomain: "finanzas-bcuevas.firebaseapp.com", projectId: "finanzas-bcuevas" });
 const db = firebase.firestore(), auth = firebase.auth();
@@ -517,9 +528,22 @@ window.agregarMovimiento = function() {
 }
 
 function limpiarFormulario() {
-    document.getElementById('editId').value = ''; document.getElementById('inputNombre').value = ''; document.getElementById('inputMonto').value = '';
+    document.getElementById('editId').value = ''; 
+    if(document.getElementById('inputNombre')) document.getElementById('inputNombre').value = ''; 
+    if(document.getElementById('inputMonto')) document.getElementById('inputMonto').value = '';
+    
     const btn = document.getElementById('btnGuardar');
-    btn.innerHTML = isEng ? "INJECT" : "INYECTAR"; btn.style.backgroundColor = "var(--color-edit)"; btn.disabled = false; modoEdicionActivo = false;
+    if(btn) {
+        btn.innerHTML = isEng ? "INJECT DATA" : "INYECTAR DATOS"; 
+        btn.style.backgroundColor = "var(--accent-blue)"; 
+        btn.disabled = false; 
+    }
+    modoEdicionActivo = false;
+    
+    // Ocultar botón de aborto en móvil
+    const btnCancel = document.getElementById('btnCancelarEdicion');
+    if(btnCancel) btnCancel.style.display = 'none';
+
     actualizarDashboard();
 }
 
