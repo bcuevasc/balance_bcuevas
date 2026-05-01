@@ -308,6 +308,16 @@ function actualizarDashboard() {
     setTxt('txtTotalFijos', tF); setTxt('txtTotalOtros', tO); setTxt('txtTotalIngresos', tI);
     setTxt('txtCxC', tC); setTxt('txtSaldo', saldoAcc); setTxt('txtTotalInfra', tInfra); setTxt('txtTotalFlota', tFlota); 
     
+    // 🛠️ MEJORA 4: Activar Alarma Crítica si el Balance Real cae bajo cero
+    const txtSaldoEl = document.getElementById('txtSaldo');
+    if(txtSaldoEl) {
+        const cardSaldo = txtSaldoEl.closest('.kpi-card');
+        if(cardSaldo) {
+            if(saldoAcc < 0) cardSaldo.classList.add('alarma-critica');
+            else cardSaldo.classList.remove('alarma-critica');
+        }
+    }
+    
     const diasCiclo = Math.max(1, Math.round((TFinal - T0) / 86400000));
     const hoy = new Date();
     let diasT = (hoy >= T0 && hoy <= TFinal) ? Math.max(Math.floor((hoy - T0) / 86400000) + 1, 1) : (hoy > TFinal ? diasCiclo : 0);
@@ -348,7 +358,6 @@ function actualizarDashboard() {
     setTxt('txtGastoTramo', tO + tF);
     setTxt('txtPromedioZoom', Math.round((tO + tF) / diasCiclo));
 }
-
 // ==========================================
 // 📝 RENDERIZAR LISTAS PC
 // ==========================================
@@ -378,6 +387,45 @@ if (typeof window.renderizarListas === 'undefined') {
             contenedorPC.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:20px; color:var(--text-muted); font-family:monospace;">MATRIZ SIN DATOS</td></tr>`;
             return;
         }
+        // 🛠️ MEJORA 1: Recuperador seguro de iconos
+        const getEmoji = (catId) => {
+            if (typeof catMaestras !== 'undefined') {
+                const found = catMaestras.find(c => c.id === catId);
+                if (found) return found.em;
+            }
+            return "❓";
+        };
+
+        let htmlPC = '';
+        datos.forEach((x) => {
+            const d = new Date(x.fechaISO);
+            const dateStr = d.toLocaleDateString('es-CL', {day:'2-digit', month:'2-digit'});
+            const timeStr = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+
+            const colorMonto = x.esIn ? "var(--color-ingresos)" : x.esNeutro ? "#d29922" : "var(--text-main)";
+            const nombreSeguro = x.nombre || "Dato no identificado";
+            const montoSeguro = (typeof x.monto === 'number' && !isNaN(x.monto)) ? x.monto : 0;
+            const colorSaldo = x.saldoCalculadoVista < 0 ? 'var(--color-fuga)' : 'var(--text-muted)';
+            let iconImpacto = x.esIn ? `<span class="impact-icon impact-pos">+</span>` : x.esNeutro ? `<span class="impact-icon impact-neu">=</span>` : `<span class="impact-icon impact-neg">-</span>`;
+            
+            let editIdVal = document.getElementById('editId') ? document.getElementById('editId').value : '';
+            let esEditando = (editIdVal === x.firestoreId);
+            
+            let cssFuga = x.catV === 'Dopamina & Antojos' && !esEditando ? 'background: linear-gradient(90deg, rgba(255,255,255,0.01) 60%, rgba(255,82,82,0.15) 100%); border-right: 2px solid #ff5252;' : '';
+            let bgEdicion = esEditando ? 'background-color: rgba(210, 153, 34, 0.15); border-left: 3px solid var(--color-edit);' : cssFuga;
+
+            // 🛠️ MEJORA 1: Implementación del Icono (${getEmoji(x.catV)}) en la fila
+            htmlPC += `<tr style="${bgEdicion}" draggable="true" ondragstart="dragStart(event, '${x.firestoreId}')" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dropRow(event, '${x.firestoreId}')">
+                <td style="text-align: center;"><input type="checkbox" class="row-check" value="${x.firestoreId}" onchange="updateMassActions()"></td>
+                <td style="font-size:0.75rem; color:var(--text-muted);">${dateStr} <span class="col-hora">${timeStr}</span></td>
+                <td class="col-desc" title="${nombreSeguro}">${nombreSeguro}</td>
+                <td style="font-size:0.7rem;"><span class="cat-badge">${getEmoji(x.catV)} ${x.catV.replace(' & ','&')}</span></td>
+                <td class="col-monto" style="color:${colorMonto};">${iconImpacto}$${montoSeguro.toLocaleString('es-CL')}</td>
+                <td class="col-monto hide-mobile" style="color:${colorSaldo}; font-size:0.75rem;">$${x.saldoCalculadoVista.toLocaleString('es-CL')}</td>
+                <td style="text-align:center;"><button class="btn-sys" style="padding:2px 6px; border:none; background:transparent; font-size:1rem;" onclick="editarMovimiento('${x.firestoreId}')">✏️</button></td>
+            </tr>`;
+        });
+        contenedorPC.innerHTML = htmlPC;
 
         let htmlPC = '';
         datos.forEach((x) => {
@@ -490,6 +538,9 @@ function editarMovimiento(id) {
         window.scrollTo({ top: 0, behavior: 'smooth' }); // Comportamiento original para PC
     }
     document.getElementById('btnCancelarEdicion').style.display = 'block';
+    // (Añadir al final de editarMovimiento)
+    const btnCancelPC = document.getElementById('btnCancelarPC');
+    if(btnCancelPC) btnCancelPC.style.display = 'inline-block';
 }
 
 function procesarCompraTCManual(nombre, montoTotal, cuotas, fechaStr) {
@@ -543,16 +594,18 @@ function limpiarFormulario() {
     if(document.getElementById('inputMonto')) document.getElementById('inputMonto').value = '';
     
     const btn = document.getElementById('btnGuardar');
-    if(btn) {
-        btn.innerHTML = isEng ? "INJECT DATA" : "INYECTAR DATOS"; 
-        btn.style.backgroundColor = "var(--accent-blue)"; 
+    if(btn) { 
+        btn.innerHTML = isEng ? "INJECT" : "INYECTAR"; 
+        btn.style.backgroundColor = "var(--color-edit)"; 
         btn.disabled = false; 
     }
     modoEdicionActivo = false;
-    
-    // Ocultar botón de aborto en móvil
-    const btnCancel = document.getElementById('btnCancelarEdicion');
-    if(btnCancel) btnCancel.style.display = 'none';
+
+    // 🛠️ MEJORA 3: Ocultar botón de abortar en PC y Móvil
+    const btnCancelPC = document.getElementById('btnCancelarPC');
+    if(btnCancelPC) btnCancelPC.style.display = 'none';
+    const btnCancelMovil = document.getElementById('btnCancelarEdicion');
+    if(btnCancelMovil) btnCancelMovil.style.display = 'none';
 
     actualizarDashboard();
 }
@@ -569,6 +622,30 @@ function massCategorize() { const ids = Array.from(document.querySelectorAll('.r
 // 📊 GRÁFICOS (ETIQUETAS VISUALES INTEGRADAS)
 // =====================================================================
 function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0, totalFijosMes, tInfra, tFlota, deudaAprox) {
+    // 🛠️ MEJORA 2: Failsafe para gráficos sin datos (No Signal)
+    const noSignalPlugin = {
+        id: 'noSignalPlugin',
+        afterDraw: (chart) => {
+            let hasData = false;
+            chart.data.datasets.forEach(ds => {
+                if (ds.data && ds.data.some(v => v > 0 || v < 0)) hasData = true;
+            });
+            if (!hasData) {
+                const ctx = chart.ctx;
+                const width = chart.width;
+                const height = chart.height;
+                ctx.save();
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.font = 'bold 13px monospace';
+                ctx.fillStyle = 'rgba(139, 148, 158, 0.5)'; // Tono text-muted
+                ctx.fillText('[ NO SIGNAL / MATRIZ VACÍA ]', width / 2, height / 2);
+                ctx.restore();
+            }
+        }
+    };
+
+    try { if(chartBD) chartBD.destroy(); } catch(e){}
     try { if(chartBD) chartBD.destroy(); } catch(e){}
     try { if(chartP) chartP.destroy(); } catch(e){}
     try { if(chartDiario) chartDiario.destroy(); } catch(e){}
