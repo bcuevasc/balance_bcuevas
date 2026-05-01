@@ -33,7 +33,16 @@ const diccAuto = [
     { keys: ["farmacia", "cruz verde", "salcobrand", "doctor", "consulta", "integramedica", "medico", "ahumada"], cat: "Mantenimiento Hardware (Salud)", tipo: "Gasto", fuga: "0" },
     { keys: ["ahorro", "inversion", "fintual", "deposito", "traspaso"], cat: "Transferencia Propia / Ahorro", tipo: "Ahorro", fuga: "0" }
 ];
+// 🛠️ PARCHE 1: Sincronización Temporal de Arranque
+    // Forzamos al navegador de tiempo a igualarse al reloj del sistema
+    const hoy = new Date();
+    const navAnio = document.getElementById('navAnio');
+    const navMes = document.getElementById('navMesConceptual');
 
+    if (navAnio && navMes) {
+        navAnio.value = hoy.getFullYear().toString();
+        navMes.value = hoy.getMonth().toString(); // En JS, los meses van de 0 a 11
+    }
 const catMaestras = [
     { id: "Gastos Fijos (Búnker)", em: "🏠", label: "Carga Fija (Base)" },
     { id: "Infraestructura (Depto)", em: "🏢", label: "Infraestructura (Depto)" },
@@ -152,6 +161,7 @@ window.mostrarToast = function(mensaje) {
 window.loginWithGoogle = () => { auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()).catch(err => { if (err.code === 'auth/popup-blocked' || err.code === 'auth/cancelled-popup-request') auth.signInWithRedirect(new firebase.auth.GoogleAuthProvider()); }); };
 window.logout = () => { auth.signOut().then(() => location.reload()); };
 
+// 🛠️ PARCHE 2: Gatillo Refresco Inicial
 auth.onAuthStateChanged(user => {
     if (user && user.email.toLowerCase() === BYRON_EMAIL.toLowerCase()) {
         const loginScreen = document.getElementById('login-screen'), reportZone = document.getElementById('reportZone');
@@ -160,7 +170,14 @@ auth.onAuthStateChanged(user => {
         const userDisplay = document.getElementById('user-display');
         if(userDisplay) userDisplay.innerText = user.displayName.split(" ")[0];
         
-        db.collection("parametros").doc("sueldos").onSnapshot(snap => { if(snap.exists) { sueldosHistoricos = snap.data(); cargarSueldoVisual(); actualizarDashboard(); } });
+        db.collection("parametros").doc("sueldos").onSnapshot(snap => { 
+            if(snap.exists) { 
+                sueldosHistoricos = snap.data(); 
+                cargarSueldoVisual(); 
+                actualizarDashboard(); 
+            } 
+        });
+
         db.collection("movimientos").onSnapshot(snap => {
             listaMovimientos = [];
             snap.forEach(doc => {
@@ -169,9 +186,14 @@ auth.onAuthStateChanged(user => {
                 d.monto = Number(d.monto) || 0;
                 listaMovimientos.push(d);
             });
-            aplicarCicloAlSistema();
+            // Esto asegura que cada vez que cambien los datos, el ciclo se aplique
+            aplicarCicloAlSistema(); 
         });
+        
         inicializarListenerTC();
+        
+        // Disparo secundario forzado para asegurar la pintura en móvil
+        setTimeout(() => { aplicarCicloAlSistema(); }, 500); 
     }
 });
 
@@ -822,13 +844,14 @@ window.calcularDiaCero = function() {
     if(elCer) { elCer.innerText = cer + '%'; elCer.style.color = cer < 40 ? '#ff5252' : (cer < 80 ? '#ff9800' : '#2ea043'); }
 }
 
+// 🛠️ PARCHE 3: Upsert Determinista en Arranque Día Cero
 window.ejecutarArranque = function() {
-    if(!confirm("⚠️ INYECCIÓN CRÍTICA\n\n¿Estás seguro de inyectar toda tu Planilla Operativa en la Matriz del mes seleccionado?")) return;
+    if(!confirm("⚠️ INYECCIÓN CRÍTICA\n\n¿Estás seguro de inyectar toda tu Planilla Operativa en la Matriz del mes seleccionado?\nLos valores inyectados reemplazarán a los existentes para este mismo mes.")) return;
     
     const elMes = document.getElementById('navMesConceptual');
     const elAnio = document.getElementById('navAnio');
     
-    // ⚡ FIX: Inyectar en el Mes + 1 y saltar
+    // Mes + 1 para proyectar
     let pM = parseInt(elMes.value) + 1;
     let pA = parseInt(elAnio.value);
     if (pM > 11) { pM = 0; pA++; }
@@ -854,8 +877,22 @@ window.ejecutarArranque = function() {
         }
         
         if (monto > 0) {
-            let ref = db.collection("movimientos").doc();
-            batch.set(ref, { monto: monto, nombre: nombre, categoria: cat, tipo: "Gasto Fijo", fecha: fechaDestino, status: estado === 'real' ? 'Real' : 'Estimado', innecesarioPct: 0, cuotas: 1 });
+            // LÓGICA DE UPSERT: ID Determinista basado en Año_Mes_Input
+            let idEstructurado = `ARRANQUE_${pA}_${pM}_${idInput}`;
+            let ref = db.collection("movimientos").doc(idEstructurado);
+            
+            // Usar set() con merge:true (Upsert) en lugar de add()
+            batch.set(ref, { 
+                monto: monto, 
+                nombre: nombre, 
+                categoria: cat, 
+                tipo: "Gasto Fijo", 
+                fecha: fechaDestino, 
+                status: estado === 'real' ? 'Real' : 'Estimado', 
+                innecesarioPct: 0, 
+                cuotas: 1 
+            }, { merge: true });
+            
             inyectados++;
         }
     };
@@ -878,14 +915,14 @@ window.ejecutarArranque = function() {
     if (inyectados > 0) {
         batch.commit().then(() => { 
             cerrarPreVuelo(); 
-            // ⚡ FIX: Salto Automático Visual
+            // Salto Automático Visual
             document.getElementById('navMesConceptual').value = pM;
             document.getElementById('navAnio').value = pA;
             aplicarCicloAlSistema();
-            mostrarToast(`ARRANQUE COMPLETADO: ${inyectados} REG. INYECTADOS.`); 
+            mostrarToast(`ARRANQUE COMPLETADO: ${inyectados} REGISTROS PROCESADOS.`); 
         }).catch(err => { alert("❌ Error: " + err.message); });
     } else {
-        alert("No se inyectaron registros."); cerrarPreVuelo();
+        alert("No se procesaron registros."); cerrarPreVuelo();
     }
 }
 
