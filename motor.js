@@ -519,25 +519,18 @@ function editarMovimiento(id) {
 
     
     // Ajustar Botón de Guardado
+   // Ajustar Botón de Guardado
     const btn = document.getElementById('btnGuardar');
     if(btn) { 
         btn.innerHTML = isEng ? "UPDATE DATA" : "ACTUALIZAR DATOS"; 
         btn.style.backgroundColor = "var(--color-saldo)"; 
     }
     
-    actualizarDashboard(); 
-    
-    // 🛠️ PARCHE MÓVIL: Forzar cambio a pestaña de inyección si estamos en mobile.html
-    if (typeof switchTabApp === 'function') {
-        const addTabButton = document.querySelectorAll('.nav-item')[2]; // El botón "+" en el medio
-        switchTabApp('add', addTabButton);
-    } else {
-        window.scrollTo({ top: 0, behavior: 'smooth' }); // Comportamiento original para PC
-    }
-    document.getElementById('btnCancelarEdicion').style.display = 'block';
-    // (Añadir al final de editarMovimiento)
+    // 👇 ESTA ES LA LÍNEA QUE HACE APARECER EL BOTÓN ESC 👇
     const btnCancelPC = document.getElementById('btnCancelarPC');
     if(btnCancelPC) btnCancelPC.style.display = 'inline-block';
+    
+    actualizarDashboard();
 }
 
 function procesarCompraTCManual(nombre, montoTotal, cuotas, fechaStr) {
