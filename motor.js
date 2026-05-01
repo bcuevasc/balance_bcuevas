@@ -509,6 +509,9 @@ function editarMovimiento(id) {
         window.scrollTo({ top: 0, behavior: 'smooth' }); // Comportamiento original para PC
     }
     document.getElementById('btnCancelarEdicion').style.display = 'block';
+    // (Añadir al final de editarMovimiento)
+    const btnCancelPC = document.getElementById('btnCancelarPC');
+    if(btnCancelPC) btnCancelPC.style.display = 'inline-block';
 }
 
 function procesarCompraTCManual(nombre, montoTotal, cuotas, fechaStr) {
@@ -590,7 +593,31 @@ function massCategorize() { const ids = Array.from(document.querySelectorAll('.r
 // 📊 GRÁFICOS (ETIQUETAS VISUALES INTEGRADAS)
 // =====================================================================
 function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0, totalFijosMes, tInfra, tFlota, deudaAprox) {
+    // 🛠️ MEJORA 2: Failsafe para gráficos sin datos (No Signal)
+    const noSignalPlugin = {
+        id: 'noSignalPlugin',
+        afterDraw: (chart) => {
+            let hasData = false;
+            chart.data.datasets.forEach(ds => {
+                if (ds.data && ds.data.some(v => v > 0 || v < 0)) hasData = true;
+            });
+            if (!hasData) {
+                const ctx = chart.ctx;
+                const width = chart.width;
+                const height = chart.height;
+                ctx.save();
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.font = 'bold 13px monospace';
+                ctx.fillStyle = 'rgba(139, 148, 158, 0.5)'; // Tono text-muted
+                ctx.fillText('[ NO SIGNAL / MATRIZ VACÍA ]', width / 2, height / 2);
+                ctx.restore();
+            }
+        }
+    };
+
     try { if(chartBD) chartBD.destroy(); } catch(e){}
+    // ... el resto sigue igual
     try { if(chartP) chartP.destroy(); } catch(e){}
     try { if(chartDiario) chartDiario.destroy(); } catch(e){}
     try { if(chartRadar) chartRadar.destroy(); } catch(e){}
