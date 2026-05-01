@@ -998,22 +998,38 @@ window.calcularDiaCero = function() {
     let deudasDuras = tcNac + tcIntCLP + valSiNoPagado('pv-linea');
     let estructural = valSiNoPagado('pv-arriendo') + valSiNoPagado('pv-udec') + valSiNoPagado('pv-cae') + valSiNoPagado('pv-ggcc') + valSiNoPagado('pv-luz') + valSiNoPagado('pv-agua') + valSiNoPagado('pv-gas') + valSiNoPagado('pv-celu') + valSiNoPagado('pv-madre') + valSiNoPagado('pv-subs') + valSiNoPagado('pv-seguro');
     
-    document.getElementById('pv-txt-liquidez').innerText = (sueldo - deudasDuras - estructural).toLocaleString('es-CL');
+    let liquidezNeta = sueldo - deudasDuras - estructural;
     
+    // Modal principal
+    let txtLiq = document.getElementById('pv-txt-liquidez');
+    if (txtLiq) txtLiq.innerText = liquidezNeta.toLocaleString('es-CL');
+    
+    let pR = 0, pN = 0, pV = 100;
     if (sueldo > 0) {
-        let pR = Math.min((deudasDuras / sueldo) * 100, 100), pN = Math.min((estructural / sueldo) * 100, 100 - pR), pV = Math.max(100 - pR - pN, 0);
-        document.getElementById('pv-barra-roja').style.width = pR + '%'; 
-        document.getElementById('pv-barra-naranja').style.width = pN + '%'; 
-        document.getElementById('pv-barra-verde').style.width = pV + '%';
+        pR = Math.min((deudasDuras / sueldo) * 100, 100);
+        pN = Math.min((estructural / sueldo) * 100, 100 - pR);
+        pV = Math.max(100 - pR - pN, 0);
         
-        // 🛠️ Sincronización visual del Widget
-        if (document.getElementById('widget-txt-liquidez')) {
-            document.getElementById('widget-txt-liquidez').innerText = (sueldo - deudasDuras - estructural).toLocaleString('es-CL');
-            document.getElementById('widget-barra-roja').style.width = pR + '%'; 
-            document.getElementById('widget-barra-naranja').style.width = pN + '%'; 
-            document.getElementById('widget-barra-verde').style.width = pV + '%';
-        }
+        let bR = document.getElementById('pv-barra-roja'); if(bR) bR.style.width = pR + '%';
+        let bN = document.getElementById('pv-barra-naranja'); if(bN) bN.style.width = pN + '%';
+        let bV = document.getElementById('pv-barra-verde'); if(bV) bV.style.width = pV + '%';
     }
+
+    // 🛠️ Sincronización visual del Widget
+    let wTxtLiq = document.getElementById('widget-txt-liquidez');
+    if (wTxtLiq) {
+        wTxtLiq.innerText = liquidezNeta.toLocaleString('es-CL');
+        let wbR = document.getElementById('widget-barra-roja'); if(wbR) wbR.style.width = pR + '%'; 
+        let wbN = document.getElementById('widget-barra-naranja'); if(wbN) wbN.style.width = pN + '%'; 
+        let wbV = document.getElementById('widget-barra-verde'); if(wbV) wbV.style.width = pV + '%';
+    }
+
+    let tgls = document.querySelectorAll('.btn-estado'), conf = 0;
+    tgls.forEach(b => { if(b.classList.contains('real') || b.classList.contains('pag')) conf++; });
+    let cer = tgls.length > 0 ? Math.round((conf / tgls.length) * 100) : 0;
+    let elCer = document.getElementById('pv-certeza-pct');
+    if(elCer) { elCer.innerText = cer + '%'; elCer.style.color = cer < 40 ? '#ff5252' : (cer < 80 ? '#ff9800' : '#2ea043'); }
+};
 
 // 🛠️ PARCHE 3: Upsert Determinista en Arranque Día Cero
 window.ejecutarArranque = function() {
@@ -1067,7 +1083,35 @@ window.ejecutarArranque = function() {
             inyectados++;
         }
     };
+
+    procesarInyeccion('pv-tc-nac', "PAGO TC NACIONAL (DÍA CERO)", "Gastos Fijos (Búnker)"); 
+    procesarInyeccion('pv-tc-int', "PAGO TC INTERNACIONAL (DÍA CERO)", "Gastos Fijos (Búnker)"); 
+    procesarInyeccion('pv-linea', "PAGO LÍNEA CRÉDITO (DÍA CERO)", "Gastos Fijos (Búnker)");
+    procesarInyeccion('pv-arriendo', "ARRIENDO / DIVIDENDO", "Infraestructura (Depto)");
+    procesarInyeccion('pv-udec', "PAGO UDEC 2024", "Infraestructura (Depto)");
+    procesarInyeccion('pv-cae', "PAGO CAE", "Infraestructura (Depto)");
+    procesarInyeccion('pv-ggcc', "GASTOS COMUNES", "Infraestructura (Depto)");
+    procesarInyeccion('pv-luz', "LUZ / ELECTRICIDAD", "Infraestructura (Depto)");
+    procesarInyeccion('pv-agua', "AGUA / SANEAMIENTO", "Infraestructura (Depto)");
+    procesarInyeccion('pv-gas', "GAS", "Infraestructura (Depto)");
+    procesarInyeccion('pv-celu', "CELU MIO PLAN", "Suscripciones");
+    procesarInyeccion('pv-madre', "MOVISTAR MADRE", "Red de Apoyo (Familia)");
+    procesarInyeccion('pv-subs', "PACK SUSCRIPCIONES (YT, Disney, etc)", "Suscripciones");
+    procesarInyeccion('pv-seguro', "SEGURO AUTO", "Flota & Movilidad");
     
+    if (inyectados > 0) {
+        batch.commit().then(() => { 
+            cerrarPreVuelo(); 
+            // Salto Automático Visual
+            document.getElementById('navMesConceptual').value = pM;
+            document.getElementById('navAnio').value = pA;
+            aplicarCicloAlSistema();
+            mostrarToast(`ARRANQUE COMPLETADO: ${inyectados} REGISTROS PROCESADOS.`); 
+        }).catch(err => { alert("❌ Error: " + err.message); });
+    } else {
+        alert("No se procesaron registros."); cerrarPreVuelo();
+    }
+}; 
     procesarInyeccion('pv-tc-nac', "PAGO TC NACIONAL (DÍA CERO)", "Gastos Fijos (Búnker)"); 
     procesarInyeccion('pv-tc-int', "PAGO TC INTERNACIONAL (DÍA CERO)", "Gastos Fijos (Búnker)"); 
     procesarInyeccion('pv-linea', "PAGO LÍNEA CRÉDITO (DÍA CERO)", "Gastos Fijos (Búnker)");
