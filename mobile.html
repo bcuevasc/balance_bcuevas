@@ -26,6 +26,7 @@
         .master-hud { text-align: center; padding: 5px 20px 10px 20px; width: 100%; overflow: hidden;}
         .hud-value { font-size: clamp(2.2rem, 10vw, 3.5rem); font-weight: 900; letter-spacing: -1px; font-family: monospace; text-shadow: 0 0 20px rgba(31, 111, 235, 0.3); transition: transform 0.3s; word-break: break-all; line-height: 1;}
         .hud-value.danger { color: var(--accent-red); text-shadow: 0 0 30px rgba(255, 82, 82, 0.3); }
+        /* Busca y reemplaza estas clases en tu CSS actual */
 
         .slave-kpis { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 0 15px; margin-bottom: 10px; }
         .slave-pill { background: var(--bg-card); border: 1px solid var(--border-subtle); padding: 6px 10px; border-radius: 10px; display: flex; flex-direction: column; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.3); position: relative; overflow: hidden;}
@@ -35,52 +36,10 @@
         .slave-pill.purple::before { background: var(--color-infra); box-shadow: 0 0 10px var(--color-infra); }
         .slave-pill.cyan::before { background: var(--color-flota); box-shadow: 0 0 10px var(--color-flota); }
 
-        /* =======================================================
-           📱 UI MÓVIL V14.9 - TARJETAS NATIVAS & TOUCH TARGETS
-           ======================================================= */
-        .lista-contenedor { padding: 0 15px; display: flex; flex-direction: column; gap: 10px; margin-top: 10px; padding-bottom: calc(120px + env(safe-area-inset-bottom)); }
+        .lista-contenedor { padding: 0 10px; display: flex; flex-direction: column; gap: 6px; margin-top: 5px; padding-bottom: calc(120px + env(safe-area-inset-bottom)); }
         
-        .mobile-card { 
-            background: linear-gradient(145deg, var(--bg-elevated) 0%, var(--bg-card) 100%) !important; 
-            border: 1px solid rgba(255, 255, 255, 0.05) !important; 
-            border-radius: 16px !important; 
-            padding: 16px 14px !important; 
-            display: flex; 
-            align-items: center; 
-            gap: 12px;
-            transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.15s ease !important; 
-            box-shadow: 0 6px 15px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.03) !important; 
-            position: relative;
-            overflow: hidden;
-            cursor: pointer;
-        }
-        .mobile-card:active { transform: scale(0.96) !important; box-shadow: 0 2px 5px rgba(0,0,0,0.5) !important; }
-
-        /* 🟢 Barras de Estado Laterales (Indicador Táctico) */
-        .mobile-card::before {
-            content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
-            background: var(--border-subtle); transition: all 0.3s ease;
-        }
-        .mobile-card.is-ingreso::before { background: var(--accent-green); box-shadow: 0 0 12px var(--accent-green); }
-        .mobile-card.is-fuga::before { background: var(--accent-red); box-shadow: 0 0 12px var(--accent-red); }
-        .mobile-card.is-neutro::before { background: var(--accent-orange); box-shadow: 0 0 12px var(--accent-orange); }
-
-        /* 🔵 Contenedor del Icono */
-        .mc-icon {
-            width: 44px; height: 44px; background: rgba(0,0,0,0.4); border-radius: 12px;
-            display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-            border: 1px solid rgba(255,255,255,0.05); font-size: 1.4rem;
-            box-shadow: inset 0 2px 5px rgba(0,0,0,0.5);
-        }
-
-        /* ⚪ Cuerpo del Texto */
-        .mc-body { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; }
-        .mc-title { font-weight: 800; font-size: 0.95rem; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: 0.3px; line-height: 1.2; margin-bottom: 3px; }
-        .mc-subtitle { font-size: 0.7rem; color: var(--text-dim); display: flex; align-items: center; gap: 5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;}
-
-        /* 🔴 Monto */
-        .mc-amount { font-family: monospace; font-weight: 900; font-size: 1.15rem; text-align: right; flex-shrink: 0; }
-
+        .mobile-card { background: var(--bg-card) !important; border: 1px solid var(--border-subtle) !important; border-radius: 14px !important; padding: 14px 12px !important; display: flex; align-items: center; transition: transform 0.1s ease; box-shadow: 0 4px 10px rgba(0,0,0,0.2) !important; }
+        .mobile-card:active { transform: scale(0.97); }
         .date-header { padding-left: 5px; font-size: 0.65rem; font-weight: 900; color: #79c0ff; text-transform: uppercase; margin: 15px 0 5px 5px; letter-spacing: 1px; display: flex; align-items: center; gap: 5px; }
         .date-header::before { content: '●'; font-size: 0.5rem; text-shadow: 0 0 5px #79c0ff;}
 
@@ -480,7 +439,6 @@
             const dateStr = d.toLocaleDateString('es-CL');
             const timeStr = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
             
-            // Lógica de separador de fechas
             if (currentSort.column === 'fechaISO' && currentSort.direction === 'desc' && dateStr !== currentDayGroup) {
                 let labelText = dateStr;
                 if (dClean.getTime() === now.getTime()) labelText = "HOY";
@@ -493,29 +451,29 @@
                 currentDayGroup = dateStr;
             }
 
-            const iconoVisual = getEmoji(x.catV);
-            const colorMonto = x.esIn ? "var(--accent-green)" : x.esNeutro ? "var(--accent-orange)" : "var(--text-main)";
+            const iconoVisual = `<span style="font-size: 1.5rem;">${getEmoji(x.catV)}</span>`;
+            const colorMonto = x.esIn ? "var(--accent-green)" : x.esNeutro ? "#d29922" : "var(--text-main)";
             const nombreSeguro = x.nombre || "Dato no identificado";
             const montoSeguro = (typeof x.monto === 'number' && !isNaN(x.monto)) ? x.monto : 0;
             
-            // Telemetría táctica (Color de la barra lateral)
-            let esFuga = (x.catV === 'Dopamina & Antojos' || (x.innecesarioPct && x.innecesarioPct > 0)) && !x.esIn && !x.esNeutro;
-            let statusClass = x.esIn ? 'is-ingreso' : (esFuga ? 'is-fuga' : (x.esNeutro ? 'is-neutro' : ''));
+            let styleExtra = x.catV === 'Dopamina & Antojos' ? 'background: linear-gradient(90deg, rgba(255,255,255,0.01) 30%, rgba(255, 82, 82, 0.15) 100%) !important; border-right: 2px solid var(--accent-red) !important;' : '';
 
             const clickAction = typeof openBottomSheet === 'function' ? `openBottomSheet('${x.firestoreId}', '${nombreSeguro.replace(/'/g, "\\'")}', ${montoSeguro})` : ``;
             
             htmlMovil += `
-            <div class="mobile-card ${statusClass}" onclick="${clickAction}">
-                <div class="mc-icon">${iconoVisual}</div>
-                <div class="mc-body">
-                    <div class="mc-title">${nombreSeguro}</div>
-                    <div class="mc-subtitle"><span>🕒 ${timeStr}</span> <span style="opacity: 0.5;">•</span> <span>${x.catV.replace(' & ','&')}</span></div>
+            <div class="mobile-card" onclick="${clickAction}" style="${styleExtra}">
+                <div style="width: 46px; height: 46px; margin-right: 12px; background: var(--bg-elevated); border-radius: 50%; display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0; border: 1px solid var(--border-subtle); box-shadow: inset 0 2px 5px rgba(0,0,0,0.5);">
+                    ${iconoVisual}
                 </div>
-                <div class="mc-amount" style="color:${colorMonto};">
-                    ${x.esIn ? '+' : (x.esNeutro ? '=' : '-')} $${Math.round(montoSeguro/1000)}k
+                <div style="flex: 1; min-width: 0;">
+                    <div style="font-weight:bold; font-size:0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text-main); letter-spacing: 0.5px;">${nombreSeguro}</div>
+                    <div style="font-size:0.7rem; color:var(--text-dim); margin-top:3px;">${timeStr} • ${x.catV.replace(' & ','&')}</div>
                 </div>
+                <div style="font-weight:900; color:${colorMonto}; flex-shrink: 0; font-size:1.15rem; font-family:monospace;">${x.esIn?'+':(x.esNeutro?'=':'-')}$${Math.round(montoSeguro/1000)}k</div>
             </div>`;
         });
+        contenedorMovil.innerHTML = htmlMovil;
+    };
 
     window.renderizarTablaTC = function() {
         if (typeof datosTCGlobal === 'undefined') return;
