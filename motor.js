@@ -1263,3 +1263,62 @@ window.resetearSimulacionTC = function() {
     actualizarDashboard();
     mostrarToast("MATRIZ RESTAURADA A CONDICIÓN BASE");
 };
+// =====================================================================
+// 🔄 MÓDULO DE REORDENAMIENTO DINÁMICO (DRAG & DROP CRONOLÓGICO)
+// =====================================================================
+let dragSourceId = null;
+
+window.dragStart = function(event, id) {
+    dragSourceId = id;
+    event.dataTransfer.effectAllowed = 'move';
+    // Efecto visual: atenuamos la fila mientras se arrastra
+    event.target.style.opacity = '0.4';
+};
+
+window.dragOver = function(event) {
+    event.preventDefault(); // Condición vital para permitir el Drop
+    let tr = event.target.closest('tr');
+    // Indicador táctico de inserción
+    if (tr) tr.style.borderTop = "2px dashed var(--color-edit)";
+};
+
+window.dragLeave = function(event) {
+    let tr = event.target.closest('tr');
+    if (tr) tr.style.borderTop = "";
+};
+
+window.dropRow = function(event, targetId) {
+    event.preventDefault();
+    let tr = event.target.closest('tr');
+    if (tr) tr.style.borderTop = "";
+
+    // Restaurar opacidad a todos los elementos del DOM
+    document.querySelectorAll('.data-grid tbody tr').forEach(row => row.style.opacity = '1');
+
+    // Failsafe: Si soltamos en el mismo lugar o fuera de rango, abortar
+    if (!dragSourceId || dragSourceId === targetId) return;
+
+    // Localizar los nodos en la memoria local (RAM)
+    const sourceNode = listaMovimientos.find(m => m.firestoreId === dragSourceId);
+    const targetNode = listaMovimientos.find(m => m.firestoreId === targetId);
+
+    if (!sourceNode || !targetNode) return;
+
+    mostrarToast("RECALCULANDO CRONOLOGÍA Y CASCADA DE SALDOS...");
+
+    // 🛠️ MANIPULACIÓN DEL TIMESTAMP
+    // Extraemos el tiempo base del objetivo y le sumamos 1000 milisegundos (1 segundo)
+    // Esto fuerza un Offset cronológico para que el elemento arrastrado quede justo arriba
+    let targetTime = new Date(targetNode.fechaISO).getTime();
+    let nuevoTiempoCronologico = new Date(targetTime + 1000); 
+
+    // Actuador: Inyección de la nueva estampa de tiempo al Firestore.
+    // El listener onSnapshot detectará este cambio y redibujará la cascada de saldos sola.
+    db.collection("movimientos").doc(dragSourceId).update({
+        fecha: nuevoTiempoCronologico
+    }).then(() => {
+        dragSourceId = null; // Purgar variable global
+    }).catch(err => {
+        alert("❌ Error de Sincronización Cronológica: " + err.message);
+    });
+};
