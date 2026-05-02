@@ -692,12 +692,22 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0, totalFijosMes, 
         labelsFechas.push(`${dia} ${nombresMes[f.getMonth()]}`); labelsX.push(f.getDate() === 1 ? `${dia} ${nombresMes[f.getMonth()]}` : dia); 
     }
 
-    if(limit > 1 && limit <= diasCiclo) {
-        let promedioGastoDiario = (sueldo - actual[limit]) / limit;
+    if(limit >= 1 && limit <= diasCiclo) {
+        // 🛠️ CALIBRACIÓN V14.8: Proyección basada solo en Tasa de Consumo Variable
+        // Ignoramos la perturbación (escalón) de la Carga Fija del Día 1
+        let gastoVariableAcumulado = 0;
+        for(let i = 1; i <= limit; i++) {
+            gastoVariableAcumulado += dailyNecesario[i] + dailyFugas[i];
+        }
+        
+        // Pendiente (Slope) de quema diaria
+        let tasaVariableDiaria = limit > 0 ? (gastoVariableAcumulado / limit) : 0;
+        
         proyeccion[limit] = actual[limit];
-        for(let i = limit + 1; i <= diasCiclo; i++) proyeccion[i] = proyeccion[i-1] - promedioGastoDiario;
+        for(let i = limit + 1; i <= diasCiclo; i++) {
+            proyeccion[i] = proyeccion[i-1] - tasaVariableDiaria;
+        }
     }
-
     try {
         const ctxBD = document.getElementById('chartBurnDown');
         if(ctxBD) {
@@ -986,8 +996,12 @@ window.calcularDiaCero = function() {
     const valSiNoPagado = (id) => { let el = document.getElementById(id); return (el && el.getAttribute('data-estado') !== 'pag') ? (parseInt(el.value.replace(/\./g, '')) || 0) : 0; };
     let sueldo = parseInt((document.getElementById('pv-sueldo').value || "0").replace(/\./g, '')) || 0;
     let tcNac = valSiNoPagado('pv-tc-nac');
+    
+    // 🛠️ PRECISIÓN DECIMAL TC INTERNACIONAL
     let elTcInt = document.getElementById('pv-tc-int');
-    let tcIntUSD = (elTcInt && elTcInt.getAttribute('data-estado') !== 'pag') ? (parseInt(elTcInt.value.replace(/\./g, '')) || 0) : 0;
+    let valTcIntRaw = elTcInt ? elTcInt.value.replace(/\$/g, '').replace(/,/g, '.') : "0";
+    let tcIntUSD = (elTcInt && elTcInt.getAttribute('data-estado') !== 'pag') ? (parseFloat(valTcIntRaw) || 0) : 0;
+    
     let tcIntCLP = Math.round(tcIntUSD * (isNaN(window.VALOR_USD) ? 950 : window.VALOR_USD)); 
     let elTcIntCLP = document.getElementById('pv-tc-int-clp');
     if (elTcIntCLP) {
@@ -1030,87 +1044,12 @@ window.calcularDiaCero = function() {
     let elCer = document.getElementById('pv-certeza-pct');
     if(elCer) { elCer.innerText = cer + '%'; elCer.style.color = cer < 40 ? '#ff5252' : (cer < 80 ? '#ff9800' : '#2ea043'); }
 };
-
-// 🛠️ PARCHE 3: Upsert Determinista en Arranque Día Cero
+// 🚀 SIMULADOR DÍA CERO (MODO GEMELO DIGITAL PURO)
 window.ejecutarArranque = function() {
-    if(!confirm("⚠️ INYECCIÓN CRÍTICA\n\n¿Estás seguro de inyectar toda tu Planilla Operativa en la Matriz del mes seleccionado?\nLos valores inyectados reemplazarán a los existentes para este mismo mes.")) return;
-    
-    const elMes = document.getElementById('navMesConceptual');
-    const elAnio = document.getElementById('navAnio');
-    
-    // Mes + 1 para proyectar
-    let pM = parseInt(elMes.value) + 1;
-    let pA = parseInt(elAnio.value);
-    if (pM > 11) { pM = 0; pA++; }
-
-    let fechaDestino = new Date(pA, pM, 1, 10, 0, 0);
-    
-    const batch = db.batch();
-    let inyectados = 0;
-    
-    const procesarInyeccion = (idInput, nombre, cat) => {
-        let el = document.getElementById(idInput);
-        if (!el) return;
-        let estado = el.getAttribute('data-estado') || 'est';
-        if (estado === 'pag') return; 
-        
-        let monto = 0;
-        if (idInput === 'pv-tc-int') {
-            let tcIntUSD = parseInt(el.value.replace(/\./g, '')) || 0;
-            let valorDolarSeguro = isNaN(window.VALOR_USD) ? 950 : window.VALOR_USD;
-            monto = Math.round(tcIntUSD * valorDolarSeguro);
-        } else {
-            monto = parseInt(el.value.replace(/\./g, '')) || 0;
-        }
-        
-        if (monto > 0) {
-            // LÓGICA DE UPSERT: ID Determinista basado en Año_Mes_Input
-            let idEstructurado = `ARRANQUE_${pA}_${pM}_${idInput}`;
-            let ref = db.collection("movimientos").doc(idEstructurado);
-            
-            // Usar set() con merge:true (Upsert) en lugar de add()
-            batch.set(ref, { 
-                monto: monto, 
-                nombre: nombre, 
-                categoria: cat, 
-                tipo: "Gasto Fijo", 
-                fecha: fechaDestino, 
-                status: estado === 'real' ? 'Real' : 'Estimado', 
-                innecesarioPct: 0, 
-                cuotas: 1 
-            }, { merge: true });
-            
-            inyectados++;
-        }
-    };
-
-    procesarInyeccion('pv-tc-nac', "PAGO TC NACIONAL (DÍA CERO)", "Gastos Fijos (Búnker)"); 
-    procesarInyeccion('pv-tc-int', "PAGO TC INTERNACIONAL (DÍA CERO)", "Gastos Fijos (Búnker)"); 
-    procesarInyeccion('pv-linea', "PAGO LÍNEA CRÉDITO (DÍA CERO)", "Gastos Fijos (Búnker)");
-    procesarInyeccion('pv-arriendo', "ARRIENDO / DIVIDENDO", "Infraestructura (Depto)");
-    procesarInyeccion('pv-udec', "PAGO UDEC 2024", "Infraestructura (Depto)");
-    procesarInyeccion('pv-cae', "PAGO CAE", "Infraestructura (Depto)");
-    procesarInyeccion('pv-ggcc', "GASTOS COMUNES", "Infraestructura (Depto)");
-    procesarInyeccion('pv-luz', "LUZ / ELECTRICIDAD", "Infraestructura (Depto)");
-    procesarInyeccion('pv-agua', "AGUA / SANEAMIENTO", "Infraestructura (Depto)");
-    procesarInyeccion('pv-gas', "GAS", "Infraestructura (Depto)");
-    procesarInyeccion('pv-celu', "CELU MIO PLAN", "Suscripciones");
-    procesarInyeccion('pv-madre', "MOVISTAR MADRE", "Red de Apoyo (Familia)");
-    procesarInyeccion('pv-subs', "PACK SUSCRIPCIONES (YT, Disney, etc)", "Suscripciones");
-    procesarInyeccion('pv-seguro', "SEGURO AUTO", "Flota & Movilidad");
-    
-    if (inyectados > 0) {
-        batch.commit().then(() => { 
-            cerrarPreVuelo(); 
-            // Salto Automático Visual
-            document.getElementById('navMesConceptual').value = pM;
-            document.getElementById('navAnio').value = pA;
-            aplicarCicloAlSistema();
-            mostrarToast(`ARRANQUE COMPLETADO: ${inyectados} REGISTROS PROCESADOS.`); 
-        }).catch(err => { alert("❌ Error: " + err.message); });
-    } else {
-        alert("No se procesaron registros."); cerrarPreVuelo();
-    }
+    // LOBOTOMÍA: Actuador de base de datos desconectado. 
+    // Solo evalúa impacto local sin escritura en Firestore.
+    mostrarToast("SIMULACIÓN FINALIZADA: GEMELO DIGITAL SEGURO (NO SE INYECTÓ DATA)");
+    cerrarPreVuelo();
 };
 
 // ☁️ SINC Y EXPORTACIÓN LEGACY
