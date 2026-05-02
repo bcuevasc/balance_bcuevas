@@ -834,55 +834,108 @@ function inicializarListenerTC() {
 
 if (typeof window.renderizarTablaTC === 'undefined') {
     window.renderizarTablaTC = function() {
-        const tbody = document.getElementById("listaDetalleTC"); if (!tbody) return;
-        
-        if (datosTCGlobal.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:20px; color:var(--text-muted); font-family:monospace;">MATRIZ SIN DATOS</td></tr>`;
-            let bImp = document.getElementById('boxImpactoTC'); if (bImp) bImp.style.display = 'none';
-            return;
-        }
-
-        let agrupado = {};
-        datosTCGlobal.forEach(doc => {
-            if(!doc.mesCobro) return;
-            let f = new Date(doc.mesCobro), key = f.getFullYear() + "-" + String(f.getMonth() + 1).padStart(2, '0');
-            if (!agrupado[key]) agrupado[key] = { label: f.toLocaleString('es-CL', { month: 'long', year: 'numeric' }).toUpperCase(), total: 0, items: [] };
-            agrupado[key].items.push(doc); agrupado[key].total += (Number(doc.monto) || 0);
-        });
-
-        let htmlString = "";
-        Object.keys(agrupado).sort().forEach(key => {
-            let g = agrupado[key];
-            htmlString += `<tr style="background:rgba(255,82,82,0.15); border-top:2px solid rgba(255,82,82,0.5);">
-                <td></td><td colspan="2" style="font-weight:900; color:#ff5252; font-size:0.85rem; letter-spacing:1px;">🗓️ ${g.label}</td>
-                <td class="col-monto" style="color:#ff5252; font-weight:900;">$${g.total.toLocaleString('es-CL')}</td>
-            </tr>`;
-            g.items.forEach(doc => {
-                let op = (doc.nombre && (doc.nombre.includes("PROYECCIÓN") || doc.nombre.includes("FACTURADA"))) ? "1" : "0.7";
-                htmlString += `<tr>
-                    <td style="text-align: center;"><input type="checkbox" class="checkItemTC" value="${doc.id}" onclick="actualizarBarraTC()" style="accent-color: #ff5252;"></td>
-                    <td style="font-size: 0.7rem; color: #79c0ff; opacity:${op};">Cuota: ${doc.cuota || '1/1'}</td>
-                    <td class="col-desc" title="${doc.nombre || 'N/A'}" style="opacity:${op}; font-size:0.75rem;">${doc.nombre || 'N/A'}</td>
-                    <td class="col-monto" style="opacity:${op};">$${(Number(doc.monto)||0).toLocaleString('es-CL')}</td>
-                </tr>`;
-            });
-        });
-        tbody.innerHTML = htmlString;
-
-        let fHoy = new Date(), pM = fHoy.getMonth() + 2, pA = fHoy.getFullYear();
-        if (pM > 12) { pM = 1; pA++; }
-        let kProx = pA + "-" + String(pM).padStart(2, '0');
-
-        let bImp = document.getElementById('boxImpactoTC');
-        if (bImp) {
-            if (agrupado[kProx]) {
-                bImp.style.display = 'flex';
-                document.getElementById('lblImpactoMes').innerText = agrupado[kProx].label;
-                document.getElementById('txtImpactoMonto').innerText = `$${agrupado[kProx].total.toLocaleString('es-CL')}`;
-            } else { bImp.style.display = 'none'; }
-        }
-        if(typeof actualizarBarraTC === 'function') actualizarBarraTC(); 
+    if (typeof datosTCGlobal === 'undefined') return;
+    
+    // Detectamos si estamos en PC o Móvil
+    const tbodyPC = document.getElementById("listaDetalleTC"); 
+    const tbodyMovil = document.getElementById("listaMovilTC");
+    
+    if (!tbodyPC && !tbodyMovil) return;
+    
+    if (datosTCGlobal.length === 0) {
+        if (tbodyPC) tbodyPC.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:20px; color:var(--text-muted); font-family:monospace;">MATRIZ SIN DATOS</td></tr>`;
+        if (tbodyMovil) tbodyMovil.innerHTML = `<div style="text-align:center; padding: 40px 20px; color: var(--text-dim);"><i>📡</i><br>MATRIZ TC SIN DATOS</div>`;
+        let boxImpacto = document.getElementById('boxImpactoTC'); if(boxImpacto) boxImpacto.style.display = 'none';
+        return;
     }
+
+    let agrupado = {};
+    let sumaProximoMes = 0; 
+    let fechaHoy = new Date();
+    let proximoMes = fechaHoy.getMonth() + 1; 
+    let proximoAnio = fechaHoy.getFullYear();
+    if (proximoMes > 11) { proximoMes = 0; proximoAnio++; }
+
+    // 1. Construir el Árbol Lógico agrupando por Mes
+    datosTCGlobal.forEach(doc => {
+        if(!doc.mesCobro) return;
+        let f = new Date(doc.mesCobro);
+        let key = f.getFullYear() + "-" + String(f.getMonth() + 1).padStart(2, '0');
+        
+        if (!agrupado[key]) agrupado[key] = { label: f.toLocaleString('es-CL', { month: 'long', year: 'numeric' }).toUpperCase(), total: 0, items: [] };
+        
+        agrupado[key].items.push(doc); 
+        agrupado[key].total += (Number(doc.monto) || 0);
+        
+        if (f.getMonth() === proximoMes && f.getFullYear() === proximoAnio) {
+            sumaProximoMes += (Number(doc.monto) || 0);
+        }
+    });
+
+    let htmlPC = "";
+    let htmlMovil = "";
+
+    // 2. Renderizar Padres e Hijos
+    Object.keys(agrupado).sort().forEach(key => {
+        let g = agrupado[key];
+        
+        // PADRE PC
+        htmlPC += `<tr style="background:rgba(255,82,82,0.15); border-top:2px solid rgba(255,82,82,0.5);">
+            <td></td><td colspan="2" style="font-weight:900; color:#ff5252; font-size:0.85rem; letter-spacing:1px;">🗓️ ${g.label}</td>
+            <td class="col-monto" style="color:#ff5252; font-weight:900;">$${g.total.toLocaleString('es-CL')}</td>
+        </tr>`;
+        
+        // PADRE MÓVIL
+        htmlMovil += `<div style="background:rgba(255,82,82,0.1); padding: 10px 15px; margin: 15px 0 10px 0; border-radius: 8px; border-left: 3px solid var(--accent-red);">
+            <div style="display:flex; justify-content:space-between; color:var(--accent-red); font-weight:900; font-size: 0.85rem; letter-spacing: 1px;">
+                <span>🗓️ ${g.label}</span><span>$${g.total.toLocaleString('es-CL')}</span>
+            </div>
+        </div>`;
+
+        // HIJOS (Las Cuotas)
+        g.items.forEach(doc => {
+            let op = (doc.nombre && (doc.nombre.includes("PROYECCIÓN") || doc.nombre.includes("FACTURADA"))) ? "1" : "0.7";
+            
+            // Hijo PC
+            htmlPC += `<tr>
+                <td style="text-align: center;"><input type="checkbox" class="checkItemTC" value="${doc.id}" onclick="actualizarBarraTC()" style="accent-color: #ff5252;"></td>
+                <td style="font-size: 0.7rem; color: #79c0ff; opacity:${op};">Cuota: ${doc.cuota || '1/1'}</td>
+                <td class="col-desc" title="${doc.nombre || 'N/A'}" style="opacity:${op}; font-size:0.75rem;">${doc.nombre || 'N/A'}</td>
+                <td class="col-monto" style="opacity:${op};">$${(Number(doc.monto)||0).toLocaleString('es-CL')}</td>
+            </tr>`;
+            
+            // Hijo Móvil
+            const clickAction = typeof openBottomSheet === 'function' ? `openBottomSheet('${doc.id}', '${(doc.nombre || '').replace(/'/g, "\\'")}', ${doc.monto})` : ``;
+            htmlMovil += `
+            <div class="mobile-card is-fuga" onclick="${clickAction}" style="opacity: ${op}; margin-bottom: 6px; padding: 12px !important;">
+                <div class="mc-icon" style="font-size: 1rem; width: 36px; height: 36px;">💳</div>
+                <div class="mc-body">
+                    <div class="mc-title" style="font-size: 0.85rem;">${doc.nombre || 'N/A'}</div>
+                    <div class="mc-subtitle" style="color: var(--accent-red);"><span>Cuota: ${doc.cuota || '1/1'}</span></div>
+                </div>
+                <div class="mc-amount" style="font-size: 1rem;">$${(Number(doc.monto)||0).toLocaleString('es-CL')}</div>
+            </div>`;
+        });
+    });
+
+    if (tbodyPC) tbodyPC.innerHTML = htmlPC;
+    if (tbodyMovil) tbodyMovil.innerHTML = htmlMovil; 
+    
+    // Actualizar Alerta Superior
+    let mesNombreStr = new Date(proximoAnio, proximoMes, 1).toLocaleString('es-CL', { month: 'long' }).toUpperCase();
+    let boxImpacto = document.getElementById('boxImpactoTC');
+    if (boxImpacto) {
+        if (sumaProximoMes > 0) {
+            boxImpacto.style.display = 'flex';
+            let elMes = document.getElementById('lblImpactoMes'); if(elMes) elMes.innerText = `${mesNombreStr}`;
+            let elMonto = document.getElementById('txtImpactoMonto'); if(elMonto) elMonto.innerText = `$${sumaProximoMes.toLocaleString('es-CL')}`;
+        } else { 
+            boxImpacto.style.display = 'none'; 
+        }
+    }
+
+    if(typeof actualizarBarraTC === 'function') actualizarBarraTC(); 
+};
 }
 
 window.cargarCSV_TC = function() {
