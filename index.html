@@ -300,7 +300,17 @@
         <div class="form-group"><label data-en="Category">Categoría V31.4</label><select id="inputCategoria" class="form-control"></select></div>
         <div class="form-group sm" id="boxFuga"><label data-en="% Leak">% Fuga</label>
             <select id="inputFuga" class="form-control">
-                <option value="100">100%</option><option value="90">90%</option><option value="80">80%</option><option value="50">50%</option><option value="0" selected>0%</option>
+                <option value="100">100%</option>
+                <option value="90">90%</option>
+                <option value="80">80%</option>
+                <option value="70">70%</option>
+                <option value="60">60%</option>
+                <option value="50">50%</option>
+                <option value="40">40%</option>
+                <option value="30">30%</option>
+                <option value="20">20%</option>
+                <option value="10">10%</option>
+                <option value="0" selected>0%</option>
             </select>
         </div>
         <div class="form-group sm" id="boxCuotas" style="display:none;"><label data-en="Installments">Cuotas</label>
@@ -502,7 +512,7 @@
                     <div class="pv-input-group">
                         <label>TC Nacional</label>
                         <button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-tc-nac')">EST</button>
-                        <input type="text" id="pv-tc-nac" class="pv-input" style="color:var(--color-fuga);" placeholder="0" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();">
+                        <input type="text" id="pv-tc-int" class="pv-input" style="color:var(--color-fuga); width:100px;" placeholder="US$ 0.00" data-estado="est" inputmode="decimal" oninput="this.value = this.value.replace(/[^0-9.,]/g, ''); calcularDiaCero();">
                     </div>
                     <div style="display:flex; flex-direction:column; width:100%; background: var(--bg-card); border-radius: 12px; border: 1px solid rgba(248,81,73,0.3); margin-bottom: 10px; padding: 12px 14px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
                         <div style="display: flex; align-items: center; justify-content: space-between; gap:10px;">
