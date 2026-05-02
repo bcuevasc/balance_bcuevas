@@ -1284,6 +1284,43 @@ window.resetearSimulacionTC = function() {
     actualizarDashboard();
     mostrarToast("MATRIZ RESTAURADA A CONDICIÓN BASE");
 };
+// ==========================================
+// ⚠️ MÓDULO DE ALARMAS (HISTORIAN LOG)
+// ==========================================
+window.abrirHistorian = function() {
+    const content = document.getElementById('historian-content');
+    const modal = document.getElementById('modal-historian');
+    if (!content || !modal) return;
+
+    // Filtramos movimientos buscando Fugas explícitas o de la categoría Dopamina
+    let fugas = datosMesGlobal.filter(x => catEvitables.includes(x.catV) || (x.innecesarioPct && x.innecesarioPct > 0));
+    
+    // Ordenamos de más reciente a más antigua
+    fugas.sort((a, b) => new Date(b.fechaISO) - new Date(a.fechaISO));
+
+    if (fugas.length === 0) {
+        content.innerHTML = `<div style="text-align:center; padding:50px 20px; color:var(--text-muted); font-family:monospace; font-size: 1.1rem; line-height: 1.5;">🟢 SISTEMA ESTABLE<br><br>Cero fugas de dopamina detectadas en este ciclo.</div>`;
+    } else {
+        let html = '';
+        fugas.forEach(f => {
+            let d = new Date(f.fechaISO);
+            let fechaTxt = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')} • ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+            let pct = f.innecesarioPct !== undefined ? f.innecesarioPct : 100;
+            
+            html += `
+            <div class="log-item critical">
+                <div class="log-icon">🍔</div>
+                <div class="log-content">
+                    <div class="log-date">${fechaTxt} | IMPACTO: ${pct}%</div>
+                    <strong>${f.nombre || 'Fuga no identificada'}</strong>
+                </div>
+                <span>-$${f.monto.toLocaleString('es-CL')}</span>
+            </div>`;
+        });
+        content.innerHTML = html;
+    }
+    modal.style.display = 'flex';
+};
 // =====================================================================
 // 🔄 MÓDULO DE REORDENAMIENTO DINÁMICO (DRAG & DROP CRONOLÓGICO)
 // =====================================================================
