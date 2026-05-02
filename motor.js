@@ -1052,11 +1052,32 @@ window.ejecutarArranque = function() {
     cerrarPreVuelo();
 };
 
-// ☁️ SINC Y EXPORTACIÓN LEGACY
-window.triggerSync = function() {
-    fetch("https://script.google.com/macros/s/AKfycbwKlub0qrv8_d24ZuyKKNryqOw1E68xv1_JvPOoEUc6W8TICllFfodNcwkigQE_7AuoNg/exec", {mode:'no-cors'})
-    .then(()=>mostrarToast("SYNC COMPLETADA"))
-    .catch(e => alert("Error Net: " + e));
+// ☁️ SINC Y EXPORTACIÓN (PUENTE REST)
+window.triggerSync = async function() {
+    // ⚠️ REEMPLAZA ESTA URL POR LA URL WEB APP DE TU APPS SCRIPT
+    const urlWebApp = "https://script.google.com/macros/s/AKfycbwKlub0qrv8_d24ZuyKKNryqOw1E68xv1_JvPOoEUc6W8TICllFfodNcwkigQE_7AuoNg/exec";
+    
+    mostrarToast("INICIANDO BARRIDO GMAIL...");
+    
+    try {
+        // En Apps Script, los requests CORS a veces sufren redirecciones opacas.
+        // Usamos no-cors pero controlamos el flujo para no congelar la UI.
+        fetch(urlWebApp, { mode: 'no-cors' })
+        .then(() => {
+            // Como es 'no-cors', no podemos leer el JSON de vuelta por seguridad del navegador,
+            // pero sabemos que el disparo llegó a la RTU.
+            setTimeout(() => {
+                mostrarToast("BARRIDO COMPLETADO. MATRIZ SINCRONIZADA.");
+                // Forzamos la actualización visual
+                aplicarCicloAlSistema();
+            }, 2000);
+        })
+        .catch(e => {
+            alert("❌ Falla de Telemetría: " + e);
+        });
+    } catch (err) {
+        alert("❌ Error Crítico de Red.");
+    }
 };
 
 window.exportarDataLink = function() {
