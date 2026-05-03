@@ -382,7 +382,7 @@
                 <!-- CAMBIO: Grilla 55% / 45% (1.2fr 1fr) -->
                 <div style="padding: 0 15px 20px 15px; width: 100%; max-width: 1800px; margin: 0 auto; display: grid; grid-template-columns: 1.2fr 1fr; gap: 15px; height: calc(100vh - 480px); min-height: 350px;">
                     
-                    <!-- COLUMNA IZQ: Libro Diario (Queda Igual) -->
+                    <!-- COLUMNA IZQ: Libro Diario -->
                     <div style="background: var(--bg-panel); border-radius: 8px; border: 1px solid var(--border-color); overflow: hidden; box-shadow: 0 5px 25px rgba(0,0,0,0.2); display: flex; flex-direction: column;">
                         <div style="padding: 6px 12px; background: rgba(0,0,0,0.4); border-bottom: 1px solid var(--border-color); position: sticky; top: 0; z-index: 30; flex-shrink: 0;">
                             <input type="text" id="inputBuscador" class="form-control" placeholder="🔍 Buscar en la matriz diaria..." autocomplete="off" oninput="actualizarDashboard()" style="width: 100%; max-width: 350px; height: 30px; background: var(--input-bg);">
@@ -405,7 +405,7 @@
                         </div>
                     </div>
 
-                    <!-- COLUMNA DER: Tablero Kanban Financiero (Rediseñado) -->
+                    <!-- COLUMNA DER: Tablero Kanban Financiero -->
                     <div style="background: var(--bg-panel); border-radius: 8px; border: 1px solid var(--border-color); overflow: hidden; box-shadow: 0 5px 25px rgba(0,0,0,0.2); display: flex; flex-direction: column;">
                         
                         <!-- Cabecera y 3 KPIs -->
@@ -414,29 +414,94 @@
                             <div style="display:flex; gap: 5px;">
                                 <div title="Cuentas por Cobrar" style="font-size: 0.7rem; font-family: monospace; color: var(--color-saldo); background: rgba(46, 160, 67, 0.1); padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(46, 160, 67, 0.3);">+ $<span id="kpiMeDeben">0</span></div>
                                 <div title="Deuda Dura" style="font-size: 0.7rem; font-family: monospace; color: var(--color-fuga); background: rgba(248, 81, 73, 0.1); padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(248, 81, 73, 0.3);">- $<span id="kpiYoDebo">0</span></div>
-                                <div title="Fondos Comprometidos (Tareas)" style="font-size: 0.7rem; font-family: monospace; color: #d29922; background: rgba(210, 153, 34, 0.1); padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(210, 153, 34, 0.3);">📌 $<span id="kpiPendientes">0</span></div>
+                                <div title="Fondos Comprometidos" style="font-size: 0.7rem; font-family: monospace; color: #d29922; background: rgba(210, 153, 34, 0.1); padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(210, 153, 34, 0.3);">📌 $<span id="kpiPendientes">0</span></div>
                             </div>
                         </div>
                         
-                        <!-- Mini-Consola de Inyección con 3 Botones -->
+                        <!-- Mini-Consola de Inyección -->
                         <div style="padding: 10px; background: rgba(255,255,255,0.02); border-bottom: 1px solid var(--border-color); display: flex; gap: 5px; flex-direction: column; flex-shrink: 0;">
                             <div style="display:flex; gap:5px;">
                                 <input type="text" id="inputTerceroNombre" class="form-control" placeholder="Descripción de deuda o tarea pendiente..." style="flex:2; height:28px; font-size: 0.75rem;">
                                 <input type="text" id="inputTerceroMonto" class="form-control" placeholder="$ Monto (Aprox)" oninput="formatearEntradaNumerica(this)" style="flex:1; height:28px; font-size: 0.75rem; text-align:right;">
                             </div>
                             <div style="display:flex; gap:5px;">
-                                <button onclick="inyectarTercero('ME DEBEN')" style="flex:1; background:rgba(46, 160, 67, 0.15); color:var(--color-saldo); border:1px solid rgba(46, 160, 67, 0.4); border-radius:4px; font-size:0.65rem; font-weight:bold; cursor:pointer; height:24px;">➕ ME DEBEN</button>
-                                <button onclick="inyectarTercero('YO DEBO')" style="flex:1; background:rgba(248, 81, 73, 0.15); color:var(--color-fuga); border:1px solid rgba(248, 81, 73, 0.4); border-radius:4px; font-size:0.65rem; font-weight:bold; cursor:pointer; height:24px;">➖ YO DEBO</button>
+                                <button onclick="inyectarTercero('ME DEBEN')" style="flex:1; background:rgba(46, 160, 67, 0.15); color:var(--color-saldo); border:1px solid rgba(46, 160, 67, 0.4); border-radius:4px; font-size:0.65rem; font-weight:bold; cursor:pointer; height:24px;">➕ DEBEN</button>
+                                <button onclick="inyectarTercero('YO DEBO')" style="flex:1; background:rgba(248, 81, 73, 0.15); color:var(--color-fuga); border:1px solid rgba(248, 81, 73, 0.4); border-radius:4px; font-size:0.65rem; font-weight:bold; cursor:pointer; height:24px;">➖ DEBO</button>
                                 <button onclick="inyectarTercero('PENDIENTE')" style="flex:1; background:rgba(210, 153, 34, 0.15); color:#d29922; border:1px solid rgba(210, 153, 34, 0.4); border-radius:4px; font-size:0.65rem; font-weight:bold; cursor:pointer; height:24px;">📌 PENDIENTE</button>
                             </div>
                         </div>
 
                         <!-- Zona de Scroll Kanban -->
-                        <div style="flex-grow: 1; overflow-y: auto; padding: 10px;" id="listaTerceros">
-                            <!-- Los registros se inyectarán aquí -->
+                        <div style="flex-grow: 1; overflow-y: auto; padding: 10px;" id="listaTerceros"></div>
+                    </div>
+                </div>
+            </div> <!-- 🟢 CIERRE EXACTO core-body (panelMain) -->
+        </div> <!-- 🟢 CIERRE EXACTO panelMain -->
+
+        <!-- ============================================== -->
+        <!-- 🔴 PANEL 2: MATRIZ TC                          -->
+        <!-- ============================================== -->
+        <div class="core-panel hidden" id="panelTC" style="border-color: rgba(248, 81, 73, 0.2); box-shadow: inset 0 0 30px rgba(248, 81, 73, 0.02);" ondragover="dragOverPanel(event, 'tc')" ondragleave="dragLeavePanel(event, 'tc')" ondrop="dropOnPanel(event, 'tc')">
+            <div class="core-header" style="background: rgba(248, 81, 73, 0.08); border-bottom-color: rgba(248, 81, 73, 0.2);">
+                <div class="core-title"><span style="color:var(--color-fuga); text-shadow: 0 0 8px var(--color-fuga);">●</span> <span>MATRIZ DE DEUDA TC</span></div>
+                <div style="display: flex; gap: 12px; align-items: center;">
+                    <div style="font-size:1.2rem; font-weight:900; color:var(--color-fuga); font-family: monospace; text-shadow: 0 0 10px rgba(248, 81, 73, 0.3);">$<span id="txtTotalTC">0</span></div>
+                    <button class="btn-sys" onclick="cargarCSV_TC()" style="background-color: var(--color-fuga); color: white; border: none; box-shadow: 0 0 10px rgba(248, 81, 73, 0.4);">💳 INGESTAR</button>
+                </div>
+            </div>
+            
+            <div class="core-body">
+                <div class="context-charts tc">
+                    <div class="chart-box" style="border-color: rgba(248, 81, 73, 0.3);"><h5 style="color:var(--color-fuga);">HORIZONTE DE DEUDA TC (6M)</h5><div class="canvas-container"><canvas id="chartRadar"></canvas></div></div>
+                    
+                    <!-- 🛠️ MÓDULO WHAT-IF SIMULATOR -->
+                    <div class="chart-box" style="border-color: rgba(121, 192, 255, 0.3); justify-content: space-between; background: rgba(31, 111, 235, 0.02);">
+                        <h5 style="color:#79c0ff; text-shadow: 0 0 8px rgba(121, 192, 255, 0.4);">MÓDULO DE SIMULACIÓN "WHAT-IF"</h5>
+                        <p style="font-size: 0.65rem; color: var(--text-muted); text-align: center; margin: 0 0 10px 0; font-weight: 600;">CONTROL PREALIMENTADO: Evalúa el impacto de un prepago de capital sobre la curva de deuda a 6 meses.</p>
+
+                        <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); border-radius: 8px; padding: 15px; display: flex; flex-direction: column; gap: 10px; align-items: center; flex-grow: 1; justify-content: center; box-shadow: inset 0 0 15px rgba(0,0,0,0.5);">
+                            <label style="font-size: 0.65rem; font-weight: 800; color: var(--text-main); text-transform: uppercase;">Capital a Inyectar (Prepago)</label>
+                            
+                            <div style="display: flex; align-items: center; gap: 10px; width: 100%; max-width: 250px;">
+                                <span style="font-size: 1.2rem; color: var(--color-saldo); font-weight: 900; text-shadow: 0 0 10px rgba(46,160,67,0.4);">$</span>
+                                <input type="text" id="inputSimuladorTC" class="form-control" style="font-size: 1.1rem; font-family: monospace; color: var(--color-saldo); font-weight: 900; text-align: right; border-color: var(--color-saldo); background: #010409;" inputmode="numeric" placeholder="0" oninput="formatearEntradaNumerica(this)">
+                            </div>
+
+                            <div style="display: flex; gap: 10px; width: 100%; max-width: 250px; margin-top: 5px;">
+                                <button class="btn-sys" onclick="resetearSimulacionTC()" style="flex: 1; border-color: var(--text-muted); color: var(--text-muted);">RESET</button>
+                                <button class="btn-sys" onclick="ejecutarSimulacionTC()" style="flex: 2; background: rgba(46, 160, 67, 0.15); border-color: var(--color-saldo); color: var(--color-saldo); box-shadow: 0 0 10px rgba(46, 160, 67, 0.2);">SIMULAR IMPACTO</button>
+                            </div>
                         </div>
                     </div>
                 </div>
+
+                <div style="padding: 12px; border-bottom: 1px solid rgba(248, 81, 73, 0.2); border-top: 1px solid rgba(248, 81, 73, 0.2); background: rgba(0,0,0,0.2); position: sticky; top: 0; z-index: 30;">
+                    <div id="boxImpactoTC" class="tc-impact-box" style="display:none;">
+                        <span id="lblImpactoMes">⚠️ ALARMA DE IMPACTO PRÓX. MES</span>
+                        <strong id="txtImpactoMonto">$0</strong>
+                        <div style="flex:1;"></div>
+                        <button class="btn-sys" onclick="exportarTablaBunker('tablaCuotas', 'Bunker_Proyeccion_TC')" style="border-color: var(--color-fuga); color: var(--color-fuga); background: transparent; padding: 4px 10px;">📥 EXPORTAR</button>
+                    </div>
+                    <div id="barraAccionesTC" style="display:none; background: rgba(0,0,0,0.8); border: 1px solid var(--border-color); color: white; padding: 8px 15px; border-radius: 6px; justify-content: space-between; align-items: center; margin-top: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.4);">
+                        <span id="txtSeleccionadosTC" style="font-weight: 900; font-size: 0.8rem; letter-spacing: 1px; color: var(--text-main);">0 SELECCIONADAS</span>
+                        <div style="display: flex; gap: 10px;">
+                            <button onclick="marcarFacturadosTC()" style="background: rgba(46, 160, 67, 0.2); color: var(--color-saldo); border: 1px solid var(--color-saldo); padding: 6px 15px; border-radius: 4px; font-weight: 900; cursor: pointer; font-size: 0.75rem; text-transform: uppercase;">🔒 FACTURAR OFICIAL</button>
+                            <button onclick="ejecutarPurgaMasivaTC()" style="background: rgba(248, 81, 73, 0.2); color: var(--color-fuga); border: 1px solid var(--color-fuga); padding: 6px 15px; border-radius: 4px; font-weight: 900; cursor: pointer; font-size: 0.75rem; text-transform: uppercase;">🗑️ PURGAR PAGADAS</button>
+                        </div>
+                    </div>
+
+                    <table id="tablaCuotas" class="data-grid">
+                        <thead style="background: rgba(248, 81, 73, 0.05);">
+                            <tr>
+                                <th style="width: 30px; text-align: center;"><input type="checkbox" id="checkMaestroTC" onclick="toggleTodosTC(this)" style="accent-color: var(--color-fuga);"></th>
+                                <th>Ciclo/Cuota</th><th>Comercio Asociado</th><th style="text-align: right;">Cuota ($)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="listaDetalleTC"></tbody>
+                    </table>
+                </div> <!-- 🟢 CIERRE zona sticky -->
+            </div> <!-- 🟢 CIERRE EXACTO core-body (panelTC) -->
+        </div> <!-- 🟢 CIERRE EXACTO panelTC -->
         <!-- ============================================== -->
         <!-- 🔴 PANEL 2: MATRIZ TC                          -->
         <!-- ============================================== -->
