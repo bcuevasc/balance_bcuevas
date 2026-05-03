@@ -1433,21 +1433,50 @@ function guardarTerceros() {
     renderizarTablaTerceros();
 }
 
-window.inyectarTercero = function(tipo, isMovil = false) {
-    const inputNombre = isMovil ? document.getElementById('inputTerceroNombreMovil') : document.getElementById('inputTerceroNombre');
-    const inputMonto = isMovil ? document.getElementById('inputTerceroMontoMovil') : document.getElementById('inputTerceroMonto');
-    
+// 🚀 INYECCIÓN ESTANDARIZADA HACIA FIREBASE
+window.inyectarTercero = async function(tipo, isMovil = false) {
+    // 1. Detectar de qué pantalla viene el dato
+    let idNombre = isMovil ? 'inputTerceroNombreMovil' : 'inputTerceroNombre';
+    let idMonto = isMovil ? 'inputTerceroMontoMovil' : 'inputTerceroMonto';
+
+    let inputNombre = document.getElementById(idNombre);
+    let inputMonto = document.getElementById(idMonto);
+
+    if (!inputNombre || !inputMonto) return;
+
     let nombre = inputNombre.value.trim().toUpperCase();
-    let montoRaw = inputMonto.value.replace(/\./g, '');
-    let monto = parseInt(montoRaw);
+    let montoStr = inputMonto.value.replace(/\./g, '');
+    let monto = parseInt(montoStr) || 0;
 
-    if (!nombre || isNaN(monto) || monto <= 0) return mostrarToast("⚠️ FALTAN DATOS PARA EL TERCERO");
+    if (nombre === "" || monto <= 0) {
+        alert("⚠️ Faltan parámetros: Ingrese un Nombre y Monto válido.");
+        return;
+    }
 
-    datosTerceros.push({ id: 'T' + Date.now(), nombre: nombre, monto: monto, tipo: tipo, fecha: new Date().toISOString() });
-    
-    inputNombre.value = ''; inputMonto.value = '';
-    guardarTerceros();
-    mostrarToast("🤝 REGISTRO AÑADIDO");
+    // 2. Empaquetar los datos
+    let nuevoRegistro = {
+        nombre: nombre,
+        monto: monto,
+        tipo: tipo,
+        fecha: new Date().toISOString()
+    };
+
+    // 3. Transmisión a la Nube (Firebase)
+    try {
+        await db.collection("terceros").add(nuevoRegistro);
+        
+        // Limpiar casillas tras envío exitoso
+        inputNombre.value = "";
+        inputMonto.value = "";
+        inputNombre.focus();
+        
+        // (Opcional) Si usas Toast notifications
+        if (typeof mostrarToast === 'function') mostrarToast("OBLIGACIÓN REGISTRADA");
+        
+    } catch (error) {
+        console.error("Error al transmitir a Firebase:", error);
+        alert("⚠️ Error de enlace satelital. Revisa tu conexión.");
+    }
 };
 
 window.eliminarTercero = function(id) {
@@ -1593,3 +1622,24 @@ window.marcarFacturadosTC = function() {
         // Firebase onSnapshot recargará la tabla automáticamente
     }).catch(e => alert("Error al facturar: " + e));
 };
+
+
+// 📡 RADAR EN TIEMPO REAL PARA TERCEROS / KANBAN
+if (typeof db !== 'undefined') {
+    db.collection("terceros").onSnapshot((querySnapshot) => {
+        window.datosTerceros = []; // Vaciamos la matriz local
+        
+        querySnapshot.forEach((doc) => {
+            let data = doc.data();
+            data.id = doc.id; // Vital para poder borrar y editar después
+            window.datosTerceros.push(data);
+        });
+
+        // Forzar actualización de pantallas al recibir datos
+        if (typeof renderizarTablaTerceros === 'function') {
+            renderizarTablaTerceros();
+        }
+    }, (error) => {
+        console.error("Fallo en la telemetría de Terceros:", error);
+    });
+}
