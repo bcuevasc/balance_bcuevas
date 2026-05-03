@@ -1388,3 +1388,105 @@ window.dropRow = function(event, targetId) {
         alert("❌ Error de Sincronización Cronológica: " + err.message);
     });
 };
+// =====================================================================
+// 🤝 MÓDULO DE CUENTAS A TERCEROS (ME DEBEN / YO DEBO)
+// =====================================================================
+
+// 1. Inicialización y Carga Local
+let datosTerceros = JSON.parse(localStorage.getItem('bunker_terceros')) || [];
+
+function guardarTerceros() {
+    localStorage.setItem('bunker_terceros', JSON.stringify(datosTerceros));
+    renderizarTablaTerceros();
+}
+
+// 2. Inyección de Datos
+window.inyectarTercero = function(tipo) {
+    const inputNombre = document.getElementById('inputTerceroNombre');
+    const inputMonto = document.getElementById('inputTerceroMonto');
+    
+    let nombre = inputNombre.value.trim().toUpperCase();
+    let montoRaw = inputMonto.value.replace(/\./g, '');
+    let monto = parseInt(montoRaw);
+
+    if (!nombre || isNaN(monto) || monto <= 0) {
+        mostrarToast("⚠️ FALTAN DATOS PARA EL TERCERO");
+        return;
+    }
+
+    let nuevoRegistro = {
+        id: 'T' + Date.now(),
+        nombre: nombre,
+        monto: monto,
+        tipo: tipo, // 'ME DEBEN' o 'YO DEBO'
+        fecha: new Date().toISOString()
+    };
+
+    datosTerceros.push(nuevoRegistro);
+    
+    // Limpiar consola
+    inputNombre.value = '';
+    inputMonto.value = '';
+    
+    guardarTerceros();
+    mostrarToast("🤝 REGISTRO DE TERCERO AÑADIDO");
+};
+
+// 3. Eliminación (Pago saldado)
+window.eliminarTercero = function(id) {
+    if(!confirm("¿Dar por saldada/eliminada esta deuda?")) return;
+    datosTerceros = datosTerceros.filter(t => t.id !== id);
+    guardarTerceros();
+    mostrarToast("✅ DEUDA SALDADA");
+};
+
+// 4. Renderizado Visual
+window.renderizarTablaTerceros = function() {
+    const contenedor = document.getElementById('listaTerceros');
+    const kpiMeDeben = document.getElementById('kpiMeDeben');
+    const kpiYoDebo = document.getElementById('kpiYoDebo');
+    
+    if(!contenedor) return;
+
+    let sumaMeDeben = 0;
+    let sumaYoDebo = 0;
+    let html = "";
+
+    if (datosTerceros.length === 0) {
+        contenedor.innerHTML = `<div style="text-align:center; padding:30px 10px; color:var(--text-muted); font-size:0.75rem; font-family:monospace;">Sin registros pendientes.</div>`;
+        if(kpiMeDeben) kpiMeDeben.innerText = "0";
+        if(kpiYoDebo) kpiYoDebo.innerText = "0";
+        return;
+    }
+
+    // Ordenar de más reciente a más antiguo
+    datosTerceros.sort((a, b) => new Date(b.fecha) - new Date(a.fecha)).forEach(t => {
+        let isMeDeben = t.tipo === 'ME DEBEN';
+        let color = isMeDeben ? "var(--color-saldo)" : "var(--color-fuga)";
+        let signo = isMeDeben ? "+" : "-";
+        
+        if (isMeDeben) sumaMeDeben += t.monto;
+        else sumaYoDebo += t.monto;
+
+        html += `
+        <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-left: 3px solid ${color}; padding: 8px 10px; border-radius: 6px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+            <div style="display:flex; flex-direction:column; overflow: hidden;">
+                <span style="font-size:0.75rem; font-weight:800; color:var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${t.nombre}</span>
+                <span style="font-size:0.6rem; color:var(--text-muted); text-transform:uppercase;">${t.tipo}</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:10px; flex-shrink:0;">
+                <span style="font-family:monospace; font-weight:900; font-size:0.9rem; color:${color};">${signo}$${t.monto.toLocaleString('es-CL')}</span>
+                <button onclick="eliminarTercero('${t.id}')" style="background:transparent; border:none; color:var(--text-muted); cursor:pointer; font-size:1rem;" title="Saldar">✅</button>
+            </div>
+        </div>`;
+    });
+
+    contenedor.innerHTML = html;
+    if(kpiMeDeben) kpiMeDeben.innerText = sumaMeDeben.toLocaleString('es-CL');
+    if(kpiYoDebo) kpiYoDebo.innerText = sumaYoDebo.toLocaleString('es-CL');
+};
+
+// Enganchar el renderizado al arranque inicial del Búnker
+document.addEventListener("DOMContentLoaded", () => {
+    setTimeout(renderizarTablaTerceros, 500);
+});
