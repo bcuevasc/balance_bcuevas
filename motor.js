@@ -1458,54 +1458,61 @@ window.eliminarTercero = function(id) {
 };
 
 window.renderizarTablaTerceros = function() {
-    if (typeof datosTercerosGlobal === 'undefined') return;
+    let sumaMeDeben = 0; let sumaYoDebo = 0;
+    let htmlPC = ""; let htmlMovil = "";
+
+    if (datosTerceros.length === 0) {
+        htmlPC = `<div style="text-align:center; padding:30px 10px; color:var(--text-muted); font-size:0.75rem; font-family:monospace;">Sin registros pendientes.</div>`;
+        htmlMovil = `<div style="text-align:center; padding: 40px 20px; color: var(--text-dim);"><i>🤝</i><br>Cuentas saldadas.</div>`;
+    } else {
+        datosTerceros.sort((a, b) => new Date(b.fecha) - new Date(a.fecha)).forEach(t => {
+            let isMeDeben = t.tipo === 'ME DEBEN';
+            let color = isMeDeben ? "var(--color-saldo)" : "var(--color-fuga)";
+            let colorHex = isMeDeben ? "46, 160, 67" : "248, 81, 73";
+            let signo = isMeDeben ? "+" : "-";
+            
+            if (isMeDeben) sumaMeDeben += t.monto; else sumaYoDebo += t.monto;
+
+            // Fila PC
+            htmlPC += `
+            <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-left: 3px solid ${color}; padding: 8px 10px; border-radius: 6px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+                <div style="display:flex; flex-direction:column; overflow: hidden;">
+                    <span style="font-size:0.75rem; font-weight:800; color:var(--text-main); white-space: nowrap;">${t.nombre}</span>
+                    <span style="font-size:0.6rem; color:var(--text-muted);">${t.tipo}</span>
+                </div>
+                <div style="display:flex; align-items:center; gap:10px; flex-shrink:0;">
+                    <span style="font-family:monospace; font-weight:900; font-size:0.9rem; color:${color};">${signo}$${t.monto.toLocaleString('es-CL')}</span>
+                    <button onclick="eliminarTercero('${t.id}')" style="background:transparent; border:none; color:var(--text-muted); cursor:pointer; font-size:1rem;">✅</button>
+                </div>
+            </div>`;
+
+            // Tarjeta Móvil
+            htmlMovil += `
+            <div class="mobile-card ${isMeDeben ? 'is-ingreso' : 'is-fuga'}" style="margin-bottom: 8px; padding: 12px 14px !important;">
+                <div class="mc-icon" style="font-size: 1.2rem; background: rgba(${colorHex}, 0.1); border-color: rgba(${colorHex}, 0.3);">${isMeDeben ? '📥' : '📤'}</div>
+                <div class="mc-body">
+                    <div class="mc-title">${t.nombre}</div>
+                    <div class="mc-subtitle"><span style="color:${color}; font-weight:900;">${t.tipo}</span></div>
+                </div>
+                <div style="display:flex; flex-direction:column; align-items:flex-end;">
+                    <div class="mc-amount" style="color:${color}; font-size: 1.1rem;">${signo}$${Math.round(t.monto/1000)}k</div>
+                    <button onclick="eliminarTercero('${t.id}')" style="background:rgba(${colorHex}, 0.2); border:1px solid rgba(${colorHex},0.5); color:${color}; margin-top:6px; border-radius:6px; font-weight:900; padding:2px 10px; font-size:0.7rem;">SALDAR</button>
+                </div>
+            </div>`;
+        });
+    }
+
+    // Inyección Dual (Si encuentra el ID en pantalla lo inyecta, si no, lo salta sin errores)
+    if(document.getElementById('listaTerceros')) document.getElementById('listaTerceros').innerHTML = htmlPC;
+    if(document.getElementById('listaTercerosMovil')) document.getElementById('listaTercerosMovil').innerHTML = htmlMovil;
     
-    let container = document.getElementById("listaTerceros");
-    if (!container) return;
-
-    let html = "";
-    let sumMeDeben = 0, sumYoDebo = 0, sumPendientes = 0;
-
-    // Ordenar: Primero YO DEBO (Urgente), luego PENDIENTES, luego ME DEBEN
-    const pesoEstado = {"YO DEBO": 1, "PENDIENTE": 2, "ME DEBEN": 3};
-    let datosOrdenados = [...datosTercerosGlobal].sort((a, b) => {
-        return (pesoEstado[a.tipo] || 99) - (pesoEstado[b.tipo] || 99);
-    });
-
-    datosOrdenados.forEach(doc => {
-        let m = Number(doc.monto) || 0;
-        let cText, cBg, icon, signo;
-
-        if (doc.tipo === "ME DEBEN") {
-            sumMeDeben += m;
-            cText = "var(--color-saldo)"; cBg = "rgba(46, 160, 67, 0.05)"; icon = "➕"; signo = "+";
-        } else if (doc.tipo === "YO DEBO") {
-            sumYoDebo += m;
-            cText = "var(--color-fuga)"; cBg = "rgba(248, 81, 73, 0.05)"; icon = "➖"; signo = "-";
-        } else { // PENDIENTE
-            sumPendientes += m;
-            cText = "#d29922"; cBg = "rgba(210, 153, 34, 0.05)"; icon = "📌"; signo = "~";
-        }
-
-        html += `
-        <div style="background: ${cBg}; border: 1px solid rgba(255,255,255,0.05); border-left: 3px solid ${cText}; padding: 10px; margin-bottom: 8px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; transition: all 0.2s;">
-            <div style="display:flex; flex-direction:column; gap:3px;">
-                <span style="font-size: 0.8rem; font-weight: bold; color: var(--text-main);">${doc.nombre}</span>
-                <span style="font-size: 0.6rem; color: ${cText}; font-family: monospace;">${icon} ${doc.tipo}</span>
-            </div>
-            <div style="display:flex; align-items:center; gap: 10px;">
-                <span style="font-size: 0.95rem; font-weight: 900; color: ${cText}; font-family: monospace;">${signo}$${m.toLocaleString('es-CL')}</span>
-                <button onclick="eliminarTercero('${doc.id}')" title="Marcar como Resuelto" style="background: rgba(255,255,255,0.1); border:none; border-radius:4px; padding: 4px 8px; cursor: pointer; filter: grayscale(100%); transition: all 0.2s;" onmouseover="this.style.filter='none'; this.style.background='${cBg}';" onmouseout="this.style.filter='grayscale(100%)'; this.style.background='rgba(255,255,255,0.1)';">✔️</button>
-            </div>
-        </div>`;
-    });
-
-    container.innerHTML = html || `<div style="text-align:center; padding: 20px; color: var(--text-muted); font-size: 0.8rem; font-family: monospace;">TABLERO KANBAN VACÍO</div>`;
-
-    // Actualizar KPIs de la cabecera
-    let elMeDeben = document.getElementById('kpiMeDeben'); if(elMeDeben) elMeDeben.innerText = sumMeDeben.toLocaleString('es-CL');
-    let elYoDebo = document.getElementById('kpiYoDebo'); if(elYoDebo) elYoDebo.innerText = sumYoDebo.toLocaleString('es-CL');
-    let elPendiente = document.getElementById('kpiPendientes'); if(elPendiente) elPendiente.innerText = sumPendientes.toLocaleString('es-CL');
+    // KPIs PC
+    if(document.getElementById('kpiMeDeben')) document.getElementById('kpiMeDeben').innerText = sumaMeDeben.toLocaleString('es-CL');
+    if(document.getElementById('kpiYoDebo')) document.getElementById('kpiYoDebo').innerText = sumaYoDebo.toLocaleString('es-CL');
+    
+    // KPIs Móvil
+    if(document.getElementById('kpiMeDebenMovil')) document.getElementById('kpiMeDebenMovil').innerText = sumaMeDeben.toLocaleString('es-CL');
+    if(document.getElementById('kpiYoDeboMovil')) document.getElementById('kpiYoDeboMovil').innerText = sumaYoDebo.toLocaleString('es-CL');
 };
 
 document.addEventListener("DOMContentLoaded", () => { setTimeout(renderizarTablaTerceros, 500); });
