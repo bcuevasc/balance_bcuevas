@@ -477,11 +477,13 @@
                         <div style="flex:1;"></div>
                         <button class="btn-sys" onclick="exportarTablaBunker('tablaCuotas', 'Bunker_Proyeccion_TC')" style="border-color: var(--color-fuga); color: var(--color-fuga); background: transparent; padding: 4px 10px;">📥 EXPORTAR</button>
                     </div>
-                    <div id="barraAccionesTC" style="display:none; background: #b71c1c; color: white; padding: 8px 15px; border-radius: 6px; justify-content: space-between; align-items: center; margin-top: 8px; box-shadow: 0 4px 15px rgba(183, 28, 28, 0.4);">
-                        <span id="txtSeleccionadosTC" style="font-weight: 900; font-size: 0.8rem; letter-spacing: 1px;">0 SELECCIONADAS</span>
-                        <button onclick="ejecutarPurgaMasivaTC()" style="background: white; color: #b71c1c; border: none; padding: 6px 15px; border-radius: 4px; font-weight: 900; cursor: pointer; font-size: 0.75rem; text-transform: uppercase;">🗑️ PURGAR MATRIZ</button>
+                    <div id="barraAccionesTC" style="display:none; background: rgba(0,0,0,0.8); border: 1px solid var(--border-color); color: white; padding: 8px 15px; border-radius: 6px; justify-content: space-between; align-items: center; margin-top: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.4);">
+                        <span id="txtSeleccionadosTC" style="font-weight: 900; font-size: 0.8rem; letter-spacing: 1px; color: var(--text-main);">0 SELECCIONADAS</span>
+                        <div style="display: flex; gap: 10px;">
+                            <button onclick="marcarFacturadosTC()" style="background: rgba(46, 160, 67, 0.2); color: var(--color-saldo); border: 1px solid var(--color-saldo); padding: 6px 15px; border-radius: 4px; font-weight: 900; cursor: pointer; font-size: 0.75rem; text-transform: uppercase;">🔒 FACTURAR OFICIAL</button>
+                            <button onclick="ejecutarPurgaMasivaTC()" style="background: rgba(248, 81, 73, 0.2); color: var(--color-fuga); border: 1px solid var(--color-fuga); padding: 6px 15px; border-radius: 4px; font-weight: 900; cursor: pointer; font-size: 0.75rem; text-transform: uppercase;">🗑️ PURGAR PAGADAS</button>
+                        </div>
                     </div>
-                </div>
 
                 <table id="tablaCuotas" class="data-grid">
                     <thead style="background: rgba(248, 81, 73, 0.05);">
