@@ -223,6 +223,10 @@
         </div>
         <div class="system-btns">
             <div id="cronos" class="cronos">--:--:--</div>
+            
+            <!-- 🟢 NUEVO BOTÓN SYNC INYECTADO AQUÍ 🟢 -->
+            <button class="btn-sys" onclick="let b=this; b.innerHTML='⏳...'; b.style.opacity='0.7'; triggerSync(); setTimeout(()=>{b.innerHTML='🔄 SYNC'; b.style.opacity='1';}, 2500)" style="color:var(--color-saldo); border-color:rgba(46, 160, 67, 0.4); background:rgba(46, 160, 67, 0.1);" title="Forzar Sincronización con Gmail Sniper">🔄 SYNC</button>
+            
             <button class="btn-sys" onclick="toggleLanguage()" style="color:#58a6ff; border-color:rgba(88,166,255,0.4);">🌐 ENG</button>
             <button class="btn-sys" onclick="abrirHistorian()" style="color:var(--color-fuga); border-color:rgba(248,81,73,0.4);">⚠️ LOG</button>
             <button class="btn-sys" onclick="abrirPreVuelo()" style="color:#ff9800; border-color:rgba(255,152,0,0.4); background:rgba(255,152,0,0.1);" data-en="🚀 PRE-FLIGHT">🚀 PRE-VUELO</button>
