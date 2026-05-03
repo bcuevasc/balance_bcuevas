@@ -1644,22 +1644,34 @@ window.marcarFacturadosTC = function() {
 };
 
 
-// 📡 RADAR EN TIEMPO REAL PARA TERCEROS / KANBAN
-if (typeof db !== 'undefined') {
-    db.collection("terceros").onSnapshot((querySnapshot) => {
-        window.datosTerceros = []; // Vaciamos la matriz local
-        
-        querySnapshot.forEach((doc) => {
-            let data = doc.data();
-            data.id = doc.id; // Vital para poder borrar y editar después
-            window.datosTerceros.push(data);
-        });
+// 📡 RADAR EN TIEMPO REAL PARA TERCEROS (VERSIÓN BLINDADA)
+firebase.auth().onAuthStateChanged((user) => {
+    if (user) {
+        // Al detectar tu usuario, el Radar pide SOLO tus datos
+        db.collection("terceros")
+          .where("usuario", "==", user.email) // 🔐 AQUÍ ESTÁ LA LLAVE DE ACCESO
+          .onSnapshot((querySnapshot) => {
+              
+              let dataFresca = [];
+              
+              querySnapshot.forEach((doc) => {
+                  let data = doc.data();
+                  data.id = doc.id; // Vital para la edición
+                  dataFresca.push(data);
+              });
 
-        // Forzar actualización de pantallas al recibir datos
-        if (typeof renderizarTablaTerceros === 'function') {
-            renderizarTablaTerceros();
-        }
-    }, (error) => {
-        console.error("Fallo en la telemetría de Terceros:", error);
-    });
-}
+              // Inyectamos los datos frescos a la memoria del Búnker
+              window.datosTerceros = dataFresca;
+              
+              // Sincronización de seguridad por si tu código usa la variable sin "window."
+              try { datosTerceros = dataFresca; } catch(e) {}
+
+              // Forzar actualización de las pantallas PC y Móvil
+              if (typeof renderizarTablaTerceros === 'function') {
+                  renderizarTablaTerceros();
+              }
+          }, (error) => {
+              console.error("Fallo crítico en el Radar de Firebase:", error);
+          });
+    }
+});
