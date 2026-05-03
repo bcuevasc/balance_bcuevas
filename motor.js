@@ -832,11 +832,10 @@ function inicializarListenerTC() {
     });
 }
 
-if (typeof window.renderizarTablaTC === 'undefined') {
-    window.renderizarTablaTC = function() {
+window.renderizarTablaTC = function() {
     if (typeof datosTCGlobal === 'undefined') return;
     
-    // Detectamos si estamos en PC o Móvil
+    // Detectamos entorno (PC o Móvil)
     const tbodyPC = document.getElementById("listaDetalleTC"); 
     const tbodyMovil = document.getElementById("listaMovilTC");
     
@@ -856,7 +855,7 @@ if (typeof window.renderizarTablaTC === 'undefined') {
     let proximoAnio = fechaHoy.getFullYear();
     if (proximoMes > 11) { proximoMes = 0; proximoAnio++; }
 
-    // 1. Construir el Árbol Lógico agrupando por Mes
+    // 1. Árbol Lógico agrupado por Mes
     datosTCGlobal.forEach(doc => {
         if(!doc.mesCobro) return;
         let f = new Date(doc.mesCobro);
@@ -875,37 +874,45 @@ if (typeof window.renderizarTablaTC === 'undefined') {
     let htmlPC = "";
     let htmlMovil = "";
 
-    // 2. Renderizar Padres e Hijos
+    // 2. Construcción de Nodos
     Object.keys(agrupado).sort().forEach(key => {
         let g = agrupado[key];
         
         // PADRE PC
         htmlPC += `<tr style="background:rgba(255,82,82,0.15); border-top:2px solid rgba(255,82,82,0.5);">
-            <td></td><td colspan="2" style="font-weight:900; color:#ff5252; font-size:0.85rem; letter-spacing:1px;">🗓️ ${g.label}</td>
-            <td class="col-monto" style="color:#ff5252; font-weight:900;">$${g.total.toLocaleString('es-CL')}</td>
+            <td style="text-align: center; width: 30px; position: relative; z-index: 10;">
+                <input type="checkbox" class="checkMesTC" value="${key}" onclick="toggleMesTC(this, '${key}')" style="accent-color: #ff5252; cursor: pointer;">
+            </td>
+            <td colspan="2" style="font-weight:900; color:#ff5252; font-size:0.85rem; letter-spacing:1px; pointer-events: none;">🗓️ ${g.label}</td>
+            <td class="col-monto" style="color:#ff5252; font-weight:900; pointer-events: none;">$${g.total.toLocaleString('es-CL')}</td>
         </tr>`;
         
         // PADRE MÓVIL
-        htmlMovil += `<div style="background:rgba(255,82,82,0.1); padding: 10px 15px; margin: 15px 0 10px 0; border-radius: 8px; border-left: 3px solid var(--accent-red);">
-            <div style="display:flex; justify-content:space-between; color:var(--accent-red); font-weight:900; font-size: 0.85rem; letter-spacing: 1px;">
-                <span>🗓️ ${g.label}</span><span>$${g.total.toLocaleString('es-CL')}</span>
+        htmlMovil += `<div style="background:rgba(255,82,82,0.1); padding: 12px 15px; margin: 15px 0 10px 0; border-radius: 8px; border-left: 3px solid var(--accent-red); display:flex; justify-content:space-between; align-items:center;">
+            <div style="display:flex; flex-direction:column; gap:4px;">
+                <span style="color:var(--accent-red); font-weight:900; font-size: 0.85rem; letter-spacing: 1px;">🗓️ ${g.label}</span>
+                <span style="color:var(--text-main); font-weight:900; font-size: 1.1rem; font-family:monospace;">$${g.total.toLocaleString('es-CL')}</span>
             </div>
+            <button onclick="purgarMesTCMovil('${key}')" style="background:var(--accent-red); color:white; border:none; padding:8px 12px; border-radius:8px; font-weight:900; font-size:0.7rem; box-shadow:0 4px 10px rgba(255,82,82,0.3); transition:transform 0.1s;">🗑️ PURGAR</button>
         </div>`;
 
-        // HIJOS (Las Cuotas)
+        // HIJOS
         g.items.forEach(doc => {
             let op = (doc.nombre && (doc.nombre.includes("PROYECCIÓN") || doc.nombre.includes("FACTURADA"))) ? "1" : "0.7";
+            let colorIconoInfo = (doc.nombre && doc.nombre.includes("FACTURADA")) ? "⚠️" : "⚙️";
             
             // Hijo PC
-            htmlPC += `<tr>
-                <td style="text-align: center;"><input type="checkbox" class="checkItemTC" value="${doc.id}" onclick="actualizarBarraTC()" style="accent-color: #ff5252;"></td>
-                <td style="font-size: 0.7rem; color: #79c0ff; opacity:${op};">Cuota: ${doc.cuota || '1/1'}</td>
-                <td class="col-desc" title="${doc.nombre || 'N/A'}" style="opacity:${op}; font-size:0.75rem;">${doc.nombre || 'N/A'}</td>
-                <td class="col-monto" style="opacity:${op};">$${(Number(doc.monto)||0).toLocaleString('es-CL')}</td>
+            htmlPC += `<tr class="fila-hijo-${key}" style="background-color: transparent;">
+                <td style="text-align: center; width: 30px; position: relative; z-index: 10;">
+                    <input type="checkbox" class="checkItemTC checkItemTC-${key}" value="${doc.id}" onclick="actualizarBarraTC()" style="accent-color: #ff5252; cursor: pointer;">
+                </td>
+                <td style="font-size: 0.7rem; color: #79c0ff; opacity:${op}; width: 20%; padding-left: 20px;">Cuota: ${doc.cuota || '1/1'}</td>
+                <td class="col-desc" title="${doc.nombre || 'N/A'}" style="opacity:${op}; font-size:0.75rem; width: 50%;">${colorIconoInfo} ${doc.nombre || 'N/A'}</td>
+                <td class="col-monto" style="opacity:${op}; width: 30%;">$${(Number(doc.monto)||0).toLocaleString('es-CL')}</td>
             </tr>`;
             
             // Hijo Móvil
-            const clickAction = typeof openBottomSheet === 'function' ? `openBottomSheet('${doc.id}', '${(doc.nombre || '').replace(/'/g, "\\'")}', ${doc.monto})` : ``;
+            const clickAction = typeof openBottomSheet === 'function' ? `openBottomSheet('${doc.id}', '${(doc.nombre || '').replace(/'/g, "\\'")}', ${doc.monto}, 'deuda_tc')` : ``;
             htmlMovil += `
             <div class="mobile-card is-fuga" onclick="${clickAction}" style="opacity: ${op}; margin-bottom: 6px; padding: 12px !important;">
                 <div class="mc-icon" style="font-size: 1rem; width: 36px; height: 36px;">💳</div>
@@ -921,7 +928,7 @@ if (typeof window.renderizarTablaTC === 'undefined') {
     if (tbodyPC) tbodyPC.innerHTML = htmlPC;
     if (tbodyMovil) tbodyMovil.innerHTML = htmlMovil; 
     
-    // Actualizar Alerta Superior
+    // Configuración de Alarmas
     let mesNombreStr = new Date(proximoAnio, proximoMes, 1).toLocaleString('es-CL', { month: 'long' }).toUpperCase();
     let boxImpacto = document.getElementById('boxImpactoTC');
     if (boxImpacto) {
@@ -936,7 +943,12 @@ if (typeof window.renderizarTablaTC === 'undefined') {
 
     if(typeof actualizarBarraTC === 'function') actualizarBarraTC(); 
 };
-}
+
+// Actuador Maestro de Mes para PC
+window.toggleMesTC = function(checkboxMes, key) {
+    document.querySelectorAll(`.checkItemTC-${key}`).forEach(c => c.checked = checkboxMes.checked);
+    actualizarBarraTC();
+};
 
 window.cargarCSV_TC = function() {
     let fileInputTC = document.createElement('input'); fileInputTC.type = 'file'; fileInputTC.accept = '.csv';
@@ -1176,63 +1188,6 @@ document.addEventListener('keydown', function(event) {
     }
 });
 
-// ==========================================
-// 🛠️ FIX: RENDERIZADO MÓVIL MATRIZ TC
-// ==========================================
-// Reemplaza o ajusta tu función renderizarTablaTC actual para asegurar 
-// que detecte tanto el contenedor de PC como el de Móvil (si existe en tu HTML final).
-window.renderizarTablaTC = function() {
-    const tbodyPC = document.getElementById("listaDetalleTC"); 
-    const tbodyMovil = document.getElementById("listaMovilTC"); // Contenedor móvil esperado
-    
-    if (!tbodyPC && !tbodyMovil) return;
-    
-    if (datosTCGlobal.length === 0) {
-        const emptyMsg = `<tr><td colspan="4" style="text-align:center; padding:20px; color:var(--text-muted); font-family:monospace;">MATRIZ SIN DATOS</td></tr>`;
-        if (tbodyPC) tbodyPC.innerHTML = emptyMsg;
-        if (tbodyMovil) tbodyMovil.innerHTML = `<div style="text-align:center; padding:20px; color:var(--text-muted);">Sin deuda proyectada</div>`;
-        return;
-    }
-
-    // Lógica de agrupación (Mantenida de tu código original)
-    let agrupado = {};
-    datosTCGlobal.forEach(doc => {
-        if(!doc.mesCobro) return;
-        let f = new Date(doc.mesCobro), key = f.getFullYear() + "-" + String(f.getMonth() + 1).padStart(2, '0');
-        if (!agrupado[key]) agrupado[key] = { label: f.toLocaleString('es-CL', { month: 'long', year: 'numeric' }).toUpperCase(), total: 0, items: [] };
-        agrupado[key].items.push(doc); agrupado[key].total += (Number(doc.monto) || 0);
-    });
-
-    let htmlPC = "";
-    let htmlMovil = ""; // Variable separada para la estructura móvil (Divs/Cards en lugar de Tabla)
-
-    Object.keys(agrupado).sort().forEach(key => {
-        let g = agrupado[key];
-        
-        // Render PC
-        htmlPC += `<tr style="background:rgba(255,82,82,0.15); border-top:2px solid rgba(255,82,82,0.5);">
-            <td></td><td colspan="2" style="font-weight:900; color:#ff5252; font-size:0.85rem;">🗓️ ${g.label}</td>
-            <td class="col-monto" style="color:#ff5252; font-weight:900;">$${g.total.toLocaleString('es-CL')}</td>
-        </tr>`;
-        
-        // Render Móvil (Estructura adaptada a flexbox o cards)
-        htmlMovil += `<div style="background:rgba(255,82,82,0.1); padding: 10px; margin-top: 10px; border-radius: 6px;">
-            <div style="display:flex; justify-content:space-between; color:#ff5252; font-weight:bold;">
-                <span>${g.label}</span><span>$${g.total.toLocaleString('es-CL')}</span>
-            </div>
-        </div>`;
-
-        g.items.forEach(doc => {
-            // ... (Acá va el ciclo forEach original para inyectar los <tr> del PC y los <div> del Móvil)
-        });
-    });
-
-    if (tbodyPC) tbodyPC.innerHTML = htmlPC;
-    if (tbodyMovil) tbodyMovil.innerHTML = htmlMovil; 
-    
-    // Disparar actualizaciones secundarias
-    if(typeof actualizarBarraTC === 'function') actualizarBarraTC(); 
-}
 window.exportarTablaBunker = function(idTabla, nombreArchivo) {
     const tabla = document.getElementById(idTabla); if (!tabla) return alert("Error SYS: Tabla no hallada.");
     let csv = ''; const filas = tabla.querySelectorAll("tr");
