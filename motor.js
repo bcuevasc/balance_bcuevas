@@ -1433,9 +1433,8 @@ function guardarTerceros() {
     renderizarTablaTerceros();
 }
 
-// 🚀 INYECCIÓN ESTANDARIZADA HACIA FIREBASE
 window.inyectarTercero = async function(tipo, isMovil = false) {
-    // 1. Detectar de qué pantalla viene el dato
+    // 1. Detección de Plataforma
     let idNombre = isMovil ? 'inputTerceroNombreMovil' : 'inputTerceroNombre';
     let idMonto = isMovil ? 'inputTerceroMontoMovil' : 'inputTerceroMonto';
 
@@ -1453,29 +1452,50 @@ window.inyectarTercero = async function(tipo, isMovil = false) {
         return;
     }
 
+    // Obtener la firma del operador (El correo) para que no se pierda en el vacío
+    let usuarioActual = (typeof firebase !== 'undefined' && firebase.auth().currentUser) ? firebase.auth().currentUser.email : "";
+
     // 2. Empaquetar los datos
     let nuevoRegistro = {
         nombre: nombre,
         monto: monto,
         tipo: tipo,
-        fecha: new Date().toISOString()
+        fecha: new Date().toISOString(),
+        usuario: usuarioActual // Sello de seguridad
     };
+
+    // ⚡ ACTUALIZACIÓN VISUAL INSTANTÁNEA (Optimistic UI)
+    // Engañamos a la matriz para que lo muestre en pantalla ANTES de que la nube responda
+    if (typeof window.datosTerceros === 'undefined') window.datosTerceros = [];
+    
+    // Le damos un ID temporal para que el Lápiz o el Check no colapsen si los aprietas muy rápido
+    let idTemporal = "temp_" + Date.now(); 
+    window.datosTerceros.push({...nuevoRegistro, id: idTemporal});
+    
+    // Disparamos el renderizado en ambas pantallas (¡Aquí ocurre la magia visual!)
+    if (typeof renderizarTablaTerceros === 'function') renderizarTablaTerceros();
 
     // 3. Transmisión a la Nube (Firebase)
     try {
-        await db.collection("terceros").add(nuevoRegistro);
+        const docRef = await db.collection("terceros").add(nuevoRegistro);
         
+        // Reemplazamos el ID temporal por el ID real de Firebase de forma silenciosa
+        let index = window.datosTerceros.findIndex(t => t.id === idTemporal);
+        if (index !== -1) window.datosTerceros[index].id = docRef.id;
+
         // Limpiar casillas tras envío exitoso
         inputNombre.value = "";
         inputMonto.value = "";
-        inputNombre.focus();
+        if (!isMovil) inputNombre.focus();
         
-        // (Opcional) Si usas Toast notifications
         if (typeof mostrarToast === 'function') mostrarToast("OBLIGACIÓN REGISTRADA");
         
     } catch (error) {
         console.error("Error al transmitir a Firebase:", error);
-        alert("⚠️ Error de enlace satelital. Revisa tu conexión.");
+        // Fallback: Si la nube falla (ej. sin internet), borramos el registro falso de la pantalla
+        window.datosTerceros = window.datosTerceros.filter(t => t.id !== idTemporal);
+        if (typeof renderizarTablaTerceros === 'function') renderizarTablaTerceros();
+        alert("⚠️ Error de enlace satelital. La transmisión rebotó.");
     }
 };
 
