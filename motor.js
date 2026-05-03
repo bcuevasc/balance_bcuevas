@@ -546,12 +546,15 @@ function procesarCompraTCManual(nombre, montoTotal, cuotas, fechaStr) {
         let mesesDesfase = (dia > diaCorte || cuotas > 1) ? 2 : 1; 
         let fCobro = new Date(fCompra.getFullYear(), fCompra.getMonth() + mesesDesfase + (i - 1), 15);
         batch.set(db.collection("deuda_tc").doc(), {
-            nombre: `${nombre.toUpperCase()} (MANUAL)`, monto: montoCuota, cuota: `${i}/${cuotas}`,
-            mesCobro: fCobro.toISOString(), status: "Proyectado"
+            nombre: `${nombre.toUpperCase()} (MANUAL)`, 
+            monto: montoCuota, 
+            cuota: `${i}/${cuotas}`,
+            mesCobro: fCobro.toISOString(), 
+            status: "En Transito" // 🔥 ETIQUETA NUEVA
         });
     }
     batch.commit().then(() => {
-        mostrarToast(`TC: ${cuotas} CUOTAS DESPLEGADAS`);
+        mostrarToast(`TC: ${cuotas} CUOTAS DESPLEGADAS EN TRÁNSITO`);
         limpiarFormulario();
     }).catch(e => alert("Error TC: " + e));
 }
@@ -857,72 +860,102 @@ window.renderizarTablaTC = function() {
     let proximoAnio = fechaHoy.getFullYear();
     if (proximoMes > 11) { proximoMes = 0; proximoAnio++; }
 
-    // 1. Árbol Lógico agrupado por Mes
+    // 1. Árbol Lógico agrupado por Mes y suma de 3 estados
     datosTCGlobal.forEach(doc => {
         if(!doc.mesCobro) return;
         let f = new Date(doc.mesCobro);
         let key = f.getFullYear() + "-" + String(f.getMonth() + 1).padStart(2, '0');
         
-        if (!agrupado[key]) agrupado[key] = { label: f.toLocaleString('es-CL', { month: 'long', year: 'numeric' }).toUpperCase(), total: 0, items: [] };
+        if (!agrupado[key]) agrupado[key] = { 
+            label: f.toLocaleString('es-CL', { month: 'long', year: 'numeric' }).toUpperCase(), 
+            total: 0, sumFacturado: 0, sumProyectado: 0, sumTransito: 0, items: [] 
+        };
         
         agrupado[key].items.push(doc); 
-        agrupado[key].total += (Number(doc.monto) || 0);
+        let m = Number(doc.monto) || 0;
+        agrupado[key].total += m;
+
+        // 🧠 Clasificador de Estado
+        let esFacturado = doc.status === "Facturado" || (doc.nombre && doc.nombre.includes("FACTURADA"));
+        let esTransito = doc.status === "En Transito" || (doc.nombre && doc.nombre.includes("(MANUAL)"));
         
-        if (f.getMonth() === proximoMes && f.getFullYear() === proximoAnio) {
-            sumaProximoMes += (Number(doc.monto) || 0);
-        }
+        if (esFacturado) agrupado[key].sumFacturado += m;
+        else if (esTransito) agrupado[key].sumTransito += m;
+        else agrupado[key].sumProyectado += m;
+        
+        if (f.getMonth() === proximoMes && f.getFullYear() === proximoAnio) sumaProximoMes += m;
     });
 
     let htmlPC = "";
     let htmlMovil = "";
 
-    // 2. Construcción de Nodos
+    // 2. Construcción Visual (Badges y Nodos)
     Object.keys(agrupado).sort().forEach(key => {
         let g = agrupado[key];
         
+        // 📊 Desglose Visual (Mini-KPIs por mes)
+        let badgeFacturado = g.sumFacturado > 0 ? `<span style="color:#2ea043; background:rgba(46,160,67,0.1); padding:2px 6px; border-radius:4px; margin-right:5px; border: 1px solid rgba(46,160,67,0.3);">🔒 $${g.sumFacturado.toLocaleString('es-CL')}</span>` : '';
+        let badgeProyectado = g.sumProyectado > 0 ? `<span style="color:#79c0ff; background:rgba(121,192,255,0.1); padding:2px 6px; border-radius:4px; margin-right:5px; border: 1px solid rgba(121,192,255,0.3);">⚙️ $${g.sumProyectado.toLocaleString('es-CL')}</span>` : '';
+        let badgeTransito = g.sumTransito > 0 ? `<span style="color:#d29922; background:rgba(210,153,34,0.1); padding:2px 6px; border-radius:4px; border: 1px solid rgba(210,153,34,0.3);">🔥 $${g.sumTransito.toLocaleString('es-CL')}</span>` : '';
+        let desgloseHTML = `<div style="font-size: 0.65rem; font-family: monospace; display: flex; align-items: center; margin-top: 6px; flex-wrap: wrap; gap: 4px;">${badgeFacturado}${badgeProyectado}${badgeTransito}</div>`;
+
         // PADRE PC
-        htmlPC += `<tr style="background:rgba(255,82,82,0.15); border-top:2px solid rgba(255,82,82,0.5);">
+        htmlPC += `<tr style="background:rgba(255,82,82,0.08); border-top:2px solid rgba(255,82,82,0.5);">
             <td style="text-align: center; width: 30px; position: relative; z-index: 10;">
                 <input type="checkbox" class="checkMesTC" value="${key}" onclick="toggleMesTC(this, '${key}')" style="accent-color: #ff5252; cursor: pointer;">
             </td>
-            <td colspan="2" style="font-weight:900; color:#ff5252; font-size:0.85rem; letter-spacing:1px; pointer-events: none;">🗓️ ${g.label}</td>
-            <td class="col-monto" style="color:#ff5252; font-weight:900; pointer-events: none;">$${g.total.toLocaleString('es-CL')}</td>
+            <td colspan="2" style="padding-top: 10px; padding-bottom: 10px;">
+                <div style="font-weight:900; color:#ff5252; font-size:0.85rem; letter-spacing:1px; pointer-events: none;">🗓️ ${g.label}</div>
+                ${desgloseHTML}
+            </td>
+            <td class="col-monto" style="color:#ff5252; font-weight:900; pointer-events: none; vertical-align: middle; font-size: 1.1rem;">$${g.total.toLocaleString('es-CL')}</td>
         </tr>`;
         
         // PADRE MÓVIL
         htmlMovil += `<div style="background:rgba(255,82,82,0.1); padding: 12px 15px; margin: 15px 0 10px 0; border-radius: 8px; border-left: 3px solid var(--accent-red); display:flex; justify-content:space-between; align-items:center;">
-            <div style="display:flex; flex-direction:column; gap:4px;">
+            <div style="display:flex; flex-direction:column; gap:4px; flex: 1;">
                 <span style="color:var(--accent-red); font-weight:900; font-size: 0.85rem; letter-spacing: 1px;">🗓️ ${g.label}</span>
-                <span style="color:var(--text-main); font-weight:900; font-size: 1.1rem; font-family:monospace;">$${g.total.toLocaleString('es-CL')}</span>
+                ${desgloseHTML}
             </div>
-            <button onclick="purgarMesTCMovil('${key}')" style="background:var(--accent-red); color:white; border:none; padding:8px 12px; border-radius:8px; font-weight:900; font-size:0.7rem; box-shadow:0 4px 10px rgba(255,82,82,0.3); transition:transform 0.1s;">🗑️ PURGAR</button>
+            <div style="display:flex; flex-direction:column; align-items:flex-end; gap:8px; margin-left: 10px;">
+                <span style="color:var(--text-main); font-weight:900; font-size: 1.1rem; font-family:monospace;">$${g.total.toLocaleString('es-CL')}</span>
+                <button onclick="purgarMesTCMovil('${key}')" style="background:var(--accent-red); color:white; border:none; padding:4px 10px; border-radius:6px; font-weight:900; font-size:0.65rem; box-shadow:0 4px 10px rgba(255,82,82,0.3); transition:transform 0.1s;">🗑️ PURGAR</button>
+            </div>
         </div>`;
 
         // HIJOS
         g.items.forEach(doc => {
-            let op = (doc.nombre && (doc.nombre.includes("PROYECCIÓN") || doc.nombre.includes("FACTURADA"))) ? "1" : "0.7";
-            let colorIconoInfo = (doc.nombre && doc.nombre.includes("FACTURADA")) ? "⚠️" : "⚙️";
+            let esFacturado = doc.status === "Facturado" || (doc.nombre && doc.nombre.includes("FACTURADA"));
+            let esTransito = doc.status === "En Transito" || (doc.nombre && doc.nombre.includes("(MANUAL)"));
             
+            let iconInfo = esFacturado ? "🔒" : (esTransito ? "🔥" : "⚙️");
+            let colorText = esFacturado ? "var(--color-saldo)" : (esTransito ? "var(--color-edit)" : "#79c0ff");
+            let colorHex = esFacturado ? "46, 160, 67" : (esTransito ? "210, 153, 34" : "121, 192, 255");
+            let opacity = esFacturado ? "1" : "0.75";
+            let fontWeight = esFacturado ? "900" : "600";
+            
+            let badgeItem = `<span style="font-size:0.6rem; font-weight:900; background:rgba(${colorHex},0.15); color:${colorText}; padding: 2px 5px; border-radius: 4px; border: 1px solid rgba(${colorHex},0.4); margin-right: 5px;">${iconInfo} ${esFacturado ? 'FACT.' : (esTransito ? 'NUEVO' : 'PROY.')}</span>`;
+
             // Hijo PC
             htmlPC += `<tr class="fila-hijo-${key}" style="background-color: transparent;">
                 <td style="text-align: center; width: 30px; position: relative; z-index: 10;">
                     <input type="checkbox" class="checkItemTC checkItemTC-${key}" value="${doc.id}" onclick="actualizarBarraTC()" style="accent-color: #ff5252; cursor: pointer;">
                 </td>
-                <td style="font-size: 0.7rem; color: #79c0ff; opacity:${op}; width: 20%; padding-left: 20px;">Cuota: ${doc.cuota || '1/1'}</td>
-                <td class="col-desc" title="${doc.nombre || 'N/A'}" style="opacity:${op}; font-size:0.75rem; width: 50%;">${colorIconoInfo} ${doc.nombre || 'N/A'}</td>
-                <td class="col-monto" style="opacity:${op}; width: 30%;">$${(Number(doc.monto)||0).toLocaleString('es-CL')}</td>
+                <td style="font-size: 0.7rem; color: ${colorText}; opacity:${opacity}; width: 20%; padding-left: 20px;">Cuota: ${doc.cuota || '1/1'}</td>
+                <td class="col-desc" title="${doc.nombre || 'N/A'}" style="opacity:${opacity}; font-weight:${fontWeight}; font-size:0.75rem; width: 50%;">${badgeItem} ${doc.nombre || 'N/A'}</td>
+                <td class="col-monto" style="opacity:${opacity}; color:${esFacturado ? '#fff' : 'var(--text-main)'}; width: 30%;">$${(Number(doc.monto)||0).toLocaleString('es-CL')}</td>
             </tr>`;
             
             // Hijo Móvil
             const clickAction = typeof openBottomSheet === 'function' ? `openBottomSheet('${doc.id}', '${(doc.nombre || '').replace(/'/g, "\\'")}', ${doc.monto}, 'deuda_tc')` : ``;
             htmlMovil += `
-            <div class="mobile-card is-fuga" onclick="${clickAction}" style="opacity: ${op}; margin-bottom: 6px; padding: 12px !important;">
-                <div class="mc-icon" style="font-size: 1rem; width: 36px; height: 36px;">💳</div>
+            <div class="mobile-card is-fuga" onclick="${clickAction}" style="opacity: ${opacity}; margin-bottom: 6px; padding: 12px !important; border-left-color: ${colorText} !important; box-shadow: inset 3px 0 0 ${colorText} !important;">
+                <div class="mc-icon" style="font-size: 1.1rem; width: 36px; height: 36px; background:rgba(${colorHex},0.1); border-color:rgba(${colorHex},0.3);">${iconInfo}</div>
                 <div class="mc-body">
-                    <div class="mc-title" style="font-size: 0.85rem;">${doc.nombre || 'N/A'}</div>
-                    <div class="mc-subtitle" style="color: var(--accent-red);"><span>Cuota: ${doc.cuota || '1/1'}</span></div>
+                    <div class="mc-title" style="font-size: 0.85rem; font-weight:${fontWeight}; color:${esFacturado ? '#fff' : 'var(--text-main)'}">${doc.nombre || 'N/A'}</div>
+                    <div class="mc-subtitle" style="color: ${colorText};"><span>${badgeItem} Cuota: ${doc.cuota || '1/1'}</span></div>
                 </div>
-                <div class="mc-amount" style="font-size: 1rem;">$${(Number(doc.monto)||0).toLocaleString('es-CL')}</div>
+                <div class="mc-amount" style="font-size: 1rem; color:${esFacturado ? '#fff' : 'var(--text-main)'};">$${(Number(doc.monto)||0).toLocaleString('es-CL')}</div>
             </div>`;
         });
     });
