@@ -1434,7 +1434,6 @@ function guardarTerceros() {
 }
 
 window.inyectarTercero = async function(tipo, isMovil = false) {
-    // 1. Detección de Plataforma
     let idNombre = isMovil ? 'inputTerceroNombreMovil' : 'inputTerceroNombre';
     let idMonto = isMovil ? 'inputTerceroMontoMovil' : 'inputTerceroMonto';
 
@@ -1452,38 +1451,33 @@ window.inyectarTercero = async function(tipo, isMovil = false) {
         return;
     }
 
-    // Obtener la firma del operador (El correo) para que no se pierda en el vacío
     let usuarioActual = (typeof firebase !== 'undefined' && firebase.auth().currentUser) ? firebase.auth().currentUser.email : "";
 
-    // 2. Empaquetar los datos
     let nuevoRegistro = {
         nombre: nombre,
         monto: monto,
         tipo: tipo,
         fecha: new Date().toISOString(),
-        usuario: usuarioActual // Sello de seguridad
+        usuario: usuarioActual 
     };
 
-    // ⚡ ACTUALIZACIÓN VISUAL INSTANTÁNEA (Optimistic UI)
-    // Engañamos a la matriz para que lo muestre en pantalla ANTES de que la nube responda
+    // ⚡ Inyección Visual Instantánea (ID Falso)
     if (typeof window.datosTerceros === 'undefined') window.datosTerceros = [];
-    
-    // Le damos un ID temporal para que el Lápiz o el Check no colapsen si los aprietas muy rápido
     let idTemporal = "temp_" + Date.now(); 
     window.datosTerceros.push({...nuevoRegistro, id: idTemporal});
-    
-    // Disparamos el renderizado en ambas pantallas (¡Aquí ocurre la magia visual!)
     if (typeof renderizarTablaTerceros === 'function') renderizarTablaTerceros();
 
-    // 3. Transmisión a la Nube (Firebase)
+    // ☁️ Transmisión a Firebase
     try {
         const docRef = await db.collection("terceros").add(nuevoRegistro);
         
-        // Reemplazamos el ID temporal por el ID real de Firebase de forma silenciosa
+        // CORRECCIÓN VITAL: Cambiamos el ID Falso por el Real y RE-DIBUJAMOS LOS BOTONES
         let index = window.datosTerceros.findIndex(t => t.id === idTemporal);
-        if (index !== -1) window.datosTerceros[index].id = docRef.id;
+        if (index !== -1) {
+            window.datosTerceros[index].id = docRef.id;
+            if (typeof renderizarTablaTerceros === 'function') renderizarTablaTerceros(); // <- Esto arregla el bug
+        }
 
-        // Limpiar casillas tras envío exitoso
         inputNombre.value = "";
         inputMonto.value = "";
         if (!isMovil) inputNombre.focus();
@@ -1491,42 +1485,35 @@ window.inyectarTercero = async function(tipo, isMovil = false) {
         if (typeof mostrarToast === 'function') mostrarToast("OBLIGACIÓN REGISTRADA");
         
     } catch (error) {
-        console.error("Error al transmitir a Firebase:", error);
-        // Fallback: Si la nube falla (ej. sin internet), borramos el registro falso de la pantalla
+        console.error("Error al transmitir:", error);
         window.datosTerceros = window.datosTerceros.filter(t => t.id !== idTemporal);
         if (typeof renderizarTablaTerceros === 'function') renderizarTablaTerceros();
-        alert("⚠️ Error de enlace satelital. La transmisión rebotó.");
+        alert("⚠️ Error satelital. La transmisión rebotó.");
     }
 };
 
 // 🗑️ PROTOCOLO DE DESTRUCCIÓN DE TERCEROS / KANBAN
 window.eliminarTercero = async function(id) {
-    // 1. Confirmación de seguridad
+    // 🛡️ ESCUDO ANTI-FANTASMAS: Si intentas borrar un ID temporal, te detiene.
+    if (!id || id.startsWith("temp_")) {
+        alert("⚠️ El registro aún se está encriptando en la nube. Espera 1 segundo y vuelve a intentarlo.");
+        return;
+    }
+
     if (!confirm('¿Dar por saldada/eliminada esta cuenta?')) return;
 
-    // 2. Eliminación Visual Instantánea (Optimistic UI)
-    // Guardamos un respaldo en la memoria por si falla el internet
     let respaldoTerceros = [...window.datosTerceros]; 
-    
-    // Filtramos el registro para que desaparezca de tu vista AHORA
     window.datosTerceros = window.datosTerceros.filter(t => t.id !== id);
     if (typeof renderizarTablaTerceros === 'function') renderizarTablaTerceros();
 
-    // 3. Destrucción en la Nube (Firebase)
     try {
         await db.collection("terceros").doc(id).delete();
-        
-        // (Opcional) Notificación de éxito
-        if (typeof mostrarToast === 'function') mostrarToast("✔️ TAREA SALDADA");
-        
+        if (typeof mostrarToast === 'function') mostrarToast("✔️ DEUDA SALDADA");
     } catch (error) {
-        console.error("Error al destruir el dato en Firebase:", error);
-        
-        // Protocolo de Reversa: Si la nube falló, volvemos a mostrar el dato
+        console.error("Error al destruir:", error);
         window.datosTerceros = respaldoTerceros;
         if (typeof renderizarTablaTerceros === 'function') renderizarTablaTerceros();
-        
-        alert("⚠️ Fallo satelital: No se pudo eliminar el registro en la nube.");
+        alert("⚠️ Fallo satelital: No se pudo eliminar en la nube.");
     }
 };
 
