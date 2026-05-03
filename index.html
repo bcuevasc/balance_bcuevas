@@ -328,6 +328,9 @@
     </div>
 
     <div class="dual-core">
+        <!-- ============================================== -->
+        <!-- 🔴 PANEL 1: FLUJO PRESENTE + TERCEROS          -->
+        <!-- ============================================== -->
         <div class="core-panel" id="panelMain" ondragover="dragOverPanel(event, 'main')" ondragleave="dragLeavePanel(event, 'main')" ondrop="dropOnPanel(event, 'main')">
             <div class="core-header">
                 <div class="core-title"><span style="color:var(--color-saldo); text-shadow: 0 0 8px var(--color-saldo);">●</span> <span>FLUJO PRESENTE (LIBRO DIARIO)</span></div>
@@ -354,7 +357,6 @@
                     <div class="chart-box"><h5 data-en="VITAL PULSE (BASE VS LEAK)">PULSO VITAL (BASE VS FUGA)</h5><div class="canvas-container"><canvas id="chartDiario"></canvas></div></div>
                     <div class="chart-box"><h5 data-en="CATEGORICAL SPECTRUM">ESPECTRO CATEGÓRICO</h5><div class="canvas-container"><canvas id="chartPareto"></canvas></div></div>
                     
-                    <!-- NUEVO WIDGET PRE-VUELO ENCABEZADO -->
                     <div class="chart-box" style="border-top: 3px solid #ff9800; display: flex; flex-direction: column; justify-content: space-between; background: rgba(255, 152, 0, 0.03);">
                         <div>
                             <h5 style="color:#ff9800; margin-bottom: 2px;">ESTADO PRE-VUELO</h5>
@@ -379,7 +381,7 @@
                 <!-- 🛠️ MATRIZ DE GASTOS COMPLETA + CUENTAS A TERCEROS -->
                 <div style="padding: 0 15px 20px 15px; width: 100%; max-width: 1800px; margin: 0 auto; display: grid; grid-template-columns: 2fr 1fr; gap: 15px; flex-grow: 1;">
                     
-                    <!-- COLUMNA IZQUIERDA: Libro Diario (Tu tabla principal) -->
+                    <!-- COLUMNA IZQUIERDA: Libro Diario -->
                     <div style="background: var(--bg-panel); border-radius: 8px; border: 1px solid var(--border-color); overflow: hidden; box-shadow: 0 5px 25px rgba(0,0,0,0.2); display: flex; flex-direction: column;">
                         <div style="padding: 6px 12px; background: rgba(0,0,0,0.4); border-bottom: 1px solid var(--border-color); position: sticky; top: 0; z-index: 30;">
                             <input type="text" id="inputBuscador" class="form-control" placeholder="🔍 Buscar en la matriz diaria..." autocomplete="off" oninput="actualizarDashboard()" style="width: 100%; max-width: 350px; height: 30px; background: var(--input-bg);">
@@ -402,9 +404,9 @@
                     </div>
 
                     <!-- COLUMNA DERECHA: Cuentas por Cobrar / Pagar -->
-                    <div style="background: var(--bg-panel); border-radius: 8px; border: 1px solid var(--border-color); overflow: hidden; box-shadow: 0 5px 25px rgba(0,0,0,0.2); display: flex; flex-direction: column;">
+                    <div style="background: var(--bg-panel); border-radius: 8px; border: 1px solid var(--border-color); overflow: hidden; box-shadow: 0 5px 25px rgba(0,0,0,0.2); display: flex; flex-direction: column; max-height: 800px;">
                         <div style="padding: 10px 15px; background: rgba(0,0,0,0.4); border-bottom: 1px solid var(--border-color); position: sticky; top: 0; z-index: 30; display: flex; justify-content: space-between; align-items: center;">
-                            <span style="font-size: 0.8rem; font-weight: 900; color: #d29922; text-transform: uppercase; letter-spacing: 1px;">🤝 CUENTAS A TERCEROS</span>
+                            <span style="font-size: 0.8rem; font-weight: 900; color: #d29922; text-transform: uppercase; letter-spacing: 1px;">🤝 TERCEROS</span>
                             <div style="display:flex; gap: 5px;">
                                 <div style="font-size: 0.7rem; font-family: monospace; color: var(--color-saldo); background: rgba(46, 160, 67, 0.1); padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(46, 160, 67, 0.3);">+ $<span id="kpiMeDeben">0</span></div>
                                 <div style="font-size: 0.7rem; font-family: monospace; color: var(--color-fuga); background: rgba(248, 81, 73, 0.1); padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(248, 81, 73, 0.3);">- $<span id="kpiYoDebo">0</span></div>
@@ -427,10 +429,13 @@
                             <!-- Los registros se inyectarán aquí -->
                         </div>
                     </div>
-
                 </div>
+            </div> <!-- CIERRE core-body de panelMain -->
+        </div> <!-- CIERRE panelMain -->
 
-      
+        <!-- ============================================== -->
+        <!-- 🔴 PANEL 2: MATRIZ TC                          -->
+        <!-- ============================================== -->
         <div class="core-panel hidden" id="panelTC" style="border-color: rgba(248, 81, 73, 0.2); box-shadow: inset 0 0 30px rgba(248, 81, 73, 0.02);" ondragover="dragOverPanel(event, 'tc')" ondragleave="dragLeavePanel(event, 'tc')" ondrop="dropOnPanel(event, 'tc')">
             <div class="core-header" style="background: rgba(248, 81, 73, 0.08); border-bottom-color: rgba(248, 81, 73, 0.2);">
                 <div class="core-title"><span style="color:var(--color-fuga); text-shadow: 0 0 8px var(--color-fuga);">●</span> <span>MATRIZ DE DEUDA TC</span></div>
@@ -487,9 +492,9 @@
                     </thead>
                     <tbody id="listaDetalleTC"></tbody>
                 </table>
-            </div>
-        </div>
-    </div>
+            </div> <!-- CIERRE core-body de panelTC -->
+        </div> <!-- CIERRE panelTC -->
+    </div> <!-- CIERRE dual-core -->
     
     <div id="massActionsBar" class="floating-mass-actions" style="display: none;">
         <span id="massCount" style="font-weight:900; font-size:0.85rem; letter-spacing: 0.5px;">0 SEL</span>
