@@ -1542,24 +1542,34 @@ window.renderizarTablaTerceros = function() {
 // Se mantiene tu gatillo intacto
 document.addEventListener("DOMContentLoaded", () => { setTimeout(renderizarTablaTerceros, 500); });
 
-window.editarTercero = function(id) {
-    // 1. Encontrar el registro en el array
+window.editarTercero = async function(id) {
     let registro = datosTerceros.find(t => t.id === id);
     if (!registro) return;
 
-    // 2. Extraer los datos y poblar las casillas de texto
-    let inputNombre = document.getElementById('inputTerceroNombre');
-    let inputMonto = document.getElementById('inputTerceroMonto');
-    
-    if (inputNombre) inputNombre.value = registro.nombre;
-    if (inputMonto) inputMonto.value = registro.monto;
+    // 1. Extraer a casillas de PC
+    let nPC = document.getElementById('inputTerceroNombre');
+    let mPC = document.getElementById('inputTerceroMonto');
+    if (nPC) nPC.value = registro.nombre;
+    if (mPC) mPC.value = registro.monto;
 
-    // 3. Eliminar el registro original (porque lo vas a reescribir)
-    // Nota: Esto asume que tu función eliminarTercero() funciona correctamente y borra de Firebase/LocalStorage
-    eliminarTercero(id);
+    // 2. Extraer a casillas de Celular
+    let nMovil = document.getElementById('inputTerceroNombreMovil');
+    let mMovil = document.getElementById('inputTerceroMontoMovil');
+    if (nMovil) nMovil.value = registro.nombre;
+    if (mMovil) mMovil.value = registro.monto;
 
-    // 4. Hacer foco en la casilla de monto para que escribas rápido
-    if (inputMonto) inputMonto.focus();
+    // 3. Borrado Silencioso (Saltarse el confirm de alerta)
+    try {
+        await db.collection("terceros").doc(id).delete();
+        // Opcional: Si tienes una función de toast, puedes activarla
+        // if(typeof mostrarToast === 'function') mostrarToast("MODO EDICIÓN ACTIVO");
+    } catch(error) {
+        console.error("Error al extraer para edición: ", error);
+    }
+
+    // 4. Hacer foco para escribir rápido (dependiendo de qué pantalla estés usando)
+    if (mPC && mPC.offsetParent !== null) mPC.focus();
+    else if (mMovil && mMovil.offsetParent !== null) mMovil.focus();
 };
 // =====================================================================
 // 🔒 MÓDULO TC: CONGELAMIENTO DE FACTURACIÓN OFICIAL
