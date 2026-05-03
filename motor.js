@@ -1508,19 +1508,6 @@ window.renderizarTablaTerceros = function() {
     let elPendiente = document.getElementById('kpiPendientes'); if(elPendiente) elPendiente.innerText = sumPendientes.toLocaleString('es-CL');
 };
 
-    // Inyección Dual (Si encuentra el ID en pantalla lo inyecta, si no, lo salta sin errores)
-    if(document.getElementById('listaTerceros')) document.getElementById('listaTerceros').innerHTML = htmlPC;
-    if(document.getElementById('listaTercerosMovil')) document.getElementById('listaTercerosMovil').innerHTML = htmlMovil;
-    
-    // KPIs PC
-    if(document.getElementById('kpiMeDeben')) document.getElementById('kpiMeDeben').innerText = sumaMeDeben.toLocaleString('es-CL');
-    if(document.getElementById('kpiYoDebo')) document.getElementById('kpiYoDebo').innerText = sumaYoDebo.toLocaleString('es-CL');
-    
-    // KPIs Móvil
-    if(document.getElementById('kpiMeDebenMovil')) document.getElementById('kpiMeDebenMovil').innerText = sumaMeDeben.toLocaleString('es-CL');
-    if(document.getElementById('kpiYoDeboMovil')) document.getElementById('kpiYoDeboMovil').innerText = sumaYoDebo.toLocaleString('es-CL');
-};
-
 document.addEventListener("DOMContentLoaded", () => { setTimeout(renderizarTablaTerceros, 500); });
 
 // =====================================================================
