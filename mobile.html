@@ -552,8 +552,8 @@
                     <div class="mc-title">${nombreSeguro}</div>
                     <div class="mc-subtitle"><span>🕒 ${timeStr}</span> <span style="opacity: 0.5;">•</span> <span>${x.catV.replace(' & ','&')}</span></div>
                 </div>
-                <div class="mc-amount" style="color:${colorMonto};">
-                    ${x.esIn ? '+' : (x.esNeutro ? '=' : '-')} $${Math.round(montoSeguro/1000)}k
+                <div class="mc-amount" style="color:${colorMonto}; font-size: 1.05rem;">
+                    ${x.esIn ? '+' : (x.esNeutro ? '=' : '-')} $${montoSeguro.toLocaleString('es-CL')}
                 </div>
             </div>`;
         });
