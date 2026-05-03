@@ -1458,45 +1458,63 @@ window.eliminarTercero = function(id) {
 };
 
 window.renderizarTablaTerceros = function() {
-    let sumaMeDeben = 0; let sumaYoDebo = 0;
-    let htmlPC = ""; let htmlMovil = "";
+    let sumaMeDeben = 0, sumaYoDebo = 0, sumaPendientes = 0;
+    let htmlPC = "", htmlMovil = "";
 
-    if (datosTerceros.length === 0) {
-        htmlPC = `<div style="text-align:center; padding:30px 10px; color:var(--text-muted); font-size:0.75rem; font-family:monospace;">Sin registros pendientes.</div>`;
+    if (!datosTerceros || datosTerceros.length === 0) {
+        htmlPC = `<div style="text-align:center; padding:40px 20px; color:var(--text-muted); font-size:0.8rem; font-family:monospace;">📌 TABLERO KANBAN VACÍO<br><span style="font-size: 0.65rem; opacity: 0.7;">No hay obligaciones ni tareas pendientes</span></div>`;
         htmlMovil = `<div style="text-align:center; padding: 40px 20px; color: var(--text-dim);"><i>🤝</i><br>Cuentas saldadas.</div>`;
     } else {
-        datosTerceros.sort((a, b) => new Date(b.fecha) - new Date(a.fecha)).forEach(t => {
-            let isMeDeben = t.tipo === 'ME DEBEN';
-            let color = isMeDeben ? "var(--color-saldo)" : "var(--color-fuga)";
-            let colorHex = isMeDeben ? "46, 160, 67" : "248, 81, 73";
-            let signo = isMeDeben ? "+" : "-";
-            
-            if (isMeDeben) sumaMeDeben += t.monto; else sumaYoDebo += t.monto;
+        // Ordenar: Primero YO DEBO (1), luego PENDIENTES (2), luego ME DEBEN (3)
+        const pesoEstado = {"YO DEBO": 1, "PENDIENTE": 2, "ME DEBEN": 3};
+        
+        let datosOrdenados = [...datosTerceros].sort((a, b) => {
+            let pesoA = pesoEstado[a.tipo] || 99;
+            let pesoB = pesoEstado[b.tipo] || 99;
+            if (pesoA === pesoB) return new Date(b.fecha) - new Date(a.fecha); // Si son del mismo tipo, ordena por fecha
+            return pesoA - pesoB;
+        });
 
-            // Fila PC
+        datosOrdenados.forEach(t => {
+            let m = Number(t.monto) || 0;
+            let cText, cBgHex, iconPC, iconMovil, signo, cardClass;
+
+            // Lógica de los 3 Estados
+            if (t.tipo === "ME DEBEN") {
+                sumaMeDeben += m;
+                cText = "var(--color-saldo)"; cBgHex = "46, 160, 67"; iconPC = "➕"; iconMovil = "📥"; signo = "+"; cardClass = "is-ingreso";
+            } else if (t.tipo === "YO DEBO") {
+                sumaYoDebo += m;
+                cText = "var(--color-fuga)"; cBgHex = "248, 81, 73"; iconPC = "➖"; iconMovil = "📤"; signo = "-"; cardClass = "is-fuga";
+            } else { // PENDIENTE
+                sumaPendientes += m;
+                cText = "#d29922"; cBgHex = "210, 153, 34"; iconPC = "📌"; iconMovil = "📌"; signo = "~"; cardClass = "is-neutro";
+            }
+
+            // Fila PC (Diseño Kanban)
             htmlPC += `
-            <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-left: 3px solid ${color}; padding: 8px 10px; border-radius: 6px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
-                <div style="display:flex; flex-direction:column; overflow: hidden;">
-                    <span style="font-size:0.75rem; font-weight:800; color:var(--text-main); white-space: nowrap;">${t.nombre}</span>
-                    <span style="font-size:0.6rem; color:var(--text-muted);">${t.tipo}</span>
+            <div style="background: rgba(${cBgHex}, 0.05); border: 1px solid rgba(255,255,255,0.05); border-left: 3px solid ${cText}; padding: 10px; margin-bottom: 8px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; transition: all 0.2s;">
+                <div style="display:flex; flex-direction:column; gap:3px; overflow: hidden;">
+                    <span style="font-size: 0.8rem; font-weight: bold; color: var(--text-main); white-space: nowrap;">${t.nombre}</span>
+                    <span style="font-size: 0.6rem; color: ${cText}; font-family: monospace;">${iconPC} ${t.tipo}</span>
                 </div>
-                <div style="display:flex; align-items:center; gap:10px; flex-shrink:0;">
-                    <span style="font-family:monospace; font-weight:900; font-size:0.9rem; color:${color};">${signo}$${t.monto.toLocaleString('es-CL')}</span>
-                    <button onclick="eliminarTercero('${t.id}')" style="background:transparent; border:none; color:var(--text-muted); cursor:pointer; font-size:1rem;">✅</button>
+                <div style="display:flex; align-items:center; gap: 10px; flex-shrink:0;">
+                    <span style="font-size: 0.95rem; font-weight: 900; color: ${cText}; font-family: monospace;">${signo}$${m.toLocaleString('es-CL')}</span>
+                    <button onclick="eliminarTercero('${t.id}')" title="Marcar como Resuelto" style="background: rgba(255,255,255,0.1); border:none; border-radius:4px; padding: 4px 8px; cursor: pointer; filter: grayscale(100%); transition: all 0.2s;" onmouseover="this.style.filter='none'; this.style.background='rgba(${cBgHex}, 0.15)';" onmouseout="this.style.filter='grayscale(100%)'; this.style.background='rgba(255,255,255,0.1)';">✔️</button>
                 </div>
             </div>`;
 
-            // Tarjeta Móvil
+            // Tarjeta Móvil (Manteniendo tu estructura original)
             htmlMovil += `
-            <div class="mobile-card ${isMeDeben ? 'is-ingreso' : 'is-fuga'}" style="margin-bottom: 8px; padding: 12px 14px !important;">
-                <div class="mc-icon" style="font-size: 1.2rem; background: rgba(${colorHex}, 0.1); border-color: rgba(${colorHex}, 0.3);">${isMeDeben ? '📥' : '📤'}</div>
+            <div class="mobile-card ${cardClass}" style="margin-bottom: 8px; padding: 12px 14px !important; border-left: 4px solid ${cText};">
+                <div class="mc-icon" style="font-size: 1.2rem; background: rgba(${cBgHex}, 0.1); border-color: rgba(${cBgHex}, 0.3); color: ${cText};">${iconMovil}</div>
                 <div class="mc-body">
                     <div class="mc-title">${t.nombre}</div>
-                    <div class="mc-subtitle"><span style="color:${color}; font-weight:900;">${t.tipo}</span></div>
+                    <div class="mc-subtitle"><span style="color:${cText}; font-weight:900;">${t.tipo}</span></div>
                 </div>
                 <div style="display:flex; flex-direction:column; align-items:flex-end;">
-                    <div class="mc-amount" style="color:${color}; font-size: 1.1rem;">${signo}$${Math.round(t.monto/1000)}k</div>
-                    <button onclick="eliminarTercero('${t.id}')" style="background:rgba(${colorHex}, 0.2); border:1px solid rgba(${colorHex},0.5); color:${color}; margin-top:6px; border-radius:6px; font-weight:900; padding:2px 10px; font-size:0.7rem;">SALDAR</button>
+                    <div class="mc-amount" style="color:${cText}; font-size: 1.1rem;">${signo}$${Math.round(m/1000)}k</div>
+                    <button onclick="eliminarTercero('${t.id}')" style="background:rgba(${cBgHex}, 0.2); border:1px solid rgba(${cBgHex},0.5); color:${cText}; margin-top:6px; border-radius:6px; font-weight:900; padding:2px 10px; font-size:0.7rem;">SALDAR</button>
                 </div>
             </div>`;
         });
@@ -1509,12 +1527,14 @@ window.renderizarTablaTerceros = function() {
     // KPIs PC
     if(document.getElementById('kpiMeDeben')) document.getElementById('kpiMeDeben').innerText = sumaMeDeben.toLocaleString('es-CL');
     if(document.getElementById('kpiYoDebo')) document.getElementById('kpiYoDebo').innerText = sumaYoDebo.toLocaleString('es-CL');
+    if(document.getElementById('kpiPendientes')) document.getElementById('kpiPendientes').innerText = sumaPendientes.toLocaleString('es-CL'); // El nuevo KPI
     
-    // KPIs Móvil
+    // KPIs Móvil (Se mantienen los tuyos)
     if(document.getElementById('kpiMeDebenMovil')) document.getElementById('kpiMeDebenMovil').innerText = sumaMeDeben.toLocaleString('es-CL');
     if(document.getElementById('kpiYoDeboMovil')) document.getElementById('kpiYoDeboMovil').innerText = sumaYoDebo.toLocaleString('es-CL');
+    // Dejé preparado este por si a futuro agregas el cuadrito amarillo en la app móvil
+    if(document.getElementById('kpiPendientesMovil')) document.getElementById('kpiPendientesMovil').innerText = sumaPendientes.toLocaleString('es-CL'); 
 };
-
 document.addEventListener("DOMContentLoaded", () => { setTimeout(renderizarTablaTerceros, 500); });
 
 // =====================================================================
