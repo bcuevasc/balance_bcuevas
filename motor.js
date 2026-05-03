@@ -1721,3 +1721,21 @@ firebase.auth().onAuthStateChanged((user) => {
           });
     }
 });
+
+// ⏱️ RELOJ MAESTRO: Auto-seleccionar mes y año actual al iniciar
+document.addEventListener("DOMContentLoaded", () => {
+    let hoy = new Date();
+    // getMonth() devuelve 0 para Enero, 4 para Mayo, etc. (Exactamente lo que usas)
+    let mesActual = hoy.getMonth(); 
+    let anioActual = hoy.getFullYear().toString();
+    
+    let selectMes = document.getElementById('navMesConceptual');
+    let selectAnio = document.getElementById('navAnio');
+    
+    // Fijar los selectores al tiempo real sin alertar a la interfaz todavía
+    if(selectMes) selectMes.value = mesActual;
+    if(selectAnio) selectAnio.value = anioActual;
+    
+    // (Opcional) Si tienes una función que carga los datos iniciales, 
+    // asegúrate de que use estos valores ya actualizados.
+});
