@@ -1517,21 +1517,46 @@ window.eliminarTercero = async function(id) {
     }
 };
 
+window.filtroTercerosActual = 'TODOS'; // Memoria del filtro
+
+// Función que se activa al tocar un cuadro de color
+window.setFiltroTerceros = function(tipo) {
+    if (window.filtroTercerosActual === tipo) {
+        window.filtroTercerosActual = 'TODOS'; // Si lo tocas de nuevo, apaga el filtro
+    } else {
+        window.filtroTercerosActual = tipo; // Enciende el filtro
+    }
+    if (typeof renderizarTablaTerceros === 'function') renderizarTablaTerceros();
+};
+
 window.renderizarTablaTerceros = function() {
     let sumaMeDeben = 0, sumaYoDebo = 0, sumaPendientes = 0;
     let htmlPC = "", htmlMovil = "";
 
-    if (!datosTerceros || datosTerceros.length === 0) {
+    if (!window.datosTerceros || window.datosTerceros.length === 0) {
         htmlPC = `<div style="text-align:center; padding:40px 20px; color:var(--text-muted); font-size:0.8rem; font-family:monospace;">📌 TABLERO KANBAN VACÍO<br><span style="font-size: 0.65rem; opacity: 0.7;">No hay obligaciones ni tareas pendientes</span></div>`;
         htmlMovil = `<div style="text-align:center; padding: 40px 20px; color: var(--text-dim);"><i>🤝</i><br>Cuentas saldadas.</div>`;
     } else {
-        // Ordenar: Primero YO DEBO (1), luego PENDIENTES (2), luego ME DEBEN (3)
+        // 1. Calculamos los KPIs con TODOS los datos (para que los números de arriba no cambien al filtrar)
+        window.datosTerceros.forEach(t => {
+            let m = Number(t.monto) || 0;
+            if (t.tipo === "ME DEBEN") sumaMeDeben += m;
+            else if (t.tipo === "YO DEBO") sumaYoDebo += m;
+            else sumaPendientes += m;
+        });
+
+        // 2. Aplicamos el filtro visual a la lista
+        let datosFiltrados = window.datosTerceros;
+        if (window.filtroTercerosActual !== 'TODOS') {
+            datosFiltrados = window.datosTerceros.filter(t => t.tipo === window.filtroTercerosActual);
+        }
+
+        // 3. Ordenamos
         const pesoEstado = {"YO DEBO": 1, "PENDIENTE": 2, "ME DEBEN": 3};
-        
-        let datosOrdenados = [...datosTerceros].sort((a, b) => {
+        let datosOrdenados = [...datosFiltrados].sort((a, b) => {
             let pesoA = pesoEstado[a.tipo] || 99;
             let pesoB = pesoEstado[b.tipo] || 99;
-            if (pesoA === pesoB) return new Date(b.fecha) - new Date(a.fecha); // Si son del mismo tipo, ordena por fecha
+            if (pesoA === pesoB) return new Date(b.fecha) - new Date(a.fecha);
             return pesoA - pesoB;
         });
 
@@ -1539,19 +1564,15 @@ window.renderizarTablaTerceros = function() {
             let m = Number(t.monto) || 0;
             let cText, cBgHex, iconPC, iconMovil, signo, cardClass;
 
-            // Lógica de los 3 Estados
             if (t.tipo === "ME DEBEN") {
-                sumaMeDeben += m;
                 cText = "var(--color-saldo)"; cBgHex = "46, 160, 67"; iconPC = "➕"; iconMovil = "📥"; signo = "+"; cardClass = "is-ingreso";
             } else if (t.tipo === "YO DEBO") {
-                sumaYoDebo += m;
                 cText = "var(--color-fuga)"; cBgHex = "248, 81, 73"; iconPC = "➖"; iconMovil = "📤"; signo = "-"; cardClass = "is-fuga";
             } else { // PENDIENTE
-                sumaPendientes += m;
                 cText = "#d29922"; cBgHex = "210, 153, 34"; iconPC = "📌"; iconMovil = "📌"; signo = "~"; cardClass = "is-neutro";
             }
 
-            // Fila PC (Diseño Kanban + Botón Editar ✏️)
+            // Fila PC
             htmlPC += `
             <div style="background: rgba(${cBgHex}, 0.05); border: 1px solid rgba(255,255,255,0.05); border-left: 3px solid ${cText}; padding: 10px; margin-bottom: 8px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; transition: all 0.2s;">
                 <div style="display:flex; flex-direction:column; gap:3px; overflow: hidden;">
@@ -1565,7 +1586,7 @@ window.renderizarTablaTerceros = function() {
                 </div>
             </div>`;
 
-            // Tarjeta Móvil (Tu estructura original + Botones en fila ✏️)
+            // Tarjeta Móvil (AHORA CON MONTOS EXACTOS)
             htmlMovil += `
             <div class="mobile-card ${cardClass}" style="margin-bottom: 8px; padding: 12px 14px !important; border-left: 4px solid ${cText};">
                 <div class="mc-icon" style="font-size: 1.2rem; background: rgba(${cBgHex}, 0.1); border-color: rgba(${cBgHex}, 0.3); color: ${cText};">${iconMovil}</div>
@@ -1574,7 +1595,7 @@ window.renderizarTablaTerceros = function() {
                     <div class="mc-subtitle"><span style="color:${cText}; font-weight:900;">${t.tipo}</span></div>
                 </div>
                 <div style="display:flex; flex-direction:column; align-items:flex-end;">
-                    <div class="mc-amount" style="color:${cText}; font-size: 1.1rem;">${signo}$${Math.round(m/1000)}k</div>
+                    <div class="mc-amount" style="color:${cText}; font-size: 1.05rem;">${signo}$${m.toLocaleString('es-CL')}</div>
                     <div style="display:flex; gap: 5px; margin-top: 6px;">
                         <button onclick="editarTercero('${t.id}')" style="background:transparent; border:1px solid rgba(255,255,255,0.2); color:var(--text-muted); border-radius:6px; font-weight:900; padding:2px 8px; font-size:0.7rem;">✏️</button>
                         <button onclick="eliminarTercero('${t.id}')" style="background:rgba(${cBgHex}, 0.2); border:1px solid rgba(${cBgHex},0.5); color:${cText}; border-radius:6px; font-weight:900; padding:2px 10px; font-size:0.7rem;">SALDAR</button>
@@ -1584,19 +1605,33 @@ window.renderizarTablaTerceros = function() {
         });
     }
 
-    // Inyección Dual
     if(document.getElementById('listaTerceros')) document.getElementById('listaTerceros').innerHTML = htmlPC;
-    if(document.getElementById('listaTercerosMovil')) document.getElementById('listaTercerosMovil').innerHTML = htmlMovil;
     
-    // KPIs PC
+    // Inyección Móvil con Mensaje de "Filtro Vacío"
+    if(document.getElementById('listaTercerosMovil')) {
+        if (window.datosTerceros && window.datosTerceros.length > 0 && window.filtroTercerosActual !== 'TODOS' && htmlMovil === "") {
+             document.getElementById('listaTercerosMovil').innerHTML = `<div style="text-align:center; padding: 30px; color: var(--text-dim); font-size:0.8rem;">Filtro activo:<br><strong style="color:white;">${window.filtroTercerosActual}</strong><br>No hay registros aquí.</div>`;
+        } else {
+             document.getElementById('listaTercerosMovil').innerHTML = htmlMovil;
+        }
+    }
+    
     if(document.getElementById('kpiMeDeben')) document.getElementById('kpiMeDeben').innerText = sumaMeDeben.toLocaleString('es-CL');
     if(document.getElementById('kpiYoDebo')) document.getElementById('kpiYoDebo').innerText = sumaYoDebo.toLocaleString('es-CL');
     if(document.getElementById('kpiPendientes')) document.getElementById('kpiPendientes').innerText = sumaPendientes.toLocaleString('es-CL'); 
     
-    // KPIs Móvil
     if(document.getElementById('kpiMeDebenMovil')) document.getElementById('kpiMeDebenMovil').innerText = sumaMeDeben.toLocaleString('es-CL');
     if(document.getElementById('kpiYoDeboMovil')) document.getElementById('kpiYoDeboMovil').innerText = sumaYoDebo.toLocaleString('es-CL');
     if(document.getElementById('kpiPendientesMovil')) document.getElementById('kpiPendientesMovil').innerText = sumaPendientes.toLocaleString('es-CL'); 
+
+    // Efecto Visual de "Apagado" para los filtros inactivos en el Celular
+    let btnVerde = document.getElementById('btnFiltroVerde');
+    let btnRojo = document.getElementById('btnFiltroRojo');
+    let btnAmarillo = document.getElementById('btnFiltroAmarillo');
+    
+    if(btnVerde) btnVerde.style.opacity = (window.filtroTercerosActual === 'TODOS' || window.filtroTercerosActual === 'ME DEBEN') ? '1' : '0.3';
+    if(btnRojo) btnRojo.style.opacity = (window.filtroTercerosActual === 'TODOS' || window.filtroTercerosActual === 'YO DEBO') ? '1' : '0.3';
+    if(btnAmarillo) btnAmarillo.style.opacity = (window.filtroTercerosActual === 'TODOS' || window.filtroTercerosActual === 'PENDIENTE') ? '1' : '0.3';
 };
 
 // Se mantiene tu gatillo intacto
