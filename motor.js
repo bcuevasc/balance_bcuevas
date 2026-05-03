@@ -1491,20 +1491,21 @@ window.renderizarTablaTerceros = function() {
                 cText = "#d29922"; cBgHex = "210, 153, 34"; iconPC = "📌"; iconMovil = "📌"; signo = "~"; cardClass = "is-neutro";
             }
 
-            // Fila PC (Diseño Kanban)
+            // Fila PC (Diseño Kanban + Botón Editar ✏️)
             htmlPC += `
             <div style="background: rgba(${cBgHex}, 0.05); border: 1px solid rgba(255,255,255,0.05); border-left: 3px solid ${cText}; padding: 10px; margin-bottom: 8px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; transition: all 0.2s;">
                 <div style="display:flex; flex-direction:column; gap:3px; overflow: hidden;">
                     <span style="font-size: 0.8rem; font-weight: bold; color: var(--text-main); white-space: nowrap;">${t.nombre}</span>
                     <span style="font-size: 0.6rem; color: ${cText}; font-family: monospace;">${iconPC} ${t.tipo}</span>
                 </div>
-                <div style="display:flex; align-items:center; gap: 10px; flex-shrink:0;">
+                <div style="display:flex; align-items:center; gap: 6px; flex-shrink:0;">
                     <span style="font-size: 0.95rem; font-weight: 900; color: ${cText}; font-family: monospace;">${signo}$${m.toLocaleString('es-CL')}</span>
-                    <button onclick="eliminarTercero('${t.id}')" title="Marcar como Resuelto" style="background: rgba(255,255,255,0.1); border:none; border-radius:4px; padding: 4px 8px; cursor: pointer; filter: grayscale(100%); transition: all 0.2s;" onmouseover="this.style.filter='none'; this.style.background='rgba(${cBgHex}, 0.15)';" onmouseout="this.style.filter='grayscale(100%)'; this.style.background='rgba(255,255,255,0.1)';">✔️</button>
+                    <button onclick="editarTercero('${t.id}')" title="Editar" style="background: transparent; border: 1px solid rgba(255,255,255,0.15); border-radius:4px; padding: 4px 6px; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.1)';">✏️</button>
+                    <button onclick="eliminarTercero('${t.id}')" title="Marcar como Resuelto" style="background: rgba(255,255,255,0.1); border:none; border-radius:4px; padding: 4px 6px; cursor: pointer; filter: grayscale(100%); transition: all 0.2s;" onmouseover="this.style.filter='none'; this.style.background='rgba(${cBgHex}, 0.15)';" onmouseout="this.style.filter='grayscale(100%)'; this.style.background='rgba(255,255,255,0.1)';">✔️</button>
                 </div>
             </div>`;
 
-            // Tarjeta Móvil (Manteniendo tu estructura original)
+            // Tarjeta Móvil (Tu estructura original + Botones en fila ✏️)
             htmlMovil += `
             <div class="mobile-card ${cardClass}" style="margin-bottom: 8px; padding: 12px 14px !important; border-left: 4px solid ${cText};">
                 <div class="mc-icon" style="font-size: 1.2rem; background: rgba(${cBgHex}, 0.1); border-color: rgba(${cBgHex}, 0.3); color: ${cText};">${iconMovil}</div>
@@ -1514,29 +1515,54 @@ window.renderizarTablaTerceros = function() {
                 </div>
                 <div style="display:flex; flex-direction:column; align-items:flex-end;">
                     <div class="mc-amount" style="color:${cText}; font-size: 1.1rem;">${signo}$${Math.round(m/1000)}k</div>
-                    <button onclick="eliminarTercero('${t.id}')" style="background:rgba(${cBgHex}, 0.2); border:1px solid rgba(${cBgHex},0.5); color:${cText}; margin-top:6px; border-radius:6px; font-weight:900; padding:2px 10px; font-size:0.7rem;">SALDAR</button>
+                    <div style="display:flex; gap: 5px; margin-top: 6px;">
+                        <button onclick="editarTercero('${t.id}')" style="background:transparent; border:1px solid rgba(255,255,255,0.2); color:var(--text-muted); border-radius:6px; font-weight:900; padding:2px 8px; font-size:0.7rem;">✏️</button>
+                        <button onclick="eliminarTercero('${t.id}')" style="background:rgba(${cBgHex}, 0.2); border:1px solid rgba(${cBgHex},0.5); color:${cText}; border-radius:6px; font-weight:900; padding:2px 10px; font-size:0.7rem;">SALDAR</button>
+                    </div>
                 </div>
             </div>`;
         });
     }
 
-    // Inyección Dual (Si encuentra el ID en pantalla lo inyecta, si no, lo salta sin errores)
+    // Inyección Dual
     if(document.getElementById('listaTerceros')) document.getElementById('listaTerceros').innerHTML = htmlPC;
     if(document.getElementById('listaTercerosMovil')) document.getElementById('listaTercerosMovil').innerHTML = htmlMovil;
     
     // KPIs PC
     if(document.getElementById('kpiMeDeben')) document.getElementById('kpiMeDeben').innerText = sumaMeDeben.toLocaleString('es-CL');
     if(document.getElementById('kpiYoDebo')) document.getElementById('kpiYoDebo').innerText = sumaYoDebo.toLocaleString('es-CL');
-    if(document.getElementById('kpiPendientes')) document.getElementById('kpiPendientes').innerText = sumaPendientes.toLocaleString('es-CL'); // El nuevo KPI
+    if(document.getElementById('kpiPendientes')) document.getElementById('kpiPendientes').innerText = sumaPendientes.toLocaleString('es-CL'); 
     
-    // KPIs Móvil (Se mantienen los tuyos)
+    // KPIs Móvil
     if(document.getElementById('kpiMeDebenMovil')) document.getElementById('kpiMeDebenMovil').innerText = sumaMeDeben.toLocaleString('es-CL');
     if(document.getElementById('kpiYoDeboMovil')) document.getElementById('kpiYoDeboMovil').innerText = sumaYoDebo.toLocaleString('es-CL');
-    // Dejé preparado este por si a futuro agregas el cuadrito amarillo en la app móvil
     if(document.getElementById('kpiPendientesMovil')) document.getElementById('kpiPendientesMovil').innerText = sumaPendientes.toLocaleString('es-CL'); 
 };
+
+// Se mantiene tu gatillo intacto
+document.addEventListener("DOMContentLoaded", () => { setTimeout(renderizarTablaTerceros, 500); });
 document.addEventListener("DOMContentLoaded", () => { setTimeout(renderizarTablaTerceros, 500); });
 
+
+window.editarTercero = function(id) {
+    // 1. Encontrar el registro en el array
+    let registro = datosTerceros.find(t => t.id === id);
+    if (!registro) return;
+
+    // 2. Extraer los datos y poblar las casillas de texto
+    let inputNombre = document.getElementById('inputTerceroNombre');
+    let inputMonto = document.getElementById('inputTerceroMonto');
+    
+    if (inputNombre) inputNombre.value = registro.nombre;
+    if (inputMonto) inputMonto.value = registro.monto;
+
+    // 3. Eliminar el registro original (porque lo vas a reescribir)
+    // Nota: Esto asume que tu función eliminarTercero() funciona correctamente y borra de Firebase/LocalStorage
+    eliminarTercero(id);
+
+    // 4. Hacer foco en la casilla de monto para que escribas rápido
+    if (inputMonto) inputMonto.focus();
+};
 // =====================================================================
 // 🔒 MÓDULO TC: CONGELAMIENTO DE FACTURACIÓN OFICIAL
 // =====================================================================
