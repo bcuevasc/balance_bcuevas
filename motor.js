@@ -738,7 +738,9 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0, totalFijosMes, 
         let limiteDiarioIdeal = Math.max((sueldo - totalFijosMes - tInfra - tFlota) / diasCiclo, 0);
 
         if(ctxDiario) {
-            let lastDayWithData = diasCiclo; while(lastDayWithData > 0 && (dailyNecesario[lastDayWithData] === 0 && dailyFugas[lastDayWithData] === 0)) lastDayWithData--; let startDayForBars = Math.max(1, lastDayWithData - 14); 
+            // Forzar el gráfico de Pulso Vital para que siempre ancle el eje X en el día actual (limit)
+let lastDayWithData = Math.max(1, Math.min(limit, diasCiclo)); 
+let startDayForBars = Math.max(1, lastDayWithData - 14);
             
             chartDiario = new Chart(ctxDiario, {
                 type: 'bar',
