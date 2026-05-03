@@ -1517,3 +1517,26 @@ window.renderizarTablaTerceros = function() {
 };
 
 document.addEventListener("DOMContentLoaded", () => { setTimeout(renderizarTablaTerceros, 500); });
+
+// =====================================================================
+// 🔒 MÓDULO TC: CONGELAMIENTO DE FACTURACIÓN OFICIAL
+// =====================================================================
+window.marcarFacturadosTC = function() {
+    let checkboxes = document.querySelectorAll('.checkItemTC:checked');
+    if (checkboxes.length === 0) return;
+    
+    if (!confirm(`¿Estás seguro de marcar ${checkboxes.length} cuotas como FACTURADAS OFICIALMENTE por el banco?`)) return;
+
+    let batch = db.batch();
+    checkboxes.forEach(chk => {
+        let ref = db.collection("deuda_tc").doc(chk.value);
+        batch.update(ref, { status: "Facturado" });
+    });
+
+    batch.commit().then(() => {
+        mostrarToast("🔒 CUOTAS CONGELADAS (FACTURADAS)");
+        checkboxes.forEach(chk => chk.checked = false);
+        if(typeof actualizarBarraTC === 'function') actualizarBarraTC(); 
+        // Firebase onSnapshot recargará la tabla automáticamente
+    }).catch(e => alert("Error al facturar: " + e));
+};
