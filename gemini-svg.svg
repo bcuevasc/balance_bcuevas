@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Fondo oscuro iOS -->
+  <rect width="512" height="512" rx="115" fill="#0d1117" stroke="#21262d" stroke-width="6"/>
+  
+  <!-- Anillo exterior de telemetría (Radar) -->
+  <circle cx="256" cy="256" r="180" fill="none" stroke="#1f6feb" stroke-width="12" stroke-dasharray="20 15" opacity="0.6"/>
+  
+  <!-- Anillo interior de estabilidad (Verde Balance) -->
+  <circle cx="256" cy="256" r="140" fill="none" stroke="#2ea043" stroke-width="6" opacity="0.4"/>
+  
+  <!-- Texto Central "By" con brillo -->
+  <text x="256" y="325" font-family="monospace, sans-serif" font-size="200" font-weight="900" fill="#c9d1d9" text-anchor="middle" style="text-shadow: 0 0 40px rgba(121,192,255,0.8);">By</text>
+</svg>
