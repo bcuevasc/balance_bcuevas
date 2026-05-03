@@ -1499,11 +1499,35 @@ window.inyectarTercero = async function(tipo, isMovil = false) {
     }
 };
 
-window.eliminarTercero = function(id) {
-    if(!confirm("¿Dar por saldada/eliminada esta cuenta?")) return;
-    datosTerceros = datosTerceros.filter(t => t.id !== id);
-    guardarTerceros();
-    mostrarToast("✅ DEUDA SALDADA");
+// 🗑️ PROTOCOLO DE DESTRUCCIÓN DE TERCEROS / KANBAN
+window.eliminarTercero = async function(id) {
+    // 1. Confirmación de seguridad
+    if (!confirm('¿Dar por saldada/eliminada esta cuenta?')) return;
+
+    // 2. Eliminación Visual Instantánea (Optimistic UI)
+    // Guardamos un respaldo en la memoria por si falla el internet
+    let respaldoTerceros = [...window.datosTerceros]; 
+    
+    // Filtramos el registro para que desaparezca de tu vista AHORA
+    window.datosTerceros = window.datosTerceros.filter(t => t.id !== id);
+    if (typeof renderizarTablaTerceros === 'function') renderizarTablaTerceros();
+
+    // 3. Destrucción en la Nube (Firebase)
+    try {
+        await db.collection("terceros").doc(id).delete();
+        
+        // (Opcional) Notificación de éxito
+        if (typeof mostrarToast === 'function') mostrarToast("✔️ TAREA SALDADA");
+        
+    } catch (error) {
+        console.error("Error al destruir el dato en Firebase:", error);
+        
+        // Protocolo de Reversa: Si la nube falló, volvemos a mostrar el dato
+        window.datosTerceros = respaldoTerceros;
+        if (typeof renderizarTablaTerceros === 'function') renderizarTablaTerceros();
+        
+        alert("⚠️ Fallo satelital: No se pudo eliminar el registro en la nube.");
+    }
 };
 
 window.renderizarTablaTerceros = function() {
