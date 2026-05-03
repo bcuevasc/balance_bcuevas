@@ -278,11 +278,16 @@ function actualizarDashboard() {
     if(fHasta) { let [y,m,d] = fHasta.split('-'); TFinal = new Date(y, m-1, d, 23, 59, 59); }
     
     let dataMes = listaMovimientos.filter(x => { let d = new Date(x.fechaISO); return d >= T0 && d <= TFinal; });
+    
+    // 🧠 LÓGICA DE CATEGORÍAS CONSOLIDADAS V2.0 (Preparación de Banderas)
     dataMes.forEach(x => {
         x.catV = x.categoria || 'Sin Categoría';
         if (x.monto <= 1000 && x.catV === 'Sin Categoría') x.catV = "Ruido de Sistema";
-        x.esIn = x.tipo === 'Ingreso' || x.catV === 'Transferencia Recibida' || x.catV === 'Ingreso Adicional';
-        x.esNeutro = x.tipo === 'Por Cobrar' || x.tipo === 'Ahorro' || x.catV === 'Transferencia Propia / Ahorro';
+        
+        // Mapeo Inteligente de las nuevas categorías
+        x.esIn = x.tipo === 'Ingreso' || x.tipo === 'Ingreso Extra' || x.catV === 'Transferencia Recibida' || x.catV === 'Ingreso Adicional';
+        x.esNeutro = x.tipo === 'Ahorro' || x.tipo === 'Ahorro / Neutro' || x.catV === 'Transferencia Propia / Ahorro' || x.catV === 'Ahorro / Traspaso';
+        x.esCxC = x.tipo === 'Por Cobrar' || x.tipo === 'Préstamo (CxC)' || x.catV === 'Cuentas por Cobrar (Activos)';
     });
 
     datosMesGlobal = [...dataMes];
@@ -290,16 +295,36 @@ function actualizarDashboard() {
     
     [...dataMes].sort((x,y) => x.fechaISO < y.fechaISO ? -1 : 1).forEach(x => {
         if (x.catV !== 'Gasto Tarjeta de Crédito') { 
-            if (x.esIn) { tI += x.monto; saldoAcc += x.monto; }
-            else if (x.tipo === 'Por Cobrar' || x.categoria === 'Cuentas por Cobrar (Activos)') tC += x.monto;
-            else if (!x.esNeutro) {
-                saldoAcc -= x.monto;
+            
+            // 1. 📥 INGRESOS: Suman al saldo, no al gasto
+            if (x.esIn) { 
+                tI += x.monto; 
+                saldoAcc += x.monto; 
+            }
+            // 2. 💸 PRÉSTAMOS (CxC): Restan saldo hoy, se anotan en el panel de cuentas por cobrar
+            else if (x.esCxC) {
+                saldoAcc -= x.monto; 
+                tC += x.monto;       
+            }
+            // 3. 🏦 AHORRO / TRASPASO: Restan saldo disponible, pero NO ensucian los gráficos
+            else if (x.esNeutro) {
+                saldoAcc -= x.monto; // <-- El ajuste crítico que faltaba
+            }
+            // 4. 🍔 GASTOS REALES (Fijos, Variables, Operación)
+            else {
+                saldoAcc -= x.monto; // Resta del Balance Real
+                
+                // Clasificación de KPI
                 if (x.catV === 'Infraestructura (Depto)') tInfra += x.monto;
                 else if (x.catV === 'Flota & Movilidad') tFlota += x.monto;
-                else if (x.tipo === 'Gasto Fijo') tF += x.monto; 
-                else tO += x.monto; 
+                else if (x.tipo === 'Gasto Fijo' || x.catV.includes('Carga Fija')) tF += x.monto; 
+                else tO += x.monto; // Todo lo demás es Gasto Variable
+                
+                // Alimenta el Espectro Categórico (Gráfico de Torta) SOLO con gastos reales
                 gCat[x.catV] = (gCat[x.catV] || 0) + x.monto;
-                let pctFuga = x.innecesarioPct !== undefined ? x.innecesarioPct : (catEvitables.includes(x.catV) ? 100 : 0);
+                
+                // Cálculo de Fugas (Dopamina)
+                let pctFuga = x.innecesarioPct !== undefined ? x.innecesarioPct : ((typeof catEvitables !== 'undefined' && catEvitables.includes(x.catV)) ? 100 : 0);
                 tEvitable += (x.monto * (pctFuga / 100));
             }
         }
@@ -357,13 +382,12 @@ function actualizarDashboard() {
     const kpiSalida = document.getElementById('txtGastoTotalPeriodo');
     if (kpiSalida) kpiSalida.innerText = '$' + (tO + tF).toLocaleString('es-CL');
     setTxt('txtGastoTramo', tO + tF);
-    // (Añadir al final de actualizarDashboard)
+    
     setTxt('txtPromedioZoom', Math.round((tO + tF) / diasCiclo));
     
     // 🛠️ Gatillo del Widget Lateral
     if (typeof sincronizarWidgetPreVuelo === 'function') sincronizarWidgetPreVuelo();
 }
-
 // ==========================================
 // 📝 RENDERIZAR LISTAS PC
 // ==========================================
