@@ -1541,8 +1541,6 @@ window.renderizarTablaTerceros = function() {
 
 // Se mantiene tu gatillo intacto
 document.addEventListener("DOMContentLoaded", () => { setTimeout(renderizarTablaTerceros, 500); });
-document.addEventListener("DOMContentLoaded", () => { setTimeout(renderizarTablaTerceros, 500); });
-
 
 window.editarTercero = function(id) {
     // 1. Encontrar el registro en el array
