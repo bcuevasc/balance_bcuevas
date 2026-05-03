@@ -236,35 +236,40 @@
         <!-- 🚀 NUEVA VISTA TERCEROS MÓVIL (INYECCIÓN AQUÍ) -->
         <div id="vista-terceros" style="display: none; animation: fadeSlideUp 0.3s;">
             <div class="master-hud" style="padding-bottom:10px;">
-                <div style="font-size:0.7rem; color:var(--text-dim); font-weight:900; text-transform:uppercase; margin-bottom:5px; letter-spacing: 3px;">Cuentas a Terceros</div>
+                <div style="font-size:0.7rem; color:var(--text-dim); font-weight:900; text-transform:uppercase; margin-bottom:5px; letter-spacing: 3px;">Obligaciones & Provisiones</div>
                 
-                <div style="display:flex; justify-content:center; gap: 10px; margin-top: 10px;">
-                    <div style="background: rgba(46, 160, 67, 0.1); border: 1px solid rgba(46, 160, 67, 0.3); border-radius: 12px; padding: 10px; width: 45%;">
-                        <div style="font-size: 0.6rem; font-weight: 800; color: var(--accent-green); text-transform: uppercase;">Me Deben</div>
-                        <div style="font-size: 1.2rem; font-weight: 900; color: var(--accent-green); font-family: monospace;">$<span id="kpiMeDebenMovil">0</span></div>
+                <!-- LOS 3 KPIs (Ajustados para caber en móvil) -->
+                <div style="display:flex; justify-content:center; gap: 6px; margin-top: 10px;">
+                    <div style="background: rgba(46, 160, 67, 0.1); border: 1px solid rgba(46, 160, 67, 0.3); border-radius: 10px; padding: 8px; flex: 1;">
+                        <div style="font-size: 0.55rem; font-weight: 800; color: var(--accent-green); text-transform: uppercase;">Me Deben</div>
+                        <div style="font-size: 0.95rem; font-weight: 900; color: var(--accent-green); font-family: monospace;">$<span id="kpiMeDebenMovil">0</span></div>
                     </div>
-                    <div style="background: rgba(248, 81, 73, 0.1); border: 1px solid rgba(248, 81, 73, 0.3); border-radius: 12px; padding: 10px; width: 45%;">
-                        <div style="font-size: 0.6rem; font-weight: 800; color: var(--accent-red); text-transform: uppercase;">Yo Debo</div>
-                        <div style="font-size: 1.2rem; font-weight: 900; color: var(--accent-red); font-family: monospace;">$<span id="kpiYoDeboMovil">0</span></div>
+                    <div style="background: rgba(248, 81, 73, 0.1); border: 1px solid rgba(248, 81, 73, 0.3); border-radius: 10px; padding: 8px; flex: 1;">
+                        <div style="font-size: 0.55rem; font-weight: 800; color: var(--accent-red); text-transform: uppercase;">Yo Debo</div>
+                        <div style="font-size: 0.95rem; font-weight: 900; color: var(--accent-red); font-family: monospace;">$<span id="kpiYoDeboMovil">0</span></div>
+                    </div>
+                    <div style="background: rgba(210, 153, 34, 0.1); border: 1px solid rgba(210, 153, 34, 0.3); border-radius: 10px; padding: 8px; flex: 1;">
+                        <div style="font-size: 0.55rem; font-weight: 800; color: #d29922; text-transform: uppercase;">Pendiente</div>
+                        <div style="font-size: 0.95rem; font-weight: 900; color: #d29922; font-family: monospace;">$<span id="kpiPendientesMovil">0</span></div>
                     </div>
                 </div>
             </div>
 
-            <!-- Mini Consola Móvil -->
+            <!-- Mini Consola Móvil (Ahora con 3 botones) -->
             <div class="terminal-form" style="margin: 0 15px 15px 15px; padding: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.3);">
                 <div style="display: flex; gap: 8px; margin-bottom: 10px;">
-                    <input type="text" id="inputTerceroNombreMovil" placeholder="Sujeto..." style="flex:2; padding: 10px; background: var(--bg-elevated); border: 1px solid var(--border-subtle); border-radius: 8px; color: white;">
-                    <input type="text" id="inputTerceroMontoMovil" placeholder="$ Monto" oninput="formatearEntradaNumerica(this)" style="flex:1; padding: 10px; background: var(--bg-elevated); border: 1px solid var(--border-subtle); border-radius: 8px; color: white; text-align: right;">
+                    <input type="text" id="inputTerceroNombreMovil" placeholder="Descripción / Tarea..." style="flex:2; padding: 10px; background: var(--bg-elevated); border: 1px solid var(--border-subtle); border-radius: 8px; color: white; font-size: 0.8rem;">
+                    <input type="text" id="inputTerceroMontoMovil" placeholder="$ Monto" oninput="formatearEntradaNumerica(this)" style="flex:1; padding: 10px; background: var(--bg-elevated); border: 1px solid var(--border-subtle); border-radius: 8px; color: white; text-align: right; font-size: 0.8rem;">
                 </div>
-                <div style="display: flex; gap: 8px;">
-                    <button onclick="inyectarTercero('ME DEBEN', true)" style="flex:1; padding: 12px; background: rgba(46, 160, 67, 0.15); color: var(--accent-green); border: 1px solid rgba(46, 160, 67, 0.4); border-radius: 8px; font-weight: 900; font-size: 0.75rem;">➕ ME DEBEN</button>
-                    <button onclick="inyectarTercero('YO DEBO', true)" style="flex:1; padding: 12px; background: rgba(248, 81, 73, 0.15); color: var(--accent-red); border: 1px solid rgba(248, 81, 73, 0.4); border-radius: 8px; font-weight: 900; font-size: 0.75rem;">➖ YO DEBO</button>
+                <div style="display: flex; gap: 5px;">
+                    <button onclick="inyectarTercero('ME DEBEN', true)" style="flex:1; padding: 10px 2px; background: rgba(46, 160, 67, 0.15); color: var(--accent-green); border: 1px solid rgba(46, 160, 67, 0.4); border-radius: 6px; font-weight: 900; font-size: 0.6rem;">➕ DEBEN</button>
+                    <button onclick="inyectarTercero('YO DEBO', true)" style="flex:1; padding: 10px 2px; background: rgba(248, 81, 73, 0.15); color: var(--accent-red); border: 1px solid rgba(248, 81, 73, 0.4); border-radius: 6px; font-weight: 900; font-size: 0.6rem;">➖ DEBO</button>
+                    <button onclick="inyectarTercero('PENDIENTE', true)" style="flex:1; padding: 10px 2px; background: rgba(210, 153, 34, 0.15); color: #d29922; border: 1px solid rgba(210, 153, 34, 0.4); border-radius: 6px; font-weight: 900; font-size: 0.6rem;">📌 PEND</button>
                 </div>
             </div>
 
             <div id="listaTercerosMovil" class="lista-contenedor" style="padding-top: 0;"></div>
         </div>
-    </div>
 
     <div id="tab-trend" class="tab-content">
         <div class="core-tabs" style="margin: 0 0 15px 0; background:var(--bg-card);">
