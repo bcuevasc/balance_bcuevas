@@ -840,10 +840,8 @@ function inicializarListenerTC() {
 window.renderizarTablaTC = function() {
     if (typeof datosTCGlobal === 'undefined') return;
     
-    // Detectamos entorno (PC o Móvil)
     const tbodyPC = document.getElementById("listaDetalleTC"); 
     const tbodyMovil = document.getElementById("listaMovilTC");
-    
     if (!tbodyPC && !tbodyMovil) return;
     
     if (datosTCGlobal.length === 0) {
@@ -860,7 +858,7 @@ window.renderizarTablaTC = function() {
     let proximoAnio = fechaHoy.getFullYear();
     if (proximoMes > 11) { proximoMes = 0; proximoAnio++; }
 
-    // 1. Árbol Lógico agrupado por Mes y suma de 3 estados
+    // 1. Clasificador de Estados y Sumatorias
     datosTCGlobal.forEach(doc => {
         if(!doc.mesCobro) return;
         let f = new Date(doc.mesCobro);
@@ -875,7 +873,6 @@ window.renderizarTablaTC = function() {
         let m = Number(doc.monto) || 0;
         agrupado[key].total += m;
 
-        // 🧠 Clasificador de Estado
         let esFacturado = doc.status === "Facturado" || (doc.nombre && doc.nombre.includes("FACTURADA"));
         let esTransito = doc.status === "En Transito" || (doc.nombre && doc.nombre.includes("(MANUAL)"));
         
@@ -886,24 +883,21 @@ window.renderizarTablaTC = function() {
         if (f.getMonth() === proximoMes && f.getFullYear() === proximoAnio) sumaProximoMes += m;
     });
 
-    let htmlPC = "";
-    let htmlMovil = "";
+    let htmlPC = ""; let htmlMovil = "";
 
-    // 2. Construcción Visual (Badges y Nodos)
+    // 2. Construcción Visual
     Object.keys(agrupado).sort().forEach(key => {
         let g = agrupado[key];
         
-        // 📊 Desglose Visual (Mini-KPIs por mes)
-        let badgeFacturado = g.sumFacturado > 0 ? `<span style="color:#2ea043; background:rgba(46,160,67,0.1); padding:2px 6px; border-radius:4px; margin-right:5px; border: 1px solid rgba(46,160,67,0.3);">🔒 $${g.sumFacturado.toLocaleString('es-CL')}</span>` : '';
-        let badgeProyectado = g.sumProyectado > 0 ? `<span style="color:#79c0ff; background:rgba(121,192,255,0.1); padding:2px 6px; border-radius:4px; margin-right:5px; border: 1px solid rgba(121,192,255,0.3);">⚙️ $${g.sumProyectado.toLocaleString('es-CL')}</span>` : '';
-        let badgeTransito = g.sumTransito > 0 ? `<span style="color:#d29922; background:rgba(210,153,34,0.1); padding:2px 6px; border-radius:4px; border: 1px solid rgba(210,153,34,0.3);">🔥 $${g.sumTransito.toLocaleString('es-CL')}</span>` : '';
-        let desgloseHTML = `<div style="font-size: 0.65rem; font-family: monospace; display: flex; align-items: center; margin-top: 6px; flex-wrap: wrap; gap: 4px;">${badgeFacturado}${badgeProyectado}${badgeTransito}</div>`;
+        // Badges del Mes (Cabecera)
+        let bFact = g.sumFacturado > 0 ? `<span style="color:#2ea043; background:rgba(46,160,67,0.1); padding:2px 6px; border-radius:4px; margin-right:5px; border: 1px solid rgba(46,160,67,0.3);">🔒 $${g.sumFacturado.toLocaleString('es-CL')}</span>` : '';
+        let bProy = g.sumProyectado > 0 ? `<span style="color:#79c0ff; background:rgba(121,192,255,0.1); padding:2px 6px; border-radius:4px; margin-right:5px; border: 1px solid rgba(121,192,255,0.3);">⚙️ $${g.sumProyectado.toLocaleString('es-CL')}</span>` : '';
+        let bTran = g.sumTransito > 0 ? `<span style="color:#d29922; background:rgba(210,153,34,0.1); padding:2px 6px; border-radius:4px; border: 1px solid rgba(210,153,34,0.3);">🔥 $${g.sumTransito.toLocaleString('es-CL')}</span>` : '';
+        let desgloseHTML = `<div style="font-size: 0.65rem; font-family: monospace; display: flex; align-items: center; margin-top: 6px; flex-wrap: wrap; gap: 4px;">${bFact}${bProy}${bTran}</div>`;
 
         // PADRE PC
         htmlPC += `<tr style="background:rgba(255,82,82,0.08); border-top:2px solid rgba(255,82,82,0.5);">
-            <td style="text-align: center; width: 30px; position: relative; z-index: 10;">
-                <input type="checkbox" class="checkMesTC" value="${key}" onclick="toggleMesTC(this, '${key}')" style="accent-color: #ff5252; cursor: pointer;">
-            </td>
+            <td style="text-align: center; width: 30px;"><input type="checkbox" class="checkMesTC" value="${key}" onclick="toggleMesTC(this, '${key}')" style="accent-color: #ff5252; cursor: pointer;"></td>
             <td colspan="2" style="padding-top: 10px; padding-bottom: 10px;">
                 <div style="font-weight:900; color:#ff5252; font-size:0.85rem; letter-spacing:1px; pointer-events: none;">🗓️ ${g.label}</div>
                 ${desgloseHTML}
@@ -913,13 +907,10 @@ window.renderizarTablaTC = function() {
         
         // PADRE MÓVIL
         htmlMovil += `<div style="background:rgba(255,82,82,0.1); padding: 12px 15px; margin: 15px 0 10px 0; border-radius: 8px; border-left: 3px solid var(--accent-red); display:flex; justify-content:space-between; align-items:center;">
-            <div style="display:flex; flex-direction:column; gap:4px; flex: 1;">
-                <span style="color:var(--accent-red); font-weight:900; font-size: 0.85rem; letter-spacing: 1px;">🗓️ ${g.label}</span>
-                ${desgloseHTML}
-            </div>
+            <div style="display:flex; flex-direction:column; gap:4px; flex: 1;"><span style="color:var(--accent-red); font-weight:900; font-size: 0.85rem; letter-spacing: 1px;">🗓️ ${g.label}</span>${desgloseHTML}</div>
             <div style="display:flex; flex-direction:column; align-items:flex-end; gap:8px; margin-left: 10px;">
                 <span style="color:var(--text-main); font-weight:900; font-size: 1.1rem; font-family:monospace;">$${g.total.toLocaleString('es-CL')}</span>
-                <button onclick="purgarMesTCMovil('${key}')" style="background:var(--accent-red); color:white; border:none; padding:4px 10px; border-radius:6px; font-weight:900; font-size:0.65rem; box-shadow:0 4px 10px rgba(255,82,82,0.3); transition:transform 0.1s;">🗑️ PURGAR</button>
+                <button onclick="purgarMesTCMovil('${key}')" style="background:var(--accent-red); color:white; border:none; padding:4px 10px; border-radius:6px; font-weight:900; font-size:0.65rem;">🗑️ PURGAR</button>
             </div>
         </div>`;
 
@@ -928,33 +919,24 @@ window.renderizarTablaTC = function() {
             let esFacturado = doc.status === "Facturado" || (doc.nombre && doc.nombre.includes("FACTURADA"));
             let esTransito = doc.status === "En Transito" || (doc.nombre && doc.nombre.includes("(MANUAL)"));
             
-            let iconInfo = esFacturado ? "🔒" : (esTransito ? "🔥" : "⚙️");
-            let colorText = esFacturado ? "var(--color-saldo)" : (esTransito ? "var(--color-edit)" : "#79c0ff");
-            let colorHex = esFacturado ? "46, 160, 67" : (esTransito ? "210, 153, 34" : "121, 192, 255");
-            let opacity = esFacturado ? "1" : "0.75";
-            let fontWeight = esFacturado ? "900" : "600";
+            let iInfo = esFacturado ? "🔒" : (esTransito ? "🔥" : "⚙️");
+            let cText = esFacturado ? "var(--color-saldo)" : (esTransito ? "var(--color-edit)" : "#79c0ff");
+            let cHex = esFacturado ? "46, 160, 67" : (esTransito ? "210, 153, 34" : "121, 192, 255");
+            let op = esFacturado ? "1" : "0.75"; let fw = esFacturado ? "900" : "600";
             
-            let badgeItem = `<span style="font-size:0.6rem; font-weight:900; background:rgba(${colorHex},0.15); color:${colorText}; padding: 2px 5px; border-radius: 4px; border: 1px solid rgba(${colorHex},0.4); margin-right: 5px;">${iconInfo} ${esFacturado ? 'FACT.' : (esTransito ? 'NUEVO' : 'PROY.')}</span>`;
+            let badgeItem = `<span style="font-size:0.6rem; font-weight:900; background:rgba(${cHex},0.15); color:${cText}; padding: 2px 5px; border-radius: 4px; border: 1px solid rgba(${cHex},0.4); margin-right: 5px;">${iInfo} ${esFacturado ? 'FACT.' : (esTransito ? 'NUEVO' : 'PROY.')}</span>`;
 
-            // Hijo PC
             htmlPC += `<tr class="fila-hijo-${key}" style="background-color: transparent;">
-                <td style="text-align: center; width: 30px; position: relative; z-index: 10;">
-                    <input type="checkbox" class="checkItemTC checkItemTC-${key}" value="${doc.id}" onclick="actualizarBarraTC()" style="accent-color: #ff5252; cursor: pointer;">
-                </td>
-                <td style="font-size: 0.7rem; color: ${colorText}; opacity:${opacity}; width: 20%; padding-left: 20px;">Cuota: ${doc.cuota || '1/1'}</td>
-                <td class="col-desc" title="${doc.nombre || 'N/A'}" style="opacity:${opacity}; font-weight:${fontWeight}; font-size:0.75rem; width: 50%;">${badgeItem} ${doc.nombre || 'N/A'}</td>
-                <td class="col-monto" style="opacity:${opacity}; color:${esFacturado ? '#fff' : 'var(--text-main)'}; width: 30%;">$${(Number(doc.monto)||0).toLocaleString('es-CL')}</td>
+                <td style="text-align: center;"><input type="checkbox" class="checkItemTC checkItemTC-${key}" value="${doc.id}" onclick="actualizarBarraTC()" style="accent-color: #ff5252; cursor: pointer;"></td>
+                <td style="font-size: 0.7rem; color: ${cText}; opacity:${op}; width: 20%; padding-left: 20px;">Cuota: ${doc.cuota || '1/1'}</td>
+                <td class="col-desc" style="opacity:${op}; font-weight:${fw}; font-size:0.75rem; width: 50%;">${badgeItem} ${doc.nombre || 'N/A'}</td>
+                <td class="col-monto" style="opacity:${op}; color:${esFacturado ? '#fff' : 'var(--text-main)'}; width: 30%;">$${(Number(doc.monto)||0).toLocaleString('es-CL')}</td>
             </tr>`;
             
-            // Hijo Móvil
-            const clickAction = typeof openBottomSheet === 'function' ? `openBottomSheet('${doc.id}', '${(doc.nombre || '').replace(/'/g, "\\'")}', ${doc.monto}, 'deuda_tc')` : ``;
-            htmlMovil += `
-            <div class="mobile-card is-fuga" onclick="${clickAction}" style="opacity: ${opacity}; margin-bottom: 6px; padding: 12px !important; border-left-color: ${colorText} !important; box-shadow: inset 3px 0 0 ${colorText} !important;">
-                <div class="mc-icon" style="font-size: 1.1rem; width: 36px; height: 36px; background:rgba(${colorHex},0.1); border-color:rgba(${colorHex},0.3);">${iconInfo}</div>
-                <div class="mc-body">
-                    <div class="mc-title" style="font-size: 0.85rem; font-weight:${fontWeight}; color:${esFacturado ? '#fff' : 'var(--text-main)'}">${doc.nombre || 'N/A'}</div>
-                    <div class="mc-subtitle" style="color: ${colorText};"><span>${badgeItem} Cuota: ${doc.cuota || '1/1'}</span></div>
-                </div>
+            htmlMovil += `<div class="mobile-card is-fuga" style="opacity: ${op}; margin-bottom: 6px; padding: 12px !important; border-left-color: ${cText} !important; box-shadow: inset 3px 0 0 ${cText} !important;">
+                <div class="mc-icon" style="font-size: 1.1rem; width: 36px; height: 36px; background:rgba(${cHex},0.1); border-color:rgba(${cHex},0.3);">${iInfo}</div>
+                <div class="mc-body"><div class="mc-title" style="font-size: 0.85rem; font-weight:${fw}; color:${esFacturado ? '#fff' : 'var(--text-main)'}">${doc.nombre || 'N/A'}</div>
+                <div class="mc-subtitle" style="color: ${cText};"><span>${badgeItem} Cuota: ${doc.cuota || '1/1'}</span></div></div>
                 <div class="mc-amount" style="font-size: 1rem; color:${esFacturado ? '#fff' : 'var(--text-main)'};">$${(Number(doc.monto)||0).toLocaleString('es-CL')}</div>
             </div>`;
         });
@@ -963,19 +945,12 @@ window.renderizarTablaTC = function() {
     if (tbodyPC) tbodyPC.innerHTML = htmlPC;
     if (tbodyMovil) tbodyMovil.innerHTML = htmlMovil; 
     
-    // Configuración de Alarmas
     let mesNombreStr = new Date(proximoAnio, proximoMes, 1).toLocaleString('es-CL', { month: 'long' }).toUpperCase();
     let boxImpacto = document.getElementById('boxImpactoTC');
     if (boxImpacto) {
-        if (sumaProximoMes > 0) {
-            boxImpacto.style.display = 'flex';
-            let elMes = document.getElementById('lblImpactoMes'); if(elMes) elMes.innerText = `${mesNombreStr}`;
-            let elMonto = document.getElementById('txtImpactoMonto'); if(elMonto) elMonto.innerText = `$${sumaProximoMes.toLocaleString('es-CL')}`;
-        } else { 
-            boxImpacto.style.display = 'none'; 
-        }
+        if (sumaProximoMes > 0) { boxImpacto.style.display = 'flex'; document.getElementById('lblImpactoMes').innerText = `${mesNombreStr}`; document.getElementById('txtImpactoMonto').innerText = `$${sumaProximoMes.toLocaleString('es-CL')}`; } 
+        else { boxImpacto.style.display = 'none'; }
     }
-
     if(typeof actualizarBarraTC === 'function') actualizarBarraTC(); 
 };
 
