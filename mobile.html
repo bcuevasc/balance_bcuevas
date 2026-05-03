@@ -177,9 +177,10 @@
 
     <div id="tab-dash" class="tab-content" style="display:block; padding:0;">
         <div class="core-tabs">
-            <div id="core-highlighter"></div>
-            <button class="core-btn active blue" onclick="switchDualCore('efectivo', this)" style="color:white;" data-en="PRESENT FLOW">Flujo Pres.</button>
-            <button class="core-btn" onclick="switchDualCore('tc', this)" data-en="TC MATRIX">Matriz TC</button>
+            <div id="core-highlighter" style="width: calc(33.33% - 4px);"></div>
+            <button class="core-btn active blue" onclick="switchTriCore('efectivo', this, 0)" style="color:white;" data-en="PRESENT FLOW">Flujo</button>
+            <button class="core-btn" onclick="switchTriCore('tc', this, 1)" data-en="TC MATRIX">Tarjeta</button>
+            <button class="core-btn" onclick="switchTriCore('terceros', this, 2)">Terceros</button>
         </div>
 
         <div id="vista-efectivo" style="display: block; animation: fadeSlideUp 0.3s;">
@@ -230,6 +231,38 @@
                 <strong id="txtImpactoMonto" style="font-size: 1.5rem; font-family: monospace; font-weight: 900; color: var(--accent-red); text-shadow: 0 0 15px rgba(255,82,82,0.5);">$0</strong>
             </div>
             <div id="listaMovilTC" class="lista-contenedor"></div>
+        </div>
+
+        <!-- 🚀 NUEVA VISTA TERCEROS MÓVIL (INYECCIÓN AQUÍ) -->
+        <div id="vista-terceros" style="display: none; animation: fadeSlideUp 0.3s;">
+            <div class="master-hud" style="padding-bottom:10px;">
+                <div style="font-size:0.7rem; color:var(--text-dim); font-weight:900; text-transform:uppercase; margin-bottom:5px; letter-spacing: 3px;">Cuentas a Terceros</div>
+                
+                <div style="display:flex; justify-content:center; gap: 10px; margin-top: 10px;">
+                    <div style="background: rgba(46, 160, 67, 0.1); border: 1px solid rgba(46, 160, 67, 0.3); border-radius: 12px; padding: 10px; width: 45%;">
+                        <div style="font-size: 0.6rem; font-weight: 800; color: var(--accent-green); text-transform: uppercase;">Me Deben</div>
+                        <div style="font-size: 1.2rem; font-weight: 900; color: var(--accent-green); font-family: monospace;">$<span id="kpiMeDebenMovil">0</span></div>
+                    </div>
+                    <div style="background: rgba(248, 81, 73, 0.1); border: 1px solid rgba(248, 81, 73, 0.3); border-radius: 12px; padding: 10px; width: 45%;">
+                        <div style="font-size: 0.6rem; font-weight: 800; color: var(--accent-red); text-transform: uppercase;">Yo Debo</div>
+                        <div style="font-size: 1.2rem; font-weight: 900; color: var(--accent-red); font-family: monospace;">$<span id="kpiYoDeboMovil">0</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mini Consola Móvil -->
+            <div class="terminal-form" style="margin: 0 15px 15px 15px; padding: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.3);">
+                <div style="display: flex; gap: 8px; margin-bottom: 10px;">
+                    <input type="text" id="inputTerceroNombreMovil" placeholder="Sujeto..." style="flex:2; padding: 10px; background: var(--bg-elevated); border: 1px solid var(--border-subtle); border-radius: 8px; color: white;">
+                    <input type="text" id="inputTerceroMontoMovil" placeholder="$ Monto" oninput="formatearEntradaNumerica(this)" style="flex:1; padding: 10px; background: var(--bg-elevated); border: 1px solid var(--border-subtle); border-radius: 8px; color: white; text-align: right;">
+                </div>
+                <div style="display: flex; gap: 8px;">
+                    <button onclick="inyectarTercero('ME DEBEN', true)" style="flex:1; padding: 12px; background: rgba(46, 160, 67, 0.15); color: var(--accent-green); border: 1px solid rgba(46, 160, 67, 0.4); border-radius: 8px; font-weight: 900; font-size: 0.75rem;">➕ ME DEBEN</button>
+                    <button onclick="inyectarTercero('YO DEBO', true)" style="flex:1; padding: 12px; background: rgba(248, 81, 73, 0.15); color: var(--accent-red); border: 1px solid rgba(248, 81, 73, 0.4); border-radius: 8px; font-weight: 900; font-size: 0.75rem;">➖ YO DEBO</button>
+                </div>
+            </div>
+
+            <div id="listaTercerosMovil" class="lista-contenedor" style="padding-top: 0;"></div>
         </div>
     </div>
 
@@ -610,23 +643,25 @@
         }
     };
 
-    function switchDualCore(viewId, el) {
-        document.querySelectorAll('.core-btn').forEach(b => { b.classList.remove('active'); b.classList.remove('blue'); b.classList.remove('red'); });
+    function switchTriCore(viewId, el, index) {
+        document.querySelectorAll('.core-btn').forEach(b => { b.classList.remove('active', 'blue', 'red', 'orange'); });
         el.classList.add('active');
         const highlighter = document.getElementById('core-highlighter');
-        
+        highlighter.style.transform = `translateX(${index * 100}%)`;
+
+        document.getElementById('vista-efectivo').style.display = 'none';
+        document.getElementById('vista-tc').style.display = 'none';
+        document.getElementById('vista-terceros').style.display = 'none';
+
         if (viewId === 'efectivo') {
-            el.classList.add('blue');
-            highlighter.style.transform = 'translateX(0)';
-            highlighter.style.background = 'var(--accent-blue)';
-            document.getElementById('vista-tc').style.display = 'none';
+            el.classList.add('blue'); highlighter.style.background = 'var(--accent-blue)';
             document.getElementById('vista-efectivo').style.display = 'block';
-        } else {
-            el.classList.add('red');
-            highlighter.style.transform = 'translateX(100%)';
-            highlighter.style.background = 'var(--accent-red)';
-            document.getElementById('vista-efectivo').style.display = 'none';
+        } else if (viewId === 'tc') {
+            el.classList.add('red'); highlighter.style.background = 'var(--accent-red)';
             document.getElementById('vista-tc').style.display = 'block';
+        } else {
+            el.classList.add('orange'); highlighter.style.background = 'var(--accent-orange)';
+            document.getElementById('vista-terceros').style.display = 'block';
         }
     }
 
