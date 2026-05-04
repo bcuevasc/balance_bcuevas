@@ -2,709 +2,473 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Bunker Digital SCADA v14.7 (Clean Core)</title>
-    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>ByFINANCE SCADA</title>
+    <link rel="apple-touch-icon" href="logo-by.png?v=4">
+    <meta name="theme-color" content="#0d1117">
+
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
-    
+
     <style>
-        /* Paleta HMI Alto Desempeño: Neutros para lo normal, vivos para alarmas */
-        :root { 
-            --bg-body: #0d1117; 
-            --bg-panel: #161b22; 
-            --bg-subpanel: #21262d; 
-            --text-main: #c9d1d9; 
-            --text-muted: #8b949e; 
-            --border-color: #30363d; 
-            --input-bg: #010409; 
-            --item-hover: #1f2428; 
-            --color-guardar: #238636; 
-            --color-ingresos: #238636; 
-            --color-gastos: #da3633;  
-            --color-saldo: #2ea043; 
-            --color-edit: #d29922; 
-            --color-fuga: #f85149; 
-            --color-proyectado: #58a6ff; 
-            --color-telegram: #0088cc; 
-            --color-infra: #a371f7; 
-            --color-flota: #00bcd4; 
+        :root { --bg-base: #0d1117; --bg-card: #161b22; --bg-elevated: #21262d; --text-main: #c9d1d9; --text-dim: #8b949e; --accent-blue: #1f6feb; --accent-green: #2ea043; --accent-red: #ff5252; --accent-orange: #d29922; --border-subtle: #30363d; --color-infra: #a371f7; --color-flota: #00bcd4; color-scheme: dark;}
+        * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
+
+        body { background-color: var(--bg-base); background-image: radial-gradient(rgba(255,255,255,0.02) 1px, transparent 1px); background-size: 25px 25px; color: var(--text-main); margin: 0; padding-bottom: calc(100px + env(safe-area-inset-bottom)); overscroll-behavior-y: none; }
+
+        #login-screen { position: fixed; inset: 0; background: var(--bg-base); display: flex; align-items: center; justify-content: center; z-index: 10000; flex-direction: column; }
+        
+        /* 🛸 NUEVA CABECERA MÓVIL (GLASSMORPHISM) */
+        .top-bar { 
+            padding: max(15px, env(safe-area-inset-top)) 20px 10px 20px; 
+            display: flex; justify-content: space-between; align-items: center; 
+            background: rgba(13, 17, 23, 0.75); 
+            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); 
+            position: sticky; top: 0; z-index: 1000; 
+            border-bottom: 1px solid rgba(255,255,255,0.05); 
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3); 
         }
-        body.light-theme { --bg-body: #f0f2f5; --bg-panel: #ffffff; --bg-subpanel: #f8f9fa; --text-main: #24292e; --text-muted: #57606a; --border-color: #d0d7de; --input-bg: #ffffff; --item-hover: #e1e4e8; }
-        * { box-sizing: border-box; transition: background-color 0.3s, border-color 0.3s; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
+        .brand { display: flex; align-items: center; gap: 10px; }
+        .user-tag { border: 1px solid rgba(163, 113, 247, 0.4); color: #a371f7; background: rgba(163, 113, 247, 0.1); font-weight: 800; padding: 4px 10px; border-radius: 6px; font-size: 0.7rem; letter-spacing: 1px; box-shadow: 0 0 10px rgba(163, 113, 247, 0.2); text-transform: uppercase;}
 
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: var(--bg-body); }
-        ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 10px; border: 2px solid var(--bg-body); }
-        ::-webkit-scrollbar-thumb:hover { background: var(--color-guardar); }
+        .master-hud { text-align: center; padding: 5px 20px 10px 20px; width: 100%; overflow: hidden; }
+        .hud-value { font-size: clamp(2.2rem, 10vw, 3.5rem); font-weight: 900; letter-spacing: -1px; font-family: monospace; text-shadow: 0 0 20px rgba(31, 111, 235, 0.3); transition: transform 0.3s; word-break: break-all; line-height: 1;}
+        .hud-value.danger { color: var(--accent-red); text-shadow: 0 0 30px rgba(255, 82, 82, 0.3); }
 
-        body { background-color: var(--bg-body); background-image: radial-gradient(rgba(255,255,255,0.015) 1px, transparent 1px); background-size: 25px 25px; margin: 0; padding: 0; color: var(--text-main); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
-        .app-container { display: none; width: 100%; height: 100vh; padding: 10px; flex-direction: column; gap: 10px; margin: 0 auto; max-width: 2560px; overflow: hidden;}
-        .app-container.active-app { display: flex; }
+        .slave-kpis { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 0 15px; margin-bottom: 10px; }
+        .slave-pill { background: var(--bg-card); border: 1px solid var(--border-subtle); padding: 6px 10px; border-radius: 10px; display: flex; flex-direction: column; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.3); position: relative; overflow: hidden;}
+        .slave-pill::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--border-subtle); }
+        .slave-pill.red::before { background: var(--accent-red); box-shadow: 0 0 10px var(--accent-red); }
+        .slave-pill.orange::before { background: var(--accent-orange); box-shadow: 0 0 10px var(--accent-orange); }
+        .slave-pill.purple::before { background: var(--color-infra); box-shadow: 0 0 10px var(--color-infra); }
+        .slave-pill.cyan::before { background: var(--color-flota); box-shadow: 0 0 10px var(--color-flota); }
 
-        #login-screen { position: fixed; inset: 0; background: #030508; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10000; text-align: center; }
-        .login-box { padding: 40px; background: #0d1117; border: 1px solid var(--border-color); border-radius: 12px; box-shadow: 0 0 80px rgba(31, 111, 235, 0.15); }
-        .btn-google { background: #fff; color: #000; border: none; padding: 12px 24px; border-radius: 6px; font-weight: 900; cursor: pointer; display: flex; align-items: center; gap: 10px; margin-top: 20px; font-size: 1rem; }
+        .lista-contenedor { padding: 0 15px; display: flex; flex-direction: column; gap: 10px; margin-top: 10px; padding-bottom: calc(120px + env(safe-area-inset-bottom)); }
 
-        .header-titles { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 5px; flex-shrink: 0;}
-        h2 { color: var(--text-main); margin: 0; font-size: 1.3rem; font-weight: 900; letter-spacing: 2px; }
-        .scada-badge { background: linear-gradient(90deg, #1f6feb, #8c9eff); color: #fff; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; vertical-align: top; margin-left: 5px; font-family: monospace; text-shadow: 0 2px 4px rgba(0,0,0,0.5);}
-        .cronos { font-family: 'Courier New', Courier, monospace; font-size: 0.9rem; font-weight: 900; color: var(--color-saldo); background: var(--input-bg); padding: 4px 12px; border-radius: 6px; border: 1px solid rgba(46, 160, 67, 0.3); text-shadow: 0 0 10px rgba(46, 160, 67, 0.4);}
-        .system-btns { display: flex; gap: 8px; align-items: center; }
-        .btn-sys { background: var(--bg-subpanel); color: var(--text-main); border: 1px solid var(--border-color); padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: 800; font-size: 0.7rem; text-transform: uppercase; transition: all 0.2s;}
-        .btn-sys:hover { border-color: var(--color-ingresos); background: rgba(31, 111, 235, 0.1); }
-        .time-navigator-panel { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 8px; padding: 6px 15px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.4); border-left: 4px solid var(--color-ingresos); flex-shrink: 0;}
-        .nav-select { background: var(--input-bg); color: var(--text-main); border: 1px solid var(--border-color); padding: 4px 12px; border-radius: 4px; font-weight: 800; text-transform: uppercase; font-size: 0.8rem; outline: none; cursor: pointer;}
-        .nav-badge { font-family: monospace; background: rgba(31, 111, 235, 0.1); color: #79c0ff; border: 1px solid rgba(31, 111, 235, 0.3); padding: 4px 10px; border-radius: 4px; font-size: 0.8rem; font-weight: 900; letter-spacing: 0.5px; }
-        @keyframes fadeSlideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-        .kpi-row { display: grid; gap: 10px; flex-shrink: 0; }
-        .kpi-card { padding: 12px 15px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-panel); border-top: 4px solid var(--border-color); position: relative; overflow: hidden; box-shadow: none;}
-        .kpi-card h4 { margin: 0 0 4px 0; font-size: 0.6rem; text-transform: uppercase; color: var(--text-muted); font-weight: 800; letter-spacing: 0.5px;}
-        .kpi-card .value { margin: 0; font-size: 1.15rem; font-weight: 900; color: var(--text-main); font-family: monospace; display: flex; align-items: center; white-space: nowrap; overflow: hidden;}
-        .kpi-card .value span { color: var(--text-muted); font-size: 0.95rem; margin-right: 2px;}
-        .kpi-saldo { background: rgba(46, 160, 67, 0.02); border-color: rgba(46, 160, 67, 0.4); border-top: 4px solid var(--color-saldo);}
-        .kpi-saldo h4 { color: var(--color-saldo); }
-        .kpi-saldo .value { text-shadow: 0 0 15px rgba(46, 160, 67, 0.4); }
-        .kpi-proyectado { background: rgba(88, 166, 255, 0.05); border-color: rgba(88, 166, 255, 0.4); border-top: 4px solid #58a6ff;}
-        .kpi-proyectado h4 { color: #58a6ff; }
-
-        .context-charts { display: grid; gap: 15px; padding: 15px; border-bottom: 1px solid var(--border-color); flex-shrink: 0;}
-        .context-charts.flujo { grid-template-columns: repeat(3, 1fr); background: rgba(31, 111, 235, 0.03); }
-        .context-charts.tc { grid-template-columns: repeat(2, 1fr); background: rgba(248, 81, 73, 0.03); }
-
-        .chart-box { background: var(--bg-subpanel); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; position: relative; box-shadow: inset 0 0 20px rgba(0,0,0,0.5);}
-        .chart-box h5 { margin: 0 0 8px 0; font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; font-weight: 900; z-index: 10; text-align: center;}
-        .canvas-container { position: relative; flex-grow: 1; height: 190px; width: 100%; }
-        .bd-overlay-kpis { position: absolute; top: 10px; width: calc(100% - 24px); display: flex; justify-content: space-between; z-index: 20; pointer-events: none;}
-        .bd-badge { padding: 2px 8px; font-size: 0.65rem; font-weight: 900; color: var(--text-main); background: rgba(0,0,0,0.6); border-radius: 4px; border: 1px solid var(--border-color); backdrop-filter: blur(2px);}
-
-        .command-ribbon { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; background: linear-gradient(90deg, var(--bg-panel) 0%, rgba(31, 111, 235, 0.08) 100%); border: 1px solid var(--border-color); border-left: 4px solid var(--color-edit); padding: 15px 20px; border-radius: 8px; flex-shrink: 0; box-shadow: 0 5px 20px rgba(0,0,0,0.3);}
-        .ribbon-title { font-size: 0.7rem; font-weight: 900; color: var(--color-edit); text-transform: uppercase; letter-spacing: 1px; writing-mode: vertical-lr; transform: rotate(180deg); margin: 0 5px 0 0; text-align: center; text-shadow: 0 0 10px rgba(210, 153, 34, 0.5); display: flex; align-items: center; justify-content: center; }
-
-        .form-group { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 120px; }
-        .form-group.sm { flex: 0.5; min-width: 80px; }
-        .form-group.lg { flex: 2; min-width: 200px; }
-        .form-group label { font-size: 0.6rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;}
-        .form-control { background: var(--input-bg); color: var(--text-main); border: 1px solid var(--border-color); padding: 8px 10px; border-radius: 6px; font-size: 0.85rem; outline: none; width: 100%; height: 38px; font-family: 'Segoe UI', sans-serif;}
-        .form-control:focus { border-color: var(--color-edit); box-shadow: 0 0 0 1px var(--color-edit); }
-        .btn-ribbon { background: var(--color-edit); color: #000; border: none; border-radius: 6px; font-weight: 900; padding: 0 25px; height: 34px; cursor: pointer; text-transform: uppercase; font-size: 0.85rem; transition: transform 0.1s, box-shadow 0.2s; white-space: nowrap; box-shadow: 0 0 15px rgba(210, 153, 34, 0.4);}
-        .btn-ribbon:active { transform: scale(0.95); }
-
-        .dual-core { display: flex; gap: 15px; flex: 1 1 0px; min-height: 0; overflow: hidden; }
-        .core-panel { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 10px; display: flex; flex-direction: column; overflow: hidden; position: relative; box-shadow: 0 5px 25px rgba(0,0,0,0.2); flex: 1; transition: flex 0.3s ease;}
-        .core-panel.hidden { display: none; }
-        .core-header { padding: 12px 15px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.3); flex-shrink: 0;}
-        .core-title { font-size: 0.95rem; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; gap: 8px;}
-        .core-body { flex: 1 1 0px; overflow-y: auto; overflow-x: hidden; padding: 0; scrollbar-width: thin; scrollbar-color: var(--border-color) var(--bg-body); display: flex; flex-direction: column;}
-
-        .data-grid { width: 100%; border-collapse: collapse; text-align: left; font-family: 'Segoe UI', sans-serif;}
-        .data-grid th { position: sticky; top: 0; background: var(--bg-subpanel); padding: 12px 15px; font-size: 0.70rem; color: var(--text-muted); text-transform: uppercase; z-index: 10; border-bottom: 2px solid var(--border-color); letter-spacing: 0.5px; cursor: pointer; }
-        .data-grid td { padding: 14px 15px; font-size: 0.80rem; border-bottom: 1px solid var(--border-color); vertical-align: middle; }
-        .data-grid tbody tr:nth-child(odd) { background-color: rgba(255,255,255,0.01); }
-        .data-grid tbody tr:hover { background-color: var(--item-hover); }
-        .col-monto { text-align: right; font-family: monospace; font-weight: bold; font-size: 0.9rem; }
-        .col-hora { font-size: 0.65rem; color: var(--text-muted); margin-left: 5px; }
-        .col-desc { color: var(--text-main); font-weight: 600; }
-        .cat-badge { font-size: 0.6rem; padding: 2px 6px; border-radius: 4px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: var(--text-muted); font-weight: 600;}
-        .impact-icon { font-weight: 900; margin-right: 5px; }
-
-        .fugas-mini-kpi { display: flex; align-items: center; gap: 10px; background: var(--input-bg); border: 1px solid var(--border-color); padding: 6px 12px; border-radius: 20px; box-shadow: inset 0 0 10px rgba(0,0,0,0.5);}
-        .fugas-mini-kpi span { font-size: 0.7rem; font-weight: 800; color: var(--text-muted); }
-        .fugas-mini-kpi strong { font-size: 0.85rem; font-weight: 900; color: var(--color-fuga); font-family: monospace; text-shadow: 0 0 10px rgba(248, 81, 73, 0.4);}
-
-        .tc-impact-box { background: rgba(248, 81, 73, 0.1); border: 1px solid rgba(248, 81, 73, 0.4); border-radius: 6px; padding: 6px 15px; display: flex; gap: 15px; align-items: center; box-shadow: 0 0 15px rgba(248, 81, 73, 0.15); border-left: 4px solid var(--color-fuga);}
-        .tc-impact-box span { font-size: 0.75rem; font-weight: 900; color: var(--color-fuga); text-transform: uppercase; letter-spacing: 1px;}
-        .tc-impact-box strong { font-size: 1.1rem; font-family: monospace; font-weight: 900; color: var(--color-fuga); text-shadow: 0 0 10px rgba(248, 81, 73, 0.4);}
-
-        .floating-mass-actions { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #1c2128; border: 1px solid var(--color-edit); border-radius: 50px; padding: 8px 20px; display: flex; align-items: center; gap: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); z-index: 9999; }
-
-        #modal-historian { position: fixed; inset: 0; background: rgba(3, 5, 8, 0.95); z-index: 25000; display: none; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(10px); padding: 20px; }
-        .hist-box { position: relative; background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 12px; width: 100%; max-width: 600px; box-shadow: 0 0 40px rgba(248, 81, 73, 0.2); overflow: hidden; border-top: 4px solid var(--color-fuga); display: flex; flex-direction: column; max-height: 85vh;}
-        .hist-header { padding: 15px 20px; background: rgba(0,0,0,0.3); border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;}
-        .hist-body { padding: 20px; overflow-y: auto; flex-grow: 1;}
-
-        .log-item { display: flex; gap: 15px; padding: 15px; border-radius: 12px; margin-bottom: 12px; background: rgba(255,255,255,0.02); border: 1px solid transparent; align-items: center; }
-        .log-icon { font-size: 1.8rem; background: rgba(0,0,0,0.2); width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; border-radius: 50%; flex-shrink: 0;}
-        .log-content { flex: 1; line-height: 1.3; }
-        .log-content strong { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; }
-        .log-content div.log-date { font-size: 0.75rem; color: var(--text-muted); margin-bottom: 4px; }
-        .log-content span { font-family: monospace; font-size: 1.2rem; font-weight: 900; }
-        .log-item.critical { border-color: rgba(248,81,73,0.4); background: linear-gradient(90deg, rgba(248,81,73,0.05), transparent); }
-        .log-item.critical strong, .log-item.critical span { color: var(--color-fuga); }
-        .log-item.warning { border-color: rgba(255,152,0,0.4); background: linear-gradient(90deg, rgba(255,152,0,0.05), transparent); }
-        .log-item.warning strong, .log-item.warning span { color: #ff9800; }
-
-        #modal-dia-cero { position: fixed; inset: 0; background: rgba(3, 5, 8, 0.95); z-index: 20000; display: none; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(10px); padding: 10px; }
-        .pv-container { position: relative; background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 16px; width: 100%; max-width: 1150px; max-height: 95vh; box-shadow: 0 0 50px rgba(255, 152, 0, 0.2); display: flex; flex-direction: column; border-top: 4px solid #ff9800; }
-        .pv-header { padding: 15px 20px; text-align: center; border-bottom: 1px solid var(--border-color); background: rgba(0,0,0,0.3); flex-shrink:0;}
-        .pv-title { font-size: 1.3rem; font-weight: 900; color: #ff9800; letter-spacing: 2px; margin: 0; text-transform: uppercase; }
-        .pv-subtitle { font-size: 0.75rem; color: var(--text-muted); font-family: monospace; margin-top: 4px; }
-        .pv-tank-wrapper { padding: 15px 20px; border-bottom: 1px solid var(--border-color); flex-shrink:0;}
-        .pv-tank-label { display: flex; justify-content: space-between; font-weight: 900; font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px; }
-        .pv-tank { width: 100%; height: 35px; background: rgba(255,255,255,0.05); border-radius: 20px; overflow: hidden; display: flex; border: 1px solid var(--border-color); box-shadow: inset 0 0 15px rgba(0,0,0,0.5); }
-        .pv-fill-rojo { background: linear-gradient(90deg, #b71c1c, var(--color-fuga)); height: 100%; transition: width 0.4s ease; }
-        .pv-fill-naranja { background: linear-gradient(90deg, #e65100, #ff9800); height: 100%; transition: width 0.4s ease; }
-        .pv-fill-verde { background: linear-gradient(90deg, #1b5e20, var(--color-saldo)); height: 100%; transition: width 0.4s ease; box-shadow: 0 0 20px rgba(46, 160, 67, 0.5); }
-        .pv-liquidez-text { text-align: center; font-size: 2.5rem; font-weight: 900; color: var(--color-saldo); font-family: monospace; margin-top: 10px; text-shadow: 0 0 15px rgba(46, 160, 67, 0.4); }
-        .pv-certeza { font-size: 0.7rem; font-weight: bold; color: var(--text-muted); text-align: center; margin-top: 8px; text-transform: uppercase; letter-spacing: 1px;}
-        .pv-body { padding: 15px 20px; overflow-y: auto; flex-grow:1;}
-        .pv-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; }
-        .pv-section { background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; }
-        .pv-section-title { font-size: 0.7rem; font-weight: 900; text-transform: uppercase; margin-bottom: 10px; border-bottom: 1px solid var(--border-color); padding-bottom: 5px; color: var(--text-main); display:flex; align-items:center; gap:5px;}
-        .pv-input-group { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; gap: 5px;}
-        .pv-input-group label { font-size: 0.65rem; font-weight: 700; color: var(--text-muted); flex:1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
-        .pv-input { background: var(--input-bg); border: 1px solid var(--border-color); color: var(--text-main); padding: 4px 6px; border-radius: 4px; font-family: monospace; font-size: 0.85rem; width: 135px; text-align: right; outline: none; font-weight: bold; transition: all 0.3s;}
-        .pv-input:focus { border-color: #ff9800; }
-        .pv-input.pagado { text-decoration: line-through; color: var(--text-muted); background: transparent; border-color: transparent;}
-
-        .btn-estado { width: 28px; height: 28px; border-radius: 4px; border: 1px solid var(--border-color); background: var(--bg-panel); color: var(--text-muted); font-size: 0.7rem; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; font-weight: bold; flex-shrink: 0;}
-        .btn-estado.est { border-color: rgba(255, 152, 0, 0.4); color: #ff9800; background: rgba(255, 152, 0, 0.1); }
-        .btn-estado.real { border-color: rgba(31, 111, 235, 0.6); color: #58a6ff; background: rgba(31, 111, 235, 0.2); box-shadow: 0 0 8px rgba(31, 111, 235, 0.3);}
-        .btn-estado.pag { border-color: rgba(46, 160, 67, 0.6); color: var(--color-saldo); background: rgba(46, 160, 67, 0.2); box-shadow: 0 0 8px rgba(46, 160, 67, 0.3);}
-
-        .pv-footer { padding: 15px 20px; display: flex; gap: 15px; background: rgba(0,0,0,0.3); border-top: 1px solid var(--border-color); flex-shrink:0;}
-        .btn-pv-close { flex: 1; padding: 12px; background: transparent; border: 1px solid var(--text-muted); color: var(--text-muted); border-radius: 8px; font-weight: 900; cursor: pointer; text-transform: uppercase; font-size:0.9rem;}
-        .btn-pv-launch { flex: 2; padding: 12px; background: #ff9800; color: #000; border: none; border-radius: 8px; font-weight: 900; font-size: 1rem; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 0 15px rgba(255, 152, 0, 0.4); transition: transform 0.1s; }
-        .btn-pv-launch:active { transform: scale(0.98); }
-
-        /* 🛠️ MEJORA 4: Jerarquía de Alarmas (Top-Bar Triage) */
-        .kpi-card.alarma-critica { 
-            border-top-color: var(--color-fuga) !important; 
-            background: rgba(248, 81, 73, 0.08) !important; 
-            animation: pulsoAlarma 2s infinite; 
+        .mobile-card {
+            background: linear-gradient(145deg, var(--bg-elevated) 0%, var(--bg-card) 100%) !important;
+            border: 1px solid rgba(255, 255, 255, 0.05) !important;
+            border-radius: 16px !important;
+            padding: 16px 14px !important;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.15s ease !important;
+            box-shadow: 0 6px 15px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.03) !important;
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
         }
-        @keyframes pulsoAlarma { 
-            0% { box-shadow: 0 0 0 rgba(248, 81, 73, 0); } 
-            50% { box-shadow: 0 0 20px rgba(248, 81, 73, 0.3); } 
-            100% { box-shadow: 0 0 0 rgba(248, 81, 73, 0); } 
-        }
+        .mobile-card:active { transform: scale(0.96) !important; box-shadow: 0 2px 5px rgba(0,0,0,0.5) !important; }
+        
+        .mobile-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--border-subtle); }
+        .mobile-card.is-fuga::before { background: var(--accent-red); box-shadow: 0 0 10px var(--accent-red); }
+        .mobile-card.is-ingreso::before { background: var(--accent-green); box-shadow: 0 0 10px var(--accent-green); }
+        .mobile-card.is-neutro::before { background: var(--accent-orange); box-shadow: 0 0 10px var(--accent-orange); }
 
-        /* 🛠️ MEJORA 5: Contraste de Cebra y Enfoque de Fila */
-        .data-grid tbody tr { transition: all 0.15s ease-in-out; }
-        .data-grid tbody tr:nth-child(odd) { background-color: rgba(255,255,255,0.02); }
-        .data-grid tbody tr:hover { 
-            background-color: rgba(31, 111, 235, 0.15) !important; 
-            box-shadow: inset 3px 0 0 var(--color-proyectado); 
+        .mc-icon {
+            width: 42px; height: 42px; border-radius: 12px;
+            background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.4rem; flex-shrink: 0; box-shadow: inset 0 2px 5px rgba(255,255,255,0.02);
         }
+        .mc-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px;}
+        .mc-title { font-weight: 700; font-size: 0.95rem; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: 0.3px;}
+        .mc-subtitle { font-size: 0.7rem; color: var(--text-dim); display: flex; align-items: center; gap: 6px; font-weight: 500;}
+        .mc-amount { font-family: monospace; font-size: 1.15rem; font-weight: 800; color: var(--text-main); letter-spacing: -0.5px;}
 
-        /* 🛠️ MEJORA 3: Botón Safe-Escape (Abortar) */
-        .btn-abortar-pc { 
-            background: transparent; color: var(--text-muted); 
-            border: 1px dashed var(--text-muted); padding: 0 15px; 
-            height: 34px; border-radius: 6px; cursor: pointer; 
-            font-weight: 900; font-size: 0.75rem; transition: all 0.2s; 
-            display: none; margin-left: 5px;
+        .floating-action-btn { position: fixed; bottom: calc(25px + env(safe-area-inset-bottom)); right: 25px; width: 65px; height: 65px; border-radius: 20px; background: linear-gradient(135deg, var(--accent-blue), #58a6ff); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 2rem; box-shadow: 0 10px 25px rgba(31, 111, 235, 0.5), inset 0 2px 0 rgba(255,255,255,0.2); z-index: 9999; border: none; cursor: pointer; transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);}
+        .floating-action-btn:active { transform: scale(0.9) rotate(15deg); }
+
+        .bottom-sheet { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 10000; display: none; flex-direction: column; justify-content: flex-end; backdrop-filter: blur(5px); }
+        .sheet-content { background: var(--bg-card); border-top-left-radius: 24px; border-top-right-radius: 24px; padding: 25px 20px calc(20px + env(safe-area-inset-bottom)) 20px; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); border-top: 1px solid var(--border-subtle); box-shadow: 0 -10px 40px rgba(0,0,0,0.5); max-height: 90vh; overflow-y: auto;}
+        .sheet-content.open { transform: translateY(0); }
+        
+        .input-mega { width: 100%; background: transparent; border: none; font-size: 4.5rem; text-align: center; color: var(--accent-blue); font-weight: 900; outline: none; margin-bottom: 20px; font-family: monospace; text-shadow: 0 0 20px rgba(31, 111, 235, 0.3); }
+        
+        /* 🛠️ MEJORA 2: Input de limpieza rápida (type="search" se maneja en el HTML, aquí el estilo) */
+        .input-mega::-webkit-search-cancel-button {
+            -webkit-appearance: none; appearance: none;
+            height: 30px; width: 30px;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%238b949e"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>');
+            cursor: pointer;
         }
-        .btn-abortar-pc:hover { 
-            color: var(--color-fuga); border-color: var(--color-fuga); 
-            background: rgba(248, 81, 73, 0.1); 
+        
+        .input-std { width: 100%; background: var(--bg-elevated); border: 1px solid var(--border-subtle); padding: 16px; border-radius: 12px; color: #fff; font-size: 1rem; margin-bottom: 12px; outline: none; transition: border-color 0.2s;}
+        .input-std:focus { border-color: var(--accent-blue); }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+        .btn-mega { width: 100%; padding: 18px; border-radius: 14px; border: none; font-weight: 900; font-size: 1.1rem; color: #fff; background: linear-gradient(135deg, var(--accent-blue), #58a6ff); box-shadow: 0 8px 20px rgba(31, 111, 235, 0.4); margin-top: 10px; transition: transform 0.1s;}
+        .btn-mega:active { transform: scale(0.97); }
+
+        .date-divider { 
+            position: sticky; top: 60px; z-index: 10; /* 🛠️ MEJORA 1: Fechas flotantes */
+            font-size: 0.7rem; font-weight: 800; color: var(--accent-blue); text-transform: uppercase; margin: 15px 0 5px 5px; letter-spacing: 1px; display: flex; align-items: center; gap: 8px;
+            background: var(--bg-base); padding: 5px 0;
         }
+        .date-divider::before { content: '●'; font-size: 0.5rem; }
+
+        .nav-tabs { display: flex; background: var(--bg-card); border-radius: 12px; padding: 4px; margin: 0 15px 15px 15px; border: 1px solid var(--border-subtle); box-shadow: 0 4px 10px rgba(0,0,0,0.2);}
+        .nav-tab { flex: 1; text-align: center; padding: 10px; font-size: 0.75rem; font-weight: 800; color: var(--text-dim); border-radius: 8px; transition: all 0.3s; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px;}
+        .nav-tab.active { background: var(--accent-blue); color: #fff; box-shadow: 0 2px 8px rgba(31, 111, 235, 0.4); }
+
+        .view-panel { display: none; animation: fadeIn 0.3s; }
+        .view-panel.active { display: block; }
+        @keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+
+        /* Estilos Mini-Gráficos Móviles */
+        .mini-chart-container { background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 16px; padding: 15px; margin: 0 15px 15px 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+        .mini-chart-title { font-size: 0.7rem; font-weight: 900; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; text-align: center; display: flex; align-items: center; justify-content: center; gap: 6px;}
+
+        /* Bottom Sheet Editar/Eliminar Movimiento */
+        #sheetEdit { z-index: 11000; }
+        .btn-edit-action { flex: 1; padding: 16px; border-radius: 12px; font-weight: 900; font-size: 0.9rem; text-transform: uppercase; border: none; }
+        
+        /* 🛠️ MEJORA 4: Botón rojo más evidente */
+        .btn-danger { 
+            background: rgba(248, 81, 73, 0.1); border: 1px solid rgba(248, 81, 73, 0.4); color: var(--accent-red); 
+        }
+        .btn-danger:active { background: var(--accent-red); color: #fff; }
+        
+        .btn-primary { background: rgba(31, 111, 235, 0.1); border: 1px solid var(--accent-blue); color: #79c0ff; }
+
+        /* Botón Sync Reducido */
+        .btn-sync-mini { background: transparent; border: 1px solid var(--border-subtle); color: var(--text-dim); border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; }
     </style>
 </head>
 <body>
 
 <div id="login-screen">
-    <div class="login-box">
-        <h2 style="color:var(--color-proyectado); margin-bottom:10px; font-size: 2rem;">BÚNKER SCADA</h2>
-        <p style="color:var(--text-muted); font-size:0.85rem; letter-spacing: 2px;">VERSIÓN 14.7 (CLEAN CORE)</p>
-        <button class="btn-google" onclick="loginWithGoogle()">INICIAR ENLACE NEURAL</button>
+    <div style="background:var(--bg-card); padding:30px; border-radius:20px; border:1px solid var(--border-subtle); text-align:center; width:90%; max-width:350px;">
+        <h2 style="color:var(--accent-blue); margin-bottom:5px; font-size:1.8rem; letter-spacing:1px;">BÚNKER SCADA</h2>
+        <p style="color:var(--text-dim); font-size:0.7rem; letter-spacing:2px; font-family:monospace; margin-bottom:25px;">[ HUD MÓVIL V15.0 GLOBAL ]</p>
+        <button onclick="loginWithGoogle()" style="background:#fff; color:#000; font-weight:900; padding:15px; border-radius:12px; width:100%; border:none; font-size:1rem;">INICIAR ENLACE</button>
     </div>
 </div>
 
-<div class="app-container" id="reportZone">
+<div id="main-app" style="display:none;">
+
     <!-- ============================================== -->
-<!-- 🛸 BARRA MAESTRA UNIFICADA (HEADER)            -->
+    <!-- 🛸 CABECERA MÓVIL (GLASSMORPHISM)              -->
+    <!-- ============================================== -->
+    <div class="top-bar">
+        <!-- BRANDING ByFINANCE -->
+        <div class="brand">
+            <svg width="32" height="32" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 0 6px rgba(163, 113, 247, 0.6));">
+                <circle cx="256" cy="256" r="210" fill="none" stroke="#a371f7" stroke-width="28"/>
+                <text x="256" y="340" font-family="monospace" font-size="280" font-weight="900" fill="#a371f7" text-anchor="middle" opacity="0.3">$</text>
+                <text x="256" y="300" font-family="-apple-system, sans-serif" font-size="120" font-weight="900" fill="#ffffff" text-anchor="middle">By</text>
+            </svg>
+            <div style="display: flex; flex-direction: column; line-height: 1;">
+                <span style="font-size: 1.2rem; font-weight: 900; color: #fff; letter-spacing: 0.5px;">ByFINANCE</span>
+                <span style="font-size: 0.6rem; color: #a371f7; font-family: monospace; letter-spacing: 2px; font-weight: bold; margin-top: 2px;">SCADA <span style="color:var(--text-dim);">V15.0</span></span>
+            </div>
+        </div>
+
+        <!-- BOTONES DE SISTEMA -->
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <button onclick="triggerSync()" style="background:transparent; border:none; font-size:1.2rem; padding:0; color: #a371f7;">🔄</button>
+            <div class="user-tag" id="user-display">BYRON</div>
+        </div>
+    </div>
+
+    <!-- NAVEGADOR DE PESTAÑAS -->
+    <div class="nav-tabs">
+        <div class="nav-tab active" onclick="switchView('tab-flujo')" id="btn-tab-flujo">FLUJO</div>
+        <div class="nav-tab" onclick="switchView('tab-tc')" id="btn-tab-tc">TARJETA</div>
+        <div class="nav-tab" onclick="switchView('tab-terceros')" id="btn-tab-terceros">TERCEROS</div>
+    </div>
+
+    <!-- SELECTOR DE MES INVISIBLE (Requerido por motor.js) -->
+    <div style="display:none;">
+        <select id="navAnio"><option value="2025">2025</option><option value="2026" selected>2026</option></select>
+        <select id="navMesConceptual"><option value="0">Enero</option><option value="1">Febrero</option><option value="2">Marzo</option><option value="3" selected>Abril</option><option value="4">Mayo</option><option value="5">Junio</option><option value="6">Julio</option><option value="7">Agosto</option><option value="8">Septiembre</option><option value="9">Octubre</option><option value="10">Noviembre</option><option value="11">Diciembre</option></select>
+        <input type="text" id="inputSueldo">
+        <input type="text" id="txtArrastreLinea">
+    </div>
+
+    <!-- ============================================== -->
+    <!-- 🟢 VISTA 1: FLUJO DIARIO -->
+    <!-- ============================================== -->
+    <div id="tab-flujo" class="view-panel active">
+        <div class="master-hud">
+            <div style="font-size:0.6rem; font-weight:900; color:var(--text-dim); text-transform:uppercase; letter-spacing:2px; margin-bottom:5px;">MANIOBRA BASE</div>
+            <div class="hud-value" id="txtSaldoMovil">$0</div>
+        </div>
+
+        <div class="slave-kpis">
+            <div class="slave-pill purple"><span style="font-size:0.55rem; font-weight:900; color:var(--color-infra); text-transform:uppercase;">Infraestructura</span><strong style="font-size:1.1rem; font-family:monospace; margin-top:4px;">$<span id="txtTotalInfraMovil">0</span></strong></div>
+            <div class="slave-pill cyan"><span style="font-size:0.55rem; font-weight:900; color:var(--color-flota); text-transform:uppercase;">Flota / Auto</span><strong style="font-size:1.1rem; font-family:monospace; margin-top:4px;">$<span id="txtTotalFlotaMovil">0</span></strong></div>
+            <div class="slave-pill"><span style="font-size:0.55rem; font-weight:900; color:var(--text-dim); text-transform:uppercase;">Carga Fija</span><strong style="font-size:1.1rem; font-family:monospace; margin-top:4px;">$<span id="txtTotalFijosMovil">0</span></strong></div>
+            <div class="slave-pill"><span style="font-size:0.55rem; font-weight:900; color:var(--text-dim); text-transform:uppercase;">Carga Variable</span><strong style="font-size:1.1rem; font-family:monospace; margin-top:4px;">$<span id="txtTotalOtrosMovil">0</span></strong></div>
+        </div>
+
+        <div style="padding: 0 15px; margin-bottom: 10px;">
+            <div style="background:var(--bg-card); border:1px solid var(--border-subtle); border-radius:12px; padding:12px 15px; display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-size:0.7rem; font-weight:900; color:var(--text-dim); text-transform:uppercase;">FUGAS DE DOPAMINA:</span>
+                <div>
+                    <strong style="font-family:monospace; font-size:1rem; color:var(--text-main); margin-right:8px;" id="txtTotalEvitableMovil">0</strong>
+                    <span id="txtPorcentajeFugasMovil" style="background:rgba(248,81,73,0.1); color:var(--accent-red); padding:2px 6px; border-radius:6px; font-weight:900; font-size:0.8rem;">0%</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- LISTA GASTOS -->
+        <div class="lista-contenedor" id="listaGastosMovil"></div>
+        <button class="floating-action-btn" onclick="abrirSheetInyeccion()">+</button>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- 🔴 VISTA 2: TARJETA TC -->
+    <!-- ============================================== -->
+    <div id="tab-tc" class="view-panel">
+        <div class="master-hud">
+            <div style="font-size:0.6rem; font-weight:900; color:var(--text-dim); text-transform:uppercase; letter-spacing:2px; margin-bottom:5px;">CARGA TC GLOBAL</div>
+            <div class="hud-value danger" id="txtTotalTCMovil">$0</div>
+        </div>
+
+        <div id="boxImpactoTCMovil" style="display:none; background:rgba(248,81,73,0.1); border:1px solid rgba(248,81,73,0.4); margin: 0 15px 15px 15px; padding:15px; border-radius:12px; border-left:4px solid var(--accent-red);">
+            <div style="font-size:0.7rem; font-weight:900; color:var(--accent-red); text-transform:uppercase; margin-bottom:5px;">ALARMA DE IMPACTO</div>
+            <div style="display:flex; justify-content:space-between; align-items:flex-end;">
+                <span id="lblImpactoMesMovil" style="color:var(--text-main); font-weight:700; font-size:0.9rem;">--</span>
+                <span id="txtImpactoMontoMovil" style="font-family:monospace; font-size:1.4rem; font-weight:900; color:var(--accent-red);">0</span>
+            </div>
+        </div>
+
+        <div class="lista-contenedor" id="listaMovilTC"></div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- 🟡 VISTA 3: TERCEROS (ME DEBEN / DEBO) -->
+    <!-- ============================================== -->
+    <div id="tab-terceros" class="view-panel">
+        <div class="master-hud">
+            <div style="font-size:0.6rem; font-weight:900; color:var(--text-dim); text-transform:uppercase; letter-spacing:2px; margin-bottom:5px;">OBLIGACIONES & PROVISIONES</div>
+        </div>
+
+        <div class="slave-kpis" style="grid-template-columns: repeat(3, 1fr);">
+            <div class="slave-pill" style="border-top:3px solid var(--accent-green);" onclick="setFiltroTerceros('ME DEBEN')" id="btnFiltroVerde"><span style="font-size:0.5rem; font-weight:900; color:var(--accent-green);">ME DEBEN</span><strong style="font-size:0.85rem; font-family:monospace; margin-top:4px;">$<span id="kpiMeDebenMovil">0</span></strong></div>
+            <div class="slave-pill" style="border-top:3px solid var(--accent-red);" onclick="setFiltroTerceros('YO DEBO')" id="btnFiltroRojo"><span style="font-size:0.5rem; font-weight:900; color:var(--accent-red);">YO DEBO</span><strong style="font-size:0.85rem; font-family:monospace; margin-top:4px;">$<span id="kpiYoDeboMovil">0</span></strong></div>
+            <div class="slave-pill" style="border-top:3px solid var(--accent-orange);" onclick="setFiltroTerceros('PENDIENTE')" id="btnFiltroAmarillo"><span style="font-size:0.5rem; font-weight:900; color:var(--accent-orange);">PENDIENTE</span><strong style="font-size:0.85rem; font-family:monospace; margin-top:4px;">$<span id="kpiPendientesMovil">0</span></strong></div>
+        </div>
+
+        <div style="padding: 0 15px; margin-bottom: 10px;">
+            <div style="background:var(--bg-card); border:1px solid var(--border-subtle); border-radius:12px; padding:10px; display:flex; flex-direction:column; gap:8px;">
+                <div style="display:flex; gap:8px;">
+                    <input type="text" id="inputTerceroNombreMovil" class="input-std" placeholder="Descripción / Tarea..." style="margin:0; padding:10px; flex:2;">
+                    <input type="text" id="inputTerceroMontoMovil" class="input-std" placeholder="$ Monto" inputmode="numeric" oninput="formatearEntradaNumerica(this)" style="margin:0; padding:10px; flex:1; text-align:right; font-family:monospace;">
+                </div>
+                <div style="display:flex; gap:8px;">
+                    <button onclick="inyectarTercero('ME DEBEN', true)" style="flex:1; background:rgba(46,160,67,0.1); border:1px solid rgba(46,160,67,0.3); color:var(--accent-green); border-radius:8px; padding:8px 0; font-size:0.7rem; font-weight:900;">➕ DEBEN</button>
+                    <button onclick="inyectarTercero('YO DEBO', true)" style="flex:1; background:rgba(248,81,73,0.1); border:1px solid rgba(248,81,73,0.3); color:var(--accent-red); border-radius:8px; padding:8px 0; font-size:0.7rem; font-weight:900;">➖ DEBO</button>
+                    <button onclick="inyectarTercero('PENDIENTE', true)" style="flex:1; background:rgba(210,153,34,0.1); border:1px solid rgba(210,153,34,0.3); color:var(--accent-orange); border-radius:8px; padding:8px 0; font-size:0.7rem; font-weight:900;">📌 PEND</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="lista-contenedor" id="listaTercerosMovil"></div>
+    </div>
+</div>
+
 <!-- ============================================== -->
-<div class="header-titles" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; border-bottom: 1px solid var(--border-color); background: rgba(0,0,0,0.3); border-top: 3px solid #a371f7;">
+<!-- BOTTOM SHEETS MÓVILES                          -->
+<!-- ============================================== -->
 
-    <!-- 1. ZONA IZQ: LOGO GIGANTE Y MARCA -->
-    <div style="display:flex; align-items:center; gap: 12px;">
-        <svg width="42" height="42" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 0 8px rgba(163, 113, 247, 0.4));">
-            <circle cx="256" cy="256" r="210" fill="none" stroke="#a371f7" stroke-width="24"/>
-            <text x="256" y="340" font-family="monospace" font-size="280" font-weight="900" fill="#a371f7" text-anchor="middle" opacity="0.3">$</text>
-            <text x="256" y="300" font-family="-apple-system, sans-serif" font-size="120" font-weight="900" fill="#ffffff" text-anchor="middle">By</text>
-        </svg>
-        <div style="display: flex; flex-direction: column; line-height: 1.1;">
-            <div style="font-size: 1.4rem; font-weight: 900; color: #fff; letter-spacing: 1px;">ByFINANCE</div>
-            <div style="font-size: 0.65rem; color: var(--text-muted); font-family: monospace; letter-spacing: 3px; margin-top: 3px;">
-                SCADA <span style="color: #a371f7; font-weight: 900;">V15.0</span>
-            </div>
+<!-- SHEET 1: INYECCIÓN RÁPIDA -->
+<div class="bottom-sheet" id="sheetAdd" onclick="if(event.target===this) cerrarSheetInyeccion()">
+    <div class="sheet-content" id="sheetAddContent">
+        <div style="text-align:center; margin-bottom:5px;"><span style="font-size:0.6rem; font-weight:900; color:var(--text-dim); letter-spacing:2px;">PROTOCOLO DE INYECCIÓN</span></div>
+        <!-- 🛠️ MEJORA 2: type="search" habilita la 'X' para limpiar rápido en iOS/Android -->
+        <input type="search" id="inputMonto" class="input-mega" placeholder="$0" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this)">
+        
+        <input type="text" id="inputNombre" class="input-std" placeholder="[ AUTO-PILOTO ] Descripción...">
+        <div class="grid-2">
+            <select id="inputCategoria" class="input-std" style="margin:0;"></select>
+            <input type="datetime-local" id="inputFecha" class="input-std" style="margin:0; font-family:monospace; font-size:0.8rem;">
         </div>
-        <div id="user-display" style="margin-left: 15px; padding-left: 15px; border-left: 1px solid var(--border-color); font-size: 0.75rem; color: var(--color-saldo); font-weight:900; text-transform:uppercase; letter-spacing: 1px;"></div>
-    </div>
-
-    <!-- 2. ZONA CENTRAL: NAVEGADOR DE MÓDULOS -->
-    <div style="display:flex; justify-content:center; gap:10px;">
-        <button class="btn-sys" id="tabBtnFlujo" onclick="switchPCPanel('main')" style="background:rgba(31, 111, 235, 0.1); border-color:var(--color-guardar); color:white; padding:8px 24px; font-size: 0.75rem; box-shadow: 0 0 10px rgba(31, 111, 235, 0.2);">1. FLUJO PRESENTE</button>
-        <button class="btn-sys" id="tabBtnTC" onclick="switchPCPanel('tc')" style="padding:8px 24px; font-size: 0.75rem;">2. MATRIZ TC</button>
-    </div>
-
-    <!-- 3. ZONA DER: RELOJ Y COMANDOS DE SISTEMA -->
-    <div class="system-btns" style="gap: 8px;">
-        <div id="cronos" class="cronos" style="font-size: 0.85rem; padding: 6px 15px;">--:--:--</div>
-        <button class="btn-sys" onclick="let b=this; b.innerHTML='⏳...'; b.style.opacity='0.7'; triggerSync(); setTimeout(()=>{b.innerHTML='🔄 SYNC'; b.style.opacity='1';}, 2500)" style="color:var(--color-saldo); border-color:rgba(46, 160, 67, 0.4); background:rgba(46, 160, 67, 0.1);" title="Forzar Sincronización">🔄 SYNC</button>
-        <button class="btn-sys" onclick="toggleLanguage()" style="color:#58a6ff; border-color:rgba(88,166,255,0.4);">🌐 ENG</button>
-        <button class="btn-sys" onclick="abrirHistorian()" style="color:var(--color-fuga); border-color:rgba(248,81,73,0.4);">⚠️ LOG</button>
-        <button class="btn-sys" onclick="abrirPreVuelo()" style="color:#ff9800; border-color:rgba(255,152,0,0.4); background:rgba(255,152,0,0.1);" data-en="🚀 PRE-FLIGHT">🚀 PRE-VUELO</button>
-        <button class="btn-sys" onclick="toggleTheme()">☀️/🌙</button>
-        <button class="btn-sys" onclick="logout()" style="color:var(--color-fuga); border-color:rgba(248,81,73,0.3);" data-en="🚪 LOGOUT">🚪 SALIR</button>
-    </div>
-
-</div>
-
-    <div style="display: flex; gap: 10px; flex-shrink: 0;">
-        <div class="time-navigator-panel">
-            <div style="display: flex; gap: 8px;">
-                <select id="navAnio" class="nav-select" onchange="aplicarCicloAlSistema()"><option value="2025">2025</option><option value="2026" selected>2026</option></select>
-                <select id="navMesConceptual" class="nav-select" onchange="aplicarCicloAlSistema()" style="color: var(--color-ingresos);"><option value="0">Enero</option><option value="1">Febrero</option><option value="2">Marzo</option><option value="3" selected>Abril</option><option value="4">Mayo</option><option value="5">Junio</option><option value="6">Julio</option><option value="7">Agosto</option><option value="8">Septiembre</option><option value="9">Octubre</option><option value="10">Noviembre</option><option value="11">Diciembre</option></select>
-            </div>
-            <div id="navRangoBadge" class="nav-badge" style="margin-left: 10px;">--/-- al --/--</div>
+        <div class="grid-2" style="margin-bottom:20px;">
+            <select id="inputTipo" class="input-std" style="margin:0;"><option value="Gasto">Gasto Variable</option><option value="Gasto Fijo">Gasto Fijo</option><option value="Ingreso">Ingreso Extra</option><option value="Por Cobrar">Préstamo (CxC)</option><option value="Ahorro">Ahorro / Neutro</option></select>
+            <select id="inputFuga" class="input-std" style="margin:0;"><option value="100">100% Fuga</option><option value="50">50% Fuga</option><option value="0" selected>0% Fuga</option></select>
         </div>
-
-        <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px; padding-right: 10px; border-right: 1px solid var(--border-color); margin-right: 10px; justify-content: center;">
-            <span id="lblPeriodoViendo" style="font-size:0.55rem; color:var(--text-muted); font-weight:900; text-transform:uppercase; letter-spacing:1px;" data-en="FULL PERIOD">PERIODO COMPLETO</span>
-            <div style="display: flex; align-items: center;">
-                <button id="btnToggleFechas" class="btn-sys" style="border-style: dashed;" onclick="document.getElementById('cajaFechasCustom').style.display='flex'; this.style.display='none';" data-en="📅 CUSTOM RANGE">📅 RANGO CUSTOM</button>
-                <div id="cajaFechasCustom" style="display: none; align-items: center; gap: 5px; animation: fadeSlideUp 0.3s;">
-                    <input type="date" id="filtroDesde" class="nav-select" onchange="document.getElementById('lblPeriodoViendo').innerText= isEng ? 'CUSTOM RANGE' : 'RANGO PERSONALIZADO'; actualizarDashboard();">
-                    <input type="date" id="filtroHasta" class="nav-select" onchange="document.getElementById('lblPeriodoViendo').innerText= isEng ? 'CUSTOM RANGE' : 'RANGO PERSONALIZADO'; actualizarDashboard();">
-                    <button class="btn-sys" onclick="document.getElementById('filtroDesde').value=''; document.getElementById('filtroHasta').value=''; document.getElementById('lblPeriodoViendo').innerText= isEng ? 'FULL PERIOD' : 'PERIODO COMPLETO'; document.getElementById('cajaFechasCustom').style.display='none'; document.getElementById('btnToggleFechas').style.display='block'; actualizarDashboard();" style="border-color:var(--color-fuga); color:var(--color-fuga); padding: 4px 8px;">✖</button>
-                </div>
-            </div>
+        <!-- Selector de Cuotas (Oculto por defecto) -->
+        <div id="boxCuotas" style="display:none; margin-bottom:20px;">
+            <select id="inputCuotas" class="input-std" style="border-color:var(--accent-green);"><option value="1">1 Cuota</option><option value="2">2 Cuotas</option><option value="3">3 Cuotas</option><option value="6">6 Cuotas</option><option value="12">12 Cuotas</option></select>
         </div>
-
-        <div class="kpi-row" style="flex: 1; grid-template-columns: repeat(6, 1fr);">
-            <div class="kpi-card">
-                <h4 data-en="Monthly Budget">Presupuesto Mensual</h4>
-                <div class="value"><span>$</span><input type="text" id="inputSueldo" placeholder="NO ASIGNADO" style="background:transparent; border:none; color:var(--text-main); font-weight:900; width:100%; font-size:1.15rem; outline:none; font-family: monospace; padding:0; flex-grow:1;"></div>
-            </div>
-            <div class="kpi-card" id="cardArrastre" style="border-top-color: var(--color-fuga); display:none;">
-                <h4 style="color:var(--color-fuga);">Arrastre Línea (M-1)</h4>
-                <div class="value" style="color:var(--color-fuga);">$<span id="txtArrastreLinea">0</span></div>
-            </div>
-            <div class="kpi-card" style="border-top-color: var(--color-fuga);">
-                <h4>Carga Fija</h4>
-                <div class="value">$<span id="txtTotalFijos">0</span></div>
-            </div>
-            <div class="kpi-card" style="border-top-color: #ff9800;">
-                <h4>Carga Variable</h4>
-                <div class="value">$<span id="txtTotalOtros">0</span></div>
-            </div>
-            <div class="kpi-card kpi-saldo">
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <h4 data-en="Net Balance">Balance Real</h4>
-                    <div id="badgeDias" style="font-size: 0.6rem; background: rgba(0,0,0,0.4); padding: 2px 4px; border-radius: 4px; font-weight: 800; color: var(--color-saldo); border: 1px solid rgba(46,160,67,0.3);">-- DÍAS</div>
-                </div>
-                <div class="value" style="margin-top:2px;">$<span id="txtSaldo">0</span></div>
-            </div>
-            <div class="kpi-card kpi-proyectado">
-                <h4 data-en="Projected Close">Saldo - TC</h4>
-                <div class="value">$<span id="txtProyectado">0</span></div>
-            </div>
-        </div>
-    </div>
-
-    <div class="command-ribbon">
-        <div class="ribbon-title">CMD</div>
+        
+        <button id="btnGuardar" class="btn-mega" onclick="agregarMovimiento()">INYECTAR</button>
+        <button id="btnCancelarEdicion" class="btn-mega" onclick="limpiarFormulario(); cerrarSheetInyeccion();" style="display:none; background:var(--bg-elevated); border:1px solid var(--border-subtle); color:var(--text-main); margin-top:10px; box-shadow:none;">CANCELAR EDICIÓN</button>
         <input type="hidden" id="editId">
-        <div class="form-group sm"><label data-en="Date">Fecha</label><input type="datetime-local" id="inputFecha" class="form-control"></div>
-        <div class="form-group sm"><label data-en="Flow Type">Tipo Flujo</label>
-            <select id="inputTipo" class="form-control">
-                <option value="Gasto">Gasto Variable</option><option value="Gasto Fijo">Gasto Fijo</option><option value="Ingreso">Ingreso Extra</option><option value="Por Cobrar">Préstamo (CxC)</option><option value="Ahorro">Ahorro / Neutro</option>
-            </select>
-        </div>
-        <div class="form-group"><label data-en="Category">Categoría V31.4</label><select id="inputCategoria" class="form-control"></select></div>
-        <div class="form-group sm" id="boxFuga"><label data-en="% Leak">% Fuga</label>
-            <select id="inputFuga" class="form-control">
-                <option value="100">100%</option>
-                <option value="90">90%</option>
-                <option value="80">80%</option>
-                <option value="70">70%</option>
-                <option value="60">60%</option>
-                <option value="50">50%</option>
-                <option value="40">40%</option>
-                <option value="30">30%</option>
-                <option value="20">20%</option>
-                <option value="10">10%</option>
-                <option value="0" selected>0%</option>
-            </select>
-        </div>
-        <div class="form-group sm" id="boxCuotas" style="display:none;"><label data-en="Installments">Cuotas</label>
-            <select id="inputCuotas" class="form-control" style="border-color:var(--color-ingresos);"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="6">6</option><option value="12">12</option></select>
-        </div>
-        <div class="form-group lg"><label data-en="Description">Descripción</label><input type="text" id="inputNombre" class="form-control" placeholder="[ AUTO-PILOTO M/L ] Ingresa gasto..." autocomplete="off" autocorrect="off" spellcheck="false"></div>
-        <div class="form-group sm"><label data-en="Amount ($)">Monto ($)</label><input type="text" id="inputMonto" class="form-control" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this)" style="color:var(--color-edit); font-weight:bold; font-size:1rem;" autocomplete="off"></div>
-        
-        <button id="btnGuardar" class="btn-ribbon" onclick="agregarMovimiento()" data-en="INJECT">INYECTAR</button>
-        <button id="btnCancelarPC" class="btn-abortar-pc" onclick="limpiarFormulario()">ESC</button>
-    </div>
-
-    <div class="dual-core">
-        <!-- ============================================== -->
-        <!-- 🔴 PANEL 1: FLUJO PRESENTE + TERCEROS          -->
-        <!-- ============================================== -->
-        <div class="core-panel" id="panelMain" ondragover="dragOverPanel(event, 'main')" ondragleave="dragLeavePanel(event, 'main')" ondrop="dropOnPanel(event, 'main')">
-            <div class="core-header">
-                <div class="core-title"><span style="color:var(--color-saldo); text-shadow: 0 0 8px var(--color-saldo);">●</span> <span>FLUJO PRESENTE (LIBRO DIARIO)</span></div>
-                <div style="display: flex; gap: 15px; align-items: center;">
-                    <div class="fugas-mini-kpi" title="Eficiencia de Gasto">
-                        <span>FUGAS DE SISTEMA:</span><strong id="txtTotalEvitable">0</strong>
-                        <span style="margin-left: 5px;">(<span id="txtPorcentajeFugas" style="color:var(--color-fuga); font-weight:bold;">0%</span>)</span>
-                    </div>
-                    <button class="btn-sys" onclick="let b=this; b.innerHTML='⏳...'; b.style.opacity='0.7'; exportarDataLink(); setTimeout(()=>{b.innerHTML='📥 DATA-LINK'; b.style.opacity='1';}, 2000)" style="background:var(--accent-blue); color:#fff; border:none; transition:all 0.2s;">📥 DATA-LINK</button>
-                </div>
-            </div>
-            
-            <div class="core-body">
-                <!-- 🛠️ FILA DE INSTRUMENTOS: 4 Paneles Simétricos -->
-                <div class="context-charts flujo" style="grid-template-columns: repeat(4, 1fr);">
-                    <div class="chart-box">
-                        <div class="bd-overlay-kpis">
-                            <div class="bd-badge">G: <span id="txtGastoTramo" style="color:var(--color-fuga)">$0</span></div>
-                            <div class="bd-badge">P: <span id="txtPromedioZoom" style="color:#d29922">$0</span></div>
-                        </div>
-                        <h5 data-en="BURN-RATE TRAJECTORY">TRAYECTORIA (BURN-RATE)</h5>
-                        <div class="canvas-container"><canvas id="chartBurnDown"></canvas></div>
-                    </div>
-                    <div class="chart-box"><h5 data-en="VITAL PULSE (BASE VS LEAK)">PULSO VITAL (BASE VS FUGA)</h5><div class="canvas-container"><canvas id="chartDiario"></canvas></div></div>
-                    <div class="chart-box"><h5 data-en="CATEGORICAL SPECTRUM">ESPECTRO CATEGÓRICO</h5><div class="canvas-container"><canvas id="chartPareto"></canvas></div></div>
-                    
-                    <div class="chart-box" style="border-top: 3px solid #ff9800; display: flex; flex-direction: column; justify-content: space-between; background: rgba(255, 152, 0, 0.03);">
-                        <div>
-                            <h5 style="color:#ff9800; margin-bottom: 2px;">ESTADO PRE-VUELO</h5>
-                            <div style="font-size: 0.6rem; color: var(--text-muted); text-align: center; font-family: monospace; margin-bottom: 15px;">PROYECCIÓN MES SIGUIENTE</div>
-                            
-                            <div class="pv-tank" style="margin-bottom: 15px; height: 14px; border-radius: 7px; width: 85%; margin-left: auto; margin-right: auto;">
-                                <div id="widget-barra-roja" class="pv-fill-rojo" style="width: 0%;"></div>
-                                <div id="widget-barra-naranja" class="pv-fill-naranja" style="width: 0%;"></div>
-                                <div id="widget-barra-verde" class="pv-fill-verde" style="width: 100%;"></div>
-                            </div>
-                            
-                            <div style="text-align: center;">
-                                <div style="font-size: 2rem; font-weight: 900; color: var(--color-saldo); font-family: monospace; text-shadow: 0 0 15px rgba(46,160,67,0.4); line-height: 1;">
-                                    $<span id="widget-txt-liquidez">0</span>
-                                </div>
-                            </div>
-                        </div>
-                        <button class="btn-sys" onclick="abrirPreVuelo()" style="width: 100%; padding: 10px; background: rgba(255, 152, 0, 0.1); color: #ff9800; border-color: rgba(255, 152, 0, 0.4); font-size: 0.8rem; margin-top: 10px;">⚙️ CONFIGURAR ARRANQUE</button>
-                    </div>
-                </div>
-
-                <!-- 🛠️ MATRIZ DE GASTOS COMPLETA + TABLERO KANBAN FINANCIERO -->
-                <!-- CAMBIO: Grilla 55% / 45% (1.2fr 1fr) -->
-                <div style="padding: 0 15px 20px 15px; width: 100%; max-width: 1800px; margin: 0 auto; display: grid; grid-template-columns: 1.2fr 1fr; gap: 15px; height: calc(100vh - 480px); min-height: 350px;">
-                    
-                    <!-- COLUMNA IZQ: Libro Diario -->
-                    <div style="background: var(--bg-panel); border-radius: 8px; border: 1px solid var(--border-color); overflow: hidden; box-shadow: 0 5px 25px rgba(0,0,0,0.2); display: flex; flex-direction: column;">
-                        <div style="padding: 6px 12px; background: rgba(0,0,0,0.4); border-bottom: 1px solid var(--border-color); position: sticky; top: 0; z-index: 30; flex-shrink: 0;">
-                            <input type="text" id="inputBuscador" class="form-control" placeholder="🔍 Buscar en la matriz diaria..." autocomplete="off" oninput="actualizarDashboard()" style="width: 100%; max-width: 350px; height: 30px; background: var(--input-bg);">
-                        </div>
-                        <div style="flex-grow: 1; overflow-y: auto;">
-                            <table id="tablaGastos" class="data-grid" style="width: 100%; position: relative; border-collapse: collapse;">
-                                <thead style="position: sticky; top: 0; z-index: 20; background: #010409; outline: 1px solid var(--border-color);">
-                                    <tr>
-                                        <th style="width: 30px; text-align: center;"><input type="checkbox" id="checkAll" onchange="toggleAllChecks()"></th>
-                                        <th onclick="sortTable('fechaISO')" style="width: 10%;">Fecha</th>
-                                        <th onclick="sortTable('nombre')" style="width: 35%;">Descripción</th>
-                                        <th onclick="sortTable('catV')" style="width: 25%;">Categoría & Telemetría</th>
-                                        <th onclick="sortTable('monto')" style="text-align: right; width: 12%;">Monto ($)</th>
-                                        <th style="text-align: right; width: 13%;">Saldo Hist.</th>
-                                        <th style="text-align: center; width: 5%;">CMD</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="listaDetalle"></tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <!-- COLUMNA DER: Tablero Kanban Financiero -->
-                    <div style="background: var(--bg-panel); border-radius: 8px; border: 1px solid var(--border-color); overflow: hidden; box-shadow: 0 5px 25px rgba(0,0,0,0.2); display: flex; flex-direction: column;">
-                        
-                        <!-- Cabecera y 3 KPIs -->
-                        <div style="padding: 10px 15px; background: rgba(0,0,0,0.4); border-bottom: 1px solid var(--border-color); position: sticky; top: 0; z-index: 30; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; flex-wrap: wrap; gap: 5px;">
-                            <span style="font-size: 0.8rem; font-weight: 900; color: #d29922; text-transform: uppercase; letter-spacing: 1px;">⚙️ OBLIGACIONES & PROVISIONES</span>
-                            <div style="display:flex; gap: 5px;">
-                                <div title="Cuentas por Cobrar" style="font-size: 0.7rem; font-family: monospace; color: var(--color-saldo); background: rgba(46, 160, 67, 0.1); padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(46, 160, 67, 0.3);">+ $<span id="kpiMeDeben">0</span></div>
-                                <div title="Deuda Dura" style="font-size: 0.7rem; font-family: monospace; color: var(--color-fuga); background: rgba(248, 81, 73, 0.1); padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(248, 81, 73, 0.3);">- $<span id="kpiYoDebo">0</span></div>
-                                <div title="Fondos Comprometidos" style="font-size: 0.7rem; font-family: monospace; color: #d29922; background: rgba(210, 153, 34, 0.1); padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(210, 153, 34, 0.3);">📌 $<span id="kpiPendientes">0</span></div>
-                            </div>
-                        </div>
-                        
-                        <!-- Mini-Consola de Inyección -->
-                        <div style="padding: 10px; background: rgba(255,255,255,0.02); border-bottom: 1px solid var(--border-color); display: flex; gap: 5px; flex-direction: column; flex-shrink: 0;">
-                            <div style="display:flex; gap:5px;">
-                                <input type="text" id="inputTerceroNombre" class="form-control" placeholder="Descripción de deuda o tarea pendiente..." style="flex:2; height:28px; font-size: 0.75rem;">
-                                <input type="text" id="inputTerceroMonto" class="form-control" placeholder="$ Monto (Aprox)" oninput="formatearEntradaNumerica(this)" style="flex:1; height:28px; font-size: 0.75rem; text-align:right;">
-                            </div>
-                            <div style="display:flex; gap:5px;">
-                                <button onclick="inyectarTercero('ME DEBEN')" style="flex:1; background:rgba(46, 160, 67, 0.15); color:var(--color-saldo); border:1px solid rgba(46, 160, 67, 0.4); border-radius:4px; font-size:0.65rem; font-weight:bold; cursor:pointer; height:24px;">➕ DEBEN</button>
-                                <button onclick="inyectarTercero('YO DEBO')" style="flex:1; background:rgba(248, 81, 73, 0.15); color:var(--color-fuga); border:1px solid rgba(248, 81, 73, 0.4); border-radius:4px; font-size:0.65rem; font-weight:bold; cursor:pointer; height:24px;">➖ DEBO</button>
-                                <button onclick="inyectarTercero('PENDIENTE')" style="flex:1; background:rgba(210, 153, 34, 0.15); color:#d29922; border:1px solid rgba(210, 153, 34, 0.4); border-radius:4px; font-size:0.65rem; font-weight:bold; cursor:pointer; height:24px;">📌 PENDIENTE</button>
-                            </div>
-                        </div>
-
-                        <!-- Zona de Scroll Kanban -->
-                        <div style="flex-grow: 1; overflow-y: auto; padding: 10px;" id="listaTerceros"></div>
-                    </div>
-                </div>
-            </div> <!-- 🟢 CIERRE EXACTO core-body (panelMain) -->
-        </div> <!-- 🟢 CIERRE EXACTO panelMain -->
-
-        <!-- ============================================== -->
-        <!-- 🔴 PANEL 2: MATRIZ TC                          -->
-        <!-- ============================================== -->
-        <div class="core-panel hidden" id="panelTC" style="border-color: rgba(248, 81, 73, 0.2); box-shadow: inset 0 0 30px rgba(248, 81, 73, 0.02);" ondragover="dragOverPanel(event, 'tc')" ondragleave="dragLeavePanel(event, 'tc')" ondrop="dropOnPanel(event, 'tc')">
-            <div class="core-header" style="background: rgba(248, 81, 73, 0.08); border-bottom-color: rgba(248, 81, 73, 0.2);">
-                <div class="core-title"><span style="color:var(--color-fuga); text-shadow: 0 0 8px var(--color-fuga);">●</span> <span>MATRIZ DE DEUDA TC</span></div>
-                <div style="display: flex; gap: 12px; align-items: center;">
-                    <div style="font-size:1.2rem; font-weight:900; color:var(--color-fuga); font-family: monospace; text-shadow: 0 0 10px rgba(248, 81, 73, 0.3);">$<span id="txtTotalTC">0</span></div>
-                    <button class="btn-sys" onclick="cargarCSV_TC()" style="background-color: var(--color-fuga); color: white; border: none; box-shadow: 0 0 10px rgba(248, 81, 73, 0.4);">💳 INGESTAR</button>
-                </div>
-            </div>
-            
-            <div class="core-body">
-                <div class="context-charts tc">
-                    <div class="chart-box" style="border-color: rgba(248, 81, 73, 0.3);"><h5 style="color:var(--color-fuga);">HORIZONTE DE DEUDA TC (6M)</h5><div class="canvas-container"><canvas id="chartRadar"></canvas></div></div>
-                    
-                    <!-- 🛠️ MÓDULO WHAT-IF SIMULATOR -->
-                    <div class="chart-box" style="border-color: rgba(121, 192, 255, 0.3); justify-content: space-between; background: rgba(31, 111, 235, 0.02);">
-                        <h5 style="color:#79c0ff; text-shadow: 0 0 8px rgba(121, 192, 255, 0.4);">MÓDULO DE SIMULACIÓN "WHAT-IF"</h5>
-                        <p style="font-size: 0.65rem; color: var(--text-muted); text-align: center; margin: 0 0 10px 0; font-weight: 600;">CONTROL PREALIMENTADO: Evalúa el impacto de un prepago de capital sobre la curva de deuda a 6 meses.</p>
-
-                        <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); border-radius: 8px; padding: 15px; display: flex; flex-direction: column; gap: 10px; align-items: center; flex-grow: 1; justify-content: center; box-shadow: inset 0 0 15px rgba(0,0,0,0.5);">
-                            <label style="font-size: 0.65rem; font-weight: 800; color: var(--text-main); text-transform: uppercase;">Capital a Inyectar (Prepago)</label>
-                            
-                            <div style="display: flex; align-items: center; gap: 10px; width: 100%; max-width: 250px;">
-                                <span style="font-size: 1.2rem; color: var(--color-saldo); font-weight: 900; text-shadow: 0 0 10px rgba(46,160,67,0.4);">$</span>
-                                <input type="text" id="inputSimuladorTC" class="form-control" style="font-size: 1.1rem; font-family: monospace; color: var(--color-saldo); font-weight: 900; text-align: right; border-color: var(--color-saldo); background: #010409;" inputmode="numeric" placeholder="0" oninput="formatearEntradaNumerica(this)">
-                            </div>
-
-                            <div style="display: flex; gap: 10px; width: 100%; max-width: 250px; margin-top: 5px;">
-                                <button class="btn-sys" onclick="resetearSimulacionTC()" style="flex: 1; border-color: var(--text-muted); color: var(--text-muted);">RESET</button>
-                                <button class="btn-sys" onclick="ejecutarSimulacionTC()" style="flex: 2; background: rgba(46, 160, 67, 0.15); border-color: var(--color-saldo); color: var(--color-saldo); box-shadow: 0 0 10px rgba(46, 160, 67, 0.2);">SIMULAR IMPACTO</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div style="padding: 12px; border-bottom: 1px solid rgba(248, 81, 73, 0.2); border-top: 1px solid rgba(248, 81, 73, 0.2); background: rgba(0,0,0,0.2); position: sticky; top: 0; z-index: 30;">
-                    <div id="boxImpactoTC" class="tc-impact-box" style="display:none;">
-                        <span id="lblImpactoMes">⚠️ ALARMA DE IMPACTO PRÓX. MES</span>
-                        <strong id="txtImpactoMonto">$0</strong>
-                        <div style="flex:1;"></div>
-                        <button class="btn-sys" onclick="exportarTablaBunker('tablaCuotas', 'Bunker_Proyeccion_TC')" style="border-color: var(--color-fuga); color: var(--color-fuga); background: transparent; padding: 4px 10px;">📥 EXPORTAR</button>
-                    </div>
-                    <div id="barraAccionesTC" style="display:none; background: rgba(0,0,0,0.8); border: 1px solid var(--border-color); color: white; padding: 8px 15px; border-radius: 6px; justify-content: space-between; align-items: center; margin-top: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.4);">
-                        <span id="txtSeleccionadosTC" style="font-weight: 900; font-size: 0.8rem; letter-spacing: 1px; color: var(--text-main);">0 SELECCIONADAS</span>
-                        <div style="display: flex; gap: 10px;">
-                            <button onclick="marcarFacturadosTC()" style="background: rgba(46, 160, 67, 0.2); color: var(--color-saldo); border: 1px solid var(--color-saldo); padding: 6px 15px; border-radius: 4px; font-weight: 900; cursor: pointer; font-size: 0.75rem; text-transform: uppercase;">🔒 FACTURAR OFICIAL</button>
-                            <button onclick="ejecutarPurgaMasivaTC()" style="background: rgba(248, 81, 73, 0.2); color: var(--color-fuga); border: 1px solid var(--color-fuga); padding: 6px 15px; border-radius: 4px; font-weight: 900; cursor: pointer; font-size: 0.75rem; text-transform: uppercase;">🗑️ PURGAR PAGADAS</button>
-                        </div>
-                    </div>
-
-                    <table id="tablaCuotas" class="data-grid">
-                        <thead style="background: rgba(248, 81, 73, 0.05);">
-                            <tr>
-                                <th style="width: 30px; text-align: center;"><input type="checkbox" id="checkMaestroTC" onclick="toggleTodosTC(this)" style="accent-color: var(--color-fuga);"></th>
-                                <th>Ciclo/Cuota</th><th>Comercio Asociado</th><th style="text-align: right;">Cuota ($)</th>
-                            </tr>
-                        </thead>
-                        <tbody id="listaDetalleTC"></tbody>
-                    </table>
-                </div> <!-- 🟢 CIERRE zona sticky -->
-            </div> <!-- 🟢 CIERRE EXACTO core-body (panelTC) -->
-        </div> <!-- 🟢 CIERRE EXACTO panelTC -->
-        <!-- ============================================== -->
-        <!-- 🔴 PANEL 2: MATRIZ TC                          -->
-        <!-- ============================================== -->
-        <div class="core-panel hidden" id="panelTC" style="border-color: rgba(248, 81, 73, 0.2); box-shadow: inset 0 0 30px rgba(248, 81, 73, 0.02);" ondragover="dragOverPanel(event, 'tc')" ondragleave="dragLeavePanel(event, 'tc')" ondrop="dropOnPanel(event, 'tc')">
-            <div class="core-header" style="background: rgba(248, 81, 73, 0.08); border-bottom-color: rgba(248, 81, 73, 0.2);">
-                <div class="core-title"><span style="color:var(--color-fuga); text-shadow: 0 0 8px var(--color-fuga);">●</span> <span>MATRIZ DE DEUDA TC</span></div>
-                <div style="display: flex; gap: 12px; align-items: center;">
-                    <div style="font-size:1.2rem; font-weight:900; color:var(--color-fuga); font-family: monospace; text-shadow: 0 0 10px rgba(248, 81, 73, 0.3);">$<span id="txtTotalTC">0</span></div>
-                    <button class="btn-sys" onclick="cargarCSV_TC()" style="background-color: var(--color-fuga); color: white; border: none; box-shadow: 0 0 10px rgba(248, 81, 73, 0.4);">💳 INGESTAR</button>
-                </div>
-            </div>
-            
-            <div class="core-body">
-                <div class="context-charts tc">
-                    <div class="chart-box" style="border-color: rgba(248, 81, 73, 0.3);"><h5 style="color:var(--color-fuga);">HORIZONTE DE DEUDA TC (6M)</h5><div class="canvas-container"><canvas id="chartRadar"></canvas></div></div>
-                    
-                    <!-- 🛠️ MÓDULO WHAT-IF SIMULATOR -->
-                    <div class="chart-box" style="border-color: rgba(121, 192, 255, 0.3); justify-content: space-between; background: rgba(31, 111, 235, 0.02);">
-                        <h5 style="color:#79c0ff; text-shadow: 0 0 8px rgba(121, 192, 255, 0.4);">MÓDULO DE SIMULACIÓN "WHAT-IF"</h5>
-                        <p style="font-size: 0.65rem; color: var(--text-muted); text-align: center; margin: 0 0 10px 0; font-weight: 600;">CONTROL PREALIMENTADO: Evalúa el impacto de un prepago de capital sobre la curva de deuda a 6 meses.</p>
-
-                        <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); border-radius: 8px; padding: 15px; display: flex; flex-direction: column; gap: 10px; align-items: center; flex-grow: 1; justify-content: center; box-shadow: inset 0 0 15px rgba(0,0,0,0.5);">
-                            <label style="font-size: 0.65rem; font-weight: 800; color: var(--text-main); text-transform: uppercase;">Capital a Inyectar (Prepago)</label>
-                            
-                            <div style="display: flex; align-items: center; gap: 10px; width: 100%; max-width: 250px;">
-                                <span style="font-size: 1.2rem; color: var(--color-saldo); font-weight: 900; text-shadow: 0 0 10px rgba(46,160,67,0.4);">$</span>
-                                <input type="text" id="inputSimuladorTC" class="form-control" style="font-size: 1.1rem; font-family: monospace; color: var(--color-saldo); font-weight: 900; text-align: right; border-color: var(--color-saldo); background: #010409;" inputmode="numeric" placeholder="0" oninput="formatearEntradaNumerica(this)">
-                            </div>
-
-                            <div style="display: flex; gap: 10px; width: 100%; max-width: 250px; margin-top: 5px;">
-                                <button class="btn-sys" onclick="resetearSimulacionTC()" style="flex: 1; border-color: var(--text-muted); color: var(--text-muted);">RESET</button>
-                                <button class="btn-sys" onclick="ejecutarSimulacionTC()" style="flex: 2; background: rgba(46, 160, 67, 0.15); border-color: var(--color-saldo); color: var(--color-saldo); box-shadow: 0 0 10px rgba(46, 160, 67, 0.2);">SIMULAR IMPACTO</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div style="padding: 12px; border-bottom: 1px solid rgba(248, 81, 73, 0.2); border-top: 1px solid rgba(248, 81, 73, 0.2); background: rgba(0,0,0,0.2); position: sticky; top: 0; z-index: 30;">
-                    <div id="boxImpactoTC" class="tc-impact-box" style="display:none;">
-                        <span id="lblImpactoMes">⚠️ ALARMA DE IMPACTO PRÓX. MES</span>
-                        <strong id="txtImpactoMonto">$0</strong>
-                        <div style="flex:1;"></div>
-                        <button class="btn-sys" onclick="exportarTablaBunker('tablaCuotas', 'Bunker_Proyeccion_TC')" style="border-color: var(--color-fuga); color: var(--color-fuga); background: transparent; padding: 4px 10px;">📥 EXPORTAR</button>
-                    </div>
-                    <div id="barraAccionesTC" style="display:none; background: rgba(0,0,0,0.8); border: 1px solid var(--border-color); color: white; padding: 8px 15px; border-radius: 6px; justify-content: space-between; align-items: center; margin-top: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.4);">
-                        <span id="txtSeleccionadosTC" style="font-weight: 900; font-size: 0.8rem; letter-spacing: 1px; color: var(--text-main);">0 SELECCIONADAS</span>
-                        <div style="display: flex; gap: 10px;">
-                            <button onclick="marcarFacturadosTC()" style="background: rgba(46, 160, 67, 0.2); color: var(--color-saldo); border: 1px solid var(--color-saldo); padding: 6px 15px; border-radius: 4px; font-weight: 900; cursor: pointer; font-size: 0.75rem; text-transform: uppercase;">🔒 FACTURAR OFICIAL</button>
-                            <button onclick="ejecutarPurgaMasivaTC()" style="background: rgba(248, 81, 73, 0.2); color: var(--color-fuga); border: 1px solid var(--color-fuga); padding: 6px 15px; border-radius: 4px; font-weight: 900; cursor: pointer; font-size: 0.75rem; text-transform: uppercase;">🗑️ PURGAR PAGADAS</button>
-                        </div>
-                    </div>
-
-                <table id="tablaCuotas" class="data-grid">
-                    <thead style="background: rgba(248, 81, 73, 0.05);">
-                        <tr>
-                            <th style="width: 30px; text-align: center;"><input type="checkbox" id="checkMaestroTC" onclick="toggleTodosTC(this)" style="accent-color: var(--color-fuga);"></th>
-                            <th>Ciclo/Cuota</th><th>Comercio Asociado</th><th style="text-align: right;">Cuota ($)</th>
-                        </tr>
-                    </thead>
-                    <tbody id="listaDetalleTC"></tbody>
-                </table>
-            </div> <!-- CIERRE core-body de panelTC -->
-        </div> <!-- CIERRE panelTC -->
-    </div> <!-- CIERRE dual-core -->
-    
-    <div id="massActionsBar" class="floating-mass-actions" style="display: none;">
-        <span id="massCount" style="font-weight:900; font-size:0.85rem; letter-spacing: 0.5px;">0 SEL</span>
-        <select id="massCategorySelect" class="form-control" style="width:220px; height: 30px; border-color:var(--color-edit);"></select>
-        <button class="btn-sys" style="background:var(--color-edit); color:#000; font-weight:900;" onclick="massCategorize()">MUTE/CAT</button>
-        <button class="btn-sys" style="background:rgba(248,81,73,0.2); border-color:var(--color-fuga); font-size:1.1rem; color:var(--color-fuga);" onclick="massDelete()">🗑️</button>
     </div>
 </div>
 
-<div id="modal-historian" style="display:none; position:fixed; inset:0; background:rgba(3, 5, 8, 0.95); z-index:25000; flex-direction:column; align-items:center; justify-content:center; backdrop-filter:blur(10px); padding:20px;">
-    <div class="hist-box" style="position: relative;">
-        <button onclick="document.getElementById('modal-historian').style.display='none'" style="position:absolute; top:12px; right:15px; background:var(--bg-panel); border:1px solid var(--border-color); color:var(--text-muted); border-radius:50%; width:32px; height:32px; cursor:pointer; font-weight:bold; z-index:100; display:flex; align-items:center; justify-content:center; box-shadow: 0 4px 10px rgba(0,0,0,0.3); transition: color 0.2s, border-color 0.2s;" onmouseover="this.style.color='var(--color-fuga)'; this.style.borderColor='var(--color-fuga)';" onmouseout="this.style.color='var(--text-muted)'; this.style.borderColor='var(--border-color)';">✕</button>
-        
-        <div class="hist-header">
-            <h3 style="color:var(--color-fuga); margin:0; display:flex; align-items:center; gap:10px;"><span style="font-size:1.5rem;">⚠️</span> HISTORIAN LOG</h3>
+<!-- SHEET 2: EDICIÓN Y DESTRUCCIÓN -->
+<div class="bottom-sheet" id="sheetEdit" onclick="if(event.target===this) document.getElementById('sheetEdit').style.display='none'">
+    <div class="sheet-content" id="sheetEditContent" style="padding: 30px 20px;">
+        <div style="text-align:center; margin-bottom:25px;">
+            <div id="editMontoDisplay" style="font-size:2.5rem; font-family:monospace; font-weight:900; color:#fff;"></div>
+            <div id="editNombreDisplay" style="font-size:0.9rem; color:var(--text-dim); margin-top:5px;"></div>
         </div>
-        <div class="hist-body" id="historian-content"></div>
-    </div>
-</div>
-
-<div id="modal-dia-cero" style="display:none; position:fixed; inset:0; background: rgba(3, 5, 8, 0.95); z-index: 20000; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(10px); padding: 10px;">
-    <div class="pv-container">
-        <button onclick="cerrarPreVuelo()" style="position:absolute; top:15px; right:15px; background:var(--bg-panel); border:1px solid var(--border-color); color:var(--text-muted); border-radius:50%; width:32px; height:32px; cursor:pointer; font-weight:bold; z-index:100; display:flex; align-items:center; justify-content:center; box-shadow: 0 4px 10px rgba(0,0,0,0.3); transition: color 0.2s, border-color 0.2s;" onmouseover="this.style.color='var(--color-fuga)'; this.style.borderColor='var(--color-fuga)';" onmouseout="this.style.color='var(--text-muted)'; this.style.borderColor='var(--border-color)';">✕</button>
-
-        <div class="pv-header">
-            <h2 class="pv-title" data-en="DAY ZERO SIMULATOR">SIMULADOR DÍA CERO</h2>
-            <div class="pv-subtitle" data-en="FEEDFORWARD CONTROL FOR">CONTROL PREALIMENTADO DE LIQUIDEZ MES DE <span id="pv-mes-label" style="color:#fff; font-weight:bold;">--</span></div>
-        </div>
-        
-        <div class="pv-tank-wrapper">
-            <div class="pv-tank-label">
-                <span data-en="Hard Deductions">Deducciones Duras</span>
-                <span data-en="Net Maneuver Liquidity">Liquidez Neta de Maniobra</span>
-            </div>
-            <div class="pv-tank">
-                <div id="pv-barra-roja" class="pv-fill-rojo" style="width: 0%;"></div>
-                <div id="pv-barra-naranja" class="pv-fill-naranja" style="width: 0%;"></div>
-                <div id="pv-barra-verde" class="pv-fill-verde" style="width: 100%;"></div>
-            </div>
-            <div class="pv-liquidez-text">$<span id="pv-txt-liquidez">0</span></div>
-            <div class="pv-certeza" id="pv-certeza-container">CERTEZA DEL CÁLCULO: <span id="pv-certeza-pct" style="color:var(--color-fuga);">0%</span></div>
-        </div>
-
-        <div class="pv-body">
-            <div class="pv-grid">
-                <div class="pv-section">
-                    <div class="pv-section-title" style="color:var(--color-fuga);"><span style="font-size:1rem;">💳</span> Deducciones Críticas</div>
-                    <div class="pv-input-group" style="background:rgba(46,160,67,0.1); border-color:var(--color-saldo);">
-                        <label style="color:var(--color-saldo);">Sueldo (Ingreso)</label>
-                        <input type="text" id="pv-sueldo" class="pv-input" style="color:var(--color-saldo); border-color:var(--color-saldo);" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();">
-                    </div>
-                    <div class="pv-input-group">
-                        <label>TC Nacional</label>
-                        <button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-tc-nac')">EST</button>
-                        <input type="text" id="pv-tc-int" class="pv-input" style="color:var(--color-fuga); width:100px;" placeholder="US$ 0.00" data-estado="est" inputmode="decimal" oninput="this.value = this.value.replace(/[^0-9.,]/g, ''); calcularDiaCero();">
-                    </div>
-                    <div style="display:flex; flex-direction:column; width:100%; background: var(--bg-card); border-radius: 12px; border: 1px solid rgba(248,81,73,0.3); margin-bottom: 10px; padding: 12px 14px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
-                        <div style="display: flex; align-items: center; justify-content: space-between; gap:10px;">
-                            <div style="flex:1;">
-                                <label style="font-size: 0.8rem; font-weight: 900; color: var(--text-main); text-transform: uppercase;">TC Internacional</label>
-                                <span id="lbl-dolar-actual" style="display:block; font-size:0.65rem; color:var(--text-muted); font-family:monospace; margin-top:4px;">Consultando USD...</span>
-                            </div>
-                            <button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-tc-int')">EST</button>
-                            <input type="text" id="pv-tc-int" class="pv-input" style="color:var(--color-fuga); width:100px;" placeholder="US$ 0" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();">
-                        </div>
-                        <div id="pv-tc-int-clp" style="text-align:right; font-size:0.85rem; color:var(--color-fuga); font-family:monospace; font-weight:900; margin-top:10px; border-top: 1px dashed rgba(248,81,73,0.3); padding-top: 10px;">~ $0 CLP</div>
-                    </div>
-                    <div class="pv-input-group">
-                        <label>Línea de Crédito</label>
-                        <button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-linea')">EST</button>
-                        <input type="text" id="pv-linea" class="pv-input" style="color:var(--color-fuga);" placeholder="0" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();">
-                    </div>
-                </div>
-
-                <div class="pv-section">
-                    <div class="pv-section-title" style="color:var(--color-infra);"><span style="font-size:1rem;">🏢</span> Carga Estructural</div>
-                    <div class="pv-input-group"><label>Arriendo</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-arriendo')">EST</button><input type="text" id="pv-arriendo" class="pv-input" value="330.000" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
-                    <div class="pv-input-group"><label>UDEC 2024</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-udec')">EST</button><input type="text" id="pv-udec" class="pv-input" value="48.000" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
-                    <div class="pv-input-group"><label>CAE</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-cae')">EST</button><input type="text" id="pv-cae" class="pv-input" value="38.742" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
-                </div>
-
-                <div class="pv-section">
-                    <div class="pv-section-title" style="color:#d29922;"><span style="font-size:1rem;">⚡</span> Serv. Básicos Hogar</div>
-                    <div class="pv-input-group"><label>Gastos Comunes</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-ggcc')">EST</button><input type="text" id="pv-ggcc" class="pv-input" value="63.220" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
-                    <div class="pv-input-group"><label>Luz</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-luz')">EST</button><input type="text" id="pv-luz" class="pv-input" value="20.000" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
-                    <div class="pv-input-group"><label>Agua</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-agua')">EST</button><input type="text" id="pv-agua" class="pv-input" value="8.000" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
-                    <div class="pv-input-group"><label>Gas</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-gas')">EST</button><input type="text" id="pv-gas" class="pv-input" value="0" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
-                </div>
-
-                <div class="pv-section">
-                    <div class="pv-section-title" style="color:#58a6ff;"><span style="font-size:1rem;">📱</span> Op. Complementaria</div>
-                    <div class="pv-input-group"><label>Celu Mio</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-celu')">EST</button><input type="text" id="pv-celu" class="pv-input" value="13.990" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
-                    <div class="pv-input-group"><label>Movistar Madre</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-madre')">EST</button><input type="text" id="pv-madre" class="pv-input" value="19.290" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
-                    <div class="pv-input-group" title="YT Premium, Disney, Icloud, Google, Spotify, HBO"><label>Pack Subs</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-subs')">EST</button><input type="text" id="pv-subs" class="pv-input" value="20.540" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
-                    <div class="pv-input-group"><label>Seguro Auto</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-seguro')">EST</button><input type="text" id="pv-seguro" class="pv-input" value="38.300" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="pv-footer">
-            <button class="btn-pv-close" onclick="cerrarPreVuelo()">ABORTAR</button>
-            <button class="btn-pv-launch" onclick="ejecutarArranque()">EFECTUAR ARRANQUE (INYECTAR MATRIZ)</button>
+        <div style="display:flex; gap:15px;">
+            <button class="btn-edit-action btn-primary" onclick="lanzarEdicionDesdeSheet()">✏️ RECALIBRAR</button>
+            <!-- 🛠️ MEJORA 4: Botón de destruir más evidente y peligroso -->
+            <button class="btn-edit-action btn-danger" onclick="ejecutarDestruccionDesdeSheet()">🗑️ DESTRUIR</button>
         </div>
     </div>
 </div>
+
+<!-- COMPARTIDO -->
+<script src="motor.js?v=15.3"></script>
 
 <script>
-    function switchPCPanel(viewId) {
-        document.querySelectorAll('.core-panel').forEach(p => p.classList.add('hidden'));
-        document.querySelectorAll('.btn-sys').forEach(b => {
-            if(b.id && b.id.startsWith('tabBtn')) { b.style.background = 'transparent'; b.style.color = 'var(--text-main)'; b.style.borderColor = 'var(--border-color)'; }
-        });
+    let idParaEditar = null;
+
+    function switchView(viewId) {
+        document.querySelectorAll('.view-panel').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
         
-        if(viewId === 'main') {
-            document.getElementById('panelMain').classList.remove('hidden');
-            document.getElementById('tabBtnFlujo').style.background = 'rgba(31, 111, 235, 0.1)'; document.getElementById('tabBtnFlujo').style.color = 'white'; document.getElementById('tabBtnFlujo').style.borderColor = 'var(--color-guardar)';
-        } else if(viewId === 'tc') {
-            document.getElementById('panelTC').classList.remove('hidden');
-            document.getElementById('tabBtnTC').style.background = 'rgba(248, 81, 73, 0.1)'; document.getElementById('tabBtnTC').style.color = 'white'; document.getElementById('tabBtnTC').style.borderColor = 'var(--color-fuga)';
+        document.getElementById(viewId).classList.add('active');
+        document.getElementById('btn-' + viewId).classList.add('active');
+    }
+
+    function abrirSheetInyeccion() {
+        const sheet = document.getElementById('sheetAdd');
+        const content = document.getElementById('sheetAddContent');
+        sheet.style.display = 'flex';
+        setTimeout(() => content.classList.add('open'), 10);
+        
+        if (!document.getElementById('editId').value) {
+            let tzoffset = (new Date()).getTimezoneOffset() * 60000;
+            let localISOTime = (new Date(Date.now() - tzoffset)).toISOString().slice(0, 16);
+            document.getElementById('inputFecha').value = localISOTime;
         }
     }
+
+    function cerrarSheetInyeccion() {
+        const content = document.getElementById('sheetAddContent');
+        content.classList.remove('open');
+        setTimeout(() => document.getElementById('sheetAdd').style.display = 'none', 300);
+    }
+
+    function abrirOpcionesFila(id, monto, nombre) {
+        idParaEditar = id;
+        document.getElementById('editMontoDisplay').innerText = monto;
+        document.getElementById('editNombreDisplay').innerText = nombre;
+        
+        const sheet = document.getElementById('sheetEdit');
+        const content = document.getElementById('sheetEditContent');
+        sheet.style.display = 'flex';
+        setTimeout(() => content.classList.add('open'), 10);
+    }
+
+    function lanzarEdicionDesdeSheet() {
+        document.getElementById('sheetEdit').style.display = 'none';
+        document.getElementById('sheetEditContent').classList.remove('open');
+        if(idParaEditar) {
+            editarMovimiento(idParaEditar);
+            abrirSheetInyeccion();
+            document.getElementById('btnCancelarEdicion').style.display = 'block';
+        }
+    }
+
+    function ejecutarDestruccionDesdeSheet() {
+        if(!idParaEditar) return;
+        if(confirm("⚠️ CONFIRMAR DESTRUCCIÓN DE REGISTRO")) {
+            db.collection("movimientos").doc(idParaEditar).delete()
+              .then(() => {
+                  document.getElementById('sheetEdit').style.display = 'none';
+                  document.getElementById('sheetEditContent').classList.remove('open');
+                  mostrarToast("REGISTRO DESTRUIDO");
+              });
+        }
+    }
+
+    // 🛠️ MÓDULO RENDERIZADO EXCLUSIVO MÓVIL (Con las mejoras 1 y 3)
+    window.renderizarListas = function(sueldoBase) {
+        let datos = [...datosMesGlobal].filter(x => x.catV !== 'Gasto Tarjeta de Crédito');
+        datos.sort((a,b) => new Date(b.fechaISO) - new Date(a.fechaISO));
+
+        const cont = document.getElementById('listaGastosMovil');
+        if(!cont) return;
+
+        let html = '';
+        let lastDate = '';
+
+        datos.forEach(x => {
+            const d = new Date(x.fechaISO);
+            const dateStr = d.toLocaleDateString('es-CL', {day:'numeric', month:'short'}).toUpperCase();
+            const timeStr = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+            
+            // 🛠️ MEJORA 1: Divisor de fecha flotante
+            let diffDays = Math.floor((new Date().setHours(0,0,0,0) - new Date(d).setHours(0,0,0,0)) / 86400000);
+            let dLabel = diffDays === 0 ? "HOY" : (diffDays === 1 ? "AYER" : dateStr);
+            if(dLabel !== lastDate) { html += `<div class="date-divider">${dLabel}</div>`; lastDate = dLabel; }
+
+            let iInfo = "❓"; let cHex = "139, 148, 158"; let cText = "var(--text-dim)"; let cFuga = ""; let cCard = "is-neutro";
+            if(typeof catMaestras !== 'undefined') { const found = catMaestras.find(c => c.id === x.catV); if(found) iInfo = found.em; }
+            
+            if(x.esIn) { cCard = "is-ingreso"; cText = "var(--accent-green)"; cHex = "46, 160, 67"; }
+            else if(!x.esNeutro) { 
+                cCard = "is-fuga"; cText = "var(--text-main)"; cHex = "248, 81, 73"; 
+                if(x.catV === 'Dopamina & Antojos') { cFuga = `background: linear-gradient(90deg, rgba(255,255,255,0.01) 40%, rgba(248, 81, 73, 0.08) 100%) !important; border-right: 3px solid var(--accent-red) !important;`; cText = "var(--accent-red)";}
+            }
+
+            let mFormat = x.esIn ? `+ $${x.monto.toLocaleString('es-CL')}` : (x.esNeutro ? `= $${x.monto.toLocaleString('es-CL')}` : `- $${x.monto.toLocaleString('es-CL')}`);
+            let mColor = x.esIn ? "var(--accent-green)" : (x.esNeutro ? "var(--accent-orange)" : "var(--text-main)");
+            
+            let nomLimpio = x.nombre || "Unknown";
+            let qNom = nomLimpio.replace(/'/g, "\\'").replace(/"/g, "&quot;");
+
+            html += `
+            <div class="mobile-card ${cCard}" style="${cFuga}" onclick="abrirOpcionesFila('${x.firestoreId}', '${mFormat}', '${qNom}')">
+                <div class="mc-icon" style="background:rgba(${cHex},0.1); border-color:rgba(${cHex},0.2);">${iInfo}</div>
+                <div class="mc-body">
+                    <div class="mc-title">${nomLimpio}</div>
+                    <div class="mc-subtitle"><span>🕒 ${timeStr}</span><span style="opacity:0.5;">|</span><span>${x.catV.replace(' & ','&')}</span></div>
+                </div>
+                <!-- 🛠️ MEJORA 3: Clase .col-monto para tabular nums -->
+                <div class="mc-amount col-monto" style="color:${mColor};">${mFormat}</div>
+            </div>`;
+        });
+        cont.innerHTML = html;
+
+        // Sync visual de KPIs de Flujo
+        let syncTxt = (idPC, idMovil) => { let pc = document.getElementById(idPC), mo = document.getElementById(idMovil); if(pc && mo) mo.innerText = pc.innerText; };
+        syncTxt('txtSaldo', 'txtSaldoMovil'); syncTxt('txtTotalInfra', 'txtTotalInfraMovil'); syncTxt('txtTotalFlota', 'txtTotalFlotaMovil');
+        syncTxt('txtTotalFijos', 'txtTotalFijosMovil'); syncTxt('txtTotalOtros', 'txtTotalOtrosMovil'); syncTxt('txtTotalEvitable', 'txtTotalEvitableMovil');
+        syncTxt('txtPorcentajeFugas', 'txtPorcentajeFugasMovil');
+        
+        // Efecto visual en saldo principal
+        let txtS = document.getElementById('txtSaldoMovil');
+        let saldoVal = parseInt((document.getElementById('txtSaldo')?.innerText||"0").replace(/\./g,''));
+        if(txtS) {
+            if(saldoVal < 0) { txtS.classList.add('danger'); } else { txtS.classList.remove('danger'); }
+        }
+    };
+
+    // Parche Visual para TC
+    const oR = window.renderizarTablaTC;
+    window.renderizarTablaTC = function() {
+        if(oR) oR();
+        let syncTxt = (idPC, idMovil) => { let pc = document.getElementById(idPC), mo = document.getElementById(idMovil); if(pc && mo) mo.innerText = pc.innerText; };
+        syncTxt('txtTotalTC', 'txtTotalTCMovil'); syncTxt('lblImpactoMes', 'lblImpactoMesMovil'); syncTxt('txtImpactoMonto', 'txtImpactoMontoMovil');
+        let bPC = document.getElementById('boxImpactoTC'), bMo = document.getElementById('boxImpactoTCMovil');
+        if(bPC && bMo) bMo.style.display = bPC.style.display;
+    };
+    
+    // Mini-Purger para TC móvil
+    window.purgarMesTCMovil = function(key) {
+        if(!confirm(`⚠️ ¿Purgar (borrar) todas las cuotas de este mes?`)) return;
+        let batch = db.batch();
+        datosTCGlobal.forEach(doc => {
+            if(!doc.mesCobro) return;
+            let f = new Date(doc.mesCobro);
+            let docKey = f.getFullYear() + "-" + String(f.getMonth() + 1).padStart(2, '0');
+            if(docKey === key) batch.delete(db.collection("deuda_tc").doc(doc.id));
+        });
+        batch.commit().then(() => mostrarToast("MES PURGADO")).catch(e => alert("Error: " + e));
+    };
+
 </script>
-<!-- 🛠️ CACHE BUSTER: Obligamos al PC a descargar el motor fresco -->
-<script src="motor.js?v=15.3"></script>
 </body>
 </html>
