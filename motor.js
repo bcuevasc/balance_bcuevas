@@ -709,25 +709,34 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0, totalFijosMes, 
         }
     });
 
-    let actual = [sueldo], ideal = [sueldo], proyeccion = Array(diasCiclo + 1).fill(null);
-    let labelsX = ["INI"], labelsFechas = ["INI"], acc = sueldo, limit = Math.floor((Date.now() - msT0) / 86400000) + 1;
+    // ==========================================
+    // 🧠 CALIBRACIÓN DE INICIO: BASE REAL (Arrastre)
+    // ==========================================
+    let textoArrastre = document.getElementById('txtArrastreLinea') ? document.getElementById('txtArrastreLinea').innerText.replace(/\./g, '') : "0";
+    let arrastre = parseInt(textoArrastre.replace(/[^0-9]/g, '')) || 0;
+    if (document.getElementById('txtArrastreLinea') && document.getElementById('txtArrastreLinea').innerText.includes('-')) {
+        arrastre = -arrastre;
+    }
+    
+    // Aquí el gráfico ahora usa tu SALDO REAL INICIAL en lugar del Sueldo Bruto ciego.
+    let basePartida = sueldo + arrastre; 
+
+    let actual = [basePartida], ideal = [basePartida], proyeccion = Array(diasCiclo + 1).fill(null);
+    let labelsX = ["INI"], labelsFechas = ["INI"], acc = basePartida, limit = Math.floor((Date.now() - msT0) / 86400000) + 1;
     const nombresMes = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"];
 
     for(let i=1; i<=diasCiclo; i++) {
-        ideal.push(sueldo - (sueldo/diasCiclo)*i); acc += daily[i]; actual.push(i > limit ? null : acc);
+        ideal.push(basePartida - (basePartida/diasCiclo)*i); acc += daily[i]; actual.push(i > limit ? null : acc);
         let f = new Date(msT0 + (i-1)*86400000); let dia = String(f.getDate()).padStart(2, '0');
         labelsFechas.push(`${dia} ${nombresMes[f.getMonth()]}`); labelsX.push(f.getDate() === 1 ? `${dia} ${nombresMes[f.getMonth()]}` : dia); 
     }
 
     if(limit >= 1 && limit <= diasCiclo) {
-        // 🛠️ CALIBRACIÓN V14.8: Proyección basada solo en Tasa de Consumo Variable
-        // Ignoramos la perturbación (escalón) de la Carga Fija del Día 1
         let gastoVariableAcumulado = 0;
         for(let i = 1; i <= limit; i++) {
             gastoVariableAcumulado += dailyNecesario[i] + dailyFugas[i];
         }
         
-        // Pendiente (Slope) de quema diaria
         let tasaVariableDiaria = limit > 0 ? (gastoVariableAcumulado / limit) : 0;
         
         proyeccion[limit] = actual[limit];
