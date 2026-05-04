@@ -693,40 +693,43 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0, totalFijosMes, 
         }
     };
     
-    let daily = Array(diasCiclo + 1).fill(0), dailyNecesario = Array(diasCiclo + 1).fill(0), dailyFugas = Array(diasCiclo + 1).fill(0); 
+    // 1. Array de impactos netos por día (El espejo del Balance Real)
+    let dailyImpact = Array(diasCiclo + 1).fill(0);
+    let dailyNecesario = Array(diasCiclo + 1).fill(0);
+    let dailyFugas = Array(diasCiclo + 1).fill(0); 
     let msT0 = T0.getTime();
 
     chronData.forEach(m => {
         let diff = Math.floor((new Date(m.fechaISO).getTime() - msT0) / 86400000) + 1;
         if(diff >= 1 && diff <= diasCiclo) { 
-            if(m.esIn) daily[diff] += m.monto; 
-            else if(!m.esNeutro) { 
-                daily[diff] -= m.monto; 
-                if(!['Infraestructura (Depto)', 'Flota & Movilidad'].includes(m.catV) && m.tipo !== 'Gasto Fijo') {
-                    if(catEvitables.includes(m.catV)) dailyFugas[diff] += m.monto; else dailyNecesario[diff] += m.monto;
-                }
-            } 
+            // 💡 SINCRONIZACIÓN EXACTA CON EL BALANCE REAL
+            if (m.esIn) {
+                dailyImpact[diff] += m.monto;
+            } else {
+                dailyImpact[diff] -= m.monto; // Aquí restamos TODO: Gastos, Ahorros, Préstamos.
+            }
+            
+            // Para el cálculo de proyección y barras (excluye fijos y ahorros)
+            if(!m.esIn && !m.esNeutro && !m.esCxC && !['Infraestructura (Depto)', 'Flota & Movilidad'].includes(m.catV) && m.tipo !== 'Gasto Fijo') {
+                if(catEvitables.includes(m.catV)) dailyFugas[diff] += m.monto; 
+                else dailyNecesario[diff] += m.monto;
+            }
         }
     });
 
-    // ==========================================
-    // 🧠 CALIBRACIÓN DE INICIO: BASE REAL (Arrastre)
-    // ==========================================
-    let textoArrastre = document.getElementById('txtArrastreLinea') ? document.getElementById('txtArrastreLinea').innerText.replace(/\./g, '') : "0";
-    let arrastre = parseInt(textoArrastre.replace(/[^0-9]/g, '')) || 0;
-    if (document.getElementById('txtArrastreLinea') && document.getElementById('txtArrastreLinea').innerText.includes('-')) {
-        arrastre = -arrastre;
-    }
-    
-    // Aquí el gráfico ahora usa tu SALDO REAL INICIAL en lugar del Sueldo Bruto ciego.
-    let basePartida = sueldo + arrastre; 
-
-    let actual = [basePartida], ideal = [basePartida], proyeccion = Array(diasCiclo + 1).fill(null);
-    let labelsX = ["INI"], labelsFechas = ["INI"], acc = basePartida, limit = Math.floor((Date.now() - msT0) / 86400000) + 1;
+    let actual = [sueldo], ideal = [sueldo], proyeccion = Array(diasCiclo + 1).fill(null);
+    let labelsX = ["INI"], labelsFechas = ["INI"], acc = sueldo, limit = Math.floor((Date.now() - msT0) / 86400000) + 1;
     const nombresMes = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"];
 
     for(let i=1; i<=diasCiclo; i++) {
-        ideal.push(basePartida - (basePartida/diasCiclo)*i); acc += daily[i]; actual.push(i > limit ? null : acc);
+        ideal.push(sueldo - (sueldo/diasCiclo)*i); 
+        
+        acc += dailyImpact[i]; 
+        
+        // Si el día es hoy o antes, guardar el saldo real
+        if (i <= limit) actual.push(acc);
+        else actual.push(null);
+        
         let f = new Date(msT0 + (i-1)*86400000); let dia = String(f.getDate()).padStart(2, '0');
         labelsFechas.push(`${dia} ${nombresMes[f.getMonth()]}`); labelsX.push(f.getDate() === 1 ? `${dia} ${nombresMes[f.getMonth()]}` : dia); 
     }
