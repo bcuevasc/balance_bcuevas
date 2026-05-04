@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Bunker Móvil HUD V14.9 (Dock Edition)</title>
+    <title>ByFINANCE SCADA</title>
     <link rel="apple-touch-icon" href="Byfinance.png.png">
     <meta name="theme-color" content="#030508">
 
@@ -168,13 +168,30 @@
 </div>
 
 <div class="app-container" id="reportZone">
-    <div class="top-bar">
-        <div class="brand">BÚNKER <span class="brand-badge">V14.9</span></div>
-        <div style="display:flex; gap:8px;">
-            <button onclick="toggleLanguage()" style="background:rgba(121,192,255,0.1); border:1px solid rgba(121,192,255,0.4); color:#79c0ff; border-radius:6px; font-weight:bold; font-size:0.7rem; padding:4px 8px;">ENG</button>
-            <div id="user-display" class="user-tag">OPERATOR</div>
+    <!-- ============================================== -->
+<!-- 🛸 CABECERA MÓVIL (GLASSMORPHISM)              -->
+<!-- ============================================== -->
+<div class="top-bar" style="padding: max(15px, env(safe-area-inset-top)) 20px 10px 20px; display: flex; justify-content: space-between; align-items: center; background: rgba(13, 17, 23, 0.75); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); position: sticky; top: 0; z-index: 1000; border-bottom: 1px solid rgba(255,255,255,0.05); box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
+    
+    <!-- BRANDING ByFINANCE -->
+    <div class="brand" style="display: flex; align-items: center; gap: 10px;">
+        <svg width="32" height="32" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 0 6px rgba(163, 113, 247, 0.6));">
+            <circle cx="256" cy="256" r="210" fill="none" stroke="#a371f7" stroke-width="28"/>
+            <text x="256" y="340" font-family="monospace" font-size="280" font-weight="900" fill="#a371f7" text-anchor="middle" opacity="0.3">$</text>
+            <text x="256" y="300" font-family="-apple-system, sans-serif" font-size="120" font-weight="900" fill="#ffffff" text-anchor="middle">By</text>
+        </svg>
+        <div style="display: flex; flex-direction: column; line-height: 1;">
+            <span style="font-size: 1.2rem; font-weight: 900; color: #fff; letter-spacing: 0.5px;">ByFINANCE</span>
+            <span style="font-size: 0.6rem; color: #a371f7; font-family: monospace; letter-spacing: 2px; font-weight: bold; margin-top: 2px;">SCADA <span style="color:var(--text-dim);">V15.0</span></span>
         </div>
     </div>
+
+    <!-- BOTONES DE SISTEMA -->
+    <div style="display: flex; align-items: center; gap: 12px;">
+        <button onclick="triggerSync()" style="background:transparent; border:none; font-size:1.2rem; padding:0; color: #a371f7;">🔄</button>
+        <div class="user-tag" id="user-display" style="border-color: rgba(163, 113, 247, 0.4); color: #a371f7; background: rgba(163, 113, 247, 0.1);">BYRON</div>
+    </div>
+</div>
 
     <div id="tab-dash" class="tab-content" style="display:block; padding:0;">
         <div class="core-tabs">
