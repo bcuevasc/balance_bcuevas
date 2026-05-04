@@ -216,38 +216,45 @@
 </div>
 
 <div class="app-container" id="reportZone">
-    <div class="header-titles">
-        <div style="display:flex; align-items:center;">
-            <h2 style="display:flex; align-items:center; gap: 8px;">
-    <!-- Icono SVG integrado -->
-    <svg width="24" height="24" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="256" cy="256" r="210" fill="none" stroke="#a371f7" stroke-width="24"/>
-        <text x="256" y="340" font-family="monospace" font-size="280" font-weight="900" fill="#a371f7" text-anchor="middle" opacity="0.3">$</text>
-        <text x="256" y="300" font-family="-apple-system, sans-serif" font-size="120" font-weight="900" fill="#ffffff" text-anchor="middle">By</text>
-    </svg>
-    ByFINANCE <span style="font-weight: 400; opacity: 0.7; margin-left: 5px;">SCADA</span>
-    <span class="scada-badge" style="background: linear-gradient(90deg, #a371f7, #1f6feb);">V15.0</span>
-</h2>
-            <div id="user-display" style="margin-left: 15px; font-size: 0.75rem; color: var(--color-saldo); font-weight:800; text-transform:uppercase;"></div>
+    <!-- ============================================== -->
+<!-- 🛸 BARRA MAESTRA UNIFICADA (HEADER)            -->
+<!-- ============================================== -->
+<div class="header-titles" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; border-bottom: 1px solid var(--border-color); background: rgba(0,0,0,0.3); border-top: 3px solid #a371f7;">
+
+    <!-- 1. ZONA IZQ: LOGO GIGANTE Y MARCA -->
+    <div style="display:flex; align-items:center; gap: 12px;">
+        <svg width="42" height="42" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 0 8px rgba(163, 113, 247, 0.4));">
+            <circle cx="256" cy="256" r="210" fill="none" stroke="#a371f7" stroke-width="24"/>
+            <text x="256" y="340" font-family="monospace" font-size="280" font-weight="900" fill="#a371f7" text-anchor="middle" opacity="0.3">$</text>
+            <text x="256" y="300" font-family="-apple-system, sans-serif" font-size="120" font-weight="900" fill="#ffffff" text-anchor="middle">By</text>
+        </svg>
+        <div style="display: flex; flex-direction: column; line-height: 1.1;">
+            <div style="font-size: 1.4rem; font-weight: 900; color: #fff; letter-spacing: 1px;">ByFINANCE</div>
+            <div style="font-size: 0.65rem; color: var(--text-muted); font-family: monospace; letter-spacing: 3px; margin-top: 3px;">
+                SCADA <span style="color: #a371f7; font-weight: 900;">V15.0</span>
+            </div>
         </div>
-        <div class="system-btns">
-            <div id="cronos" class="cronos">--:--:--</div>
-            
-            <!-- 🟢 NUEVO BOTÓN SYNC INYECTADO AQUÍ 🟢 -->
-            <button class="btn-sys" onclick="let b=this; b.innerHTML='⏳...'; b.style.opacity='0.7'; triggerSync(); setTimeout(()=>{b.innerHTML='🔄 SYNC'; b.style.opacity='1';}, 2500)" style="color:var(--color-saldo); border-color:rgba(46, 160, 67, 0.4); background:rgba(46, 160, 67, 0.1);" title="Forzar Sincronización con Gmail Sniper">🔄 SYNC</button>
-            
-            <button class="btn-sys" onclick="toggleLanguage()" style="color:#58a6ff; border-color:rgba(88,166,255,0.4);">🌐 ENG</button>
-            <button class="btn-sys" onclick="abrirHistorian()" style="color:var(--color-fuga); border-color:rgba(248,81,73,0.4);">⚠️ LOG</button>
-            <button class="btn-sys" onclick="abrirPreVuelo()" style="color:#ff9800; border-color:rgba(255,152,0,0.4); background:rgba(255,152,0,0.1);" data-en="🚀 PRE-FLIGHT">🚀 PRE-VUELO</button>
-            <button class="btn-sys" onclick="toggleTheme()">☀️/🌙</button>
-            <button class="btn-sys" onclick="logout()" style="color:var(--color-fuga); border-color:rgba(248,81,73,0.3);" data-en="🚪 LOGOUT">🚪 SALIR</button>
-        </div>
+        <div id="user-display" style="margin-left: 15px; padding-left: 15px; border-left: 1px solid var(--border-color); font-size: 0.75rem; color: var(--color-saldo); font-weight:900; text-transform:uppercase; letter-spacing: 1px;"></div>
     </div>
 
-    <div style="display:flex; justify-content:center; gap:10px; margin-bottom:5px;">
-        <button class="btn-sys" id="tabBtnFlujo" onclick="switchPCPanel('main')" style="background:rgba(31, 111, 235, 0.1); border-color:var(--color-guardar); color:white; padding:8px 20px;">1. FLUJO PRESENTE</button>
-        <button class="btn-sys" id="tabBtnTC" onclick="switchPCPanel('tc')" style="padding:8px 20px;">2. MATRIZ TC</button>
+    <!-- 2. ZONA CENTRAL: NAVEGADOR DE MÓDULOS -->
+    <div style="display:flex; justify-content:center; gap:10px;">
+        <button class="btn-sys" id="tabBtnFlujo" onclick="switchPCPanel('main')" style="background:rgba(31, 111, 235, 0.1); border-color:var(--color-guardar); color:white; padding:8px 24px; font-size: 0.75rem; box-shadow: 0 0 10px rgba(31, 111, 235, 0.2);">1. FLUJO PRESENTE</button>
+        <button class="btn-sys" id="tabBtnTC" onclick="switchPCPanel('tc')" style="padding:8px 24px; font-size: 0.75rem;">2. MATRIZ TC</button>
     </div>
+
+    <!-- 3. ZONA DER: RELOJ Y COMANDOS DE SISTEMA -->
+    <div class="system-btns" style="gap: 8px;">
+        <div id="cronos" class="cronos" style="font-size: 0.85rem; padding: 6px 15px;">--:--:--</div>
+        <button class="btn-sys" onclick="let b=this; b.innerHTML='⏳...'; b.style.opacity='0.7'; triggerSync(); setTimeout(()=>{b.innerHTML='🔄 SYNC'; b.style.opacity='1';}, 2500)" style="color:var(--color-saldo); border-color:rgba(46, 160, 67, 0.4); background:rgba(46, 160, 67, 0.1);" title="Forzar Sincronización">🔄 SYNC</button>
+        <button class="btn-sys" onclick="toggleLanguage()" style="color:#58a6ff; border-color:rgba(88,166,255,0.4);">🌐 ENG</button>
+        <button class="btn-sys" onclick="abrirHistorian()" style="color:var(--color-fuga); border-color:rgba(248,81,73,0.4);">⚠️ LOG</button>
+        <button class="btn-sys" onclick="abrirPreVuelo()" style="color:#ff9800; border-color:rgba(255,152,0,0.4); background:rgba(255,152,0,0.1);" data-en="🚀 PRE-FLIGHT">🚀 PRE-VUELO</button>
+        <button class="btn-sys" onclick="toggleTheme()">☀️/🌙</button>
+        <button class="btn-sys" onclick="logout()" style="color:var(--color-fuga); border-color:rgba(248,81,73,0.3);" data-en="🚪 LOGOUT">🚪 SALIR</button>
+    </div>
+
+</div>
 
     <div style="display: flex; gap: 10px; flex-shrink: 0;">
         <div class="time-navigator-panel">
