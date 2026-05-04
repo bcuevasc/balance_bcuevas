@@ -218,7 +218,16 @@
 <div class="app-container" id="reportZone">
     <div class="header-titles">
         <div style="display:flex; align-items:center;">
-            <h2>BUNKER SCADA <span class="scada-badge">V14.7</span></h2>
+            <h2 style="display:flex; align-items:center; gap: 8px;">
+    <!-- Icono SVG integrado -->
+    <svg width="24" height="24" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="256" cy="256" r="210" fill="none" stroke="#a371f7" stroke-width="24"/>
+        <text x="256" y="340" font-family="monospace" font-size="280" font-weight="900" fill="#a371f7" text-anchor="middle" opacity="0.3">$</text>
+        <text x="256" y="300" font-family="-apple-system, sans-serif" font-size="120" font-weight="900" fill="#ffffff" text-anchor="middle">By</text>
+    </svg>
+    ByFINANCE <span style="font-weight: 400; opacity: 0.7; margin-left: 5px;">SCADA</span>
+    <span class="scada-badge" style="background: linear-gradient(90deg, #a371f7, #1f6feb);">V15.0</span>
+</h2>
             <div id="user-display" style="margin-left: 15px; font-size: 0.75rem; color: var(--color-saldo); font-weight:800; text-transform:uppercase;"></div>
         </div>
         <div class="system-btns">
