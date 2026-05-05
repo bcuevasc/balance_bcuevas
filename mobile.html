@@ -73,7 +73,7 @@
         .mc-body { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; }
         .mc-title { font-weight: 800; font-size: 0.95rem; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: 0.3px; line-height: 1.2; margin-bottom: 3px; }
         .mc-subtitle { font-size: 0.7rem; color: var(--text-dim); display: flex; align-items: center; gap: 5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;}
-        .mc-amount { font-family: monospace; font-weight: 900; font-size: 1.15rem; text-align: right; flex-shrink: 0; }
+        .mc-amount { font-family: monospace; font-variant-numeric: tabular-nums; font-weight: 900; font-size: 1.15rem; text-align: right; flex-shrink: 0; }
 
         .date-header { padding-left: 5px; font-size: 0.65rem; font-weight: 900; color: #79c0ff; text-transform: uppercase; margin: 15px 0 5px 5px; letter-spacing: 1px; display: flex; align-items: center; gap: 5px; }
         .date-header::before { content: '●'; font-size: 0.5rem; text-shadow: 0 0 5px #79c0ff;}
@@ -96,7 +96,7 @@
         .terminal-form input[type="text"]:not(.monto-gigante), .terminal-form select, .terminal-form input[type="datetime-local"] { width: 100%; padding: 16px 14px; margin-bottom: 12px; background: var(--bg-elevated); color: white; border: 1px solid var(--border-subtle); border-radius: 10px; font-size: 0.95rem; font-weight: 600; outline: none; -webkit-appearance: none; transition: border-color 0.3s; }
         .terminal-form input:focus, .terminal-form select:focus { border-color: var(--accent-blue); box-shadow: 0 0 0 1px var(--accent-blue); }
         
-        .btn-inyectar { width: 100%; padding: 20px; background: var(--accent-blue); color: white; border: none; font-weight: 900; border-radius: 12px; font-size: 1.1rem; text-transform: uppercase; letter-spacing: 2px; margin-top: 10px; box-shadow: 0 8px 20px rgba(31, 111, 235, 0.3); transition: transform 0.1s;}
+        .btn-inyectar { width: 100%; padding: 20px; background: linear-gradient(135deg, var(--color-infra), #8a4af3); color: white; border: none; font-weight: 900; border-radius: 12px; font-size: 1.1rem; text-transform: uppercase; letter-spacing: 2px; margin-top: 10px; box-shadow: 0 8px 20px rgba(163, 113, 247, 0.4); transition: transform 0.1s;}
         .btn-inyectar:active { transform: scale(0.96); }
 
         .bottom-nav { 
@@ -110,7 +110,7 @@
         .nav-item span { font-size: 0.6rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; transition: all 0.3s ease; }
         .nav-item.active { color: #79c0ff; background: rgba(121, 192, 255, 0.15); transform: translateY(-4px); box-shadow: 0 4px 10px rgba(121, 192, 255, 0.1); }
         .nav-item.active i { transform: scale(1.15); }
-        .nav-fab { background: linear-gradient(135deg, #1f6feb, #0b4abf); color: #fff; width: 54px; height: 54px; border-radius: 27px; display: flex; justify-content: center; align-items: center; font-size: 2.2rem; font-weight: 300; margin: 0 5px; box-shadow: 0 8px 20px rgba(31, 111, 235, 0.6); flex-shrink: 0; border: 2px solid rgba(255, 255, 255, 0.1); transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .nav-fab { background: linear-gradient(135deg, var(--color-infra), #8a4af3); color: #fff; width: 54px; height: 54px; border-radius: 27px; display: flex; justify-content: center; align-items: center; font-size: 2.2rem; font-weight: 300; margin: 0 5px; box-shadow: 0 8px 20px rgba(163, 113, 247, 0.5); flex-shrink: 0; border: 2px solid rgba(255, 255, 255, 0.1); transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         .nav-fab:active { transform: scale(0.85); }
 
         .impact-pill { background: rgba(255, 82, 82, 0.08); border: 1px solid rgba(255,82,82,0.3); border-radius: 12px; padding: 15px; display: flex; justify-content: space-between; align-items: center; margin: 0 15px 15px 15px; box-shadow: 0 0 25px rgba(255,82,82,0.15); border-left: 5px solid var(--accent-red); }
@@ -157,13 +157,25 @@
         
         .btn-pv-launch { width: 100%; padding: 18px; background: #ff9800; color: #000; border: none; border-radius: 12px; font-weight: 900; font-size: 1rem; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; margin-top: 20px; box-shadow: 0 10px 20px rgba(255, 152, 0, 0.3); }
         .btn-pv-close { width: 100%; padding: 15px; background: transparent; color: var(--text-muted); border: none; font-weight: 900; margin-top: 10px; text-transform: uppercase; }
+        /* 1. Fechas Flotantes (Sticky) */
+        .date-header { position: sticky; top: 75px; z-index: 10; background: rgba(3, 5, 8, 0.95); backdrop-filter: blur(5px); padding: 8px 5px; margin: 0 0 10px 0; border-bottom: 1px solid var(--border-subtle); }
+        /* 2. Botón Destruir Bottom Sheet */
+        .btn-danger-sheet { background: rgba(248, 81, 73, 0.1) !important; border: 1px solid rgba(248, 81, 73, 0.4) !important; color: var(--accent-red) !important; }
+        .btn-danger-sheet:active { background: var(--accent-red) !important; color: #fff !important; }
+        /* 3. Botón 'X' limpieza rápida en input */
+        .monto-gigante::-webkit-search-cancel-button { -webkit-appearance: none; appearance: none; height: 35px; width: 35px; background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%2379c0ff"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>'); cursor: pointer; }
     </style>
 </head>
 <body>
 
 <div id="login-screen">
-    <h2 style="color:var(--color-proyectado); margin: 20px 0; font-weight:900; font-size:2.5rem; letter-spacing: 2px;">BÚNKER SCADA</h2>
-    <p style="color:var(--text-dim); font-size:0.9rem; margin-bottom:40px; font-family: monospace; letter-spacing: 1px;">[ HUD MÓVIL V14.9 GLOBAL ]</p>
+    <svg width="64" height="64" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 0 15px rgba(163, 113, 247, 0.5)); margin-bottom: 15px;">
+        <circle cx="256" cy="256" r="210" fill="none" stroke="#a371f7" stroke-width="28"/>
+        <text x="256" y="340" font-family="monospace" font-size="280" font-weight="900" fill="#a371f7" text-anchor="middle" opacity="0.3">$</text>
+        <text x="256" y="300" font-family="-apple-system, sans-serif" font-size="120" font-weight="900" fill="#ffffff" text-anchor="middle">By</text>
+    </svg>
+    <h2 style="color:#fff; margin: 5px 0; font-weight:900; font-size:2.6rem; letter-spacing: 1px;">ByFINANCE</h2>
+    <p style="color:var(--color-infra); font-size:0.9rem; margin-bottom:40px; font-family: monospace; font-weight:bold; letter-spacing: 2px;">SCADA <span style="color:var(--text-dim);">V15.0</span></p>
     <button onclick="loginWithGoogle()" style="padding:18px 40px; border-radius:12px; font-weight:900; color:black; background:white; border:none; font-size:1.1rem; box-shadow: 0 0 30px rgba(255,255,255,0.3);">INICIAR ENLACE</button>
 </div>
 
@@ -343,7 +355,7 @@
         <input type="hidden" id="editId">
         <div class="injection-hud">
             <div style="font-size:0.75rem; color:var(--text-dim); font-weight:900; text-transform:uppercase; letter-spacing: 3px;" data-en="Injection Protocol">Protocolo de Inyección</div>
-            <input type="text" id="inputMonto" class="monto-gigante" inputmode="numeric" pattern="[0-9]*" placeholder="$0" oninput="formatearEntradaNumerica(this)">
+            <input type="search" id="inputMonto" class="monto-gigante" inputmode="numeric" pattern="[0-9]*" placeholder="$0" oninput="formatearEntradaNumerica(this)">
         </div>
         
         <div class="terminal-form">
@@ -427,7 +439,7 @@
     <input type="hidden" id="sheet-collection-target" value="movimientos">
 
     <button id="btn-recalibrar" onclick="const id=document.getElementById('sheet-id-target').value; closeBottomSheet(); editarMovimiento(id); switchTabApp('add', null);" style="width:100%; padding:18px; border-radius:15px; background:rgba(31,111,235,0.1); color:var(--accent-blue); border:1px solid rgba(31,111,235,0.2); font-weight:900; font-size:1rem; margin-bottom:12px; transition:transform 0.1s; letter-spacing: 1px; box-shadow: 0 4px 15px rgba(31,111,235,0.15);" data-en="✏️ RECALIBRATE">✏️ RECALIBRAR</button>
-    <button onclick="const id=document.getElementById('sheet-id-target').value; const col=document.getElementById('sheet-collection-target').value; if(confirm('¿ELIMINAR DEL BÚNKER?')) { db.collection(col).doc(id).delete().then(()=> { closeBottomSheet(); if(typeof mostrarToast === 'function') mostrarToast('REGISTRO DESTRUIDO'); }); }" style="width:100%; padding:18px; border-radius:15px; background:rgba(255,82,82,0.1); color:var(--accent-red); border:1px solid rgba(255,82,82,0.2); font-weight:900; font-size:1rem; margin-bottom:12px; transition:transform 0.1s; letter-spacing: 1px; box-shadow: 0 4px 15px rgba(255,82,82,0.15);" data-en="🗑️ DESTROY">🗑️ DESTRUIR</button>
+    <button class="btn-danger-sheet" onclick="const id=document.getElementById('sheet-id-target').value; const col=document.getElementById('sheet-collection-target').value; if(confirm('¿ELIMINAR DEL BÚNKER?')) { db.collection(col).doc(id).delete().then(()=> { closeBottomSheet(); if(typeof mostrarToast === 'function') mostrarToast('REGISTRO DESTRUIDO'); }); }" style="width:100%; padding:18px; border-radius:15px; background:rgba(255,82,82,0.1); color:var(--accent-red); border:1px solid rgba(255,82,82,0.2); font-weight:900; font-size:1rem; margin-bottom:12px; transition:transform 0.1s; letter-spacing: 1px; box-shadow: 0 4px 15px rgba(255,82,82,0.15);" data-en="🗑️ DESTROY">🗑️ DESTRUIR</button>
     <button onclick="closeBottomSheet()" style="width:100%; padding:15px; border-radius:15px; background:transparent; color:var(--text-dim); border:none; font-weight:800; text-transform:uppercase;" data-en="Cancel">Cancelar</button>
 </div>
 
