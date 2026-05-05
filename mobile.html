@@ -164,6 +164,7 @@
         .btn-danger-sheet:active { background: var(--accent-red) !important; color: #fff !important; }
         /* 3. Botón 'X' limpieza rápida en input */
         .monto-gigante::-webkit-search-cancel-button { -webkit-appearance: none; appearance: none; height: 35px; width: 35px; background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%2379c0ff"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>'); cursor: pointer; }
+        .core-btn.active { text-shadow: 0 0 10px rgba(163, 113, 247, 0.8) !important; color: #fff !important; }
     </style>
 </head>
 <body>
@@ -207,12 +208,11 @@
 
     <div id="tab-dash" class="tab-content" style="display:block; padding:0;">
         <div class="core-tabs">
-            <div id="core-highlighter" style="width: calc(33.33% - 4px);"></div>
-            <button class="core-btn active blue" onclick="switchTriCore('efectivo', this, 0)" style="color:white;" data-en="PRESENT FLOW">Flujo</button>
+            <div id="core-highlighter" style="width: calc(33.33% - 4px); background: linear-gradient(135deg, var(--color-infra), #8a4af3); box-shadow: 0 4px 12px rgba(163, 113, 247, 0.4);"></div>
+            <button class="core-btn active" onclick="switchTriCore('efectivo', this, 0)" style="color:white;" data-en="PRESENT FLOW">Flujo</button>
             <button class="core-btn" onclick="switchTriCore('tc', this, 1)" data-en="TC MATRIX">Tarjeta</button>
             <button class="core-btn" onclick="switchTriCore('terceros', this, 2)">Terceros</button>
         </div>
-
         <div id="vista-efectivo" style="display: block; animation: fadeSlideUp 0.3s;">
             <div class="master-hud">
                 <div style="font-size:0.7rem; color:var(--text-dim); font-weight:900; text-transform:uppercase; margin-bottom:5px; letter-spacing: 3px;" data-en="NET BALANCE">Maniobra Base</div>
@@ -684,23 +684,27 @@
     };
 
     function switchTriCore(viewId, el, index) {
-        document.querySelectorAll('.core-btn').forEach(b => { b.classList.remove('active', 'blue', 'red', 'orange'); });
+        // Quitamos la clase 'active' de todos los botones
+        document.querySelectorAll('.core-btn').forEach(b => { b.classList.remove('active'); });
         el.classList.add('active');
+        
+        // Movemos la pastilla morada
         const highlighter = document.getElementById('core-highlighter');
         highlighter.style.transform = `translateX(${index * 100}%)`;
+        highlighter.style.background = 'linear-gradient(135deg, var(--color-infra), #8a4af3)';
+        highlighter.style.boxShadow = '0 4px 12px rgba(163, 113, 247, 0.4)';
 
+        // Ocultamos todas las vistas
         document.getElementById('vista-efectivo').style.display = 'none';
         document.getElementById('vista-tc').style.display = 'none';
         document.getElementById('vista-terceros').style.display = 'none';
 
+        // Mostramos la correcta
         if (viewId === 'efectivo') {
-            el.classList.add('blue'); highlighter.style.background = 'var(--accent-blue)';
             document.getElementById('vista-efectivo').style.display = 'block';
         } else if (viewId === 'tc') {
-            el.classList.add('red'); highlighter.style.background = 'var(--accent-red)';
             document.getElementById('vista-tc').style.display = 'block';
         } else {
-            el.classList.add('orange'); highlighter.style.background = 'var(--accent-orange)';
             document.getElementById('vista-terceros').style.display = 'block';
         }
     }
