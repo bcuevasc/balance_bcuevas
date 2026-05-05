@@ -157,6 +157,34 @@
         
         .btn-pv-launch { width: 100%; padding: 18px; background: #ff9800; color: #000; border: none; border-radius: 12px; font-weight: 900; font-size: 1rem; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; margin-top: 20px; box-shadow: 0 10px 20px rgba(255, 152, 0, 0.3); }
         .btn-pv-close { width: 100%; padding: 15px; background: transparent; color: var(--text-muted); border: none; font-weight: 900; margin-top: 10px; text-transform: uppercase; }
+        /* 🛸 Top-Bar Cristal */
+.top-bar { 
+    padding: max(15px, env(safe-area-inset-top)) 20px 10px 20px; 
+    display: flex; justify-content: space-between; align-items: center; 
+    background: rgba(13, 17, 23, 0.75); 
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); 
+    position: sticky; top: 0; z-index: 1000; 
+    border-bottom: 1px solid rgba(255,255,255,0.05); 
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3); 
+}
+.user-tag { border: 1px solid rgba(163, 113, 247, 0.4); color: #a371f7; background: rgba(163, 113, 247, 0.1); font-weight: 800; padding: 4px 10px; border-radius: 6px; font-size: 0.7rem; letter-spacing: 1px; box-shadow: 0 0 10px rgba(163, 113, 247, 0.2); text-transform: uppercase;}
+
+/* 📌 Fechas pegajosas y Números tabulares */
+.date-divider { 
+    position: sticky; top: 75px; z-index: 10; background: var(--bg-base); padding: 5px 0;
+    font-size: 0.7rem; font-weight: 800; color: var(--accent-blue); text-transform: uppercase; margin: 15px 0 5px 5px; letter-spacing: 1px; display: flex; align-items: center; gap: 8px;
+}
+.col-monto { font-variant-numeric: tabular-nums; font-family: monospace, sans-serif; }
+
+/* ❌ Botón borrar (search) */
+.input-mega::-webkit-search-cancel-button {
+    -webkit-appearance: none; appearance: none; height: 30px; width: 30px;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%238b949e"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>'); cursor: pointer;
+}
+
+/* 🗑️ Botón Destruir */
+.btn-danger { background: rgba(248, 81, 73, 0.1) !important; border: 1px solid rgba(248, 81, 73, 0.4) !important; color: var(--accent-red) !important; }
+.btn-danger:active { background: var(--accent-red) !important; color: #fff !important; }
     </style>
 </head>
 <body>
@@ -174,6 +202,7 @@
 <div class="top-bar" style="padding: max(15px, env(safe-area-inset-top)) 20px 10px 20px; display: flex; justify-content: space-between; align-items: center; background: rgba(13, 17, 23, 0.75); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); position: sticky; top: 0; z-index: 1000; border-bottom: 1px solid rgba(255,255,255,0.05); box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
     
     <!-- BRANDING ByFINANCE -->
+    <div class="top-bar">
     <div class="brand" style="display: flex; align-items: center; gap: 10px;">
         <svg width="32" height="32" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 0 6px rgba(163, 113, 247, 0.6));">
             <circle cx="256" cy="256" r="210" fill="none" stroke="#a371f7" stroke-width="28"/>
@@ -185,11 +214,9 @@
             <span style="font-size: 0.6rem; color: #a371f7; font-family: monospace; letter-spacing: 2px; font-weight: bold; margin-top: 2px;">SCADA <span style="color:var(--text-dim);">V15.0</span></span>
         </div>
     </div>
-
-    <!-- BOTONES DE SISTEMA -->
     <div style="display: flex; align-items: center; gap: 12px;">
         <button onclick="triggerSync()" style="background:transparent; border:none; font-size:1.2rem; padding:0; color: #a371f7;">🔄</button>
-        <div class="user-tag" id="user-display" style="border-color: rgba(163, 113, 247, 0.4); color: #a371f7; background: rgba(163, 113, 247, 0.1);">BYRON</div>
+        <div class="user-tag" id="user-display">BYRON</div>
     </div>
 </div>
 
@@ -343,7 +370,7 @@
         <input type="hidden" id="editId">
         <div class="injection-hud">
             <div style="font-size:0.75rem; color:var(--text-dim); font-weight:900; text-transform:uppercase; letter-spacing: 3px;" data-en="Injection Protocol">Protocolo de Inyección</div>
-            <input type="text" id="inputMonto" class="monto-gigante" inputmode="numeric" pattern="[0-9]*" placeholder="$0" oninput="formatearEntradaNumerica(this)">
+            <input type="search" id="inputMonto" class="monto-gigante" inputmode="numeric" pattern="[0-9]*" placeholder="$0" oninput="formatearEntradaNumerica(this)">
         </div>
         
         <div class="terminal-form">
@@ -427,7 +454,7 @@
     <input type="hidden" id="sheet-collection-target" value="movimientos">
 
     <button id="btn-recalibrar" onclick="const id=document.getElementById('sheet-id-target').value; closeBottomSheet(); editarMovimiento(id); switchTabApp('add', null);" style="width:100%; padding:18px; border-radius:15px; background:rgba(31,111,235,0.1); color:var(--accent-blue); border:1px solid rgba(31,111,235,0.2); font-weight:900; font-size:1rem; margin-bottom:12px; transition:transform 0.1s; letter-spacing: 1px; box-shadow: 0 4px 15px rgba(31,111,235,0.15);" data-en="✏️ RECALIBRATE">✏️ RECALIBRAR</button>
-    <button onclick="const id=document.getElementById('sheet-id-target').value; const col=document.getElementById('sheet-collection-target').value; if(confirm('¿ELIMINAR DEL BÚNKER?')) { db.collection(col).doc(id).delete().then(()=> { closeBottomSheet(); if(typeof mostrarToast === 'function') mostrarToast('REGISTRO DESTRUIDO'); }); }" style="width:100%; padding:18px; border-radius:15px; background:rgba(255,82,82,0.1); color:var(--accent-red); border:1px solid rgba(255,82,82,0.2); font-weight:900; font-size:1rem; margin-bottom:12px; transition:transform 0.1s; letter-spacing: 1px; box-shadow: 0 4px 15px rgba(255,82,82,0.15);" data-en="🗑️ DESTROY">🗑️ DESTRUIR</button>
+    <button class="btn-danger" onclick="const id=document.getElementById('sheet-id-target').value; const col=document.getElementById('sheet-collection-target').value; if(confirm('¿ELIMINAR DEL BÚNKER?')) { db.collection(col).doc(id).delete().then(()=> { closeBottomSheet(); if(typeof mostrarToast === 'function') mostrarToast('REGISTRO DESTRUIDO'); }); }" style="width:100%; padding:18px; border-radius:15px; background:rgba(255,82,82,0.1); color:var(--accent-red); border:1px solid rgba(255,82,82,0.2); font-weight:900; font-size:1rem; margin-bottom:12px; transition:transform 0.1s; letter-spacing: 1px; box-shadow: 0 4px 15px rgba(255,82,82,0.15);" data-en="🗑️ DESTROY">🗑️ DESTRUIR</button>
     <button onclick="closeBottomSheet()" style="width:100%; padding:15px; border-radius:15px; background:transparent; color:var(--text-dim); border:none; font-weight:800; text-transform:uppercase;" data-en="Cancel">Cancelar</button>
 </div>
 
@@ -570,7 +597,7 @@
                     <div class="mc-title">${nombreSeguro}</div>
                     <div class="mc-subtitle"><span>🕒 ${timeStr}</span> <span style="opacity: 0.5;">•</span> <span>${x.catV.replace(' & ','&')}</span></div>
                 </div>
-                <div class="mc-amount" style="color:${colorMonto}; font-size: 1.05rem;">
+                <div class="mc-amount col-monto" style="color:${colorMonto}; font-size: 1.05rem;">
                     ${x.esIn ? '+' : (x.esNeutro ? '=' : '-')} $${montoSeguro.toLocaleString('es-CL')}
                 </div>
             </div>`;
