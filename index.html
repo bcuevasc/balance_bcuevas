@@ -265,10 +265,15 @@
 <body>
 
 <div id="login-screen">
-    <div class="login-box">
-        <h2 style="color:var(--color-proyectado); margin-bottom:10px; font-size: 2rem;">BÚNKER SCADA</h2>
-        <p style="color:var(--text-muted); font-size:0.85rem; letter-spacing: 2px;">VERSIÓN 14.7 (CLEAN CORE)</p>
-        <button class="btn-google" onclick="loginWithGoogle()">INICIAR ENLACE NEURAL</button>
+    <div class="login-box" style="display: flex; flex-direction: column; align-items: center; padding: 50px 70px;">
+        <svg width="80" height="80" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 0 20px rgba(163, 113, 247, 0.6)); margin-bottom: 20px;">
+            <circle cx="256" cy="256" r="210" fill="none" stroke="#a371f7" stroke-width="28"/>
+            <text x="256" y="340" font-family="monospace" font-size="280" font-weight="900" fill="#a371f7" text-anchor="middle" opacity="0.3">$</text>
+            <text x="256" y="300" font-family="-apple-system, sans-serif" font-size="120" font-weight="900" fill="#ffffff" text-anchor="middle">By</text>
+        </svg>
+        <h2 style="color:#fff; margin: 0 0 5px 0; font-weight:900; font-size:3rem; letter-spacing: 2px;">ByFINANCE</h2>
+        <p style="color:var(--color-infra); font-size:1rem; margin-bottom:30px; font-family: monospace; font-weight:bold; letter-spacing: 3px;">SCADA <span style="color:var(--text-muted);">V15.0 PC</span></p>
+        <button class="btn-google" onclick="loginWithGoogle()" style="box-shadow: 0 0 30px rgba(255,255,255,0.15); transition: transform 0.2s;">INICIAR ENLACE NEURAL</button>
     </div>
 </div>
 
@@ -770,6 +775,42 @@
             btn.style.borderColor = 'var(--color-infra)'; btn.style.boxShadow = '0 0 15px rgba(163, 113, 247, 0.2)';
         }
     }
+    /* =========================================
+           🟣 PURGA FINTECH V4: SILENCIANDO RUIDO VISUAL (PC)
+           ========================================= */
+        
+        /* 1. Reloj y Botón SYNC (Chao Verde) */
+        .cronos { color: var(--text-main) !important; border-color: var(--border-color) !important; background: rgba(0,0,0,0.5) !important; text-shadow: none !important; }
+        .btn-sys[onclick*="triggerSync"] { color: var(--text-muted) !important; border-color: var(--border-color) !important; background: transparent !important; }
+        .btn-sys[onclick*="triggerSync"]:hover { color: var(--color-infra) !important; border-color: var(--color-infra) !important; background: rgba(163, 113, 247, 0.1) !important; }
+
+        /* 2. Navegador de Tiempo (Borde y Mes - Chao Verde) */
+        .time-navigator-panel { border-left-color: var(--color-infra) !important; }
+        #navMesConceptual { color: var(--color-infra) !important; }
+
+        /* 3. Pestañas Superiores (Forzar Morado al estar activas) */
+        .btn-sys[id^="tabBtn"] { transition: all 0.3s ease; }
+        .btn-sys[id^="tabBtn"][style*="background: rgba"] { background: rgba(163, 113, 247, 0.15) !important; border-color: var(--color-infra) !important; box-shadow: 0 0 15px rgba(163, 113, 247, 0.2) !important; color: #fff !important; }
+
+        /* 4. Etiqueta CMD vertical (Chao Amarillo) */
+        .ribbon-title { color: var(--color-infra) !important; text-shadow: 0 0 10px rgba(163, 113, 247, 0.5) !important; }
+        .command-ribbon { border-left-color: var(--color-infra) !important; }
+
+        /* 5. Caja "Estado Pre-Vuelo" (Chao Naranja, Hola Gris/Morado) */
+        .chart-box[style*="border-top: 3px solid #ff9800"] { border-top-color: var(--border-color) !important; background: rgba(0, 0, 0, 0.2) !important; }
+        .chart-box h5[style*="color:#ff9800"] { color: var(--text-muted) !important; text-shadow: none !important; }
+    /* 🎁 SORPRESA PC: FÍSICA Y GRAVEDAD EN KPIs */
+        .kpi-card { 
+            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s, border-color 0.2s; 
+            cursor: default;
+        }
+        .kpi-card:hover { 
+            transform: translateY(-4px); 
+            box-shadow: 0 10px 25px rgba(163, 113, 247, 0.15); 
+            border-color: rgba(163, 113, 247, 0.4); 
+            background: linear-gradient(180deg, rgba(163, 113, 247, 0.05) 0%, transparent 100%);
+        }
+        .kpi-card:hover h4 { color: var(--color-infra) !important; }
 </script>
 <!-- 🛠️ CACHE BUSTER: Obligamos al PC a descargar el motor fresco -->
 <script src="motor.js?v=15.3"></script>
