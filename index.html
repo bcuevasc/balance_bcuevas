@@ -203,6 +203,39 @@
             color: var(--color-fuga); border-color: var(--color-fuga); 
             background: rgba(248, 81, 73, 0.1); 
         }
+        /* =========================================
+           🟣 FINTECH PURPLE OVERRIDE (PC EDITION)
+           ========================================= */
+        /* 1. Consola CMD: Borde y Título */
+        .command-ribbon { border-left: 4px solid var(--color-infra) !important; }
+        .ribbon-title { color: var(--color-infra) !important; text-shadow: 0 0 10px rgba(163, 113, 247, 0.5) !important; }
+        .command-ribbon .form-control:focus { border-color: var(--color-infra) !important; box-shadow: 0 0 0 1px var(--color-infra) !important; }
+
+        /* 2. Botón INYECTAR Premium (Chao Amarillo) */
+        .btn-ribbon { 
+            background: linear-gradient(135deg, var(--color-infra), #8a4af3) !important; 
+            color: #fff !important; 
+            box-shadow: 0 4px 15px rgba(163, 113, 247, 0.4) !important; 
+            border: none !important;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .btn-ribbon:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(163, 113, 247, 0.6) !important; }
+
+        /* 3. Precisión Numérica en Tabla PC */
+        .col-monto { font-variant-numeric: tabular-nums; font-family: monospace, sans-serif; letter-spacing: -0.5px; }
+        
+        /* 4. Efecto Hover "Mira Láser" en Tabla Diario */
+        .data-grid tbody tr:hover { 
+            background-color: rgba(163, 113, 247, 0.08) !important; 
+            box-shadow: inset 3px 0 0 var(--color-infra); 
+        }
+
+        /* 5. Animación de la Aurora PC */
+        @keyframes pulseAuroraPC { 
+            0% { transform: scale(1) translateX(0); opacity: 0.05; } 
+            100% { transform: scale(1.3) translateX(30px); opacity: 0.15; } 
+        }
     </style>
 </head>
 <body>
@@ -216,6 +249,9 @@
 </div>
 
 <div class="app-container" id="reportZone">
+    <!-- 🌌 EFECTO AURORA DE FONDO (PC) -->
+    <div style="position: fixed; top: -100px; left: 10%; width: 800px; height: 400px; background: var(--color-infra); filter: blur(150px); pointer-events: none; z-index: 0; animation: pulseAuroraPC 8s infinite alternate;"></div>
+    <div style="position: fixed; bottom: -150px; right: 5%; width: 600px; height: 300px; background: #1f6feb; filter: blur(180px); pointer-events: none; z-index: 0; opacity: 0.1; animation: pulseAuroraPC 10s infinite alternate-reverse;"></div>
     <!-- ============================================== -->
 <!-- 🛸 BARRA MAESTRA UNIFICADA (HEADER)            -->
 <!-- ============================================== -->
@@ -692,15 +728,22 @@
     function switchPCPanel(viewId) {
         document.querySelectorAll('.core-panel').forEach(p => p.classList.add('hidden'));
         document.querySelectorAll('.btn-sys').forEach(b => {
-            if(b.id && b.id.startsWith('tabBtn')) { b.style.background = 'transparent'; b.style.color = 'var(--text-main)'; b.style.borderColor = 'var(--border-color)'; }
+            if(b.id && b.id.startsWith('tabBtn')) { 
+                b.style.background = 'transparent'; b.style.color = 'var(--text-main)'; 
+                b.style.borderColor = 'var(--border-color)'; b.style.boxShadow = 'none';
+            }
         });
         
         if(viewId === 'main') {
             document.getElementById('panelMain').classList.remove('hidden');
-            document.getElementById('tabBtnFlujo').style.background = 'rgba(31, 111, 235, 0.1)'; document.getElementById('tabBtnFlujo').style.color = 'white'; document.getElementById('tabBtnFlujo').style.borderColor = 'var(--color-guardar)';
+            let btn = document.getElementById('tabBtnFlujo');
+            btn.style.background = 'rgba(163, 113, 247, 0.15)'; btn.style.color = 'white'; 
+            btn.style.borderColor = 'var(--color-infra)'; btn.style.boxShadow = '0 0 15px rgba(163, 113, 247, 0.2)';
         } else if(viewId === 'tc') {
             document.getElementById('panelTC').classList.remove('hidden');
-            document.getElementById('tabBtnTC').style.background = 'rgba(248, 81, 73, 0.1)'; document.getElementById('tabBtnTC').style.color = 'white'; document.getElementById('tabBtnTC').style.borderColor = 'var(--color-fuga)';
+            let btn = document.getElementById('tabBtnTC');
+            btn.style.background = 'rgba(163, 113, 247, 0.15)'; btn.style.color = 'white'; 
+            btn.style.borderColor = 'var(--color-infra)'; btn.style.boxShadow = '0 0 15px rgba(163, 113, 247, 0.2)';
         }
     }
 </script>
