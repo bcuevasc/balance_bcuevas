@@ -1751,3 +1751,79 @@ document.addEventListener("DOMContentLoaded", () => {
     // (Opcional) Si tienes una función que carga los datos iniciales, 
     // asegúrate de que use estos valores ya actualizados.
 });
+
+// ==========================================
+    // 🧠 MÓDULO PULL-TO-REFRESH (SINC. TÁCTIL)
+    // ==========================================
+    let startY = 0;
+    let isPulling = false;
+    const ptrIndicator = document.getElementById('ptr-indicator');
+
+    document.addEventListener('touchstart', e => {
+        // Solo activamos si estamos en lo más alto de la pantalla
+        if (window.scrollY === 0) {
+            startY = e.touches[0].clientY;
+            isPulling = true;
+            ptrIndicator.style.transition = 'none'; // Quitar transición para que siga el dedo en tiempo real
+        }
+    }, {passive: true});
+
+    document.addEventListener('touchmove', e => {
+        if (!isPulling) return;
+        let y = e.touches[0].clientY;
+        let pullDistance = y - startY;
+        
+        // Si arrastramos hacia abajo
+        if (pullDistance > 0 && window.scrollY === 0) {
+            let h = Math.min(pullDistance / 2, 70); // Resistencia física
+            ptrIndicator.style.height = h + 'px';
+            ptrIndicator.style.opacity = h / 70;
+            
+            if (h >= 60) {
+                ptrIndicator.innerHTML = '⚡ SUELTA PARA SINCRONIZAR';
+                ptrIndicator.style.color = 'var(--text-main)';
+            } else {
+                ptrIndicator.innerHTML = '↓ DESLIZA PARA SINCRONIZAR';
+                ptrIndicator.style.color = 'var(--color-infra)';
+            }
+        }
+    }, {passive: true});
+
+    document.addEventListener('touchend', e => {
+        if (!isPulling) return;
+        isPulling = false;
+        ptrIndicator.style.transition = 'height 0.3s, opacity 0.3s'; // Restaurar animación suave
+        
+        if (parseInt(ptrIndicator.style.height) >= 60) {
+            // Gatillar Sincronización
+            ptrIndicator.style.height = '40px';
+            ptrIndicator.innerHTML = '⏳ SINCRONIZANDO GMAIL...';
+            
+            // Llamamos a tu función existente
+            if(typeof triggerSync === 'function') triggerSync();
+            
+            // Ocultar después de 2 segundos
+            setTimeout(() => { 
+                ptrIndicator.style.height = '0px'; 
+                ptrIndicator.style.opacity = '0'; 
+            }, 2500);
+        } else {
+            // Abortar si no se jaló lo suficiente
+            ptrIndicator.style.height = '0px';
+            ptrIndicator.style.opacity = '0';
+        }
+    });
+
+    // ==========================================
+    // 🌤️ SALUDO DINÁMICO DEL MASTER HUD
+    // ==========================================
+    function actualizarSaludo() {
+        const hr = new Date().getHours();
+        const saludoEl = document.getElementById('greeting-text');
+        if(saludoEl) {
+            if(hr >= 5 && hr < 12) saludoEl.innerText = "🌞 BUENOS DÍAS, BYRON";
+            else if(hr >= 12 && hr < 19) saludoEl.innerText = "🌇 BUENAS TARDES, BYRON";
+            else saludoEl.innerText = "🌙 BUENAS NOCHES, BYRON";
+        }
+    }
+    document.addEventListener("DOMContentLoaded", actualizarSaludo);
