@@ -165,6 +165,19 @@
         /* 3. Botón 'X' limpieza rápida en input */
         .monto-gigante::-webkit-search-cancel-button { -webkit-appearance: none; appearance: none; height: 35px; width: 35px; background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%2379c0ff"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>'); cursor: pointer; }
         .core-btn.active { text-shadow: 0 0 10px rgba(163, 113, 247, 0.8) !important; color: #fff !important; }
+        /* =========================================
+           🟣 FINTECH PURPLE OVERRIDE (THE BLUE PURGE)
+           ========================================= */
+        /* Dock Flotante Inferior */
+        .nav-item.active { color: var(--color-infra) !important; background: rgba(163, 113, 247, 0.15) !important; box-shadow: 0 4px 10px rgba(163, 113, 247, 0.1) !important; }
+        /* Separadores de Fecha (Ayer, Hoy) */
+        .date-header { color: var(--color-infra) !important; }
+        .date-header::before { text-shadow: 0 0 5px var(--color-infra) !important; color: var(--color-infra) !important; }
+        /* Foco de Inputs en formularios */
+        .terminal-form input:focus, .terminal-form select:focus { border-color: var(--color-infra) !important; box-shadow: 0 0 0 1px var(--color-infra) !important; }
+        /* Pastilla del Oráculo y Pestañas */
+        #trend-highlighter { background: linear-gradient(135deg, var(--color-infra), #8a4af3) !important; box-shadow: 0 4px 12px rgba(163, 113, 247, 0.4) !important; border: none !important;}
+        .core-btn.active { text-shadow: 0 0 10px rgba(163, 113, 247, 0.8) !important; color: #fff !important; }
     </style>
 </head>
 <body>
@@ -349,7 +362,7 @@
         </div>
         
         <div class="terminal-form">
-            <input type="text" id="inputNombre" placeholder="[ AUTO-PILOTO ] Descripción..." style="text-align: center; font-weight:bold; letter-spacing:0.5px; border-bottom: 2px solid var(--accent-blue);">
+            <input type="text" id="inputNombre" placeholder="[ AUTO-PILOTO ] Descripción..." style="text-align: center; font-weight:bold; letter-spacing:0.5px; border-bottom: 2px solid var(--color-infra);">
             
             <div style="display: flex; gap: 10px;">
                 <select id="inputTipo" style="flex:1;">
@@ -379,32 +392,37 @@
     <div id="tab-cloud" class="tab-content">
         <h3 style="font-weight:900; text-align:center; letter-spacing:2px; margin-bottom:25px; color:var(--text-dim);" data-en="[ SATELLITE LINK ]">[ ENLACE SATELITAL ]</h3>
         
-        <button onclick="abrirPreVuelo()" style="width:100%; padding:22px; border-radius:16px; background:rgba(255, 152, 0, 0.1); color:#ff9800; border:1px solid rgba(255, 152, 0, 0.4); font-weight:900; margin-bottom:15px; box-shadow: 0 10px 25px rgba(255, 152, 0, 0.2); letter-spacing: 1px;" data-en="🚀 PRE-FLIGHT (DAY ZERO)">🚀 PRE-VUELO (DÍA CERO)</button>
+        <button onclick="abrirPreVuelo()" style="width:100%; padding:22px; border-radius:16px; background:rgba(255, 152, 0, 0.1); color:#ff9800; border:1px solid rgba(255, 152, 0, 0.4); font-weight:900; margin-bottom:15px; box-shadow: 0 10px 25px rgba(255, 152, 0, 0.2); letter-spacing: 1px;">🚀 PRE-VUELO (DÍA CERO)</button>
         
-        <button onclick="let b=this; b.innerHTML='⏳ EXPORTANDO...'; b.style.opacity='0.7'; exportarDataLink(); setTimeout(()=>{b.innerHTML='📥 DATA-LINK PRO'; b.style.opacity='1';}, 2000)" style="width:100%; padding:22px; border-radius:16px; background:rgba(121, 192, 255, 0.1); color:#79c0ff; border:1px solid rgba(121, 192, 255, 0.4); font-weight:900; margin-bottom:15px; box-shadow: 0 10px 25px rgba(121, 192, 255, 0.2); letter-spacing: 1px; transition: all 0.2s;" data-en="📥 DATA-LINK EXPORT">📥 DATA-LINK PRO</button>
+        <!-- Botón Data-Link ahora es Tono Violeta Suave -->
+        <button onclick="let b=this; b.innerHTML='⏳ EXPORTANDO...'; b.style.opacity='0.7'; exportarDataLink(); setTimeout(()=>{b.innerHTML='📥 DATA-LINK PRO'; b.style.opacity='1';}, 2000)" style="width:100%; padding:22px; border-radius:16px; background:rgba(198, 148, 255, 0.1); color:#c694ff; border:1px solid rgba(198, 148, 255, 0.3); font-weight:900; margin-bottom:15px; letter-spacing: 1px; transition: all 0.2s;">📥 DATA-LINK PRO</button>
         
-        <button onclick="abrirHistorian()" style="width:100%; padding:22px; border-radius:16px; background:rgba(255, 82, 82, 0.1); color:#ff5252; border:1px solid rgba(255, 82, 82, 0.4); font-weight:900; margin-bottom:15px; box-shadow: 0 10px 25px rgba(255, 82, 82, 0.2); letter-spacing: 1px;" data-en="⚠️ HISTORIAN ALARMS">⚠️ LOG DE ALARMAS</button>
+        <button onclick="abrirHistorian()" style="width:100%; padding:22px; border-radius:16px; background:rgba(255, 82, 82, 0.1); color:#ff5252; border:1px solid rgba(255, 82, 82, 0.4); font-weight:900; margin-bottom:15px; box-shadow: 0 10px 25px rgba(255, 82, 82, 0.2); letter-spacing: 1px;">⚠️ LOG DE ALARMAS</button>
         
         <button onclick="let b=this; b.innerHTML='⏳ SINCRONIZANDO...'; b.style.opacity='0.7'; triggerSync(); setTimeout(()=>{b.innerHTML='🔄 FORZAR SYNC'; b.style.opacity='1';}, 2500)" style="width:100%; padding:22px; border-radius:16px; background:var(--bg-card); color:white; border:1px solid var(--border-subtle); font-weight:900; margin-bottom:15px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); letter-spacing: 1px; transition: all 0.2s;">🔄 FORZAR SYNC</button>
         
-        <button onclick="let b=this; b.innerHTML='🚀 TRANSMITIENDO...'; b.style.opacity='0.7'; enviarReporteTelegram(); setTimeout(()=>{b.innerHTML='🚀 TRANSMITIR TELEGRAM'; b.style.opacity='1';}, 2500)" style="width:100%; padding:22px; border-radius:16px; background:rgba(0,136,204,0.1); color:#0088cc; border:1px solid rgba(0,136,204,0.3); font-weight:900; margin-bottom:15px; box-shadow: 0 10px 25px rgba(0,136,204,0.15); letter-spacing: 1px; transition: all 0.2s;">🚀 TRANSMITIR TELEGRAM</button>
+        <!-- Botón Telegram ahora es Magenta/Morado -->
+        <button onclick="let b=this; b.innerHTML='🚀 TRANSMITIENDO...'; b.style.opacity='0.7'; enviarReporteTelegram(); setTimeout(()=>{b.innerHTML='🚀 TRANSMITIR TELEGRAM'; b.style.opacity='1';}, 2500)" style="width:100%; padding:22px; border-radius:16px; background:rgba(226, 179, 255, 0.1); color:#e2b3ff; border:1px solid rgba(226, 179, 255, 0.3); font-weight:900; margin-bottom:15px; letter-spacing: 1px; transition: all 0.2s;">🚀 TRANSMITIR TELEGRAM</button>
     </div>
 
     <div id="tab-settings" class="tab-content">
         <h3 style="font-weight:900; text-align:center; letter-spacing:2px; color:var(--text-dim);" data-en="[ SYSTEM CONFIG ]">[ SISTEMA ]</h3>
+        
         <div style="background:var(--bg-card); border-radius: 16px; padding:20px; border:1px solid var(--border-subtle); margin-bottom:15px; box-shadow: 0 8px 20px rgba(0,0,0,0.3);">
-            <label style="font-size:0.75rem; font-weight:800; color:var(--text-dim); margin-bottom:10px; display:block; text-transform:uppercase;" data-en="Base Operative Salary">Sueldo Base Operativo</label>
-            <input type="text" id="inputSueldo" placeholder="NO ASIGNADO" style="width:100%; padding:5px 0; background:transparent; border:none; border-bottom:2px solid var(--accent-green); color:var(--text-main); font-size:2.2rem; font-weight:900; outline:none; font-family:monospace;" inputmode="numeric" pattern="[0-9]*">
+            <label style="font-size:0.75rem; font-weight:800; color:var(--text-dim); margin-bottom:10px; display:block; text-transform:uppercase;">Sueldo Base Operativo</label>
+            <input type="text" id="inputSueldo" placeholder="NO ASIGNADO" style="width:100%; padding:5px 0; background:transparent; border:none; border-bottom:2px solid var(--color-infra); color:var(--text-main); font-size:2.2rem; font-weight:900; outline:none; font-family:monospace; text-shadow: 0 0 15px rgba(163, 113, 247, 0.3);" inputmode="numeric" pattern="[0-9]*">
         </div>
+        
         <div style="margin-top:15px; background:var(--bg-card); border-radius: 16px; padding:20px; border:1px solid var(--border-subtle); margin-bottom:20px; box-shadow: 0 8px 20px rgba(0,0,0,0.3);">
-            <label style="font-size:0.75rem; font-weight:800; color:var(--text-dim); margin-bottom:10px; display:block; text-transform:uppercase;" data-en="Time Navigator">Navegador de Tiempo</label>
+            <label style="font-size:0.75rem; font-weight:800; color:var(--text-dim); margin-bottom:10px; display:block; text-transform:uppercase;">Navegador de Tiempo</label>
             <div style="display:flex; gap:10px;">
                 <select id="navMesConceptual" onchange="aplicarCicloAlSistema()" style="width:100%; padding:14px; background:var(--bg-elevated); color:white; border:1px solid var(--border-subtle); border-radius:10px; outline:none; font-weight:bold;"><option value="0">Enero</option><option value="1">Febrero</option><option value="2">Marzo</option><option value="3" selected>Abril</option><option value="4">Mayo</option><option value="5">Junio</option><option value="6">Julio</option><option value="7">Agosto</option><option value="8">Septiembre</option><option value="9">Octubre</option><option value="10">Noviembre</option><option value="11">Diciembre</option></select>
                 <select id="navAnio" onchange="aplicarCicloAlSistema()" style="width:100%; padding:14px; background:var(--bg-elevated); color:white; border:1px solid var(--border-subtle); border-radius:10px; outline:none; font-weight:bold;"><option value="2025">2025</option><option value="2026" selected>2026</option></select>
             </div>
-            <div id="navRangoBadge" style="text-align:center; font-size:0.8rem; color:#79c0ff; margin-top:15px; font-weight:bold; text-transform:uppercase; font-family:monospace; background: rgba(31, 111, 235, 0.1); padding: 8px; border-radius: 8px; border: 1px solid rgba(121, 192, 255, 0.2);"></div>
+            <div id="navRangoBadge" style="text-align:center; font-size:0.8rem; color:var(--color-infra); margin-top:15px; font-weight:bold; text-transform:uppercase; font-family:monospace; background: rgba(163, 113, 247, 0.1); padding: 8px; border-radius: 8px; border: 1px solid rgba(163, 113, 247, 0.2);"></div>
         </div>
-        <button onclick="logout()" style="width:100%; padding:20px; border-radius:16px; background:rgba(255,82,82,0.1); color:var(--accent-red); border:1px solid rgba(255,82,82,0.3); font-weight:900; text-transform:uppercase; box-shadow: 0 4px 15px rgba(255,82,82,0.15); letter-spacing: 1px;" data-en="🚪 LOGOUT">🚪 DESCONECTAR MATRIZ</button>
+        
+        <button onclick="logout()" style="width:100%; padding:20px; border-radius:16px; background:var(--bg-elevated); color:var(--accent-red); border:1px solid rgba(255,82,82,0.2); font-weight:900; text-transform:uppercase; letter-spacing: 1px;">🚪 DESCONECTAR MATRIZ</button>
     </div>
 
     <!-- 🌟 DOCK FLOTANTE 🌟 -->
@@ -428,7 +446,7 @@
     <input type="hidden" id="sheet-id-target">
     <input type="hidden" id="sheet-collection-target" value="movimientos">
 
-    <button id="btn-recalibrar" onclick="const id=document.getElementById('sheet-id-target').value; closeBottomSheet(); editarMovimiento(id); switchTabApp('add', null);" style="width:100%; padding:18px; border-radius:15px; background:rgba(31,111,235,0.1); color:var(--accent-blue); border:1px solid rgba(31,111,235,0.2); font-weight:900; font-size:1rem; margin-bottom:12px; transition:transform 0.1s; letter-spacing: 1px; box-shadow: 0 4px 15px rgba(31,111,235,0.15);" data-en="✏️ RECALIBRATE">✏️ RECALIBRAR</button>
+    <button id="btn-recalibrar" onclick="const id=document.getElementById('sheet-id-target').value; closeBottomSheet(); editarMovimiento(id); switchTabApp('add', null);" style="width:100%; padding:18px; border-radius:15px; background:rgba(163,113,247,0.1); color:var(--color-infra); border:1px solid rgba(163,113,247,0.3); font-weight:900; font-size:1rem; margin-bottom:12px; transition:transform 0.1s; letter-spacing: 1px; box-shadow: 0 4px 15px rgba(163,113,247,0.15);" data-en="✏️ RECALIBRATE">✏️ RECALIBRAR</button>
     <button class="btn-danger-sheet" onclick="const id=document.getElementById('sheet-id-target').value; const col=document.getElementById('sheet-collection-target').value; if(confirm('¿ELIMINAR DEL BÚNKER?')) { db.collection(col).doc(id).delete().then(()=> { closeBottomSheet(); if(typeof mostrarToast === 'function') mostrarToast('REGISTRO DESTRUIDO'); }); }" style="width:100%; padding:18px; border-radius:15px; background:rgba(255,82,82,0.1); color:var(--accent-red); border:1px solid rgba(255,82,82,0.2); font-weight:900; font-size:1rem; margin-bottom:12px; transition:transform 0.1s; letter-spacing: 1px; box-shadow: 0 4px 15px rgba(255,82,82,0.15);" data-en="🗑️ DESTROY">🗑️ DESTRUIR</button>
     <button onclick="closeBottomSheet()" style="width:100%; padding:15px; border-radius:15px; background:transparent; color:var(--text-dim); border:none; font-weight:800; text-transform:uppercase;" data-en="Cancel">Cancelar</button>
 </div>
