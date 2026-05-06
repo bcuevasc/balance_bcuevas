@@ -18,7 +18,7 @@
         * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
         
         body { background-color: var(--bg-base); background-image: radial-gradient(rgba(255,255,255,0.02) 1px, transparent 1px); background-size: 25px 25px; color: var(--text-main); margin: 0; padding-bottom: calc(100px + env(safe-area-inset-bottom)); overscroll-behavior-y: none; }
-
+        @keyframes pulseAurora { 0% { transform: translateX(-50%) scale(1); opacity: 0.15; } 100% { transform: translateX(-50%) scale(1.3); opacity: 0.35; } }
         #login-screen { position: fixed; inset: 0; background: var(--bg-base); display: flex; align-items: center; justify-content: center; z-index: 10000; flex-direction: column; }
         .top-bar { padding: max(20px, env(safe-area-inset-top)) 20px 10px 20px; display: flex; justify-content: space-between; align-items: center; }
         .brand { font-weight: 900; font-size: 1.2rem; letter-spacing: 2px; display: flex; align-items: center; gap: 6px;}
@@ -227,9 +227,20 @@
             <button class="core-btn" onclick="switchTriCore('terceros', this, 2)">Terceros</button>
         </div>
         <div id="vista-efectivo" style="display: block; animation: fadeSlideUp 0.3s;">
-            <div class="master-hud">
-                <div style="font-size:0.7rem; color:var(--text-dim); font-weight:900; text-transform:uppercase; margin-bottom:5px; letter-spacing: 3px;" data-en="NET BALANCE">Maniobra Base</div>
-                <div class="hud-value">$<span id="txtSaldo">0</span></div>
+
+
+            <!-- INDICADOR PULL-TO-REFRESH -->
+            <div id="ptr-indicator" style="text-align: center; color: var(--color-infra); font-size: 0.75rem; font-weight: 900; letter-spacing: 1px; height: 0px; overflow: hidden; transition: height 0.2s, opacity 0.2s; display: flex; align-items: center; justify-content: center; opacity: 0; background: rgba(163, 113, 247, 0.05); border-bottom: 1px solid rgba(163, 113, 247, 0.1);">
+                ↓ DESLIZA PARA SINCRONIZAR
+            </div>
+            <!-- REACTOR FINTECH (Master HUD) -->
+            <div class="master-hud" style="position: relative; overflow: hidden; padding: 25px 20px 20px 20px; border-bottom: 1px solid rgba(255,255,255,0.02);">
+                <!-- Efecto Aurora Morada -->
+                <div style="position: absolute; top: -40px; left: 50%; transform: translateX(-50%); width: 250px; height: 120px; background: var(--color-infra); filter: blur(60px); opacity: 0.25; pointer-events: none; border-radius: 50%; animation: pulseAurora 4s infinite alternate;"></div>
+                
+                <div id="greeting-text" style="font-size:0.65rem; color:var(--text-dim); font-weight:900; text-transform:uppercase; margin-bottom:8px; letter-spacing: 2px; position: relative; z-index: 2;">BIENVENIDO, BYRON</div>
+                <div class="hud-value" style="position: relative; z-index: 2; margin-bottom: 5px;">$<span id="txtSaldo">0</span></div>
+                <div style="font-size:0.6rem; color:var(--color-infra); font-weight:900; text-transform:uppercase; letter-spacing: 4px; position: relative; z-index: 2; opacity: 0.8;">Maniobra Base</div>
             </div>
             
             <div class="slave-kpis">
@@ -245,7 +256,14 @@
                     <div style="font-size:0.6rem; font-weight:800; color:var(--text-dim); text-transform:uppercase;">Carga Variable</div>
                     <div style="color:var(--text-main); font-size:1.1rem; font-weight:900; margin-top:5px; font-family:monospace;">$<span id="txtTotalOtros">0</span></div>
                 </div>
-               
+                <!-- AQUÍ VUELVE LA PASTILLA DE DOPAMINA -->
+                <div class="slave-pill" style="border-top-color: var(--accent-red); box-shadow: 0 0 15px rgba(255,82,82,0.1);">
+                    <div style="font-size:0.6rem; font-weight:900; color:var(--accent-red); text-transform:uppercase;">Fugas (Dopamina)</div>
+                    <div style="display:flex; align-items:center; justify-content:center; gap:6px; margin-top:5px;">
+                        <div style="color:var(--text-main); font-size:1.1rem; font-weight:900; font-family:monospace;">$<span id="txtTotalEvitable">0</span></div>
+                        <span id="txtPorcentajeFugas" style="font-size:0.75rem; font-weight:900; color:var(--accent-red); background: rgba(255,82,82,0.1); padding: 2px 6px; border-radius: 6px;">0%</span>
+                    </div>
+                </div>
             </div>
             
             <div id="listaMovilDetalle" class="lista-contenedor"></div>
