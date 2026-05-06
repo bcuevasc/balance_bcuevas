@@ -773,9 +773,18 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0, totalFijosMes, 
                     labels: sorted.map(c => aliasMap[c[0]] || c[0].split(' ')[0]), 
                     datasets: [{ 
                         data: sorted.map(c => c[1]), 
-                        // 🟣 El Morado ahora es el primario, el azul se desplaza
-                        backgroundColor: ['rgba(163, 113, 247, 0.7)', 'rgba(46, 160, 67, 0.7)', 'rgba(210, 153, 34, 0.7)', 'rgba(255, 82, 82, 0.7)', 'rgba(31, 111, 235, 0.7)', 'rgba(0, 188, 212, 0.7)'], 
-                        borderColor: ['#a371f7', '#2ea043', '#d29922', '#ff5252', '#1f6feb', '#00bcd4'], 
+                        // Reemplaza el backgroundColor y borderColor del chartPareto por esto:
+backgroundColor: [
+    'rgba(163, 113, 247, 0.8)', // Morado principal
+    'rgba(0, 188, 212, 0.5)',   // Cyan tenue (Secundario)
+    'rgba(139, 148, 158, 0.4)', // Gris Neutro
+    'rgba(248, 81, 73, 0.5)',   // Rojo tenue
+    'rgba(163, 113, 247, 0.2)', // Morado oscuro/transparente
+    'rgba(48, 54, 61, 0.8)'     // Gris grafito
+], 
+borderColor: [
+    '#a371f7', '#00bcd4', '#8b949e', '#f85149', '#a371f7', '#30363d'
+],
                         borderWidth: 2 
                     }] 
                 },
