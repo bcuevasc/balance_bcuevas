@@ -260,6 +260,16 @@
         /* 4. Tanque Pre-Vuelo (Transformar Verde a Gradiente Morado Neón) */
         .pv-fill-verde { background: linear-gradient(90deg, #3b0764, var(--color-infra)) !important; box-shadow: 0 0 20px rgba(163, 113, 247, 0.4) !important; }
         #widget-txt-liquidez { color: var(--color-infra) !important; text-shadow: 0 0 15px rgba(163, 113, 247, 0.4) !important; }
+        /* Jerarquía Visual: Balance Real Destacado */
+        .kpi-saldo {
+            background: linear-gradient(135deg, rgba(163, 113, 247, 0.08) 0%, transparent 100%) !important;
+            border: 1px solid var(--color-infra) !important;
+            box-shadow: 0 0 25px rgba(163, 113, 247, 0.15) !important;
+            transform: scale(1.02);
+            z-index: 10;
+        }
+        .kpi-saldo .value { font-size: 1.35rem !important; text-shadow: 0 0 10px rgba(163, 113, 247, 0.4) !important; }
+        .kpi-saldo:hover { transform: scale(1.05) translateY(-4px) !important; box-shadow: 0 10px 30px rgba(163, 113, 247, 0.3) !important; }
     </style>
 </head>
 <body>
@@ -311,6 +321,7 @@
     <!-- 3. ZONA DER: RELOJ Y COMANDOS DE SISTEMA -->
     <div class="system-btns" style="gap: 8px;">
         <div id="cronos" class="cronos" style="font-size: 0.85rem; padding: 6px 15px;">--:--:--</div>
+        <button class="btn-sys" onclick="document.getElementById('modal-cmd').style.display='flex'" style="background: linear-gradient(135deg, var(--color-infra), #8a4af3); color: white; border: none; box-shadow: 0 0 15px rgba(163, 113, 247, 0.4); font-weight: 900; padding: 6px 20px; letter-spacing: 1px;">⚡ INYECTAR DATOS</button>
         <button class="btn-sys" onclick="let b=this; b.innerHTML='⏳...'; b.style.opacity='0.7'; triggerSync(); setTimeout(()=>{b.innerHTML='🔄 SYNC'; b.style.opacity='1';}, 2500)" style="color:var(--color-saldo); border-color:rgba(46, 160, 67, 0.4); background:rgba(46, 160, 67, 0.1);" title="Forzar Sincronización">🔄 SYNC</button>
         <button class="btn-sys" onclick="toggleLanguage()" style="color:#58a6ff; border-color:rgba(88,166,255,0.4);">🌐 ENG</button>
         <button class="btn-sys" onclick="abrirHistorian()" style="color:var(--color-fuga); border-color:rgba(248,81,73,0.4);">⚠️ LOG</button>
@@ -373,40 +384,7 @@
         </div>
     </div>
 
-    <div class="command-ribbon">
-        <div class="ribbon-title">CMD</div>
-        <input type="hidden" id="editId">
-        <div class="form-group sm"><label data-en="Date">Fecha</label><input type="datetime-local" id="inputFecha" class="form-control"></div>
-        <div class="form-group sm"><label data-en="Flow Type">Tipo Flujo</label>
-            <select id="inputTipo" class="form-control">
-                <option value="Gasto">Gasto Variable</option><option value="Gasto Fijo">Gasto Fijo</option><option value="Ingreso">Ingreso Extra</option><option value="Por Cobrar">Préstamo (CxC)</option><option value="Ahorro">Ahorro / Neutro</option>
-            </select>
-        </div>
-        <div class="form-group"><label data-en="Category">Categoría V31.4</label><select id="inputCategoria" class="form-control"></select></div>
-        <div class="form-group sm" id="boxFuga"><label data-en="% Leak">% Fuga</label>
-            <select id="inputFuga" class="form-control">
-                <option value="100">100%</option>
-                <option value="90">90%</option>
-                <option value="80">80%</option>
-                <option value="70">70%</option>
-                <option value="60">60%</option>
-                <option value="50">50%</option>
-                <option value="40">40%</option>
-                <option value="30">30%</option>
-                <option value="20">20%</option>
-                <option value="10">10%</option>
-                <option value="0" selected>0%</option>
-            </select>
-        </div>
-        <div class="form-group sm" id="boxCuotas" style="display:none;"><label data-en="Installments">Cuotas</label>
-            <select id="inputCuotas" class="form-control" style="border-color:var(--color-ingresos);"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="6">6</option><option value="12">12</option></select>
-        </div>
-        <div class="form-group lg"><label data-en="Description">Descripción</label><input type="text" id="inputNombre" class="form-control" placeholder="[ AUTO-PILOTO M/L ] Ingresa gasto..." autocomplete="off" autocorrect="off" spellcheck="false"></div>
-        <div class="form-group sm"><label data-en="Amount ($)">Monto ($)</label><input type="text" id="inputMonto" class="form-control" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this)" style="color:var(--color-edit); font-weight:bold; font-size:1rem;" autocomplete="off"></div>
-        
-        <button id="btnGuardar" class="btn-ribbon" onclick="agregarMovimiento()" data-en="INJECT">INYECTAR</button>
-        <button id="btnCancelarPC" class="btn-abortar-pc" onclick="limpiarFormulario()">ESC</button>
-    </div>
+   
 
     <div class="dual-core">
         <!-- ============================================== -->
@@ -426,38 +404,46 @@
             
             <div class="core-body">
                 <!-- 🛠️ FILA DE INSTRUMENTOS: 4 Paneles Simétricos -->
-                <div class="context-charts flujo" style="grid-template-columns: repeat(4, 1fr);">
-                    <div class="chart-box">
-                        <div class="bd-overlay-kpis">
-                            <div class="bd-badge">G: <span id="txtGastoTramo" style="color:var(--color-fuga)">$0</span></div>
-                            <div class="bd-badge">P: <span id="txtPromedioZoom" style="color:#d29922">$0</span></div>
-                        </div>
-                        <h5 data-en="BURN-RATE TRAJECTORY">TRAYECTORIA (BURN-RATE)</h5>
-                        <div class="canvas-container"><canvas id="chartBurnDown"></canvas></div>
-                    </div>
-                    <div class="chart-box"><h5 data-en="VITAL PULSE (BASE VS LEAK)">PULSO VITAL (BASE VS FUGA)</h5><div class="canvas-container"><canvas id="chartDiario"></canvas></div></div>
-                    <div class="chart-box"><h5 data-en="CATEGORICAL SPECTRUM">ESPECTRO CATEGÓRICO</h5><div class="canvas-container"><canvas id="chartPareto"></canvas></div></div>
-                    
-                    <div class="chart-box" style="border-top: 3px solid #ff9800; display: flex; flex-direction: column; justify-content: space-between; background: rgba(255, 152, 0, 0.03);">
-                        <div>
-                            <h5 style="color:#ff9800; margin-bottom: 2px;">ESTADO PRE-VUELO</h5>
-                            <div style="font-size: 0.6rem; color: var(--text-muted); text-align: center; font-family: monospace; margin-bottom: 15px;">PROYECCIÓN MES SIGUIENTE</div>
-                            
-                            <div class="pv-tank" style="margin-bottom: 15px; height: 14px; border-radius: 7px; width: 85%; margin-left: auto; margin-right: auto;">
-                                <div id="widget-barra-roja" class="pv-fill-rojo" style="width: 0%;"></div>
-                                <div id="widget-barra-naranja" class="pv-fill-naranja" style="width: 0%;"></div>
-                                <div id="widget-barra-verde" class="pv-fill-verde" style="width: 100%;"></div>
-                            </div>
-                            
-                            <div style="text-align: center;">
-                                <div style="font-size: 2rem; font-weight: 900; color: var(--color-saldo); font-family: monospace; text-shadow: 0 0 15px rgba(46,160,67,0.4); line-height: 1;">
-                                    $<span id="widget-txt-liquidez">0</span>
-                                </div>
-                            </div>
-                        </div>
-                        <button class="btn-sys" onclick="abrirPreVuelo()" style="width: 100%; padding: 10px; background: rgba(255, 152, 0, 0.1); color: #ff9800; border-color: rgba(255, 152, 0, 0.4); font-size: 0.8rem; margin-top: 10px;">⚙️ CONFIGURAR ARRANQUE</button>
-                    </div>
-                </div>
+                <div class="context-charts flujo" style="display: grid; grid-template-columns: 2fr 1fr; gap: 15px; background: transparent; padding: 15px 0; border: none;">
+    
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+        <div class="chart-box">
+            <div class="bd-overlay-kpis">
+                <div class="bd-badge">G: <span id="txtGastoTramo" style="color:var(--color-infra)">$0</span></div>
+                <div class="bd-badge">P: <span id="txtPromedioZoom" style="color:var(--text-main)">$0</span></div>
+            </div>
+            <h5 data-en="BURN-RATE TRAJECTORY">TRAYECTORIA (BURN-RATE)</h5>
+            <div class="canvas-container"><canvas id="chartBurnDown"></canvas></div>
+        </div>
+        
+        <div class="chart-box">
+            <h5 data-en="VITAL PULSE (BASE VS LEAK)">PULSO VITAL (BASE VS FUGA)</h5>
+            <div class="canvas-container"><canvas id="chartDiario"></canvas></div>
+        </div>
+    </div>
+
+    <div style="display: grid; grid-template-rows: 1fr auto; gap: 15px;">
+        <div class="chart-box">
+            <h5 data-en="CATEGORICAL SPECTRUM">ESPECTRO CATEGÓRICO</h5>
+            <div class="canvas-container"><canvas id="chartPareto"></canvas></div>
+        </div>
+        
+        <div class="chart-box" style="border: 1px solid var(--border-color); background: rgba(0,0,0,0.2); justify-content: center;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h5 style="margin:0; color:var(--text-muted);">ESTADO PRE-VUELO</h5>
+                <button class="btn-sys" onclick="abrirPreVuelo()" style="padding: 2px 8px; font-size: 0.6rem; border-color: var(--color-infra); color: var(--color-infra); background: rgba(163, 113, 247, 0.1);">⚙️ CONFIG</button>
+            </div>
+            <div class="pv-tank" style="height: 12px; border-radius: 6px; width: 100%; margin-bottom: 12px; background: rgba(255,255,255,0.05); overflow: hidden; display: flex;">
+                <div id="widget-barra-roja" class="pv-fill-rojo" style="width: 0%;"></div>
+                <div id="widget-barra-naranja" class="pv-fill-naranja" style="width: 0%;"></div>
+                <div id="widget-barra-verde" class="pv-fill-verde" style="width: 100%;"></div>
+            </div>
+            <div style="text-align: right; font-size: 1.4rem; font-weight: 900; color: var(--color-infra); font-family: monospace; text-shadow: 0 0 10px rgba(163, 113, 247, 0.3);">
+                $<span id="widget-txt-liquidez">0</span>
+            </div>
+        </div>
+    </div>
+</div>
 
                 <!-- 🛠️ MATRIZ DE GASTOS COMPLETA + TABLERO KANBAN FINANCIERO -->
                 <!-- CAMBIO: Grilla 55% / 45% (1.2fr 1fr) -->
@@ -814,5 +800,44 @@
 </script>
 <!-- 🛠️ CACHE BUSTER: Obligamos al PC a descargar el motor fresco -->
 <script src="motor.js?v=15.3"></script>
+<div id="modal-cmd" style="display:none; position:fixed; inset:0; background:rgba(3, 5, 8, 0.85); z-index:30000; align-items:center; justify-content:center; backdrop-filter:blur(10px);">
+    <div style="width: 100%; max-width: 650px; background: var(--bg-panel); border: 1px solid var(--border-color); border-top: 4px solid var(--color-infra); border-radius: 16px; padding: 25px; box-shadow: 0 20px 50px rgba(0,0,0,0.5);">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px;">
+            <h3 style="margin:0; color:var(--text-main); font-weight:900; letter-spacing: 1px;">⚡ GESTIONAR OPERACIÓN</h3>
+            <button onclick="document.getElementById('modal-cmd').style.display='none'" style="background:transparent; border:1px solid var(--border-color); color:var(--text-muted); border-radius:50%; width:32px; height:32px; cursor:pointer; font-weight:bold; transition:all 0.2s;">✕</button>
+        </div>
+        
+        <input type="hidden" id="editId">
+        
+        <div style="display:flex; gap:15px; margin-bottom: 15px;">
+            <div class="form-group" style="flex:2;">
+                <label>Monto ($)</label>
+                <input type="text" id="inputMonto" class="form-control" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this)" style="font-size:1.8rem; font-weight:900; color:var(--color-infra); height: 55px; text-align:right; font-family:monospace; background:#010409;" placeholder="0">
+            </div>
+            <div class="form-group" style="flex:1;">
+                <label>Fecha</label>
+                <input type="datetime-local" id="inputFecha" class="form-control" style="height: 55px; background:#010409;">
+            </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 15px;">
+            <label>Descripción</label>
+            <input type="text" id="inputNombre" class="form-control" placeholder="[ AUTO-PILOTO ] Ingresa detalle..." autocomplete="off" style="background:#010409; font-weight:bold;">
+        </div>
+
+        <div style="display:flex; gap:10px; margin-bottom: 25px;">
+            <div class="form-group" style="flex:1;"><label>Flujo</label><select id="inputTipo" class="form-control" style="background:#010409;"><option value="Gasto">Gasto Variable</option><option value="Gasto Fijo">Gasto Fijo</option><option value="Ingreso">Ingreso Extra</option><option value="Por Cobrar">Préstamo (CxC)</option><option value="Ahorro">Ahorro / Neutro</option></select></div>
+            <div class="form-group" style="flex:1.5;"><label>Categoría</label><select id="inputCategoria" class="form-control" style="background:#010409;"></select></div>
+            <div class="form-group" style="flex:0.8;" id="boxFuga"><label>% Fuga</label><select id="inputFuga" class="form-control" style="background:#010409;"><option value="100">100%</option><option value="50">50%</option><option value="0" selected>0%</option></select></div>
+            <div class="form-group" id="boxCuotas" style="display:none; flex:0.8;"><label>Cuotas</label><select id="inputCuotas" class="form-control" style="background:#010409;"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="6">6</option><option value="12">12</option></select></div>
+        </div>
+
+        <div style="display:flex; gap:10px;">
+            <button id="btnCancelarPC" onclick="limpiarFormulario(); document.getElementById('modal-cmd').style.display='none';" style="flex:1; padding:15px; background:var(--bg-subpanel); border:1px solid var(--border-color); color:var(--text-muted); border-radius:8px; font-weight:900; cursor:pointer;">CANCELAR</button>
+            <button id="btnGuardar" onclick="agregarMovimiento(); document.getElementById('modal-cmd').style.display='none';" style="flex:2; padding:15px; background:linear-gradient(135deg, var(--color-infra), #8a4af3); color:#fff; border:none; border-radius:8px; font-weight:900; font-size:1.1rem; cursor:pointer; box-shadow: 0 8px 20px rgba(163, 113, 247, 0.4);">REGISTRAR OPERACIÓN</button>
+        </div>
+    </div>
+</div>
+    
 </body>
 </html>
