@@ -760,7 +760,7 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0, totalFijosMes, 
             grad.addColorStop(0, 'rgba(163, 113, 247, 0.4)'); 
             grad.addColorStop(1, 'rgba(163, 113, 247, 0)');
             chartBD = new Chart(ctxBD, {
-                type: 'line', data: { labels: labelsX, datasets: [ { label: 'Consumo Real', data: actual, borderColor: '#a371f7', backgroundColor: grad, borderWidth: 3, fill: true, pointRadius: 0, tension: 0.2 }, { label: 'Proyección', data: proyeccion, borderColor: '#d29922', borderDash: [5, 5], borderWidth: 2, fill: false, pointRadius: 0, tension: 0.2 }, { label: 'Ideal', data: ideal, borderColor: 'rgba(46, 160, 67, 0.4)', borderDash: [5, 5], borderWidth: 2, fill: false, pointRadius: 0 } ]},
+                type: 'line', data: { labels: labelsX, datasets: [ { label: 'Consumo Real', data: actual, borderColor: '#a371f7', backgroundColor: grad, borderWidth: 3, fill: true, pointRadius: 0, tension: 0.2 }, { label: 'Proyección', data: proyeccion, borderColor: 'rgba(139, 148, 158, 0.8)', borderDash: [5, 5], borderWidth: 2, fill: false, pointRadius: 0, tension: 0.2 }, { label: 'Ideal', data: ideal, borderColor: 'rgba(46, 160, 67, 0.4)', borderDash: [5, 5], borderWidth: 2, fill: false, pointRadius: 0 } ]},
                 options: { maintainAspectRatio:false, plugins:{legend:{display:false}}, scales: { x: { ticks: { color: cT, font: {size: 9} }, grid:{color:cG} }, y: { grid: { color: cG }, ticks: { color: cT, callback: v => '$' + Math.round(v/1000) + 'k' } } }, layout: { padding: 0 } },
                 plugins: [noSignalPlugin]
             });
