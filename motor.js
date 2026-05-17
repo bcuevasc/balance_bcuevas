@@ -418,13 +418,15 @@ if (typeof window.renderizarListas === 'undefined') {
             return;
         }
 
-        // 🛠️ MEJORA 1: Recuperador seguro de iconos
-        const getEmoji = (catId) => {
-            if (typeof catMaestras !== 'undefined') {
-                const found = catMaestras.find(c => c.id === catId);
-                if (found) return found.em;
-            }
-            return "❓";
+        // 🛠️ MEJORA UI/UX: Asignador Semántico de Leds de Estado
+        const getDotColor = (cat) => {
+            const c = cat ? cat.toLowerCase() : "";
+            if (c.includes("dopamina") || c.includes("fuga") || c.includes("ruido")) return "#ff5252"; // Rojo (Alerta)
+            if (c.includes("ingreso") || c.includes("ahorro") || c.includes("recibida")) return "#2ea043"; // Verde (Positivo)
+            if (c.includes("infraestructura") || c.includes("fijo")) return "#a371f7"; // Morado (Base)
+            if (c.includes("transporte") || c.includes("flota") || c.includes("logistica")) return "#00bcd4"; // Cyan
+            if (c.includes("hogar") || c.includes("supermercado") || c.includes("alimentacion")) return "#d29922"; // Naranja
+            return "#8b949e"; // Gris neutro por defecto
         };
 
         let htmlPC = '';
@@ -442,8 +444,8 @@ if (typeof window.renderizarListas === 'undefined') {
             let editIdVal = document.getElementById('editId') ? document.getElementById('editId').value : '';
             let esEditando = (editIdVal === x.firestoreId);
             
-            let cssFuga = x.catV === 'Dopamina & Antojos' && !esEditando ? 'background: linear-gradient(90deg, rgba(255,255,255,0.01) 60%, rgba(248, 81, 73, 0.08) 100%); border-right: 3px solid var(--color-fuga);' : '';
-            let bgEdicion = esEditando ? 'background-color: rgba(210, 153, 34, 0.15); border-left: 3px solid var(--color-edit);' : cssFuga;
+            let cssFuga = x.catV === 'Dopamina & Antojos' && !esEditando ? 'background: linear-gradient(90deg, rgba(255,255,255,0.01) 60%, rgba(248, 81, 73, 0.05) 100%); border-right: 2px solid var(--color-fuga);' : '';
+            let bgEdicion = esEditando ? 'background-color: rgba(163, 113, 247, 0.15); border-left: 3px solid var(--color-infra);' : cssFuga;
 
             // 🛠️ EXPANSIÓN DE TELEMETRÍA: Sparklines de Eficiencia
             let pctFuga = x.innecesarioPct !== undefined ? x.innecesarioPct : (catEvitables.includes(x.catV) ? 100 : 0);
@@ -453,39 +455,41 @@ if (typeof window.renderizarListas === 'undefined') {
                 // Barra de Fuga (Roja)
                 visualSparkline = `
                 <div style="display:flex; align-items:center; gap:8px; margin-top:6px;">
-                    <div style="flex:1; background:rgba(255,255,255,0.05); height:4px; border-radius:2px; overflow:hidden; border: 1px solid var(--border-color);">
+                    <div style="flex:1; background:rgba(255,255,255,0.05); height:3px; border-radius:2px; overflow:hidden;">
                         <div style="width:${pctFuga}%; background:var(--color-fuga); height:100%; box-shadow:0 0 8px var(--color-fuga);"></div>
                     </div>
-                    <span style="font-size:0.6rem; color:var(--color-fuga); font-weight:900; font-family:monospace;">${pctFuga}% FUGA</span>
                 </div>`;
             } else if (x.tipo === 'Ahorro' || x.esIn) {
                 // Barra de Optimización (Verde)
                 visualSparkline = `
                 <div style="display:flex; align-items:center; gap:8px; margin-top:6px;">
-                    <div style="flex:1; background:rgba(255,255,255,0.05); height:4px; border-radius:2px; overflow:hidden; border: 1px solid var(--border-color);">
+                    <div style="flex:1; background:rgba(255,255,255,0.05); height:3px; border-radius:2px; overflow:hidden;">
                         <div style="width:100%; background:var(--color-saldo); height:100%; box-shadow:0 0 8px var(--color-saldo);"></div>
                     </div>
-                    <span style="font-size:0.6rem; color:var(--color-saldo); font-weight:900; font-family:monospace;">ACTIVO</span>
                 </div>`;
             }
 
-            htmlPC += `<tr style="${bgEdicion}" draggable="true" ondragstart="dragStart(event, '${x.firestoreId}')" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dropRow(event, '${x.firestoreId}')">
+            htmlPC += `<tr style="${bgEdicion}; border-bottom: 1px solid rgba(255,255,255,0.03);" draggable="true" ondragstart="dragStart(event, '${x.firestoreId}')" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dropRow(event, '${x.firestoreId}')">
                 <td style="text-align: center;"><input type="checkbox" class="row-check" value="${x.firestoreId}" onchange="updateMassActions()"></td>
                 <td style="font-size:0.75rem; color:var(--text-muted); font-weight:bold;">${dateStr} <span class="col-hora">${timeStr}</span></td>
-                <td class="col-desc" title="${nombreSeguro}" style="font-size: 0.85rem;">${nombreSeguro}</td>
-                <td style="font-size:0.75rem; padding-top: 12px; padding-bottom: 12px;">
-                    <span class="cat-badge">${getEmoji(x.catV)} ${x.catV.replace(' & ','&')}</span>
+                <td class="col-desc" title="${nombreSeguro}" style="font-size: 0.85rem; font-weight: 600;">${nombreSeguro}</td>
+                
+                <td style="padding-top: 12px; padding-bottom: 12px;">
+                    <div style="display:flex; align-items:center; gap:6px; font-size:0.65rem; font-weight:800; color:#8b949e; text-transform:uppercase; letter-spacing:0.5px;">
+                        <span style="color:${getDotColor(x.catV)}; font-size:1.1rem; line-height:0.5; text-shadow: 0 0 8px ${getDotColor(x.catV)};">●</span> 
+                        <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:180px;">${x.catV.replace(' & ','&')}</span>
+                    </div>
                     ${visualSparkline}
                 </td>
+                
                 <td class="col-monto" style="color:${colorMonto}; font-size: 1rem;">${iconImpacto}$${montoSeguro.toLocaleString('es-CL')}</td>
                 <td class="col-monto hide-mobile" style="color:${colorSaldo}; font-size:0.8rem;">$${x.saldoCalculadoVista.toLocaleString('es-CL')}</td>
-                <td style="text-align:center;"><button class="btn-sys" style="padding:4px 8px; border:none; background:transparent; font-size:1.1rem;" onclick="editarMovimiento('${x.firestoreId}')">✏️</button></td>
+                <td style="text-align:center;"><button class="btn-sys" style="padding:4px 8px; border:none; background:transparent; font-size:1.1rem; filter: grayscale(100%) opacity(0.5); transition: all 0.2s;" onmouseover="this.style.filter='none'" onmouseout="this.style.filter='grayscale(100%) opacity(0.5)'" onclick="editarMovimiento('${x.firestoreId}')">✏️</button></td>
             </tr>`;
         });
         contenedorPC.innerHTML = htmlPC;
     }
 }
-
 // ==========================================
 // ✏️ EDICIÓN Y GUARDADO
 // ==========================================
