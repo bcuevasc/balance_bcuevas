@@ -1585,7 +1585,7 @@ window.renderizarTablaTerceros = function() {
             else if (t.tipo === "YO DEBO") sumaYoDebo += m;
             else sumaPendientes += m;
         });
-
+        
         // 2. Aplicamos el filtro visual a la lista
         let datosFiltrados = window.datosTerceros;
         if (window.filtroTercerosActual !== 'TODOS') {
@@ -1610,7 +1610,8 @@ window.renderizarTablaTerceros = function() {
             } else if (t.tipo === "YO DEBO") {
                 cText = "var(--color-fuga)"; cBgHex = "248, 81, 73"; iconPC = "➖"; iconMovil = "📤"; signo = "-"; cardClass = "is-fuga";
             } else { // PENDIENTE
-                cText = "#d29922"; cBgHex = "210, 153, 34"; iconPC = "📌"; iconMovil = "📌"; signo = "~"; cardClass = "is-neutro";
+                // ☢️ CAMBIO: Aniquilamos el naranja y forzamos Gris Plata
+                cText = "#8b949e"; cBgHex = "139, 148, 158"; iconPC = "📌"; iconMovil = "📌"; signo = "~"; cardClass = "is-neutro";
             }
 
             // Fila PC
@@ -1674,7 +1675,6 @@ window.renderizarTablaTerceros = function() {
     if(btnRojo) btnRojo.style.opacity = (window.filtroTercerosActual === 'TODOS' || window.filtroTercerosActual === 'YO DEBO') ? '1' : '0.3';
     if(btnAmarillo) btnAmarillo.style.opacity = (window.filtroTercerosActual === 'TODOS' || window.filtroTercerosActual === 'PENDIENTE') ? '1' : '0.3';
 };
-
 // Se mantiene tu gatillo intacto
 document.addEventListener("DOMContentLoaded", () => { setTimeout(renderizarTablaTerceros, 500); });
 
