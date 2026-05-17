@@ -313,21 +313,22 @@
         #widget-txt-liquidez { color: var(--color-infra) !important; text-shadow: 0 0 15px rgba(163, 113, 247, 0.4) !important; }
         .pv-fill-naranja { background: linear-gradient(90deg, rgba(163, 113, 247, 0.2), rgba(163, 113, 247, 0.6)) !important; box-shadow: 0 0 15px rgba(163, 113, 247, 0.2) !important; }
 
-        /* 8. Neutralizar Panel Obligaciones (Aniquilar el amarillo/naranja universalmente) */
-        .text-warning,
-        [style*="color:#d29922"],
-        [style*="color: #d29922"],
-        [style*="color: var(--color-edit)"] {
+        /* 8. ☢️ BOTÓN NUCLEAR: Neutralizar el Panel de Obligaciones */
+        span[style*="color: var(--color-edit)"],
+        div[style*="color: var(--color-edit)"],
+        strong[style*="color: var(--color-edit)"],
+        span[style*="color:#d29922"],
+        span[style*="color: #d29922"] {
              color: #8b949e !important;
              text-shadow: none !important;
         }
-        /* Excepto el botón de editar principal o cosas que sí deban ser naranjas */
+        /* Rescatar el botón de edición y los ingresos/fugas para que no se vuelvan grises */
         .btn-sys[style*="color: var(--color-edit)"] { color: inherit !important;}
+        span[style*="var(--color-ingresos)"] { color: var(--color-ingresos) !important; }
+        span[style*="var(--color-fuga)"] { color: var(--color-fuga) !important; }
         
-        /* Limpiar iconos secundarios */
+        /* Limpiar iconos secundarios y botones */
         i.fa-cog, i.fa-cogs, span.impact-icon { color: var(--text-muted) !important; }
-        
-        /* Asegurar que el lápiz de edición de Terceros siga la misma lógica sobria */
         button[onclick*="editarTercero"] { filter: grayscale(100%) opacity(0.5); transition: all 0.2s;}
         button[onclick*="editarTercero"]:hover { filter: none; }
     </style>
