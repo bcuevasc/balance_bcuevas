@@ -797,7 +797,7 @@
             <div class="pv-subtitle" data-en="FEEDFORWARD CONTROL FOR">CONTROL PREALIMENTADO DE LIQUIDEZ MES DE <span id="pv-mes-label" style="color:#fff; font-weight:bold;">--</span></div>
         </div>
         
-        <div class="pv-tank-wrapper">
+       <div class="pv-tank-wrapper">
             <div class="pv-tank-label">
                 <span data-en="Hard Deductions">Deducciones Duras</span>
                 <span data-en="Net Maneuver Liquidity">Liquidez Neta de Maniobra</span>
@@ -809,6 +809,11 @@
             </div>
             <div class="pv-liquidez-text">$<span id="pv-txt-liquidez">0</span></div>
             <div class="pv-certeza" id="pv-certeza-container">CERTEZA DEL CÁLCULO: <span id="pv-certeza-pct" style="color:var(--color-fuga);">0%</span></div>
+            
+            <div style="text-align: center; margin-top: 15px; padding-top: 10px; border-top: 1px dashed rgba(255,255,255,0.05);">
+                <span style="font-size: 0.7rem; color: #8b949e; font-weight: 800; letter-spacing: 2px;">PRESUPUESTO DIARIO (MÁXIMO PERMITIDO)</span><br>
+                <span style="font-size: 1.6rem; color: #58a6ff; font-weight: 900; font-family: monospace; text-shadow: 0 0 15px rgba(88, 166, 255, 0.4);">$<span id="pv-txt-diario">0</span><span style="font-size: 0.9rem; color: #8b949e;"> / día</span></span>
+            </div>
         </div>
 
         <div class="pv-body">
@@ -822,16 +827,16 @@
                     <div class="pv-input-group">
                         <label>TC Nacional</label>
                         <button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-tc-nac')">EST</button>
-                        <input type="text" id="pv-tc-int" class="pv-input" style="color:var(--color-fuga); width:100px;" placeholder="US$ 0.00" data-estado="est" inputmode="decimal" oninput="this.value = this.value.replace(/[^0-9.,]/g, ''); calcularDiaCero();">
+                        <input type="text" id="pv-tc-nac" class="pv-input" style="color:var(--color-fuga); width:100px;" placeholder="0" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();">
                     </div>
-                    <div style="display:flex; flex-direction:column; width:100%; background: var(--bg-card); border-radius: 12px; border: 1px solid rgba(248,81,73,0.3); margin-bottom: 10px; padding: 12px 14px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+                    <div style="display:flex; flex-direction:column; width:100%; background: rgba(0,0,0,0.3); border-radius: 12px; border: 1px solid rgba(248,81,73,0.3); margin-bottom: 10px; padding: 12px 14px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
                         <div style="display: flex; align-items: center; justify-content: space-between; gap:10px;">
                             <div style="flex:1;">
                                 <label style="font-size: 0.8rem; font-weight: 900; color: var(--text-main); text-transform: uppercase;">TC Internacional</label>
                                 <span id="lbl-dolar-actual" style="display:block; font-size:0.65rem; color:var(--text-muted); font-family:monospace; margin-top:4px;">Consultando USD...</span>
                             </div>
                             <button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-tc-int')">EST</button>
-                            <input type="text" id="pv-tc-int" class="pv-input" style="color:var(--color-fuga); width:100px;" placeholder="US$ 0" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();">
+                            <input type="text" id="pv-tc-int" class="pv-input" style="color:var(--color-fuga); width:100px;" placeholder="US$ 0.00" data-estado="est" inputmode="decimal" oninput="this.value = this.value.replace(/[^0-9.,]/g, ''); calcularDiaCero();">
                         </div>
                         <div id="pv-tc-int-clp" style="text-align:right; font-size:0.85rem; color:var(--color-fuga); font-family:monospace; font-weight:900; margin-top:10px; border-top: 1px dashed rgba(248,81,73,0.3); padding-top: 10px;">~ $0 CLP</div>
                     </div>
