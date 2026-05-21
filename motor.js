@@ -1088,6 +1088,50 @@ async function ejecutarPurgaMasivaTC() {
 // ==========================================
 // 🚀 SIMULADOR DÍA CERO (PROYECCIÓN MES + 1)
 // ==========================================
+
+// 💾 NUEVO: FUNCIONES DE MEMORIA CACHÉ
+window.guardarDraftDiaCero = function() {
+    let draft = {
+        arriendo: document.getElementById('pv-arriendo')?.value,
+        udec: document.getElementById('pv-udec')?.value,
+        cae: document.getElementById('pv-cae')?.value,
+        ggcc: document.getElementById('pv-ggcc')?.value,
+        luz: document.getElementById('pv-luz')?.value,
+        agua: document.getElementById('pv-agua')?.value,
+        gas: document.getElementById('pv-gas')?.value,
+        celu: document.getElementById('pv-celu')?.value,
+        madre: document.getElementById('pv-madre')?.value,
+        subs: document.getElementById('pv-subs')?.value,
+        seguro: document.getElementById('pv-seguro')?.value,
+        linea: document.getElementById('pv-linea')?.value,
+        tcInt: document.getElementById('pv-tc-int')?.value
+    };
+    localStorage.setItem('bunker_dia_cero_draft', JSON.stringify(draft));
+};
+
+window.cargarDraftDiaCero = function() {
+    let draftStr = localStorage.getItem('bunker_dia_cero_draft');
+    if (draftStr) {
+        try {
+            let draft = JSON.parse(draftStr);
+            const setVal = (id, val) => { if(val !== undefined && document.getElementById(id)) document.getElementById(id).value = val; };
+            setVal('pv-arriendo', draft.arriendo);
+            setVal('pv-udec', draft.udec);
+            setVal('pv-cae', draft.cae);
+            setVal('pv-ggcc', draft.ggcc);
+            setVal('pv-luz', draft.luz);
+            setVal('pv-agua', draft.agua);
+            setVal('pv-gas', draft.gas);
+            setVal('pv-celu', draft.celu);
+            setVal('pv-madre', draft.madre);
+            setVal('pv-subs', draft.subs);
+            setVal('pv-seguro', draft.seguro);
+            setVal('pv-linea', draft.linea);
+            setVal('pv-tc-int', draft.tcInt);
+        } catch(e) { console.log("Error cargando memoria caché del simulador"); }
+    }
+};
+
 window.abrirPreVuelo = function() {
     const modal = document.getElementById('modal-dia-cero'); if(!modal) return;
     
@@ -1105,14 +1149,19 @@ window.abrirPreVuelo = function() {
     document.getElementById('pv-sueldo').value = sueldoProximoMes.toLocaleString('es-CL');
     
     let sumaTCMes = 0;
-    datosTCGlobal.forEach(d => { 
-        if(!d.mesCobro) return;
-        let f = new Date(d.mesCobro); 
-        if (f.getMonth() === pM && f.getFullYear() === pA) sumaTCMes += (Number(d.monto) || 0); 
-    });
+    if (typeof datosTCGlobal !== 'undefined') {
+        datosTCGlobal.forEach(d => { 
+            if(!d.mesCobro) return;
+            let f = new Date(d.mesCobro); 
+            if (f.getMonth() === pM && f.getFullYear() === pA) sumaTCMes += (Number(d.monto) || 0); 
+        });
+    }
     
     let elTcNac = document.getElementById('pv-tc-nac');
     if(elTcNac && elTcNac.getAttribute('data-estado') !== 'pag') { elTcNac.value = sumaTCMes > 0 ? sumaTCMes.toLocaleString('es-CL') : "0"; }
+    
+    // 💾 INYECCIÓN: CARGAR DRAFT GUARDADO ANTES DE CALCULAR
+    cargarDraftDiaCero();
     
     calcularDiaCero(); modal.style.display = 'flex';
 }
@@ -1183,6 +1232,23 @@ window.calcularDiaCero = function() {
     let cer = tgls.length > 0 ? Math.round((conf / tgls.length) * 100) : 0;
     let elCer = document.getElementById('pv-certeza-pct');
     if(elCer) { elCer.innerText = cer + '%'; elCer.style.color = cer < 40 ? '#ff5252' : (cer < 80 ? '#ff9800' : '#2ea043'); }
+
+    // 🚀 NUEVO: CÁLCULO DE PRESUPUESTO DIARIO
+    let txtDiario = document.getElementById('pv-txt-diario');
+    if (txtDiario) {
+        let vM = parseInt(document.getElementById('navMesConceptual').value);
+        let vA = parseInt(document.getElementById('navAnio').value);
+        let pM = vM + 1; let pA = vA; if (pM > 11) { pM = 0; pA++; }
+        
+        // Calculamos los días exactos del mes siguiente
+        let diasProxMes = new Date(pA, pM + 1, 0).getDate(); 
+        
+        let pDiario = liquidezNeta > 0 ? Math.floor(liquidezNeta / diasProxMes) : 0;
+        txtDiario.innerText = pDiario.toLocaleString('es-CL');
+    }
+
+    // 💾 INYECCIÓN: GUARDAR DRAFT AL MODIFICAR CUALQUIER COSA
+    guardarDraftDiaCero();
 };
 // 🚀 SIMULADOR DÍA CERO (MODO GEMELO DIGITAL PURO)
 window.ejecutarArranque = function() {
