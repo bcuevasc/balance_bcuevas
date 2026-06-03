@@ -1128,47 +1128,63 @@ async function ejecutarPurgaMasivaTC() {
 // 🚀 SIMULADOR DÍA CERO (PROYECCIÓN MES + 1)
 // ==========================================
 
-// 💾 NUEVO: FUNCIONES DE MEMORIA CACHÉ
-window.guardarDraftDiaCero = function() {
-    let draft = {
-        arriendo: document.getElementById('pv-arriendo')?.value,
-        udec: document.getElementById('pv-udec')?.value,
-        cae: document.getElementById('pv-cae')?.value,
-        ggcc: document.getElementById('pv-ggcc')?.value,
-        luz: document.getElementById('pv-luz')?.value,
-        agua: document.getElementById('pv-agua')?.value,
-        gas: document.getElementById('pv-gas')?.value,
-        celu: document.getElementById('pv-celu')?.value,
-        madre: document.getElementById('pv-madre')?.value,
-        subs: document.getElementById('pv-subs')?.value,
-        seguro: document.getElementById('pv-seguro')?.value,
-        linea: document.getElementById('pv-linea')?.value,
-        tcInt: document.getElementById('pv-tc-int')?.value
+// ==========================================
+// 🚀 SIMULADOR DÍA CERO (AHORA CON CLOUD SAVE FIREBASE)
+// ==========================================
+
+window.guardarPerfilFijo = function() {
+    let btn = document.querySelector('.btn-pv-launch');
+    let txtOrig = btn ? btn.innerHTML : "GUARDAR";
+    if(btn) btn.innerHTML = "⏳ GUARDANDO EN LA NUBE...";
+    
+    let perfil = {
+        arriendo: document.getElementById('pv-arriendo')?.value || "0",
+        udec: document.getElementById('pv-udec')?.value || "0",
+        cae: document.getElementById('pv-cae')?.value || "0",
+        ggcc: document.getElementById('pv-ggcc')?.value || "0",
+        luz: document.getElementById('pv-luz')?.value || "0",
+        agua: document.getElementById('pv-agua')?.value || "0",
+        gas: document.getElementById('pv-gas')?.value || "0",
+        celu: document.getElementById('pv-celu')?.value || "0",
+        madre: document.getElementById('pv-madre')?.value || "0",
+        subs: document.getElementById('pv-subs')?.value || "0",
+        seguro: document.getElementById('pv-seguro')?.value || "0",
+        linea: document.getElementById('pv-linea')?.value || "0",
+        tcInt: document.getElementById('pv-tc-int')?.value || "0"
     };
-    localStorage.setItem('bunker_dia_cero_draft', JSON.stringify(draft));
+    
+    // Lo guardamos en una colección de parámetros generales en la nube
+    db.collection("parametros").doc("gastos_fijos_base").set(perfil, {merge: true}).then(() => {
+        if(typeof mostrarToast === 'function') mostrarToast("✔️ PERFIL MAESTRO GUARDADO EN LA NUBE");
+        if(btn) btn.innerHTML = txtOrig;
+    }).catch(err => {
+        alert("Error al guardar: " + err);
+        if(btn) btn.innerHTML = txtOrig;
+    });
 };
 
-window.cargarDraftDiaCero = function() {
-    let draftStr = localStorage.getItem('bunker_dia_cero_draft');
-    if (draftStr) {
-        try {
-            let draft = JSON.parse(draftStr);
+window.cargarPerfilFijo = function() {
+    // Extraemos la configuración guardada desde la nube
+    db.collection("parametros").doc("gastos_fijos_base").get().then(doc => {
+        if (doc.exists) {
+            let data = doc.data();
             const setVal = (id, val) => { if(val !== undefined && document.getElementById(id)) document.getElementById(id).value = val; };
-            setVal('pv-arriendo', draft.arriendo);
-            setVal('pv-udec', draft.udec);
-            setVal('pv-cae', draft.cae);
-            setVal('pv-ggcc', draft.ggcc);
-            setVal('pv-luz', draft.luz);
-            setVal('pv-agua', draft.agua);
-            setVal('pv-gas', draft.gas);
-            setVal('pv-celu', draft.celu);
-            setVal('pv-madre', draft.madre);
-            setVal('pv-subs', draft.subs);
-            setVal('pv-seguro', draft.seguro);
-            setVal('pv-linea', draft.linea);
-            setVal('pv-tc-int', draft.tcInt);
-        } catch(e) { console.log("Error cargando memoria caché del simulador"); }
-    }
+            setVal('pv-arriendo', data.arriendo);
+            setVal('pv-udec', data.udec);
+            setVal('pv-cae', data.cae);
+            setVal('pv-ggcc', data.ggcc);
+            setVal('pv-luz', data.luz);
+            setVal('pv-agua', data.agua);
+            setVal('pv-gas', data.gas);
+            setVal('pv-celu', data.celu);
+            setVal('pv-madre', data.madre);
+            setVal('pv-subs', data.subs);
+            setVal('pv-seguro', data.seguro);
+            setVal('pv-linea', data.linea);
+            setVal('pv-tc-int', data.tcInt);
+            calcularDiaCero(); // Recalcula la UI con los datos frescos
+        }
+    });
 };
 
 window.abrirPreVuelo = function() {
@@ -1199,11 +1215,11 @@ window.abrirPreVuelo = function() {
     let elTcNac = document.getElementById('pv-tc-nac');
     if(elTcNac && elTcNac.getAttribute('data-estado') !== 'pag') { elTcNac.value = sumaTCMes > 0 ? sumaTCMes.toLocaleString('es-CL') : "0"; }
     
-    // 💾 INYECCIÓN: CARGAR DRAFT GUARDADO ANTES DE CALCULAR
-    cargarDraftDiaCero();
+    // ☁️ CARGAR DESDE LA NUBE AL ABRIR LA VENTANA
+    cargarPerfilFijo();
     
     calcularDiaCero(); modal.style.display = 'flex';
-}
+};
 
 window.cerrarPreVuelo = function() { document.getElementById('modal-dia-cero').style.display = 'none'; actualizarDashboard(); };
 
@@ -1285,9 +1301,6 @@ window.calcularDiaCero = function() {
         let pDiario = liquidezNeta > 0 ? Math.floor(liquidezNeta / diasProxMes) : 0;
         txtDiario.innerText = pDiario.toLocaleString('es-CL');
     }
-
-    // 💾 INYECCIÓN: GUARDAR DRAFT AL MODIFICAR CUALQUIER COSA
-    guardarDraftDiaCero();
 };
 // 🚀 SIMULADOR DÍA CERO (MODO GEMELO DIGITAL PURO)
 window.ejecutarArranque = function() {
