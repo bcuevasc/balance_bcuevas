@@ -901,43 +901,47 @@
             btn.style.borderColor = 'var(--color-infra)'; btn.style.boxShadow = '0 0 15px rgba(163, 113, 247, 0.2)';
         }
     }
-    /* =========================================
-           🟣 PURGA FINTECH V4: SILENCIANDO RUIDO VISUAL (PC)
-           ========================================= */
-        
-        /* 1. Reloj y Botón SYNC (Chao Verde) */
-        .cronos { color: var(--text-main) !important; border-color: var(--border-color) !important; background: rgba(0,0,0,0.5) !important; text-shadow: none !important; }
-        .btn-sys[onclick*="triggerSync"] { color: var(--text-muted) !important; border-color: var(--border-color) !important; background: transparent !important; }
-        .btn-sys[onclick*="triggerSync"]:hover { color: var(--color-infra) !important; border-color: var(--color-infra) !important; background: rgba(163, 113, 247, 0.1) !important; }
-
-        /* 2. Navegador de Tiempo (Borde y Mes - Chao Verde) */
-        .time-navigator-panel { border-left-color: var(--color-infra) !important; }
-        #navMesConceptual { color: var(--color-infra) !important; }
-
-        /* 3. Pestañas Superiores (Forzar Morado al estar activas) */
-        .btn-sys[id^="tabBtn"] { transition: all 0.3s ease; }
-        .btn-sys[id^="tabBtn"][style*="background: rgba"] { background: rgba(163, 113, 247, 0.15) !important; border-color: var(--color-infra) !important; box-shadow: 0 0 15px rgba(163, 113, 247, 0.2) !important; color: #fff !important; }
-
-        /* 4. Etiqueta CMD vertical (Chao Amarillo) */
-        .ribbon-title { color: var(--color-infra) !important; text-shadow: 0 0 10px rgba(163, 113, 247, 0.5) !important; }
-        .command-ribbon { border-left-color: var(--color-infra) !important; }
-
-        /* 5. Caja "Estado Pre-Vuelo" (Chao Naranja, Hola Gris/Morado) */
-        .chart-box[style*="border-top: 3px solid #ff9800"] { border-top-color: var(--border-color) !important; background: rgba(0, 0, 0, 0.2) !important; }
-        .chart-box h5[style*="color:#ff9800"] { color: var(--text-muted) !important; text-shadow: none !important; }
-    /* 🎁 SORPRESA PC: FÍSICA Y GRAVEDAD EN KPIs */
-        .kpi-card { 
-            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s, border-color 0.2s; 
-            cursor: default;
-        }
-        .kpi-card:hover { 
-            transform: translateY(-4px); 
-            box-shadow: 0 10px 25px rgba(163, 113, 247, 0.15); 
-            border-color: rgba(163, 113, 247, 0.4); 
-            background: linear-gradient(180deg, rgba(163, 113, 247, 0.05) 0%, transparent 100%);
-        }
-        .kpi-card:hover h4 { color: var(--color-infra) !important; }
 </script>
+
+<style>
+    /* =========================================
+       🟣 PURGA FINTECH V4: SILENCIANDO RUIDO VISUAL (PC)
+       ========================================= */
+        
+    /* 1. Reloj y Botón SYNC (Chao Verde) */
+    .cronos { color: var(--text-main) !important; border-color: var(--border-color) !important; background: rgba(0,0,0,0.5) !important; text-shadow: none !important; }
+    .btn-sys[onclick*="triggerSync"] { color: var(--text-muted) !important; border-color: var(--border-color) !important; background: transparent !important; }
+    .btn-sys[onclick*="triggerSync"]:hover { color: var(--color-infra) !important; border-color: var(--color-infra) !important; background: rgba(163, 113, 247, 0.1) !important; }
+
+    /* 2. Navegador de Tiempo (Borde y Mes - Chao Verde) */
+    .time-navigator-panel { border-left-color: var(--color-infra) !important; }
+    #navMesConceptual { color: var(--color-infra) !important; }
+
+    /* 3. Pestañas Superiores (Forzar Morado al estar activas) */
+    .btn-sys[id^="tabBtn"] { transition: all 0.3s ease; }
+    .btn-sys[id^="tabBtn"][style*="background: rgba"] { background: rgba(163, 113, 247, 0.15) !important; border-color: var(--color-infra) !important; box-shadow: 0 0 15px rgba(163, 113, 247, 0.2) !important; color: #fff !important; }
+
+    /* 4. Etiqueta CMD vertical (Chao Amarillo) */
+    .ribbon-title { color: var(--color-infra) !important; text-shadow: 0 0 10px rgba(163, 113, 247, 0.5) !important; }
+    .command-ribbon { border-left-color: var(--color-infra) !important; }
+
+    /* 5. Caja "Estado Pre-Vuelo" (Chao Naranja, Hola Gris/Morado) */
+    .chart-box[style*="border-top: 3px solid #ff9800"] { border-top-color: var(--border-color) !important; background: rgba(0, 0, 0, 0.2) !important; }
+    .chart-box h5[style*="color:#ff9800"] { color: var(--text-muted) !important; text-shadow: none !important; }
+    
+    /* 🎁 SORPRESA PC: FÍSICA Y GRAVEDAD EN KPIs */
+    .kpi-card { 
+        transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s, border-color 0.2s; 
+        cursor: default;
+    }
+    .kpi-card:hover { 
+        transform: translateY(-4px); 
+        box-shadow: 0 10px 25px rgba(163, 113, 247, 0.15); 
+        border-color: rgba(163, 113, 247, 0.4); 
+        background: linear-gradient(180deg, rgba(163, 113, 247, 0.05) 0%, transparent 100%);
+    }
+    .kpi-card:hover h4 { color: var(--color-infra) !important; }
+</style>
 <!-- 🛠️ CACHE BUSTER: Obligamos al PC a descargar el motor fresco -->
 <script src="motor.js?v=15.4"></script>
 <div id="modal-cmd" style="display:none; position:fixed; inset:0; background:rgba(3, 5, 8, 0.85); z-index:30000; align-items:center; justify-content:center; backdrop-filter:blur(10px);">
