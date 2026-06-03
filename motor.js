@@ -1302,13 +1302,7 @@ window.calcularDiaCero = function() {
         txtDiario.innerText = pDiario.toLocaleString('es-CL');
     }
 };
-// 🚀 SIMULADOR DÍA CERO (MODO GEMELO DIGITAL PURO)
-window.ejecutarArranque = function() {
-    // LOBOTOMÍA: Actuador de base de datos desconectado. 
-    // Solo evalúa impacto local sin escritura en Firestore.
-    mostrarToast("SIMULACIÓN FINALIZADA: GEMELO DIGITAL SEGURO (NO SE INYECTÓ DATA)");
-    cerrarPreVuelo();
-};
+
 
 // ☁️ SINC Y EXPORTACIÓN (PUENTE REST)
 window.triggerSync = async function() {
