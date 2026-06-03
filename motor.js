@@ -543,7 +543,10 @@ function sortTable(column) {
 // ==========================================
 // ✏️ EDICIÓN Y GUARDADO (CON SOPORTE MÓVIL)
 // ==========================================
-function editarMovimiento(id) {
+// ==========================================
+// ✏️ EDICIÓN Y GUARDADO (CON AUTO-APERTURA)
+// ==========================================
+window.editarMovimiento = function(id) {
     const mov = listaMovimientos.find(m => m.firestoreId === id);
     if(!mov) return alert("Registro no encontrado.");
     
@@ -589,19 +592,22 @@ function editarMovimiento(id) {
         if(document.getElementById('inputFecha')) document.getElementById('inputFecha').value = dLocal;
     } catch(e) {}
 
-    // Ajustar Botón de Guardado
+    // Ajustar Botones
     const btn = document.getElementById('btnGuardar');
     if(btn) { 
         btn.innerHTML = isEng ? "UPDATE DATA" : "ACTUALIZAR DATOS"; 
         btn.style.backgroundColor = "var(--color-saldo)"; 
     }
     
-    // 👇 ESTA ES LA LÍNEA QUE HACE APARECER EL BOTÓN ESC 👇
     const btnCancelPC = document.getElementById('btnCancelarPC');
     if(btnCancelPC) btnCancelPC.style.display = 'inline-block';
     
+    // 🚀 MAGIA UI: FORZAR APERTURA DEL MODAL
+    const modalCmd = document.getElementById('modal-cmd');
+    if(modalCmd) modalCmd.style.display = 'flex';
+    
     actualizarDashboard();
-}
+};
 
 function procesarCompraTCManual(nombre, montoTotal, cuotas, fechaStr) {
     const batch = db.batch(); const diaCorte = 20;
