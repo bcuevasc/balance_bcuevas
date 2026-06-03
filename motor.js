@@ -247,15 +247,76 @@ window.guardarSueldoEnNube = function() {
     db.collection("parametros").doc("sueldos").set({ [llave]: s }, {merge: true}).then(()=>mostrarToast(`PRESUPUESTO ACTUALIZADO`));
 };
 
+// ==========================================
+// ⚙️ GESTOR DE CICLOS PERSONALIZADOS
+// ==========================================
+window.guardarCicloManual = function() {
+    let fDesde = document.getElementById('filtroDesde').value;
+    let fHasta = document.getElementById('filtroHasta').value;
+    if(fDesde && fHasta) {
+        let vM = document.getElementById('navMesConceptual').value;
+        let vA = document.getElementById('navAnio').value;
+        localStorage.setItem(`bunker_ciclo_${vA}_${vM}`, JSON.stringify({desde: fDesde, hasta: fHasta}));
+        aplicarCicloAlSistema(); // Recalcula todo desde cero con las nuevas fechas
+    }
+};
+
+window.resetearCicloManual = function() {
+    let vM = document.getElementById('navMesConceptual').value;
+    let vA = document.getElementById('navAnio').value;
+    localStorage.removeItem(`bunker_ciclo_${vA}_${vM}`);
+    aplicarCicloAlSistema();
+};
+
+window.calcularFechasCiclo = function(mesConceptual, anio) {
+    // 1. Revisar si hay un override manual guardado para este mes/año específico
+    let override = localStorage.getItem(`bunker_ciclo_${anio}_${mesConceptual}`);
+    if (override) {
+        let data = JSON.parse(override);
+        let [y0, m0, d0] = data.desde.split('-');
+        let [yf, mf, df] = data.hasta.split('-');
+        let T0 = new Date(y0, m0-1, d0, 0, 0, 0);
+        let TFinal = new Date(yf, mf-1, df, 23, 59, 59);
+        return { T0, TFinal, fechaFinVisual: TFinal };
+    }
+
+    // 2. Lógica por defecto original del Búnker (Mes 30 a 30)
+    let mesInicio = mesConceptual - 1; let anioInicio = anio; if (mesInicio < 0) { mesInicio = 11; anioInicio--; }
+    let T0 = new Date(anioInicio, mesInicio, 30); if (T0.getMonth() !== mesInicio) T0 = new Date(anioInicio, mesInicio + 1, 0); 
+    let TFinal = new Date(anio, mesConceptual, 30); if (TFinal.getMonth() !== mesConceptual) TFinal = new Date(anio, mesConceptual + 1, 0);
+    return { T0, TFinal, fechaFinVisual: new Date(TFinal.getTime() - 86400000) };
+};
+
+// ==========================================
+// 🔄 MOTOR DE ARRANQUE Y TABLERO
+// ==========================================
 window.aplicarCicloAlSistema = function() {
     const elSueldo = document.getElementById('inputSueldo');
     if (elSueldo && document.activeElement === elSueldo) { window.guardarSueldoEnNube(); elSueldo.blur(); elSueldo.value = ''; }
     
     const navMes = document.getElementById('navMesConceptual'), navAnio = document.getElementById('navAnio');
     if(!navMes || !navAnio) return;
-    
-    if(document.getElementById('filtroDesde')) document.getElementById('filtroDesde').value = ''; 
-    if(document.getElementById('filtroHasta')) document.getElementById('filtroHasta').value = '';
+
+    // ⚙️ Leer si este mes tiene un ciclo modificado en memoria
+    let override = localStorage.getItem(`bunker_ciclo_${navAnio.value}_${navMes.value}`);
+    let fDesdeEl = document.getElementById('filtroDesde'), fHastaEl = document.getElementById('filtroHasta');
+    let cajaFechas = document.getElementById('cajaFechasCustom'), btnFechas = document.getElementById('btnToggleFechas');
+    let lblViendo = document.getElementById('lblPeriodoViendo');
+
+    if (override) {
+        let data = JSON.parse(override);
+        if(fDesdeEl) fDesdeEl.value = data.desde;
+        if(fHastaEl) fHastaEl.value = data.hasta;
+        if(cajaFechas) cajaFechas.style.display = 'flex';
+        if(btnFechas) btnFechas.style.display = 'none';
+        if(lblViendo) { lblViendo.innerText = "CICLO MODIFICADO"; lblViendo.style.color = "var(--color-edit)"; }
+    } else {
+        if(fDesdeEl) fDesdeEl.value = '';
+        if(fHastaEl) fHastaEl.value = '';
+        if(cajaFechas) cajaFechas.style.display = 'none';
+        if(btnFechas) btnFechas.style.display = 'block';
+        if(lblViendo) { lblViendo.innerText = "PERIODO COMPLETO"; lblViendo.style.color = "var(--text-muted)"; }
+    }
 
     const { T0, fechaFinVisual } = calcularFechasCiclo(parseInt(navMes.value), parseInt(navAnio.value));
     const badge = document.getElementById('navRangoBadge');
@@ -272,19 +333,16 @@ function actualizarDashboard() {
     let sueldo = obtenerSueldoMes(anioVal, mesVal);
     if (inputSueldo && inputSueldo.value) { sueldo = parseInt(inputSueldo.value.replace(/\./g,'')) || sueldo; }
     
+    // 🔥 MAGIA: calcularFechasCiclo ahora es la única fuente de la verdad (lee LocalStorage automáticamente)
     let { T0, TFinal } = calcularFechasCiclo(mesVal, anioVal);
-    const fDesde = document.getElementById('filtroDesde')?.value, fHasta = document.getElementById('filtroHasta')?.value;
-    if(fDesde) { let [y,m,d] = fDesde.split('-'); T0 = new Date(y, m-1, d); }
-    if(fHasta) { let [y,m,d] = fHasta.split('-'); TFinal = new Date(y, m-1, d, 23, 59, 59); }
     
     let dataMes = listaMovimientos.filter(x => { let d = new Date(x.fechaISO); return d >= T0 && d <= TFinal; });
     
-    // 🧠 LÓGICA DE CATEGORÍAS CONSOLIDADAS V2.0 (Preparación de Banderas)
+    // 🧠 LÓGICA DE CATEGORÍAS CONSOLIDADAS V2.0
     dataMes.forEach(x => {
         x.catV = x.categoria || 'Sin Categoría';
         if (x.monto <= 1000 && x.catV === 'Sin Categoría') x.catV = "Ruido de Sistema";
         
-        // Mapeo Inteligente de las nuevas categorías
         x.esIn = x.tipo === 'Ingreso' || x.tipo === 'Ingreso Extra' || x.catV === 'Transferencia Recibida' || x.catV === 'Ingreso Adicional';
         x.esNeutro = x.tipo === 'Ahorro' || x.tipo === 'Ahorro / Neutro' || x.catV === 'Transferencia Propia / Ahorro' || x.catV === 'Ahorro / Traspaso';
         x.esCxC = x.tipo === 'Por Cobrar' || x.tipo === 'Préstamo (CxC)' || x.catV === 'Cuentas por Cobrar (Activos)';
@@ -295,35 +353,17 @@ function actualizarDashboard() {
     
     [...dataMes].sort((x,y) => x.fechaISO < y.fechaISO ? -1 : 1).forEach(x => {
         if (x.catV !== 'Gasto Tarjeta de Crédito') { 
-            
-            // 1. 📥 INGRESOS: Suman al saldo, no al gasto
-            if (x.esIn) { 
-                tI += x.monto; 
-                saldoAcc += x.monto; 
-            }
-            // 2. 💸 PRÉSTAMOS (CxC): Restan saldo hoy, se anotan en el panel de cuentas por cobrar
-            else if (x.esCxC) {
-                saldoAcc -= x.monto; 
-                tC += x.monto;       
-            }
-            // 3. 🏦 AHORRO / TRASPASO: Restan saldo disponible, pero NO ensucian los gráficos
-            else if (x.esNeutro) {
-                saldoAcc -= x.monto; // <-- El ajuste crítico que faltaba
-            }
-            // 4. 🍔 GASTOS REALES (Fijos, Variables, Operación)
+            if (x.esIn) { tI += x.monto; saldoAcc += x.monto; }
+            else if (x.esCxC) { saldoAcc -= x.monto; tC += x.monto; }
+            else if (x.esNeutro) { saldoAcc -= x.monto; }
             else {
-                saldoAcc -= x.monto; // Resta del Balance Real
-                
-                // Clasificación de KPI
+                saldoAcc -= x.monto; 
                 if (x.catV === 'Infraestructura (Depto)') tInfra += x.monto;
                 else if (x.catV === 'Flota & Movilidad') tFlota += x.monto;
                 else if (x.tipo === 'Gasto Fijo' || x.catV.includes('Carga Fija')) tF += x.monto; 
-                else tO += x.monto; // Todo lo demás es Gasto Variable
+                else tO += x.monto; 
                 
-                // Alimenta el Espectro Categórico (Gráfico de Torta) SOLO con gastos reales
                 gCat[x.catV] = (gCat[x.catV] || 0) + x.monto;
-                
-                // Cálculo de Fugas (Dopamina)
                 let pctFuga = x.innecesarioPct !== undefined ? x.innecesarioPct : ((typeof catEvitables !== 'undefined' && catEvitables.includes(x.catV)) ? 100 : 0);
                 tEvitable += (x.monto * (pctFuga / 100));
             }
@@ -334,7 +374,6 @@ function actualizarDashboard() {
     setTxt('txtTotalFijos', tF); setTxt('txtTotalOtros', tO); setTxt('txtTotalIngresos', tI);
     setTxt('txtCxC', tC); setTxt('txtSaldo', saldoAcc); setTxt('txtTotalInfra', tInfra); setTxt('txtTotalFlota', tFlota); 
     
-    // 🛠️ MEJORA 4: Activar Alarma Crítica si el Balance Real cae bajo cero
     const txtSaldoEl = document.getElementById('txtSaldo');
     if(txtSaldoEl) {
         const cardSaldo = txtSaldoEl.closest('.kpi-card');
@@ -385,7 +424,6 @@ function actualizarDashboard() {
     
     setTxt('txtPromedioZoom', Math.round((tO + tF) / diasCiclo));
     
-    // 🛠️ Gatillo del Widget Lateral
     if (typeof sincronizarWidgetPreVuelo === 'function') sincronizarWidgetPreVuelo();
 }
 // ==========================================
@@ -880,12 +918,7 @@ borderColor: [
         }
     } catch(e) {}
 }
-function calcularFechasCiclo(mesConceptual, anio) {
-    let mesInicio = mesConceptual - 1; let anioInicio = anio; if (mesInicio < 0) { mesInicio = 11; anioInicio--; }
-    let T0 = new Date(anioInicio, mesInicio, 30); if (T0.getMonth() !== mesInicio) T0 = new Date(anioInicio, mesInicio + 1, 0); 
-    let TFinal = new Date(anio, mesConceptual, 30); if (TFinal.getMonth() !== mesConceptual) TFinal = new Date(anio, mesConceptual + 1, 0);
-    return { T0, TFinal, fechaFinVisual: new Date(TFinal.getTime() - 86400000) };
-}
+
 
 // ==========================================
 // 💳 LÓGICA MATRIZ TC (RESTAURADA CON AGRUPACIÓN)
