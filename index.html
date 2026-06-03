@@ -481,15 +481,15 @@
         <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px; padding-right: 10px; border-right: 1px solid var(--border-color); margin-right: 10px; justify-content: center;">
             <span id="lblPeriodoViendo" style="font-size:0.55rem; color:var(--text-muted); font-weight:900; text-transform:uppercase; letter-spacing:1px;" data-en="FULL PERIOD">PERIODO COMPLETO</span>
             <div style="display: flex; align-items: center;">
-                <button id="btnToggleFechas" class="btn-sys" style="border-style: dashed;" onclick="document.getElementById('cajaFechasCustom').style.display='flex'; this.style.display='none';" data-en="📅 CUSTOM RANGE">📅 RANGO CUSTOM</button>
+                <button id="btnToggleFechas" class="btn-sys" style="border-style: dashed; border-color: var(--color-edit); color: var(--color-edit);" onclick="document.getElementById('cajaFechasCustom').style.display='flex'; this.style.display='none';">⚙️ AJUSTAR CICLO</button>
                 <div id="cajaFechasCustom" style="display: none; align-items: center; gap: 5px; animation: fadeSlideUp 0.3s;">
-                    <input type="date" id="filtroDesde" class="nav-select" onchange="document.getElementById('lblPeriodoViendo').innerText= isEng ? 'CUSTOM RANGE' : 'RANGO PERSONALIZADO'; actualizarDashboard();">
-                    <input type="date" id="filtroHasta" class="nav-select" onchange="document.getElementById('lblPeriodoViendo').innerText= isEng ? 'CUSTOM RANGE' : 'RANGO PERSONALIZADO'; actualizarDashboard();">
-                    <button class="btn-sys" onclick="document.getElementById('filtroDesde').value=''; document.getElementById('filtroHasta').value=''; document.getElementById('lblPeriodoViendo').innerText= isEng ? 'FULL PERIOD' : 'PERIODO COMPLETO'; document.getElementById('cajaFechasCustom').style.display='none'; document.getElementById('btnToggleFechas').style.display='block'; actualizarDashboard();" style="border-color:var(--color-fuga); color:var(--color-fuga); padding: 4px 8px;">✖</button>
+                    <input type="date" id="filtroDesde" class="nav-select" onchange="guardarCicloManual()">
+                    <input type="date" id="filtroHasta" class="nav-select" onchange="guardarCicloManual()">
+                    <button class="btn-sys" onclick="resetearCicloManual()" style="border-color:var(--color-fuga); color:var(--color-fuga); padding: 4px 8px;" title="Restaurar ciclo automático">✖</button>
                 </div>
             </div>
         </div>
-
+        
         <div class="kpi-row" style="flex: 1; grid-template-columns: repeat(6, 1fr);">
             <div class="kpi-card">
                 <h4 data-en="Monthly Budget">Presupuesto Mensual</h4>
