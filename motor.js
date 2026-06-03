@@ -1968,3 +1968,42 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
     document.addEventListener("DOMContentLoaded", actualizarSaludo);
+
+// ==========================================
+// 📥 EXPORTACIÓN CRUDA (BACKUP MATRIZ TC)
+// ==========================================
+window.exportarDataLinkTC = function() {
+    try {
+        if (!datosTCGlobal || datosTCGlobal.length === 0) { 
+            mostrarToast("MATRIZ TC VACÍA: NO HAY DATOS PARA EXPORTAR"); 
+            return; 
+        }
+        
+        // Cabeceras del CSV
+        let csv = "ID_FIREBASE,MES_COBRO,COMERCIO,CUOTA,MONTO_CLP,ESTADO\n";
+        
+        datosTCGlobal.forEach(x => {
+            let fCobro = x.mesCobro ? new Date(x.mesCobro).toISOString().slice(0,10) : "N/A";
+            let nombreLimpio = (x.nombre || "Sin Nombre").replace(/(\r\n|\n|\r)/gm, " ").replace(/"/g, '""').trim();
+            let monto = Number(x.monto) || 0;
+            let cuota = x.cuota || "1/1";
+            let estado = x.status || "Proyectado";
+            
+            csv += `${x.id},${fCobro},"${nombreLimpio}","${cuota}",${monto},"${estado}"\n`;
+        });
+        
+        const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a"); 
+        link.href = URL.createObjectURL(blob); 
+        link.download = `Bunker_Respaldo_TC_${new Date().toISOString().slice(0,10)}.csv`;
+        
+        document.body.appendChild(link); 
+        link.click(); 
+        document.body.removeChild(link);
+        
+        mostrarToast("RESPALDO MATRIZ TC EXITOSO");
+    } catch (error) { 
+        console.error("Error Export TC:", error); 
+        alert("Fallo al exportar la Matriz TC.");
+    }
+};
