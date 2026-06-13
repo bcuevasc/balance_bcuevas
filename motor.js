@@ -198,6 +198,17 @@ auth.onAuthStateChanged(user => {
             } 
         });
 
+        // ☁️ NUEVO: SINCRONIZADOR DE CICLOS EN LA NUBE
+        window.ciclosHistoricos = {};
+        db.collection("parametros").doc("ciclos").onSnapshot(snap => { 
+            if(snap.exists) { 
+                window.ciclosHistoricos = snap.data(); 
+            } else {
+                window.ciclosHistoricos = {};
+            }
+            aplicarCicloAlSistema(); // Recalcula la fecha en todos los dispositivos a la vez
+        });
+
         db.collection("movimientos").onSnapshot(snap => {
             listaMovimientos = [];
             snap.forEach(doc => {
@@ -246,9 +257,11 @@ window.guardarSueldoEnNube = function() {
     sueldosHistoricos[llave] = s;
     db.collection("parametros").doc("sueldos").set({ [llave]: s }, {merge: true}).then(()=>mostrarToast(`PRESUPUESTO ACTUALIZADO`));
 };
-
 // ==========================================
 // ⚙️ GESTOR DE CICLOS PERSONALIZADOS
+// ==========================================
+// ==========================================
+// ⚙️ GESTOR DE CICLOS PERSONALIZADOS (CLOUD)
 // ==========================================
 window.guardarCicloManual = function() {
     let fDesde = document.getElementById('filtroDesde').value;
@@ -256,31 +269,44 @@ window.guardarCicloManual = function() {
     if(fDesde && fHasta) {
         let vM = document.getElementById('navMesConceptual').value;
         let vA = document.getElementById('navAnio').value;
-        localStorage.setItem(`bunker_ciclo_${vA}_${vM}`, JSON.stringify({desde: fDesde, hasta: fHasta}));
-        aplicarCicloAlSistema(); // Recalcula todo desde cero con las nuevas fechas
+        let llave = `${vA}_${vM}`;
+        
+        // ☁️ Guardar en Firebase en lugar del PC
+        db.collection("parametros").doc("ciclos").set({
+            [llave]: { desde: fDesde, hasta: fHasta }
+        }, {merge: true}).then(() => {
+            mostrarToast("CICLO GUARDADO EN LA NUBE");
+        });
     }
 };
 
 window.resetearCicloManual = function() {
     let vM = document.getElementById('navMesConceptual').value;
     let vA = document.getElementById('navAnio').value;
-    localStorage.removeItem(`bunker_ciclo_${vA}_${vM}`);
-    aplicarCicloAlSistema();
+    let llave = `${vA}_${vM}`;
+    
+    // ☁️ Borrar de Firebase
+    db.collection("parametros").doc("ciclos").update({
+        [llave]: firebase.firestore.FieldValue.delete()
+    }).then(() => {
+        mostrarToast("CICLO RESTAURADO AL VALOR POR DEFECTO");
+    });
 };
 
 window.calcularFechasCiclo = function(mesConceptual, anio) {
-    // 1. Revisar si hay un override manual guardado para este mes/año específico
-    let override = localStorage.getItem(`bunker_ciclo_${anio}_${mesConceptual}`);
-    if (override) {
-        let data = JSON.parse(override);
-        let [y0, m0, d0] = data.desde.split('-');
-        let [yf, mf, df] = data.hasta.split('-');
+    let llave = `${anio}_${mesConceptual}`;
+    // 🧠 Leer de la memoria RAM global alimentada por Firebase
+    let override = window.ciclosHistoricos ? window.ciclosHistoricos[llave] : null;
+    
+    if (override && override.desde && override.hasta) {
+        let [y0, m0, d0] = override.desde.split('-');
+        let [yf, mf, df] = override.hasta.split('-');
         let T0 = new Date(y0, m0-1, d0, 0, 0, 0);
         let TFinal = new Date(yf, mf-1, df, 23, 59, 59);
         return { T0, TFinal, fechaFinVisual: TFinal };
     }
 
-    // 2. Lógica por defecto original del Búnker (Mes 30 a 30)
+    // Lógica por defecto original del Búnker (Mes 30 a 30)
     let mesInicio = mesConceptual - 1; let anioInicio = anio; if (mesInicio < 0) { mesInicio = 11; anioInicio--; }
     let T0 = new Date(anioInicio, mesInicio, 30); if (T0.getMonth() !== mesInicio) T0 = new Date(anioInicio, mesInicio + 1, 0); 
     let TFinal = new Date(anio, mesConceptual, 30); if (TFinal.getMonth() !== mesConceptual) TFinal = new Date(anio, mesConceptual + 1, 0);
@@ -297,16 +323,16 @@ window.aplicarCicloAlSistema = function() {
     const navMes = document.getElementById('navMesConceptual'), navAnio = document.getElementById('navAnio');
     if(!navMes || !navAnio) return;
 
-    // ⚙️ Leer si este mes tiene un ciclo modificado en memoria
-    let override = localStorage.getItem(`bunker_ciclo_${navAnio.value}_${navMes.value}`);
+    let llave = `${navAnio.value}_${navMes.value}`;
+    let override = window.ciclosHistoricos ? window.ciclosHistoricos[llave] : null;
+    
     let fDesdeEl = document.getElementById('filtroDesde'), fHastaEl = document.getElementById('filtroHasta');
     let cajaFechas = document.getElementById('cajaFechasCustom'), btnFechas = document.getElementById('btnToggleFechas');
     let lblViendo = document.getElementById('lblPeriodoViendo');
 
     if (override) {
-        let data = JSON.parse(override);
-        if(fDesdeEl) fDesdeEl.value = data.desde;
-        if(fHastaEl) fHastaEl.value = data.hasta;
+        if(fDesdeEl) fDesdeEl.value = override.desde;
+        if(fHastaEl) fHastaEl.value = override.hasta;
         if(cajaFechas) cajaFechas.style.display = 'flex';
         if(btnFechas) btnFechas.style.display = 'none';
         if(lblViendo) { lblViendo.innerText = "CICLO MODIFICADO"; lblViendo.style.color = "var(--color-edit)"; }
@@ -324,7 +350,6 @@ window.aplicarCicloAlSistema = function() {
     
     setTimeout(() => { cargarSueldoVisual(); actualizarDashboard(); }, 50);
 };
-
 function actualizarDashboard() {
     const elMes = document.getElementById('navMesConceptual'), elAnio = document.getElementById('navAnio');
     const mesVal = parseInt(elMes.value), anioVal = parseInt(elAnio.value);
