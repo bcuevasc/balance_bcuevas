@@ -450,6 +450,7 @@ function actualizarDashboard() {
     setTxt('txtPromedioZoom', Math.round((tO + tF) / diasCiclo));
     
     if (typeof sincronizarWidgetPreVuelo === 'function') sincronizarWidgetPreVuelo();
+    if (typeof renderizarDesgloseCentral === 'function') renderizarDesgloseCentral(sueldo);
 }
 // ==========================================
 // 📝 RENDERIZAR LISTAS PC
