@@ -2040,7 +2040,7 @@ window.exportarDataLinkTC = function() {
 };
 
 // ==========================================
-// 📊 MÓDULO CENTRAL: DESGLOSE DE GASTOS (ACORDEÓN)
+// 📊 MÓDULO CENTRAL: DESGLOSE DE GASTOS (ACORDEÓN MACRO)
 // ==========================================
 window.renderizarDesgloseCentral = function(sueldoBase) {
     const contenedor = document.getElementById('listaDesgloseCentral');
@@ -2048,14 +2048,20 @@ window.renderizarDesgloseCentral = function(sueldoBase) {
 
     let desglose = {};
 
-    // 1. Recolectar datos y agrupar por categoría
+    // 1. Recolectar datos y agrupar con lógica Macro
     datosMesGlobal.forEach(x => {
         // Ignoramos ingresos, ahorros y TC para ver solo el gasto del mes
         if (x.esIn || x.esCxC || x.esNeutro || x.catV === 'Gasto Tarjeta de Crédito') return; 
         
-        if (!desglose[x.catV]) desglose[x.catV] = { total: 0, items: [] };
-        desglose[x.catV].total += x.monto;
-        desglose[x.catV].items.push(x);
+        // 🧠 LÓGICA MACRO: Si es Gasto Fijo, se consolida en una sola gran categoría
+        let catVisual = x.catV;
+        if (x.tipo === 'Gasto Fijo') {
+            catVisual = 'CARGA FIJA (ESTRUCTURAL)';
+        }
+        
+        if (!desglose[catVisual]) desglose[catVisual] = { total: 0, items: [] };
+        desglose[catVisual].total += x.monto;
+        desglose[catVisual].items.push(x);
     });
 
     // 2. Ordenar categorías de mayor a menor gasto
@@ -2068,13 +2074,14 @@ window.renderizarDesgloseCentral = function(sueldoBase) {
 
     let html = '';
     
-    // Función de colores
+    // Función de colores alineada al HUD
     const getDotColor = (cat) => {
         const c = cat ? cat.toLowerCase() : "";
+        if (c.includes("fija") || c.includes("estructural")) return "#a371f7"; // Morado para consolidado fijo
         if (c.includes("dopamina") || c.includes("fuga") || c.includes("ruido")) return "#ff5252";
-        if (c.includes("infraestructura") || c.includes("fijo")) return "#a371f7";
         if (c.includes("transporte") || c.includes("flota") || c.includes("logistica")) return "#00bcd4";
-        if (c.includes("hogar") || c.includes("supermercado") || c.includes("alimentacion")) return "#d29922";
+        if (c.includes("hogar") || c.includes("supermercado") || c.includes("alimentacion") || c.includes("comida")) return "#d29922";
+        if (c.includes("mantenimiento")) return "#58a6ff";
         return "#8b949e";
     };
 
@@ -2087,11 +2094,19 @@ window.renderizarDesgloseCentral = function(sueldoBase) {
         let itemsHtml = info.items.sort((a, b) => new Date(b.fechaISO) - new Date(a.fechaISO)).map(i => {
             let d = new Date(i.fechaISO);
             let fechaTxt = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`;
+            
+            // 🏷️ Etiqueta de Trazabilidad: Solo muestra la subcategoría si estamos dentro de Carga Fija
+            let subTag = (cat === 'CARGA FIJA (ESTRUCTURAL)' && i.catV) 
+                ? `<span style="font-size:0.5rem; background:rgba(163, 113, 247, 0.15); color:#a371f7; padding:2px 5px; border-radius:3px; margin-right:6px; border: 1px solid rgba(163, 113, 247, 0.3); text-transform:uppercase;">${i.catV.split(' ')[0]}</span>` 
+                : '';
+
             return `
             <div class="desglose-item">
-                <span style="width: 45px; color: var(--text-muted);">${fechaTxt}</span>
-                <span style="flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 0 10px; font-weight: bold;">${i.nombre || 'N/A'}</span>
-                <span style="font-family: monospace; font-weight: 900;">$${i.monto.toLocaleString('es-CL')}</span>
+                <span style="width: 45px; color: var(--text-muted); flex-shrink: 0;">${fechaTxt}</span>
+                <span style="flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 0 10px; font-weight: bold;">
+                    ${subTag}${i.nombre || 'N/A'}
+                </span>
+                <span style="font-family: monospace; font-weight: 900; flex-shrink: 0;">$${i.monto.toLocaleString('es-CL')}</span>
             </div>`;
         }).join('');
 
