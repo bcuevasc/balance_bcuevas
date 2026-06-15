@@ -235,7 +235,7 @@
         <button onclick="triggerSync()" style="background:transparent; border:none; font-size:1.2rem; padding:0; color: #a371f7;">🔄</button>
         <div class="user-tag" id="user-display" style="border-color: rgba(163, 113, 247, 0.4); color: #a371f7; background: rgba(163, 113, 247, 0.1);">BYRON</div>
     </div>
-</div>
+</div> <!-- CIERRA TOP-BAR -->
 
     <div id="tab-dash" class="tab-content" style="display:block; padding:0;">
         <div class="core-tabs">
@@ -244,24 +244,23 @@
             <button class="core-btn" onclick="switchTriCore('tc', this, 1)" data-en="TC MATRIX">Tarjeta</button>
             <button class="core-btn" onclick="switchTriCore('terceros', this, 2)">Terceros</button>
         </div>
+        
         <div id="vista-efectivo" style="display: block; animation: fadeSlideUp 0.3s;">
-
-
             <!-- INDICADOR PULL-TO-REFRESH -->
             <div id="ptr-indicator" style="text-align: center; color: var(--color-infra); font-size: 0.75rem; font-weight: 900; letter-spacing: 1px; height: 0px; overflow: hidden; transition: height 0.2s, opacity 0.2s; display: flex; align-items: center; justify-content: center; opacity: 0; background: rgba(163, 113, 247, 0.05); border-bottom: 1px solid rgba(163, 113, 247, 0.1);">
                 ↓ DESLIZA PARA SINCRONIZAR
             </div>
+            
             <!-- REACTOR FINTECH (Master HUD) -->
             <div class="master-hud" style="position: relative; overflow: hidden; padding: 25px 20px 20px 20px; border-bottom: 1px solid rgba(255,255,255,0.02);">
-                <!-- Efecto Aurora Morada -->
                 <div style="position: absolute; top: -40px; left: 50%; transform: translateX(-50%); width: 250px; height: 120px; background: var(--color-infra); filter: blur(60px); opacity: 0.25; pointer-events: none; border-radius: 50%; animation: pulseAurora 4s infinite alternate;"></div>
-                
                 <div id="greeting-text" style="font-size:0.65rem; color:var(--text-dim); font-weight:900; text-transform:uppercase; margin-bottom:8px; letter-spacing: 2px; position: relative; z-index: 2;">BIENVENIDO, BYRON</div>
                 <div class="hud-value" style="position: relative; z-index: 2; margin-bottom: 5px;">$<span id="txtSaldo">0</span></div>
                 <div style="font-size:0.6rem; color:var(--color-infra); font-weight:900; text-transform:uppercase; letter-spacing: 4px; position: relative; z-index: 2; opacity: 0.8;">Maniobra Base</div>
             </div>
             
-           <div class="slave-kpis" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 15px; margin-bottom: 10px;">
+            <!-- 🎛️ NUEVA GRILLA DE KPIs (UNIFICADA) -->
+            <div class="slave-kpis" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 15px; margin-bottom: 10px;">
                 <div class="slave-pill purple" style="grid-column: span 2; padding: 18px 15px; background: linear-gradient(145deg, rgba(163, 113, 247, 0.08), transparent); border-color: rgba(163, 113, 247, 0.3);">
                     <div style="font-size:0.65rem; font-weight:900; color:var(--color-infra); text-transform:uppercase; letter-spacing: 2px;">Carga Fija (Estructural)</div>
                     <div style="color:var(--text-main); font-size:1.8rem; font-weight:900; margin-top:5px; font-family:monospace; text-shadow: 0 0 20px rgba(163, 113, 247, 0.4);">$<span id="txtTotalFijosUnified">0</span></div>
@@ -281,6 +280,7 @@
                 </div>
             </div>
             
+            <!-- 📊 MÓDULO DESGLOSE MACRO MÓVIL (DESPLEGABLE) -->
             <div class="macro-master-toggle" onclick="this.classList.toggle('open'); document.getElementById('macro-container-movil').classList.toggle('open');">
                 <div style="display:flex; align-items:center; gap:12px;">
                     <div style="width: 36px; height: 36px; background: rgba(163, 113, 247, 0.2); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; border: 1px solid rgba(163, 113, 247, 0.3);">📊</div>
@@ -293,12 +293,13 @@
             </div>
             
             <div id="macro-container-movil" class="macro-collapsible">
-                <div id="listaDesgloseCentralMovil" style="padding: 0 15px; margin-top: 10px; margin-bottom: 20px;">
-                    </div>
+                <div id="listaDesgloseCentralMovil" style="padding: 0 15px; margin-top: 10px; margin-bottom: 20px;"></div>
             </div>
 
             <div id="listaMovilDetalle" class="lista-contenedor"></div>
-        </div> <div id="vista-tc" style="display: none; animation: fadeSlideUp 0.3s;">
+        </div> <!-- CIERRE VISTA EFECTIVO -->
+
+        <div id="vista-tc" style="display: none; animation: fadeSlideUp 0.3s;">
             <div class="master-hud" style="padding-bottom:15px;">
                 <div style="font-size:0.7rem; color:var(--text-dim); font-weight:900; text-transform:uppercase; margin-bottom:5px; letter-spacing: 3px;" data-en="GLOBAL TC LIABILITIES">Carga TC Global</div>
                 <div class="hud-value danger">$<span id="txtTotalTC">0</span></div>
@@ -311,14 +312,11 @@
                 <strong id="txtImpactoMonto" style="font-size: 1.5rem; font-family: monospace; font-weight: 900; color: var(--accent-red); text-shadow: 0 0 15px rgba(255,82,82,0.5);">$0</strong>
             </div>
             <div id="listaMovilTC" class="lista-contenedor"></div>
-        </div>
+        </div> <!-- CIERRE VISTA TC -->
 
-        <!-- 🚀 NUEVA VISTA TERCEROS MÓVIL (INYECCIÓN AQUÍ) -->
         <div id="vista-terceros" style="display: none; animation: fadeSlideUp 0.3s;">
             <div class="master-hud" style="padding-bottom:10px;">
                 <div style="font-size:0.7rem; color:var(--text-dim); font-weight:900; text-transform:uppercase; margin-bottom:5px; letter-spacing: 3px;">Obligaciones & Provisiones</div>
-                
-              <!-- LOS 3 KPIs (Ahora funcionan como botones de filtro) -->
                 <div style="display:flex; justify-content:center; gap: 6px; margin-top: 10px;">
                     <div id="btnFiltroVerde" onclick="setFiltroTerceros('ME DEBEN')" style="background: rgba(46, 160, 67, 0.1); border: 1px solid rgba(46, 160, 67, 0.3); border-radius: 10px; padding: 8px; flex: 1; cursor: pointer; transition: all 0.2s;">
                         <div style="font-size: 0.55rem; font-weight: 800; color: var(--accent-green); text-transform: uppercase;">Me Deben</div>
@@ -335,7 +333,6 @@
                 </div>
             </div>
 
-            <!-- Mini Consola Móvil (Ahora con 3 botones) -->
             <div class="terminal-form" style="margin: 0 15px 15px 15px; padding: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.3);">
                 <div style="display: flex; gap: 8px; margin-bottom: 10px;">
                     <input type="text" id="inputTerceroNombreMovil" placeholder="Descripción / Tarea..." style="flex:2; padding: 10px; background: var(--bg-elevated); border: 1px solid var(--border-subtle); border-radius: 8px; color: white; font-size: 0.8rem;">
@@ -349,8 +346,8 @@
             </div>
 
             <div id="listaTercerosMovil" class="lista-contenedor" style="padding-top: 0;"></div>
-        </div> <!-- CIERRE DE vista-terceros -->
-    </div> <!-- CIERRE DE tab-dash (ESTE ES EL QUE FALTABA Y ROMPÍA TODO) -->
+        </div> <!-- CIERRE VISTA TERCEROS -->
+    </div> <!-- CIERRE TAB DASH -->
 
     <div id="tab-trend" class="tab-content">
         <div class="core-tabs" style="margin: 0 0 15px 0; background:var(--bg-card);">
@@ -399,7 +396,7 @@
             <div style="text-align:center; font-size:0.75rem; font-weight:900; color:var(--accent-red); margin-bottom:10px; letter-spacing:1px;" data-en="TC LIABILITY HORIZON">HORIZONTE DE DEUDA (6M)</div>
             <div style="height:350px;"><canvas id="chartRadar"></canvas></div>
         </div>
-    </div>
+    </div> <!-- CIERRE TAB TREND -->
 
     <div id="tab-add" class="tab-content" style="padding: 10px;">
         <input type="hidden" id="editId">
@@ -434,23 +431,17 @@
             <button id="btnGuardar" class="btn-inyectar" onclick="agregarMovimiento()" data-en="INJECT DATA">INYECTAR DATOS</button>
             <button id="btnCancelarEdicion" onclick="limpiarFormulario(); switchTabApp('dash', document.querySelectorAll('.nav-item')[0]);" style="display:none; width: 100%; padding: 15px; background: transparent; color: var(--text-dim); border: 1px solid var(--border-subtle); border-radius: 12px; font-weight: 900; margin-top: 10px; text-transform: uppercase; transition: all 0.2s;">ABORTAR RECALIBRACIÓN</button>
         </div>
-    </div>
+    </div> <!-- CIERRE TAB ADD -->
 
     <div id="tab-cloud" class="tab-content">
         <h3 style="font-weight:900; text-align:center; letter-spacing:2px; margin-bottom:25px; color:var(--text-dim);" data-en="[ SATELLITE LINK ]">[ ENLACE SATELITAL ]</h3>
         
         <button onclick="abrirPreVuelo()" style="width:100%; padding:22px; border-radius:16px; background:rgba(255, 152, 0, 0.1); color:#ff9800; border:1px solid rgba(255, 152, 0, 0.4); font-weight:900; margin-bottom:15px; box-shadow: 0 10px 25px rgba(255, 152, 0, 0.2); letter-spacing: 1px;">🚀 PRE-VUELO (DÍA CERO)</button>
-        
-        <!-- Botón Data-Link ahora es Tono Violeta Suave -->
         <button onclick="let b=this; b.innerHTML='⏳ EXPORTANDO...'; b.style.opacity='0.7'; exportarDataLink(); setTimeout(()=>{b.innerHTML='📥 DATA-LINK PRO'; b.style.opacity='1';}, 2000)" style="width:100%; padding:22px; border-radius:16px; background:rgba(198, 148, 255, 0.1); color:#c694ff; border:1px solid rgba(198, 148, 255, 0.3); font-weight:900; margin-bottom:15px; letter-spacing: 1px; transition: all 0.2s;">📥 DATA-LINK PRO</button>
-        
         <button onclick="abrirHistorian()" style="width:100%; padding:22px; border-radius:16px; background:rgba(255, 82, 82, 0.1); color:#ff5252; border:1px solid rgba(255, 82, 82, 0.4); font-weight:900; margin-bottom:15px; box-shadow: 0 10px 25px rgba(255, 82, 82, 0.2); letter-spacing: 1px;">⚠️ LOG DE ALARMAS</button>
-        
         <button onclick="let b=this; b.innerHTML='⏳ SINCRONIZANDO...'; b.style.opacity='0.7'; triggerSync(); setTimeout(()=>{b.innerHTML='🔄 FORZAR SYNC'; b.style.opacity='1';}, 2500)" style="width:100%; padding:22px; border-radius:16px; background:var(--bg-card); color:white; border:1px solid var(--border-subtle); font-weight:900; margin-bottom:15px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); letter-spacing: 1px; transition: all 0.2s;">🔄 FORZAR SYNC</button>
-        
-        <!-- Botón Telegram ahora es Magenta/Morado -->
         <button onclick="let b=this; b.innerHTML='🚀 TRANSMITIENDO...'; b.style.opacity='0.7'; enviarReporteTelegram(); setTimeout(()=>{b.innerHTML='🚀 TRANSMITIR TELEGRAM'; b.style.opacity='1';}, 2500)" style="width:100%; padding:22px; border-radius:16px; background:rgba(226, 179, 255, 0.1); color:#e2b3ff; border:1px solid rgba(226, 179, 255, 0.3); font-weight:900; margin-bottom:15px; letter-spacing: 1px; transition: all 0.2s;">🚀 TRANSMITIR TELEGRAM</button>
-    </div>
+    </div> <!-- CIERRE TAB CLOUD -->
 
     <div id="tab-settings" class="tab-content">
         <h3 style="font-weight:900; text-align:center; letter-spacing:2px; color:var(--text-dim);" data-en="[ SYSTEM CONFIG ]">[ SISTEMA ]</h3>
@@ -470,7 +461,7 @@
         </div>
         
         <button onclick="logout()" style="width:100%; padding:20px; border-radius:16px; background:var(--bg-elevated); color:var(--accent-red); border:1px solid rgba(255,82,82,0.2); font-weight:900; text-transform:uppercase; letter-spacing: 1px;">🚪 DESCONECTAR MATRIZ</button>
-    </div>
+    </div> <!-- CIERRE TAB SETTINGS -->
 
     <!-- 🌟 DOCK FLOTANTE 🌟 -->
     <div class="bottom-nav">
@@ -480,8 +471,9 @@
         <div class="nav-item" onclick="switchTabApp('cloud', this)"><i>☁️</i><span data-en="Cloud">Nube</span></div>
         <div class="nav-item" onclick="switchTabApp('settings', this)"><i>⚙️</i><span data-en="Set">Set</span></div>
     </div>
-</div>
+</div> <!-- CIERRA APP-CONTAINER -->
 
+<!-- MODALES FLOTANTES MÓVILES -->
 <div id="bottom-sheet-overlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:9999; backdrop-filter:blur(6px); opacity:0; transition:opacity 0.3s;" onclick="closeBottomSheet()"></div>
 
 <div id="bottom-sheet" style="position:fixed; bottom:-100%; left:0; width:100%; background:var(--bg-card); border-radius:30px 30px 0 0; padding:25px 20px 40px; z-index:10000; transition:bottom 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 -20px 50px rgba(0,0,0,0.8); border-top: 1px solid var(--border-subtle);">
@@ -489,7 +481,6 @@
     <div id="sheet-title" style="font-weight:900; text-align:center; font-size:1.3rem; margin-bottom:5px; color:var(--text-main); letter-spacing:0.5px;">Operación</div>
     <div id="sheet-subtitle" style="text-align:center; color:var(--text-dim); margin-bottom:25px; font-size:1.5rem; font-family:monospace; font-weight:bold;">$0</div>
     
-    <!-- FIX: Variables de Contexto para saber qué estamos destruyendo -->
     <input type="hidden" id="sheet-id-target">
     <input type="hidden" id="sheet-collection-target" value="movimientos">
 
@@ -509,7 +500,6 @@
 </div>
 
 <div id="modal-dia-cero" style="display:none; position:fixed; inset:0; background:rgba(3, 5, 8, 0.98); z-index:20000; flex-direction:column; overflow-y:auto; padding:20px 15px 100px 15px;">
-    <!-- BOTÓN DE ABORTO RÁPIDO EN LA CABECERA -->
     <button onclick="cerrarPreVuelo()" style="position: fixed; top: 20px; right: 20px; background: var(--bg-elevated); border: 1px solid var(--border-subtle); color: var(--text-dim); border-radius: 50%; width: 40px; height: 40px; cursor: pointer; font-weight: 900; z-index: 20100; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(0,0,0,0.8); font-size: 1.2rem; transition: transform 0.1s;">✕</button>
 
     <h2 class="pv-title">SIMULADOR DÍA CERO</h2>
@@ -566,7 +556,7 @@
 </div>
 
 <script>
-    // 🟢 RENDERIZADOR MÓVIL V14.9 (SANEADO Y ANTI-CARRERA) 🟢
+    // 🟢 RENDERIZADOR MÓVIL V15.0 (SANEADO Y ANTI-CARRERA) 🟢
 
     window.renderizarListas = function(sueldoBase, filtroBuscador) {
         if (typeof datosMesGlobal === 'undefined') return;
@@ -627,7 +617,6 @@
             let esFuga = (x.catV === 'Dopamina & Antojos' || (x.innecesarioPct && x.innecesarioPct > 0)) && !x.esIn && !x.esNeutro;
             let statusClass = x.esIn ? 'is-ingreso' : (esFuga ? 'is-fuga' : (x.esNeutro ? 'is-neutro' : ''));
 
-            // FIX: Enviar contexto 'movimientos'
             const clickAction = typeof openBottomSheet === 'function' ? `openBottomSheet('${x.firestoreId}', '${nombreSeguro.replace(/'/g, "\\'")}', ${montoSeguro}, 'movimientos')` : ``;
             
             htmlMovil += `
@@ -673,7 +662,6 @@
         Object.keys(agrupado).sort().forEach(key => {
             let g = agrupado[key];
             
-            // FIX: Botón de Purga Masiva por Mes incorporado directamente en el header
             htmlMovil += `<div style="background:rgba(255,82,82,0.1); padding: 12px 15px; margin: 15px 0 10px 0; border-radius: 8px; border-left: 3px solid var(--accent-red); display:flex; justify-content:space-between; align-items:center;">
                 <div style="display:flex; flex-direction:column; gap:4px;">
                     <span style="color:var(--accent-red); font-weight:900; font-size: 0.85rem; letter-spacing: 1px;">🗓️ ${g.label}</span>
@@ -683,7 +671,6 @@
             </div>`;
 
             g.items.forEach(doc => {
-                // FIX: Enviar contexto 'deuda_tc'
                 const clickAction = typeof openBottomSheet === 'function' ? `openBottomSheet('${doc.id}', '${doc.nombre.replace(/'/g, "\\'")}', ${doc.monto}, 'deuda_tc')` : ``;
                 let op = (doc.nombre && (doc.nombre.includes("PROYECCIÓN") || doc.nombre.includes("FACTURADA"))) ? "1" : "0.7";
 
@@ -712,7 +699,6 @@
         }
     };
 
-    // Función global para purgar un mes completo desde el celular
     window.purgarMesTCMovil = async function(key) {
         if(!confirm(`⚠️ ¿ELIMINAR TODAS LAS CUOTAS DE ${key}?`)) return;
         const batch = db.batch();
@@ -735,22 +721,18 @@
     };
 
     function switchTriCore(viewId, el, index) {
-        // Quitamos la clase 'active' de todos los botones
-        document.querySelectorAll('.core-btn').forEach(b => { b.classList.remove('active'); });
+        document.querySelectorAll('#tab-dash .core-btn').forEach(b => { b.classList.remove('active'); });
         el.classList.add('active');
         
-        // Movemos la pastilla morada
         const highlighter = document.getElementById('core-highlighter');
         highlighter.style.transform = `translateX(${index * 100}%)`;
         highlighter.style.background = 'linear-gradient(135deg, var(--color-infra), #8a4af3)';
         highlighter.style.boxShadow = '0 4px 12px rgba(163, 113, 247, 0.4)';
 
-        // Ocultamos todas las vistas
         document.getElementById('vista-efectivo').style.display = 'none';
         document.getElementById('vista-tc').style.display = 'none';
         document.getElementById('vista-terceros').style.display = 'none';
 
-        // Mostramos la correcta
         if (viewId === 'efectivo') {
             document.getElementById('vista-efectivo').style.display = 'block';
         } else if (viewId === 'tc') {
@@ -789,7 +771,6 @@
         highlighter.style.transform = `translateX(${index * 100}%)`;
     }
     
-    // FIX: Receptor de contexto (Colección)
     function openBottomSheet(id, n, m, col = 'movimientos') { 
         document.getElementById('sheet-title').innerText = n; 
         document.getElementById('sheet-subtitle').innerText = "$" + m.toLocaleString('es-CL'); 
@@ -806,6 +787,6 @@
     }
     function closeBottomSheet() { const overlay = document.getElementById('bottom-sheet-overlay'); const sheet = document.getElementById('bottom-sheet'); sheet.style.bottom = '-100%'; overlay.style.opacity = '0'; setTimeout(()=> overlay.style.display = 'none', 300); }
 </script>
-<script src="motor.js?v=16.7"></script>
+<script src="motor.js?v=17.5"></script>
 </body>
 </html>
