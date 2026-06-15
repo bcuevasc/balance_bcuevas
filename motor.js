@@ -2042,42 +2042,42 @@ window.exportarDataLinkTC = function() {
 // ==========================================
 // 📊 MÓDULO CENTRAL: DESGLOSE DE GASTOS (ACORDEÓN MACRO)
 // ==========================================
+// ==========================================
+// 📊 MÓDULO CENTRAL: DESGLOSE DE GASTOS (DUAL-SCREEN)
+// ==========================================
 window.renderizarDesgloseCentral = function(sueldoBase) {
-    const contenedor = document.getElementById('listaDesgloseCentral');
-    if (!contenedor) return;
+    const contenedorPC = document.getElementById('listaDesgloseCentral');
+    const contenedorMovil = document.getElementById('listaDesgloseCentralMovil'); // 📱 ANTENA MÓVIL
+    
+    if (!contenedorPC && !contenedorMovil) return;
 
     let desglose = {};
 
-    // 1. Recolectar datos y agrupar con lógica Macro
     datosMesGlobal.forEach(x => {
-        // Ignoramos ingresos, ahorros y TC para ver solo el gasto del mes
         if (x.esIn || x.esCxC || x.esNeutro || x.catV === 'Gasto Tarjeta de Crédito') return; 
         
-        // 🧠 LÓGICA MACRO: Si es Gasto Fijo, se consolida en una sola gran categoría
         let catVisual = x.catV;
-        if (x.tipo === 'Gasto Fijo') {
-            catVisual = 'CARGA FIJA (ESTRUCTURAL)';
-        }
+        if (x.tipo === 'Gasto Fijo') catVisual = 'CARGA FIJA (ESTRUCTURAL)';
         
         if (!desglose[catVisual]) desglose[catVisual] = { total: 0, items: [] };
         desglose[catVisual].total += x.monto;
         desglose[catVisual].items.push(x);
     });
 
-    // 2. Ordenar categorías de mayor a menor gasto
     let categoriasOrdenadas = Object.keys(desglose).sort((a, b) => desglose[b].total - desglose[a].total);
 
     if (categoriasOrdenadas.length === 0) {
-        contenedor.innerHTML = `<div style="text-align:center; padding:40px 20px; color:var(--text-muted); font-size:0.8rem; font-family:monospace;">SIN MOVIMIENTOS REGISTRADOS</div>`;
+        let msg = `<div style="text-align:center; padding:40px 20px; color:#8b949e; font-size:0.8rem; font-family:monospace;">SIN MOVIMIENTOS REGISTRADOS</div>`;
+        if(contenedorPC) contenedorPC.innerHTML = msg;
+        if(contenedorMovil) contenedorMovil.innerHTML = msg;
         return;
     }
 
     let html = '';
     
-    // Función de colores alineada al HUD
     const getDotColor = (cat) => {
         const c = cat ? cat.toLowerCase() : "";
-        if (c.includes("fija") || c.includes("estructural")) return "#a371f7"; // Morado para consolidado fijo
+        if (c.includes("fija") || c.includes("estructural")) return "#a371f7"; 
         if (c.includes("dopamina") || c.includes("fuga") || c.includes("ruido")) return "#ff5252";
         if (c.includes("transporte") || c.includes("flota") || c.includes("logistica")) return "#00bcd4";
         if (c.includes("hogar") || c.includes("supermercado") || c.includes("alimentacion") || c.includes("comida")) return "#d29922";
@@ -2085,7 +2085,6 @@ window.renderizarDesgloseCentral = function(sueldoBase) {
         return "#8b949e";
     };
 
-    // 3. Renderizar Acordeones
     categoriasOrdenadas.forEach(cat => {
         let info = desglose[cat];
         let pct = sueldoBase > 0 ? ((info.total / sueldoBase) * 100).toFixed(1) : 0;
@@ -2095,18 +2094,17 @@ window.renderizarDesgloseCentral = function(sueldoBase) {
             let d = new Date(i.fechaISO);
             let fechaTxt = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`;
             
-            // 🏷️ Etiqueta de Trazabilidad: Solo muestra la subcategoría si estamos dentro de Carga Fija
             let subTag = (cat === 'CARGA FIJA (ESTRUCTURAL)' && i.catV) 
                 ? `<span style="font-size:0.5rem; background:rgba(163, 113, 247, 0.15); color:#a371f7; padding:2px 5px; border-radius:3px; margin-right:6px; border: 1px solid rgba(163, 113, 247, 0.3); text-transform:uppercase;">${i.catV.split(' ')[0]}</span>` 
                 : '';
 
             return `
             <div class="desglose-item">
-                <span style="width: 45px; color: var(--text-muted); flex-shrink: 0;">${fechaTxt}</span>
-                <span style="flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 0 10px; font-weight: bold;">
+                <span style="width: 45px; color: #8b949e; flex-shrink: 0;">${fechaTxt}</span>
+                <span style="flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 0 10px; font-weight: bold; color: #c9d1d9;">
                     ${subTag}${i.nombre || 'N/A'}
                 </span>
-                <span style="font-family: monospace; font-weight: 900; flex-shrink: 0;">$${i.monto.toLocaleString('es-CL')}</span>
+                <span style="font-family: monospace; font-weight: 900; flex-shrink: 0; color: #c9d1d9;">$${i.monto.toLocaleString('es-CL')}</span>
             </div>`;
         }).join('');
 
@@ -2114,8 +2112,8 @@ window.renderizarDesgloseCentral = function(sueldoBase) {
         <div class="desglose-cat" style="border-left: 4px solid ${colorLinea};">
             <div class="desglose-cat-header" onclick="this.parentElement.classList.toggle('active')">
                 <div style="display:flex; flex-direction:column; gap:4px; max-width: 65%;">
-                    <span style="font-size: 0.8rem; font-weight: 900; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${cat.toUpperCase()}</span>
-                    <span style="font-size: 0.65rem; color: ${colorLinea}; font-family: monospace; letter-spacing: 0.5px; font-weight: bold;">${pct}% DEL PRESUPUESTO</span>
+                    <span style="font-size: 0.8rem; font-weight: 900; color: #c9d1d9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${cat.toUpperCase()}</span>
+                    <span style="font-size: 0.65rem; color: ${colorLinea}; font-family: monospace; letter-spacing: 0.5px; font-weight: bold;">${pct}% DEL Ppto</span>
                 </div>
                 <div style="font-size: 1.05rem; font-weight: 900; color: ${colorLinea}; font-family: monospace; text-align: right;">
                     $${info.total.toLocaleString('es-CL')}
@@ -2127,5 +2125,6 @@ window.renderizarDesgloseCentral = function(sueldoBase) {
         </div>`;
     });
 
-    contenedor.innerHTML = html;
+    if(contenedorPC) contenedorPC.innerHTML = html;
+    if(contenedorMovil) contenedorMovil.innerHTML = html; // 📱 DISPARO AL CELULAR
 };
