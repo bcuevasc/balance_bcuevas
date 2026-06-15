@@ -389,13 +389,16 @@ function actualizarDashboard() {
             else {
                 saldoAcc -= x.monto; 
                 if (x.catV === 'Infraestructura (Depto)') tInfra += x.monto;
-                else if (x.catV === 'Flota & Movilidad') tFlota += x.monto;
-                else if (x.tipo === 'Gasto Fijo' || x.catV.includes('Carga Fija')) tF += x.monto; 
-                else tO += x.monto; 
-                
-                gCat[x.catV] = (gCat[x.catV] || 0) + x.monto;
-                let pctFuga = x.innecesarioPct !== undefined ? x.innecesarioPct : ((typeof catEvitables !== 'undefined' && catEvitables.includes(x.catV)) ? 100 : 0);
-                tEvitable += (x.monto * (pctFuga / 100));
+                    else if (x.catV === 'Flota & Movilidad') tFlota += x.monto;
+                    else if (x.tipo === 'Gasto Fijo' || x.catV.includes('Carga Fija')) tF += x.monto; 
+                    else tO += x.monto; 
+                    
+                    // 🧠 LÓGICA MACRO APLICADA AL GRÁFICO POLAR (ESPECTRO)
+                    let macroCat = (x.tipo === 'Gasto Fijo') ? 'Carga Fija (Estructural)' : x.catV;
+                    gCat[macroCat] = (gCat[macroCat] || 0) + x.monto;
+                    
+                    let pctFuga = x.innecesarioPct !== undefined ? x.innecesarioPct : ((typeof catEvitables !== 'undefined' && catEvitables.includes(x.catV)) ? 100 : 0);
+                    tEvitable += (x.monto * (pctFuga / 100));
             }
         }
     });
@@ -760,7 +763,12 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0, totalFijosMes, 
         id: 'labelsPlugin',
         afterDatasetsDraw(chart) {
             try {
-                const ctx = chart.ctx; ctx.font = 'bold 10px monospace'; ctx.fillStyle = '#ffffff'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+                const ctx = chart.ctx; 
+                // 🎨 REDISEÑO: Fuente más compacta, tamaño reducido (8px) y blanco con 85% de opacidad
+                ctx.font = 'bold 8px -apple-system, BlinkMacSystemFont, sans-serif'; 
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.85)'; 
+                ctx.textAlign = 'center'; 
+                ctx.textBaseline = 'bottom';
                 chart.data.datasets.forEach((dataset, i) => {
                     const meta = chart.getDatasetMeta(i);
                     if (meta.hidden) return;
@@ -852,7 +860,7 @@ function dibujarGraficos(sueldo, chronData, cats, diasCiclo, T0, totalFijosMes, 
             chartP = new Chart(ctxP, {
                 type: 'polarArea', 
                 data: { 
-                    labels: sorted.map(c => aliasMap[c[0]] || c[0].split(' ')[0]), 
+                        labels: sorted.map(c => c[0] === 'Carga Fija (Estructural)' ? 'Carga Fija' : (aliasMap[c[0]] || c[0].split(' ')[0])),
                     datasets: [{ 
                         data: sorted.map(c => c[1]), 
                         // Reemplaza el backgroundColor y borderColor del chartPareto por esto:
