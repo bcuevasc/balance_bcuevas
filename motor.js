@@ -23,13 +23,17 @@ const catEvitables = ["Dopamina & Antojos"];
 
 const diccAuto = [
     { keys: ["cargo en cuenta", "comision", "mantencion"], cat: "Gastos Fijos (Búnker)", tipo: "Gasto Fijo", fuga: "0", rename: "MANTENCIÓN BANCARIA" },
-    { keys: ["prestamo", "debe", "pagar dps", "por cobrar", "cuota de"], cat: "Cuentas por Cobrar (Activos)", tipo: "Por Cobrar", fuga: "0" },
     { keys: ["uber", "didi", "cabify", "pasaje", "buses", "turbus", "metro"], cat: "Transporte & Logística", tipo: "Gasto", fuga: "0" },
     { keys: ["copec", "shell", "autopase", "revision tecnica", "lavado auto", "mecanico", "peaje", "seguro auto", "permiso circulacion"], cat: "Flota & Movilidad", tipo: "Gasto Fijo", fuga: "0" },
     { keys: ["dividendo", "arriendo", "gastos comunes", "ggcc", "contribuciones", "hipotecario", "departamento", "luz", "agua", "gas", "internet", "udec", "cae"], cat: "Infraestructura (Depto)", tipo: "Gasto Fijo", fuga: "0" },
     { keys: ["pedidosya", "mcdonalds", "burger king", "starbucks", "rappi", "helado", "cine", "concierto", "mall plaza"], cat: "Dopamina & Antojos", tipo: "Gasto", fuga: "100" },
     { keys: ["netflix", "spotify", "hbo", "prime", "icloud", "google", "vtr", "wom", "entel", "movistar"], cat: "Suscripciones", tipo: "Gasto Fijo", fuga: "0" },
     { keys: ["jumbo", "lider", "unimarc", "santa isabel", "panaderia", "carniceria", "feria", "minimarket", "tottus"], cat: "Alimentación & Supermercado", tipo: "Gasto", fuga: "0" },
+    
+    /* 🟢 NUEVAS CATEGORÍAS INYECTADAS AL AUTOPILOT */
+    { keys: ["casino", "colacion", "almuerzo", "desayuno", "comida"], cat: "Comida Necesaria", tipo: "Gasto", fuga: "0" }, 
+    { keys: ["peluqueria", "barberia", "corte pelo", "skincare", "perfume", "aseo personal", "crema"], cat: "Mantenimiento Personal", tipo: "Gasto", fuga: "0" },
+    
     { keys: ["farmacia", "cruz verde", "salcobrand", "doctor", "consulta", "integramedica", "medico", "ahumada"], cat: "Mantenimiento Hardware (Salud)", tipo: "Gasto", fuga: "0" },
     { keys: ["ahorro", "inversion", "fintual", "deposito", "traspaso"], cat: "Transferencia Propia / Ahorro", tipo: "Ahorro", fuga: "0" }
 ];
@@ -39,14 +43,15 @@ const catMaestras = [
     { id: "Infraestructura (Depto)", em: "🏢", label: "Infraestructura (Depto)" },
     { id: "Flota & Movilidad", em: "🚙", label: "Flota & Vehículo" },
     { id: "Alimentación & Supermercado", em: "🛒", label: "Supermercado" },
+    { id: "Comida Necesaria", em: "🍲", label: "Comida Necesaria" }, // 🟢 INYECTADO
     { id: "Transporte & Logística", em: "🚗", label: "Transporte Público" },
     { id: "Dopamina & Antojos", em: "🍔", label: "Fugas (Dopamina)" },
-    { id: "Cuentas por Cobrar (Activos)", em: "💸", label: "Me Deben Plata" },
     { id: "Transferencia Propia / Ahorro", em: "🏦", label: "Ahorro / Traspaso" },
     { id: "Gasto Tarjeta de Crédito", em: "💳", label: "Compra con TC" },
     { id: "Ingreso Adicional", em: "💰", label: "Ingreso Extra" },
     { id: "Suscripciones", em: "📱", label: "Suscripciones" },
     { id: "Mantenimiento Hardware (Salud)", em: "💊", label: "Salud" },
+    { id: "Mantenimiento Personal", em: "🧴", label: "Mto. Personal" }, // 🟢 INYECTADO
     { id: "Hogar & Búnker", em: "🛠️", label: "Compras Hogar" },
     { id: "Ocio & Experiencias", em: "🎸", label: "Ocio & Experiencias" },
     { id: "Red de Apoyo (Familia)", em: "🫂", label: "Red de Apoyo" },
