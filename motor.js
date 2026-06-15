@@ -2032,3 +2032,79 @@ window.exportarDataLinkTC = function() {
         alert("Fallo al exportar la Matriz TC.");
     }
 };
+
+// ==========================================
+// 📊 MÓDULO CENTRAL: DESGLOSE DE GASTOS (ACORDEÓN)
+// ==========================================
+window.renderizarDesgloseCentral = function(sueldoBase) {
+    const contenedor = document.getElementById('listaDesgloseCentral');
+    if (!contenedor) return;
+
+    let desglose = {};
+
+    // 1. Recolectar datos y agrupar por categoría
+    datosMesGlobal.forEach(x => {
+        // Ignoramos ingresos, ahorros y TC para ver solo el gasto del mes
+        if (x.esIn || x.esCxC || x.esNeutro || x.catV === 'Gasto Tarjeta de Crédito') return; 
+        
+        if (!desglose[x.catV]) desglose[x.catV] = { total: 0, items: [] };
+        desglose[x.catV].total += x.monto;
+        desglose[x.catV].items.push(x);
+    });
+
+    // 2. Ordenar categorías de mayor a menor gasto
+    let categoriasOrdenadas = Object.keys(desglose).sort((a, b) => desglose[b].total - desglose[a].total);
+
+    if (categoriasOrdenadas.length === 0) {
+        contenedor.innerHTML = `<div style="text-align:center; padding:40px 20px; color:var(--text-muted); font-size:0.8rem; font-family:monospace;">SIN MOVIMIENTOS REGISTRADOS</div>`;
+        return;
+    }
+
+    let html = '';
+    
+    // Función de colores
+    const getDotColor = (cat) => {
+        const c = cat ? cat.toLowerCase() : "";
+        if (c.includes("dopamina") || c.includes("fuga") || c.includes("ruido")) return "#ff5252";
+        if (c.includes("infraestructura") || c.includes("fijo")) return "#a371f7";
+        if (c.includes("transporte") || c.includes("flota") || c.includes("logistica")) return "#00bcd4";
+        if (c.includes("hogar") || c.includes("supermercado") || c.includes("alimentacion")) return "#d29922";
+        return "#8b949e";
+    };
+
+    // 3. Renderizar Acordeones
+    categoriasOrdenadas.forEach(cat => {
+        let info = desglose[cat];
+        let pct = sueldoBase > 0 ? ((info.total / sueldoBase) * 100).toFixed(1) : 0;
+        let colorLinea = getDotColor(cat);
+
+        let itemsHtml = info.items.sort((a, b) => new Date(b.fechaISO) - new Date(a.fechaISO)).map(i => {
+            let d = new Date(i.fechaISO);
+            let fechaTxt = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`;
+            return `
+            <div class="desglose-item">
+                <span style="width: 45px; color: var(--text-muted);">${fechaTxt}</span>
+                <span style="flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 0 10px; font-weight: bold;">${i.nombre || 'N/A'}</span>
+                <span style="font-family: monospace; font-weight: 900;">$${i.monto.toLocaleString('es-CL')}</span>
+            </div>`;
+        }).join('');
+
+        html += `
+        <div class="desglose-cat" style="border-left: 4px solid ${colorLinea};">
+            <div class="desglose-cat-header" onclick="this.parentElement.classList.toggle('active')">
+                <div style="display:flex; flex-direction:column; gap:4px; max-width: 65%;">
+                    <span style="font-size: 0.8rem; font-weight: 900; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${cat.toUpperCase()}</span>
+                    <span style="font-size: 0.65rem; color: ${colorLinea}; font-family: monospace; letter-spacing: 0.5px; font-weight: bold;">${pct}% DEL PRESUPUESTO</span>
+                </div>
+                <div style="font-size: 1.05rem; font-weight: 900; color: ${colorLinea}; font-family: monospace; text-align: right;">
+                    $${info.total.toLocaleString('es-CL')}
+                </div>
+            </div>
+            <div class="desglose-cat-body">
+                ${itemsHtml}
+            </div>
+        </div>`;
+    });
+
+    contenedor.innerHTML = html;
+};
