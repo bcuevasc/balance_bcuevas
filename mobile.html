@@ -551,8 +551,8 @@
     <div class="pv-input-group"><label>Pack Subs</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-subs')">EST</button><input type="text" id="pv-subs" class="pv-input" value="20.540" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
     <div class="pv-input-group"><label>Seguro Auto</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-seguro')">EST</button><input type="text" id="pv-seguro" class="pv-input" value="38.300" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
 
-    <button onclick="ejecutarArranque()" class="btn-pv-launch">EFECTUAR ARRANQUE</button>
-    <button onclick="cerrarPreVuelo()" class="btn-pv-close">ABORTAR</button>
+    <button onclick="guardarPerfilFijo()" class="btn-pv-launch" style="background: linear-gradient(135deg, #2ea043, #238636) !important; color: white !important; box-shadow: 0 10px 25px rgba(46, 160, 67, 0.4) !important;">💾 GUARDAR VALORES BASE</button>
+    <button onclick="cerrarPreVuelo()" class="btn-pv-close">CERRAR VISOR</button>
 </div>
 
 <script>
