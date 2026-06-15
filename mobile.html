@@ -187,6 +187,15 @@
         .desglose-cat.active .desglose-cat-body { max-height: 400px; border-top: 1px dashed var(--border-subtle); }
         .desglose-item { padding: 12px 15px; display: flex; justify-content: space-between; font-size: 0.75rem; border-bottom: 1px solid rgba(255,255,255,0.03); }
         .desglose-item:last-child { border-bottom: none; }
+        /* =========================================
+           📊 DESGLOSE MACRO MÓVIL (MASTER TOGGLE)
+           ========================================= */
+        .macro-master-toggle { margin: 15px 15px 5px 15px; background: linear-gradient(145deg, rgba(163, 113, 247, 0.08), transparent); border: 1px solid rgba(163, 113, 247, 0.2); border-radius: 16px; padding: 12px 18px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.15); transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .macro-master-toggle:active { transform: scale(0.96); }
+        .macro-master-toggle.open .chevron { transform: rotate(180deg); color: #fff !important; }
+        .macro-master-toggle.open { border-color: var(--color-infra); box-shadow: 0 6px 20px rgba(163, 113, 247, 0.3); background: rgba(163, 113, 247, 0.15); }
+        .macro-collapsible { max-height: 0; overflow: hidden; transition: max-height 0.6s cubic-bezier(0.25, 1, 0.5, 1); }
+        .macro-collapsible.open { max-height: 2500px; }
     </style>
 </head>
 <body>
@@ -252,35 +261,43 @@
                 <div style="font-size:0.6rem; color:var(--color-infra); font-weight:900; text-transform:uppercase; letter-spacing: 4px; position: relative; z-index: 2; opacity: 0.8;">Maniobra Base</div>
             </div>
             
-            <div class="slave-kpis">
-                <div class="slave-pill purple">
-                    <div style="font-size:0.6rem; font-weight:800; color:var(--text-dim); text-transform:uppercase;">Infraestructura</div>
-                    <div style="color:var(--text-main); font-size:1.1rem; font-weight:900; margin-top:5px; font-family:monospace;">$<span id="txtTotalInfra">0</span></div>
+           <div class="slave-kpis" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 15px; margin-bottom: 10px;">
+                <div class="slave-pill purple" style="grid-column: span 2; padding: 18px 15px; background: linear-gradient(145deg, rgba(163, 113, 247, 0.08), transparent); border-color: rgba(163, 113, 247, 0.3);">
+                    <div style="font-size:0.65rem; font-weight:900; color:var(--color-infra); text-transform:uppercase; letter-spacing: 2px;">Carga Fija (Estructural)</div>
+                    <div style="color:var(--text-main); font-size:1.8rem; font-weight:900; margin-top:5px; font-family:monospace; text-shadow: 0 0 20px rgba(163, 113, 247, 0.4);">$<span id="txtTotalFijosUnified">0</span></div>
                 </div>
-                <div class="slave-pill red">
-                    <div style="font-size:0.6rem; font-weight:800; color:var(--text-dim); text-transform:uppercase;">Carga Fija</div>
-                    <div style="color:var(--text-main); font-size:1.1rem; font-weight:900; margin-top:5px; font-family:monospace;">$<span id="txtTotalFijos">0</span></div>
-                </div>
-                <div class="slave-pill orange">
+                
+                <div class="slave-pill orange" style="padding: 14px 10px;">
                     <div style="font-size:0.6rem; font-weight:800; color:var(--text-dim); text-transform:uppercase;">Carga Variable</div>
-                    <div style="color:var(--text-main); font-size:1.1rem; font-weight:900; margin-top:5px; font-family:monospace;">$<span id="txtTotalOtros">0</span></div>
+                    <div style="color:var(--text-main); font-size:1.15rem; font-weight:900; margin-top:5px; font-family:monospace;">$<span id="txtTotalOtros">0</span></div>
                 </div>
-                <!-- AQUÍ VUELVE LA PASTILLA DE DOPAMINA -->
-                <div class="slave-pill" style="border-top-color: var(--accent-red); box-shadow: 0 0 15px rgba(255,82,82,0.1);">
+                
+                <div class="slave-pill red" style="padding: 14px 10px; background: linear-gradient(145deg, rgba(255, 82, 82, 0.05), transparent);">
                     <div style="font-size:0.6rem; font-weight:900; color:var(--accent-red); text-transform:uppercase;">Fugas (Dopamina)</div>
                     <div style="display:flex; align-items:center; justify-content:center; gap:6px; margin-top:5px;">
-                        <div style="color:var(--text-main); font-size:1.1rem; font-weight:900; font-family:monospace;">$<span id="txtTotalEvitable">0</span></div>
-                        <span id="txtPorcentajeFugas" style="font-size:0.75rem; font-weight:900; color:var(--accent-red); background: rgba(255,82,82,0.1); padding: 2px 6px; border-radius: 6px;">0%</span>
+                        <div style="color:var(--text-main); font-size:1.15rem; font-weight:900; font-family:monospace;">$<span id="txtTotalEvitable">0</span></div>
+                        <span id="txtPorcentajeFugas" style="font-size:0.7rem; font-weight:900; color:var(--accent-red); background: rgba(255,82,82,0.1); padding: 2px 6px; border-radius: 6px;">0%</span>
                     </div>
                 </div>
             </div>
-            <div style="margin-top: 15px; margin-bottom: 5px; padding: 0 15px; display: flex; justify-content: space-between; align-items: center;">
-                <span style="font-size: 0.75rem; font-weight: 900; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px;">📊 DESGLOSE MACRO</span>
-            </div>
-            <div id="listaDesgloseCentralMovil" style="padding: 0 15px; margin-bottom: 10px;">
+            
+            <div class="macro-master-toggle" onclick="this.classList.toggle('open'); document.getElementById('macro-container-movil').classList.toggle('open');">
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <div style="width: 36px; height: 36px; background: rgba(163, 113, 247, 0.2); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; border: 1px solid rgba(163, 113, 247, 0.3);">📊</div>
+                    <div style="display: flex; flex-direction: column; text-align: left;">
+                        <span style="font-size: 0.85rem; font-weight: 900; color: var(--text-main); text-transform: uppercase; letter-spacing: 1px;">Desglose Macro</span>
+                        <span style="font-size: 0.65rem; color: var(--color-infra); font-weight: 700; font-family: monospace;">AUDITORÍA POR CATEGORÍAS</span>
+                    </div>
                 </div>
+                <span class="chevron" style="color: var(--color-infra); font-size: 1.2rem; transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);">▼</span>
+            </div>
+            
+            <div id="macro-container-movil" class="macro-collapsible">
+                <div id="listaDesgloseCentralMovil" style="padding: 0 15px; margin-top: 10px; margin-bottom: 20px;">
+                    </div>
+            </div>
+
             <div id="listaMovilDetalle" class="lista-contenedor"></div>
-        </div>
 
         <div id="vista-tc" style="display: none; animation: fadeSlideUp 0.3s;">
             <div class="master-hud" style="padding-bottom:15px;">
