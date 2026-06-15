@@ -178,6 +178,15 @@
         /* Pastilla del Oráculo y Pestañas */
         #trend-highlighter { background: linear-gradient(135deg, var(--color-infra), #8a4af3) !important; box-shadow: 0 4px 12px rgba(163, 113, 247, 0.4) !important; border: none !important;}
         .core-btn.active { text-shadow: 0 0 10px rgba(163, 113, 247, 0.8) !important; color: #fff !important; }
+        /* =========================================
+           📊 MÓDULO CENTRAL: DESGLOSE MACRO (MÓVIL)
+           ========================================= */
+        .desglose-cat { background: rgba(255,255,255,0.02); border: 1px solid var(--border-subtle); border-radius: 8px; margin-bottom: 8px; overflow: hidden; transition: all 0.3s ease; }
+        .desglose-cat-header { padding: 14px 15px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+        .desglose-cat-body { max-height: 0; overflow-y: auto; transition: max-height 0.4s ease-out; background: rgba(0,0,0,0.5); }
+        .desglose-cat.active .desglose-cat-body { max-height: 400px; border-top: 1px dashed var(--border-subtle); }
+        .desglose-item { padding: 12px 15px; display: flex; justify-content: space-between; font-size: 0.75rem; border-bottom: 1px solid rgba(255,255,255,0.03); }
+        .desglose-item:last-child { border-bottom: none; }
     </style>
 </head>
 <body>
