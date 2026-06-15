@@ -401,8 +401,11 @@ function actualizarDashboard() {
     });
 
     const setTxt = (id, val) => { const el = document.getElementById(id); if(el) el.innerText = val.toLocaleString('es-CL'); };
-    setTxt('txtTotalFijos', tF); setTxt('txtTotalOtros', tO); setTxt('txtTotalIngresos', tI);
-    setTxt('txtCxC', tC); setTxt('txtSaldo', saldoAcc); setTxt('txtTotalInfra', tInfra); setTxt('txtTotalFlota', tFlota); 
+    // 🧠 UNIFICACIÓN MACRO: Sumamos la Base (tF), la Infraestructura y la Flota en un solo KPI (PC y Móvil)
+    setTxt('txtTotalFijos', tF + tInfra + tFlota); 
+    setTxt('txtTotalFijosUnified', tF + tInfra + tFlota); 
+    setTxt('txtTotalOtros', tO); setTxt('txtTotalIngresos', tI);
+    setTxt('txtCxC', tC); setTxt('txtSaldo', saldoAcc); setTxt('txtTotalInfra', tInfra); setTxt('txtTotalFlota', tFlota);
     
     const txtSaldoEl = document.getElementById('txtSaldo');
     if(txtSaldoEl) {
