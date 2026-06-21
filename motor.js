@@ -409,6 +409,8 @@ function actualizarDashboard() {
     setTxt('txtTotalFijosUnified', tF + tInfra + tFlota); 
     setTxt('txtTotalOtros', tO); setTxt('txtTotalIngresos', tI);
     setTxt('txtCxC', tC); setTxt('txtSaldo', saldoAcc); setTxt('txtTotalInfra', tInfra); setTxt('txtTotalFlota', tFlota);
+    // 🧠 MEMORIA GLOBAL: Guardamos el balance para que el Simulador lo lea
+    window.balanceRealGlobal = saldoAcc;
     // 🧠 FEEDBACK LOOP: CONEXIÓN DE DÉFICIT A LÍNEA DE CRÉDITO (DÍA CERO)
     const inputLinea = document.getElementById('pv-linea');
     if (inputLinea) {
@@ -1294,6 +1296,16 @@ window.toggleEstadoPV = function(btn, idInput) {
 };
 
 window.calcularDiaCero = function() {
+    // 🚀 FEEDBACK LOOP: Forzar la Línea de Crédito si el mes cierra en negativo
+    if (window.balanceRealGlobal !== undefined && window.balanceRealGlobal < 0) {
+        const inputLinea = document.getElementById('pv-linea');
+        if (inputLinea) {
+            inputLinea.value = Math.abs(window.balanceRealGlobal).toLocaleString('es-CL');
+            // Le damos un toque de alerta visual
+            inputLinea.style.color = "#ff5252"; 
+            inputLinea.style.fontWeight = "900";
+        }
+    }
     const valSiNoPagado = (id) => { let el = document.getElementById(id); return (el && el.getAttribute('data-estado') !== 'pag') ? (parseInt(el.value.replace(/\./g, '')) || 0) : 0; };
     let sueldo = parseInt((document.getElementById('pv-sueldo').value || "0").replace(/\./g, '')) || 0;
     let tcNac = valSiNoPagado('pv-tc-nac');
