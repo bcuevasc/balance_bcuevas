@@ -409,6 +409,21 @@ function actualizarDashboard() {
     setTxt('txtTotalFijosUnified', tF + tInfra + tFlota); 
     setTxt('txtTotalOtros', tO); setTxt('txtTotalIngresos', tI);
     setTxt('txtCxC', tC); setTxt('txtSaldo', saldoAcc); setTxt('txtTotalInfra', tInfra); setTxt('txtTotalFlota', tFlota);
+    // 🧠 FEEDBACK LOOP: CONEXIÓN DE DÉFICIT A LÍNEA DE CRÉDITO (DÍA CERO)
+    const inputLinea = document.getElementById('pv-linea');
+    if (inputLinea) {
+        if (saldoAcc < 0) {
+            // Si hay déficit, convertimos el valor a positivo y lo inyectamos a la Línea de Crédito
+            inputLinea.value = Math.abs(saldoAcc).toLocaleString('es-CL');
+        } else {
+            // Si el balance es positivo o cero, limpiamos la Línea de Crédito
+            inputLinea.value = "0";
+        }
+        // Si tienes el modal del Pre-Vuelo abierto en ese momento, forzamos la recarga de las barras
+        if (typeof calcularDiaCero === 'function') {
+            calcularDiaCero();
+        }
+    }
     
     const txtSaldoEl = document.getElementById('txtSaldo');
     if(txtSaldoEl) {
