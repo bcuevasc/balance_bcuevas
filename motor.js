@@ -488,18 +488,29 @@ if (typeof window.renderizarListas === 'undefined') {
         let datos = [...datosMesGlobal].filter(x => x.catV !== 'Gasto Tarjeta de Crédito'); 
         if (filtroBuscador) datos = datos.filter(x => x.nombre?.toLowerCase().includes(filtroBuscador) || x.catV.toLowerCase().includes(filtroBuscador));
 
+        // 1. CÁLCULO CRONOLÓGICO ESTRICTO (El pasado afecta al futuro)
+        // Clonamos el array y forzamos orden ascendente (más antiguo primero)
+        let calculoCronologico = [...datos].sort((a, b) => (a.fechaISO < b.fechaISO ? -1 : 1));
+        
+        let saldoRelativo = sueldoBase;
+        calculoCronologico.forEach(x => {
+            // En el flujo industrial, todo lo que no es inyección de capital, extrae liquidez de la maniobra base
+            if (x.esIn) {
+                saldoRelativo += x.monto;
+            } else {
+                saldoRelativo -= x.monto; 
+            }
+            x.saldoCalculadoVista = saldoRelativo;
+        });
+
+        // 2. ORDENAMIENTO DE INTERFAZ (HMI SORT)
+        // Ahora aplicamos el orden visual que solicita el usuario (por defecto DESC)
         datos.sort((a, b) => {
             let valA = a[currentSort.column], valB = b[currentSort.column];
             if (currentSort.column === 'nombre' || currentSort.column === 'catV') { valA = valA?.toLowerCase() || ''; valB = valB?.toLowerCase() || ''; }
             if (valA < valB) return currentSort.direction === 'asc' ? -1 : 1;
             if (valA > valB) return currentSort.direction === 'asc' ? 1 : -1;
             return 0;
-        });
-
-        let saldoRelativo = sueldoBase;
-        datos.forEach((x, idx) => {
-            if (x.esIn) saldoRelativo += x.monto; else if (!x.esNeutro) saldoRelativo -= x.monto;
-            x.saldoCalculadoVista = saldoRelativo;
         });
 
         const contenedorPC = document.getElementById('listaDetalle'); 
