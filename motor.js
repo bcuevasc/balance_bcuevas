@@ -1164,6 +1164,10 @@ window.guardarPerfilFijo = function() {
     if(btn) btn.innerHTML = "⏳ GUARDANDO EN LA NUBE...";
     
     let perfil = {
+        // Ahora Sueldo y TC Nacional también se guardan manualmente
+        sueldo: document.getElementById('pv-sueldo')?.value || "0",
+        tcNac: document.getElementById('pv-tc-nac')?.value || "0",
+        tcInt: document.getElementById('pv-tc-int')?.value || "0",
         arriendo: document.getElementById('pv-arriendo')?.value || "0",
         udec: document.getElementById('pv-udec')?.value || "0",
         cae: document.getElementById('pv-cae')?.value || "0",
@@ -1174,12 +1178,10 @@ window.guardarPerfilFijo = function() {
         celu: document.getElementById('pv-celu')?.value || "0",
         madre: document.getElementById('pv-madre')?.value || "0",
         subs: document.getElementById('pv-subs')?.value || "0",
-        seguro: document.getElementById('pv-seguro')?.value || "0",
-        linea: document.getElementById('pv-linea')?.value || "0",
-        tcInt: document.getElementById('pv-tc-int')?.value || "0"
+        seguro: document.getElementById('pv-seguro')?.value || "0"
+        // NOTA: Se elimina 'linea' para que no ensucie la BD
     };
     
-    // Lo guardamos en una colección de parámetros generales en la nube
     db.collection("parametros").doc("gastos_fijos_base").set(perfil, {merge: true}).then(() => {
         if(typeof mostrarToast === 'function') mostrarToast("✔️ PERFIL MAESTRO GUARDADO EN LA NUBE");
         if(btn) btn.innerHTML = txtOrig;
@@ -1190,11 +1192,15 @@ window.guardarPerfilFijo = function() {
 };
 
 window.cargarPerfilFijo = function() {
-    // Extraemos la configuración guardada desde la nube
     db.collection("parametros").doc("gastos_fijos_base").get().then(doc => {
         if (doc.exists) {
             let data = doc.data();
             const setVal = (id, val) => { if(val !== undefined && document.getElementById(id)) document.getElementById(id).value = val; };
+            
+            // Cargamos todos los valores guardados manualmente
+            setVal('pv-sueldo', data.sueldo);
+            setVal('pv-tc-nac', data.tcNac);
+            setVal('pv-tc-int', data.tcInt);
             setVal('pv-arriendo', data.arriendo);
             setVal('pv-udec', data.udec);
             setVal('pv-cae', data.cae);
@@ -1206,17 +1212,15 @@ window.cargarPerfilFijo = function() {
             setVal('pv-madre', data.madre);
             setVal('pv-subs', data.subs);
             setVal('pv-seguro', data.seguro);
-            setVal('pv-linea', data.linea);
-            setVal('pv-tc-int', data.tcInt);
-            calcularDiaCero(); // Recalcula la UI con los datos frescos
+            
+            // NO cargamos la línea de crédito desde la BD.
+            calcularDiaCero(); 
         }
     });
 };
-
-window.abrirPreVuelo = function() {
+wwindow.abrirPreVuelo = function() {
     const modal = document.getElementById('modal-dia-cero'); if(!modal) return;
     
-    // ⚡ FIX: Proyección Temporal Mes + 1
     let vM = parseInt(document.getElementById('navMesConceptual').value);
     let vA = parseInt(document.getElementById('navAnio').value);
     
@@ -1226,27 +1230,18 @@ window.abrirPreVuelo = function() {
     const nombresMes = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
     document.getElementById('pv-mes-label').innerText = `${nombresMes[pM]} ${pA}`.toUpperCase();
     
-    let sueldoProximoMes = window.obtenerSueldoMes(pA, pM);
-    document.getElementById('pv-sueldo').value = sueldoProximoMes.toLocaleString('es-CL');
-    
-    let sumaTCMes = 0;
-    if (typeof datosTCGlobal !== 'undefined') {
-        datosTCGlobal.forEach(d => { 
-            if(!d.mesCobro) return;
-            let f = new Date(d.mesCobro); 
-            if (f.getMonth() === pM && f.getFullYear() === pA) sumaTCMes += (Number(d.monto) || 0); 
-        });
-    }
-    
-    let elTcNac = document.getElementById('pv-tc-nac');
-    if(elTcNac && elTcNac.getAttribute('data-estado') !== 'pag') { elTcNac.value = sumaTCMes > 0 ? sumaTCMes.toLocaleString('es-CL') : "0"; }
-    
-    // ☁️ CARGAR DESDE LA NUBE AL ABRIR LA VENTANA
+    // Solo cargamos la data manual inyectada en Firebase
     cargarPerfilFijo();
     
-    calcularDiaCero(); modal.style.display = 'flex';
+    modal.style.display = 'flex';
 };
 
+window.sincronizarWidgetPreVuelo = function() {
+    // Al ser todo manual, solo necesitamos repintar las barras visuales
+    if (typeof window.calcularDiaCero === 'function') {
+        window.calcularDiaCero();
+    }
+};
 window.cerrarPreVuelo = function() { document.getElementById('modal-dia-cero').style.display = 'none'; actualizarDashboard(); };
 
 window.toggleEstadoPV = function(btn, idInput) {
