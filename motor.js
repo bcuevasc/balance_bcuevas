@@ -1282,12 +1282,6 @@ window.abrirPreVuelo = function() {
     modal.style.display = 'flex';
 };
 
-window.sincronizarWidgetPreVuelo = function() {
-    // ⚠️ SINCRONIZACIÓN VISUAL LIMPIA (Sin reescritura de la TC Nacional)
-    if (typeof window.calcularDiaCero === 'function') {
-        window.calcularDiaCero();
-    }
-};
 window.cerrarPreVuelo = function() { document.getElementById('modal-dia-cero').style.display = 'none'; actualizarDashboard(); };
 
 window.toggleEstadoPV = function(btn, idInput) {
@@ -1386,27 +1380,21 @@ window.calcularDiaCero = function() {
 };
 
 window.sincronizarWidgetPreVuelo = function() {
+    // ⚠️ SINCRONIZACIÓN VISUAL LIMPIA (Modo Manual Estricto)
     if (typeof window.calcularDiaCero === 'function') {
         window.calcularDiaCero();
     }
 };
+
 // ☁️ SINC Y EXPORTACIÓN (PUENTE REST)
 window.triggerSync = async function() {
-    // ⚠️ REEMPLAZA ESTA URL POR LA URL WEB APP DE TU APPS SCRIPT
     const urlWebApp = "https://script.google.com/macros/s/AKfycbwKlub0qrv8_d24ZuyKKNryqOw1E68xv1_JvPOoEUc6W8TICllFfodNcwkigQE_7AuoNg/exec";
-    
     mostrarToast("INICIANDO BARRIDO GMAIL...");
-    
     try {
-        // En Apps Script, los requests CORS a veces sufren redirecciones opacas.
-        // Usamos no-cors pero controlamos el flujo para no congelar la UI.
         fetch(urlWebApp, { mode: 'no-cors' })
         .then(() => {
-            // Como es 'no-cors', no podemos leer el JSON de vuelta por seguridad del navegador,
-            // pero sabemos que el disparo llegó a la RTU.
             setTimeout(() => {
                 mostrarToast("BARRIDO COMPLETADO. MATRIZ SINCRONIZADA.");
-                // Forzamos la actualización visual
                 aplicarCicloAlSistema();
             }, 2000);
         })
@@ -1437,6 +1425,7 @@ window.exportarDataLink = function() {
         mostrarToast("EXPORTACIÓN DATA-LINK EXITOSA");
     } catch (error) { console.error("Error Export:", error); }
 };
+
 // ==========================================
 // 🛠️ MEJORAS UX: CONTROL DE TECLADO (ESC)
 // ==========================================
@@ -1444,20 +1433,9 @@ document.addEventListener('keydown', function(event) {
     if (event.key === "Escape") {
         const modalDiaCero = document.getElementById('modal-dia-cero');
         const modalHistorian = document.getElementById('modal-historian');
-        
-        // Cerrar Día Cero
-        if (modalDiaCero && modalDiaCero.style.display === 'flex') {
-            cerrarPreVuelo();
-        }
-        // Cerrar Historian/Logs
-        if (modalHistorian && modalHistorian.style.display === 'flex') {
-            modalHistorian.style.display = 'none';
-        }
-        
-        // Abortar edición en la consola de comandos
-        if (typeof modoEdicionActivo !== 'undefined' && modoEdicionActivo) {
-            limpiarFormulario();
-        }
+        if (modalDiaCero && modalDiaCero.style.display === 'flex') cerrarPreVuelo();
+        if (modalHistorian && modalHistorian.style.display === 'flex') modalHistorian.style.display = 'none';
+        if (typeof modoEdicionActivo !== 'undefined' && modoEdicionActivo) limpiarFormulario();
     }
 });
 
@@ -1476,6 +1454,7 @@ window.exportarTablaBunker = function(idTabla, nombreArchivo) {
         document.body.appendChild(link); link.click(); document.body.removeChild(link);
     } catch (e) { console.error("Error Export:", e); }
 };
+
 // ==========================================
 // 🧠 MÓDULO DE CONTROL PREDICTIVO (WHAT-IF)
 // ==========================================
@@ -1488,24 +1467,20 @@ window.ejecutarSimulacionTC = function() {
     let capitalPrepago = parseInt(inputEl.value.replace(/\./g, '')) || 0;
     if (capitalPrepago <= 0) return;
 
-    // 1. Extraer la proyección actual de la Matriz TC a 6 meses
     let montosOriginales = [];
     let fechaHoy = new Date();
     
     for(let i=1; i<=6; i++) {
         let mIndex = (fechaHoy.getMonth() + i) % 12;
         let anioTemp = fechaHoy.getFullYear() + Math.floor((fechaHoy.getMonth() + i) / 12);
-        
         let sumaMes = datosTCGlobal.filter(d => { 
             if (!d.mesCobro) return false;
             let fC = new Date(d.mesCobro); 
             return fC.getMonth() === mIndex && fC.getFullYear() === anioTemp; 
         }).reduce((a, c) => a + (Number(c.monto) || 0), 0);
-        
         montosOriginales.push(sumaMes);
     }
 
-    // 2. Lógica de Prepago en Cascada (Mata la deuda del mes más cercano al más lejano)
     let trayectoriaSimulada = [...montosOriginales];
     let capitalRestante = capitalPrepago;
 
@@ -1522,42 +1497,11 @@ window.ejecutarSimulacionTC = function() {
         }
     }
 
-    // 3. Guardar vector simulado en memoria global y repintar HMI
     window.simulacionTC = trayectoriaSimulada;
     actualizarDashboard();
     mostrarToast("SIMULACIÓN WHAT-IF APLICADA");
 };
-// 🛠️ MÓDULO DE SINCRONIZACIÓN SILENCIOSA WIDGET PRE-VUELO
-window.sincronizarWidgetPreVuelo = function() {
-    const navMes = document.getElementById('navMesConceptual');
-    const navAnio = document.getElementById('navAnio');
-    if (!navMes || !navAnio) return;
 
-    let vM = parseInt(navMes.value);
-    let vA = parseInt(navAnio.value);
-    let pM = vM + 1; let pA = vA; 
-    if (pM > 11) { pM = 0; pA++; }
-
-    let sueldoProximoMes = window.obtenerSueldoMes(pA, pM);
-    let elSueldo = document.getElementById('pv-sueldo');
-    if (elSueldo) elSueldo.value = sueldoProximoMes.toLocaleString('es-CL');
-
-    let sumaTCMes = 0;
-    datosTCGlobal.forEach(d => { 
-        if(!d.mesCobro) return;
-        let f = new Date(d.mesCobro); 
-        if (f.getMonth() === pM && f.getFullYear() === pA) sumaTCMes += (Number(d.monto) || 0); 
-    });
-    
-    let elTcNac = document.getElementById('pv-tc-nac');
-    if(elTcNac && elTcNac.getAttribute('data-estado') !== 'pag') { 
-        elTcNac.value = sumaTCMes > 0 ? sumaTCMes.toLocaleString('es-CL') : "0"; 
-    }
-
-    if (typeof window.calcularDiaCero === 'function') {
-        window.calcularDiaCero();
-    }
-};
 window.resetearSimulacionTC = function() {
     const inputEl = document.getElementById('inputSimuladorTC');
     if (inputEl) inputEl.value = '';
