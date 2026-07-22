@@ -1153,9 +1153,8 @@ async function ejecutarPurgaMasivaTC() {
 // ==========================================
 // 🚀 SIMULADOR DÍA CERO (PROYECCIÓN MES + 1)
 // ==========================================
-
 // ==========================================
-// 🚀 SIMULADOR DÍA CERO (AHORA CON CLOUD SAVE FIREBASE)
+// 🚀 SIMULADOR DÍA CERO (CLOUD SAVE FIREBASE - MANUAL MODE)
 // ==========================================
 
 window.guardarPerfilFijo = function() {
@@ -1179,7 +1178,7 @@ window.guardarPerfilFijo = function() {
         madre: document.getElementById('pv-madre')?.value || "0",
         subs: document.getElementById('pv-subs')?.value || "0",
         seguro: document.getElementById('pv-seguro')?.value || "0"
-        // NOTA: Se elimina 'linea' para que no ensucie la BD
+        // NOTA: Se elimina 'linea' para que no ensucie la BD y se calcule sola
     };
     
     db.collection("parametros").doc("gastos_fijos_base").set(perfil, {merge: true}).then(() => {
@@ -1218,7 +1217,8 @@ window.cargarPerfilFijo = function() {
         }
     });
 };
-wwindow.abrirPreVuelo = function() {
+
+window.abrirPreVuelo = function() {
     const modal = document.getElementById('modal-dia-cero'); if(!modal) return;
     
     let vM = parseInt(document.getElementById('navMesConceptual').value);
@@ -1236,14 +1236,112 @@ wwindow.abrirPreVuelo = function() {
     modal.style.display = 'flex';
 };
 
+window.cerrarPreVuelo = function() { document.getElementById('modal-dia-cero').style.display = 'none'; actualizarDashboard(); };
+
+window.toggleEstadoPV = function(btn, idInput) {
+    const estados = ['est', 'real', 'pag'];
+    let curr = btn.getAttribute('data-estado') || 'est';
+    let next = estados[(estados.indexOf(curr) + 1) % estados.length];
+
+    btn.classList.remove('est', 'real', 'pag'); btn.classList.add(next); btn.innerText = next.toUpperCase(); btn.setAttribute('data-estado', next);
+    
+    const input = document.getElementById(idInput);
+    if (next === 'pag') { input.classList.add('pagado'); input.disabled = true; } 
+    else { input.classList.remove('pagado'); input.disabled = false; }
+    calcularDiaCero(); 
+};
+
+window.calcularDiaCero = function() {
+    // 🚀 LÓGICA DE LÍNEA DE CRÉDITO (ABSOLUTAMENTE DINÁMICA)
+    if (window.balanceRealGlobal !== undefined) {
+        const inputLinea = document.getElementById('pv-linea');
+        if (inputLinea) {
+            if (window.balanceRealGlobal < 0) {
+                // Hay déficit: Mostrar monto a cubrir en rojo
+                inputLinea.value = Math.abs(window.balanceRealGlobal).toLocaleString('es-CL');
+                inputLinea.style.color = "#ff5252"; 
+            } else {
+                // Balance positivo: Mostrar 0 en gris
+                inputLinea.value = "0";
+                inputLinea.style.color = "var(--text-muted)"; 
+            }
+            inputLinea.readOnly = true; // Bloquea la edición manual
+        }
+    }
+
+    const valSiNoPagado = (id) => { let el = document.getElementById(id); return (el && el.getAttribute('data-estado') !== 'pag') ? (parseInt(el.value.replace(/\./g, '')) || 0) : 0; };
+    
+    let sueldo = parseInt((document.getElementById('pv-sueldo').value || "0").replace(/\./g, '')) || 0;
+    let tcNac = valSiNoPagado('pv-tc-nac');
+    
+    // 🛠️ PRECISIÓN DECIMAL TC INTERNACIONAL
+    let elTcInt = document.getElementById('pv-tc-int');
+    let valTcIntRaw = elTcInt ? elTcInt.value.replace(/\$/g, '').replace(/,/g, '.') : "0";
+    let tcIntUSD = (elTcInt && elTcInt.getAttribute('data-estado') !== 'pag') ? (parseFloat(valTcIntRaw) || 0) : 0;
+    
+    let tcIntCLP = Math.round(tcIntUSD * (isNaN(window.VALOR_USD) ? 950 : window.VALOR_USD)); 
+    let elTcIntCLP = document.getElementById('pv-tc-int-clp');
+    if (elTcIntCLP) {
+        if (elTcInt && elTcInt.getAttribute('data-estado') === 'pag') { elTcIntCLP.innerText = "✔️ PAGADO"; elTcIntCLP.style.color = "var(--color-saldo)"; } 
+        else { elTcIntCLP.innerText = `~ $${tcIntCLP.toLocaleString('es-CL')} CLP`; elTcIntCLP.style.color = "var(--accent-red)"; }
+    }
+    
+    let deudasDuras = tcNac + tcIntCLP + valSiNoPagado('pv-linea');
+    let estructural = valSiNoPagado('pv-arriendo') + valSiNoPagado('pv-udec') + valSiNoPagado('pv-cae') + valSiNoPagado('pv-ggcc') + valSiNoPagado('pv-luz') + valSiNoPagado('pv-agua') + valSiNoPagado('pv-gas') + valSiNoPagado('pv-celu') + valSiNoPagado('pv-madre') + valSiNoPagado('pv-subs') + valSiNoPagado('pv-seguro');
+    
+    let liquidezNeta = sueldo - deudasDuras - estructural;
+    
+    // Modal principal
+    let txtLiq = document.getElementById('pv-txt-liquidez');
+    if (txtLiq) txtLiq.innerText = liquidezNeta.toLocaleString('es-CL');
+    
+    let pR = 0, pN = 0, pV = 100;
+    if (sueldo > 0) {
+        pR = Math.min((deudasDuras / sueldo) * 100, 100);
+        pN = Math.min((estructural / sueldo) * 100, 100 - pR);
+        pV = Math.max(100 - pR - pN, 0);
+        
+        let bR = document.getElementById('pv-barra-roja'); if(bR) bR.style.width = pR + '%';
+        let bN = document.getElementById('pv-barra-naranja'); if(bN) bN.style.width = pN + '%';
+        let bV = document.getElementById('pv-barra-verde'); if(bV) bV.style.width = pV + '%';
+    }
+
+    // 🛠️ Sincronización visual del Widget
+    let wTxtLiq = document.getElementById('widget-txt-liquidez');
+    if (wTxtLiq) {
+        wTxtLiq.innerText = liquidezNeta.toLocaleString('es-CL');
+        let wbR = document.getElementById('widget-barra-roja'); if(wbR) wbR.style.width = pR + '%'; 
+        let wbN = document.getElementById('widget-barra-naranja'); if(wbN) wbN.style.width = pN + '%'; 
+        let wbV = document.getElementById('widget-barra-verde'); if(wbV) wbV.style.width = pV + '%';
+    }
+
+    let tgls = document.querySelectorAll('.btn-estado'), conf = 0;
+    tgls.forEach(b => { if(b.classList.contains('real') || b.classList.contains('pag')) conf++; });
+    let cer = tgls.length > 0 ? Math.round((conf / tgls.length) * 100) : 0;
+    let elCer = document.getElementById('pv-certeza-pct');
+    if(elCer) { elCer.innerText = cer + '%'; elCer.style.color = cer < 40 ? '#ff5252' : (cer < 80 ? '#ff9800' : '#2ea043'); }
+
+    // 🚀 NUEVO: CÁLCULO DE PRESUPUESTO DIARIO
+    let txtDiario = document.getElementById('pv-txt-diario');
+    if (txtDiario) {
+        let vM = parseInt(document.getElementById('navMesConceptual').value);
+        let vA = parseInt(document.getElementById('navAnio').value);
+        let pM = vM + 1; let pA = vA; if (pM > 11) { pM = 0; pA++; }
+        
+        // Calculamos los días exactos del mes siguiente
+        let diasProxMes = new Date(pA, pM + 1, 0).getDate(); 
+        
+        let pDiario = liquidezNeta > 0 ? Math.floor(liquidezNeta / diasProxMes) : 0;
+        txtDiario.innerText = pDiario.toLocaleString('es-CL');
+    }
+};
+
 window.sincronizarWidgetPreVuelo = function() {
     // Al ser todo manual, solo necesitamos repintar las barras visuales
     if (typeof window.calcularDiaCero === 'function') {
         window.calcularDiaCero();
     }
 };
-window.cerrarPreVuelo = function() { document.getElementById('modal-dia-cero').style.display = 'none'; actualizarDashboard(); };
-
 window.toggleEstadoPV = function(btn, idInput) {
     const estados = ['est', 'real', 'pag'];
     let curr = btn.getAttribute('data-estado') || 'est';
