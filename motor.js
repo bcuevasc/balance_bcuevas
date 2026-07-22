@@ -1199,7 +1199,7 @@ async function ejecutarPurgaMasivaTC() {
 // ==========================================
 
 // ==========================================
-// 🚀 SIMULADOR DÍA CERO (AHORA CON CLOUD SAVE FIREBASE)
+// 🚀 SIMULADOR DÍA CERO (CLOUD SAVE FIREBASE - MANUAL MODE)
 // ==========================================
 
 window.guardarPerfilFijo = function() {
@@ -1208,6 +1208,11 @@ window.guardarPerfilFijo = function() {
     if(btn) btn.innerHTML = "⏳ GUARDANDO EN LA NUBE...";
     
     let perfil = {
+        // Sueldo, TC Nacional y Comodín se guardan manualmente
+        sueldo: document.getElementById('pv-sueldo')?.value || "0",
+        tcNac: document.getElementById('pv-tc-nac')?.value || "0",
+        comodin: document.getElementById('pv-comodin')?.value || "0",
+        tcInt: document.getElementById('pv-tc-int')?.value || "0",
         arriendo: document.getElementById('pv-arriendo')?.value || "0",
         udec: document.getElementById('pv-udec')?.value || "0",
         cae: document.getElementById('pv-cae')?.value || "0",
@@ -1218,12 +1223,10 @@ window.guardarPerfilFijo = function() {
         celu: document.getElementById('pv-celu')?.value || "0",
         madre: document.getElementById('pv-madre')?.value || "0",
         subs: document.getElementById('pv-subs')?.value || "0",
-        seguro: document.getElementById('pv-seguro')?.value || "0",
-        linea: document.getElementById('pv-linea')?.value || "0",
-        tcInt: document.getElementById('pv-tc-int')?.value || "0"
+        seguro: document.getElementById('pv-seguro')?.value || "0"
+        // La 'linea' se omite porque es calculada dinámicamente
     };
     
-    // Lo guardamos en una colección de parámetros generales en la nube
     db.collection("parametros").doc("gastos_fijos_base").set(perfil, {merge: true}).then(() => {
         if(typeof mostrarToast === 'function') mostrarToast("✔️ PERFIL MAESTRO GUARDADO EN LA NUBE");
         if(btn) btn.innerHTML = txtOrig;
@@ -1234,11 +1237,16 @@ window.guardarPerfilFijo = function() {
 };
 
 window.cargarPerfilFijo = function() {
-    // Extraemos la configuración guardada desde la nube
     db.collection("parametros").doc("gastos_fijos_base").get().then(doc => {
         if (doc.exists) {
             let data = doc.data();
             const setVal = (id, val) => { if(val !== undefined && document.getElementById(id)) document.getElementById(id).value = val; };
+            
+            // Cargamos todos los valores manuales
+            setVal('pv-sueldo', data.sueldo);
+            setVal('pv-tc-nac', data.tcNac);
+            setVal('pv-comodin', data.comodin);
+            setVal('pv-tc-int', data.tcInt);
             setVal('pv-arriendo', data.arriendo);
             setVal('pv-udec', data.udec);
             setVal('pv-cae', data.cae);
@@ -1250,9 +1258,8 @@ window.cargarPerfilFijo = function() {
             setVal('pv-madre', data.madre);
             setVal('pv-subs', data.subs);
             setVal('pv-seguro', data.seguro);
-            setVal('pv-linea', data.linea);
-            setVal('pv-tc-int', data.tcInt);
-            calcularDiaCero(); // Recalcula la UI con los datos frescos
+            
+            calcularDiaCero(); 
         }
     });
 };
@@ -1260,7 +1267,6 @@ window.cargarPerfilFijo = function() {
 window.abrirPreVuelo = function() {
     const modal = document.getElementById('modal-dia-cero'); if(!modal) return;
     
-    // ⚡ FIX: Proyección Temporal Mes + 1
     let vM = parseInt(document.getElementById('navMesConceptual').value);
     let vA = parseInt(document.getElementById('navAnio').value);
     
@@ -1270,25 +1276,10 @@ window.abrirPreVuelo = function() {
     const nombresMes = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
     document.getElementById('pv-mes-label').innerText = `${nombresMes[pM]} ${pA}`.toUpperCase();
     
-    let sueldoProximoMes = window.obtenerSueldoMes(pA, pM);
-    document.getElementById('pv-sueldo').value = sueldoProximoMes.toLocaleString('es-CL');
-    
-    let sumaTCMes = 0;
-    if (typeof datosTCGlobal !== 'undefined') {
-        datosTCGlobal.forEach(d => { 
-            if(!d.mesCobro) return;
-            let f = new Date(d.mesCobro); 
-            if (f.getMonth() === pM && f.getFullYear() === pA) sumaTCMes += (Number(d.monto) || 0); 
-        });
-    }
-    
-    let elTcNac = document.getElementById('pv-tc-nac');
-    if(elTcNac && elTcNac.getAttribute('data-estado') !== 'pag') { elTcNac.value = sumaTCMes > 0 ? sumaTCMes.toLocaleString('es-CL') : "0"; }
-    
-    // ☁️ CARGAR DESDE LA NUBE AL ABRIR LA VENTANA
+    // Carga exclusiva desde Firebase (Manual Mode)
     cargarPerfilFijo();
     
-    calcularDiaCero(); modal.style.display = 'flex';
+    modal.style.display = 'flex';
 };
 
 window.cerrarPreVuelo = function() { document.getElementById('modal-dia-cero').style.display = 'none'; actualizarDashboard(); };
@@ -1307,21 +1298,29 @@ window.toggleEstadoPV = function(btn, idInput) {
 };
 
 window.calcularDiaCero = function() {
-    // 🚀 FEEDBACK LOOP: Forzar la Línea de Crédito si el mes cierra en negativo
-    if (window.balanceRealGlobal !== undefined && window.balanceRealGlobal < 0) {
+    // 🚀 AUTOMATIZACIÓN DE LA LÍNEA DE CRÉDITO
+    if (window.balanceRealGlobal !== undefined) {
         const inputLinea = document.getElementById('pv-linea');
         if (inputLinea) {
-            inputLinea.value = Math.abs(window.balanceRealGlobal).toLocaleString('es-CL');
-            // Le damos un toque de alerta visual
-            inputLinea.style.color = "#ff5252"; 
-            inputLinea.style.fontWeight = "900";
+            if (window.balanceRealGlobal < 0) {
+                // Hay déficit: Mostrar monto en rojo
+                inputLinea.value = Math.abs(window.balanceRealGlobal).toLocaleString('es-CL');
+                inputLinea.style.color = "#ff5252"; 
+            } else {
+                // Positivo: Mostrar 0
+                inputLinea.value = "0";
+                inputLinea.style.color = "var(--text-muted)"; 
+            }
+            inputLinea.readOnly = true; 
         }
     }
+
     const valSiNoPagado = (id) => { let el = document.getElementById(id); return (el && el.getAttribute('data-estado') !== 'pag') ? (parseInt(el.value.replace(/\./g, '')) || 0) : 0; };
+    
     let sueldo = parseInt((document.getElementById('pv-sueldo').value || "0").replace(/\./g, '')) || 0;
     let tcNac = valSiNoPagado('pv-tc-nac');
+    let comodin = valSiNoPagado('pv-comodin'); // Nuevo campo
     
-    // 🛠️ PRECISIÓN DECIMAL TC INTERNACIONAL
     let elTcInt = document.getElementById('pv-tc-int');
     let valTcIntRaw = elTcInt ? elTcInt.value.replace(/\$/g, '').replace(/,/g, '.') : "0";
     let tcIntUSD = (elTcInt && elTcInt.getAttribute('data-estado') !== 'pag') ? (parseFloat(valTcIntRaw) || 0) : 0;
@@ -1333,12 +1332,12 @@ window.calcularDiaCero = function() {
         else { elTcIntCLP.innerText = `~ $${tcIntCLP.toLocaleString('es-CL')} CLP`; elTcIntCLP.style.color = "var(--accent-red)"; }
     }
     
-    let deudasDuras = tcNac + tcIntCLP + valSiNoPagado('pv-linea');
+    // Sumamos el Comodín a las Deudas Duras para restarlo de la liquidez
+    let deudasDuras = tcNac + tcIntCLP + valSiNoPagado('pv-linea') + comodin;
     let estructural = valSiNoPagado('pv-arriendo') + valSiNoPagado('pv-udec') + valSiNoPagado('pv-cae') + valSiNoPagado('pv-ggcc') + valSiNoPagado('pv-luz') + valSiNoPagado('pv-agua') + valSiNoPagado('pv-gas') + valSiNoPagado('pv-celu') + valSiNoPagado('pv-madre') + valSiNoPagado('pv-subs') + valSiNoPagado('pv-seguro');
     
     let liquidezNeta = sueldo - deudasDuras - estructural;
     
-    // Modal principal
     let txtLiq = document.getElementById('pv-txt-liquidez');
     if (txtLiq) txtLiq.innerText = liquidezNeta.toLocaleString('es-CL');
     
@@ -1353,7 +1352,6 @@ window.calcularDiaCero = function() {
         let bV = document.getElementById('pv-barra-verde'); if(bV) bV.style.width = pV + '%';
     }
 
-    // 🛠️ Sincronización visual del Widget
     let wTxtLiq = document.getElementById('widget-txt-liquidez');
     if (wTxtLiq) {
         wTxtLiq.innerText = liquidezNeta.toLocaleString('es-CL');
@@ -1368,14 +1366,12 @@ window.calcularDiaCero = function() {
     let elCer = document.getElementById('pv-certeza-pct');
     if(elCer) { elCer.innerText = cer + '%'; elCer.style.color = cer < 40 ? '#ff5252' : (cer < 80 ? '#ff9800' : '#2ea043'); }
 
-    // 🚀 NUEVO: CÁLCULO DE PRESUPUESTO DIARIO
     let txtDiario = document.getElementById('pv-txt-diario');
     if (txtDiario) {
         let vM = parseInt(document.getElementById('navMesConceptual').value);
         let vA = parseInt(document.getElementById('navAnio').value);
         let pM = vM + 1; let pA = vA; if (pM > 11) { pM = 0; pA++; }
         
-        // Calculamos los días exactos del mes siguiente
         let diasProxMes = new Date(pA, pM + 1, 0).getDate(); 
         
         let pDiario = liquidezNeta > 0 ? Math.floor(liquidezNeta / diasProxMes) : 0;
@@ -1383,7 +1379,11 @@ window.calcularDiaCero = function() {
     }
 };
 
-
+window.sincronizarWidgetPreVuelo = function() {
+    if (typeof window.calcularDiaCero === 'function') {
+        window.calcularDiaCero();
+    }
+};
 // ☁️ SINC Y EXPORTACIÓN (PUENTE REST)
 window.triggerSync = async function() {
     // ⚠️ REEMPLAZA ESTA URL POR LA URL WEB APP DE TU APPS SCRIPT
