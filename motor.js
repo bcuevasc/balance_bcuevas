@@ -1276,12 +1276,18 @@ window.abrirPreVuelo = function() {
     const nombresMes = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
     document.getElementById('pv-mes-label').innerText = `${nombresMes[pM]} ${pA}`.toUpperCase();
     
-    // Carga exclusiva desde Firebase (Manual Mode)
+    // ⚠️ CARGA ESTRICTAMENTE LO QUE ESTÁ EN LA NUBE (Ignora la Matriz TC)
     cargarPerfilFijo();
     
     modal.style.display = 'flex';
 };
 
+window.sincronizarWidgetPreVuelo = function() {
+    // ⚠️ SINCRONIZACIÓN VISUAL LIMPIA (Sin reescritura de la TC Nacional)
+    if (typeof window.calcularDiaCero === 'function') {
+        window.calcularDiaCero();
+    }
+};
 window.cerrarPreVuelo = function() { document.getElementById('modal-dia-cero').style.display = 'none'; actualizarDashboard(); };
 
 window.toggleEstadoPV = function(btn, idInput) {
