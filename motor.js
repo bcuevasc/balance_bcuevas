@@ -2177,3 +2177,68 @@ window.renderizarDesgloseCentral = function(sueldoBase) {
     if(contenedorPC) contenedorPC.innerHTML = html;
     if(contenedorMovil) contenedorMovil.innerHTML = html; // 📱 DISPARO AL CELULAR
 };
+
+// ==========================================
+// 🏦 MÓDULO TC: CALIBRADOR DE ANCLAS BANCO
+// ==========================================
+window.calibrarMatrizTC = async function() {
+    let inputStr = prompt(
+        "🏦 CALIBRACIÓN BASE BANCO\n\n" +
+        "Ingresa los montos proyectados de los próximos meses separados por un espacio.\n" +
+        "Ejemplo (Jul, Ago, Sep, Oct):\n279465 234792 195741 0",
+        ""
+    );
+
+    if (!inputStr) return;
+
+    // Filtra puntos, signos y letras, separando solo por espacios
+    let montosRaw = inputStr.replace(/[^0-9\s]/g, '').split(/\s+/).filter(x => x !== '');
+    if (montosRaw.length === 0) return;
+
+    let montos = montosRaw.map(x => parseInt(x));
+
+    if (!confirm(`Se inyectarán ${montos.length} anclas base del banco.\n\n⚠️ ESTO PURGARÁ LA PROYECCIÓN OBSOLETA.\n(Se conservarán tus compras nuevas manuales 'En Tránsito').\n\n¿Proceder con la calibración?`)) return;
+
+    const batch = db.batch();
+
+    // 1. Purgar todo lo obsoleto
+    let snapshot = await db.collection("deuda_tc").get();
+    snapshot.forEach(doc => {
+        let data = doc.data();
+        // Borramos todo excepto lo que tú ingresaste manualmente y el banco aún no sabe
+        if (data.status !== "En Transito") {
+            batch.delete(doc.ref);
+        }
+    });
+
+    // 2. Inyectar las nuevas anclas matemáticas
+    let fechaHoy = new Date();
+    let m1 = fechaHoy.getMonth();
+    let a1 = fechaHoy.getFullYear();
+    let mesesNombres = ["ENERO", "FEBRERO", "MARZO", "ABRIL", "MAYO", "JUNIO", "JULIO", "AGOSTO", "SEPTIEMBRE", "OCTUBRE", "NOVIEMBRE", "DICIEMBRE"];
+
+    for (let i = 0; i < montos.length; i++) {
+        let mTarget = (m1 + i) % 12;
+        let aTarget = a1 + Math.floor((m1 + i) / 12);
+        let monto = montos[i];
+
+        if (monto > 0) {
+            let fCobro = new Date(aTarget, mTarget, 15).toISOString(); 
+            let docRef = db.collection("deuda_tc").doc(`BASE_BANCO_${aTarget}_${mTarget}`);
+            batch.set(docRef, {
+                nombre: `🏦 PROYECCIÓN BASE BANCO (${mesesNombres[mTarget]})`,
+                monto: monto,
+                cuota: "BASE",
+                mesCobro: fCobro,
+                status: "Proyectado" 
+            });
+        }
+    }
+
+    try {
+        await batch.commit();
+        if(typeof mostrarToast === 'function') mostrarToast("✔️ MATRIZ TC CALIBRADA EXACTA");
+    } catch (e) {
+        alert("Error al calibrar la red satelital: " + e.message);
+    }
+};
