@@ -355,6 +355,7 @@ window.aplicarCicloAlSistema = function() {
     
     setTimeout(() => { cargarSueldoVisual(); actualizarDashboard(); }, 50);
 };
+
 function actualizarDashboard() {
     const elMes = document.getElementById('navMesConceptual'), elAnio = document.getElementById('navAnio');
     const mesVal = parseInt(elMes.value), anioVal = parseInt(elAnio.value);
@@ -480,6 +481,7 @@ function actualizarDashboard() {
     if (typeof sincronizarWidgetPreVuelo === 'function') sincronizarWidgetPreVuelo();
     if (typeof renderizarDesgloseCentral === 'function') renderizarDesgloseCentral(sueldo);
 }
+
 // ==========================================
 // 📝 RENDERIZAR LISTAS PC
 // ==========================================
@@ -542,7 +544,7 @@ if (typeof window.renderizarListas === 'undefined') {
             const nombreSeguro = x.nombre || "Dato no identificado";
             const montoSeguro = (typeof x.monto === 'number' && !isNaN(x.monto)) ? x.monto : 0;
             const colorSaldo = x.saldoCalculadoVista < 0 ? 'var(--color-fuga)' : 'var(--text-muted)';
-            let iconImpacto = x.esIn ? `<span class="impact-icon impact-pos">+</span>` : x.esNeutro ? `<span class="impact-icon impact-neu">=</span>` : `<span class="impact-icon impact-neg">-</span>`;
+            let iconImpacto = x.esIn ? `<span class="impact-icon impact-pos">+</span>` : `<span class="impact-icon impact-neg">-</span>`;
             
             let editIdVal = document.getElementById('editId') ? document.getElementById('editId').value : '';
             let esEditando = (editIdVal === x.firestoreId);
@@ -593,6 +595,7 @@ if (typeof window.renderizarListas === 'undefined') {
         contenedorPC.innerHTML = htmlPC;
     }
 }
+
 // ==========================================
 // ✏️ EDICIÓN Y GUARDADO
 // ==========================================
@@ -1132,53 +1135,6 @@ window.renderizarTablaTC = function() {
 window.toggleMesTC = function(checkboxMes, key) {
     document.querySelectorAll(`.checkItemTC-${key}`).forEach(c => c.checked = checkboxMes.checked);
     actualizarBarraTC();
-};
-
-window.cargarCSV_TC = function() {
-    let fileInputTC = document.createElement('input'); fileInputTC.type = 'file'; fileInputTC.accept = '.csv';
-    fileInputTC.onchange = e => {
-        let file = e.target.files[0];
-        let montoFacturado = parseInt(prompt("💰 ANCLA DE FACTURACIÓN:\nMonto Total FACTURADO a pagar el próximo mes (ej: 441332).\nPon 0 si no hay boleta aún.", "0").replace(/[^0-9]/g, '')) || 0;
-        let diaCorte = parseInt(prompt("📅 CORTAFUEGOS:\nDÍA DE CIERRE de tarjeta (ej: 20).", "20")) || 20;
-
-        let reader = new FileReader();
-        reader.onload = async ev => {
-            try {
-                let text = ev.target.result, lineas = text.split('\n'), batch = db.batch(), cuotasProcesadas = 0;
-                
-                if (montoFacturado > 0) {
-                    let mVisor = parseInt(document.getElementById('navMesConceptual').value), aVisor = parseInt(document.getElementById('navAnio').value);
-                    let mPago = mVisor + 1, aPago = aVisor; if (mPago > 11) { mPago = 0; aPago++; }
-                    batch.set(db.collection("deuda_tc").doc("FACTURADO_BASE_OFICIAL"), { nombre: "⚠️ BOLETA FACTURADA OFICIAL", monto: montoFacturado, cuota: "1/1", mesCobro: new Date(aPago, mPago, 15).toISOString(), status: "Facturado" });
-                }
-                
-                for(let i = 1; i < lineas.length; i++) {
-                    if(lineas[i].trim() === '') continue; 
-                    let cols = lineas[i].split(lineas[i].includes(';') ? ';' : ','); if(cols.length < 4) continue; 
-                    let fecha = cols[0].trim(); let nombre = cols[1] ? cols[1].trim().replace(/\s+/g, ' ').toUpperCase() : "DESCONOCIDO"; 
-                    let cuotasInfo = (cols.find(c => c.includes('/') && c.length <= 5 && c !== fecha) || "01/01").trim().split('/'); 
-                    
-                    let montoTotal = 0;
-                    for (let j = cols.length - 1; j >= 2; j--) { let numStr = cols[j].replace(/[^0-9]/g, ''); if (numStr.length > 0) { montoTotal = parseInt(numStr); break; } }
-                    if(isNaN(montoTotal) || montoTotal <= 0 || ["REV.COMPRAS", "PAGO PESOS", "TEF", "PAGO EN LINEA"].some(x => nombre.includes(x))) continue;
-                    
-                    let cuotaActual = parseInt(cuotasInfo[0]) || 1, totalCuotas = parseInt(cuotasInfo[1]) || 1; 
-                    let montoMensual = totalCuotas > 1 ? Math.round(montoTotal / totalCuotas) : montoTotal;
-                    let partesF = fecha.replace(/-/g, '/').split('/'); if (partesF.length !== 3) continue; 
-                    
-                    for(let c = cuotaActual; c <= totalCuotas; c++) {
-                        let mesesDesfase = (parseInt(partesF[0]) > diaCorte || totalCuotas > 1) ? 2 : 1;
-                        let fCobro = new Date(parseInt(partesF[2]), parseInt(partesF[1]) - 1 + mesesDesfase + (c - cuotaActual), 15);
-                        batch.set(db.collection("deuda_tc").doc(`${fecha.replace(/[^0-9]/g, '')}-${nombre.replace(/[^A-Z0-9]/g, '').substring(0,10)}-C${c}de${totalCuotas}`), { nombre: nombre, monto: montoMensual, cuota: `${c}/${totalCuotas}`, mesCobro: fCobro.toISOString(), status: "Proyectado" });
-                        cuotasProcesadas++;
-                    }
-                }
-                await batch.commit(); mostrarToast(`ANCLA FIJADA Y ${cuotasProcesadas} CUOTAS INYECTADAS`); 
-            } catch (error) { alert("❌ ERROR DE CÁLCULO: " + error.message); }
-        };
-        reader.readAsText(file, 'UTF-8');
-    };
-    fileInputTC.click();
 };
 
 function actualizarBarraTC() {
@@ -2179,66 +2135,95 @@ window.renderizarDesgloseCentral = function(sueldoBase) {
 };
 
 // ==========================================
-// 🏦 MÓDULO TC: CALIBRADOR DE ANCLAS BANCO
+// 🏦 MÓDULO TC V2: GESTOR MANUAL DE FACTURACIÓN BASE
 // ==========================================
-window.calibrarMatrizTC = async function() {
-    let inputStr = prompt(
-        "🏦 CALIBRACIÓN BASE BANCO\n\n" +
-        "Ingresa los montos proyectados de los próximos meses separados por un espacio.\n" +
-        "Ejemplo (Jul, Ago, Sep, Oct):\n279465 234792 195741 0",
-        ""
-    );
 
-    if (!inputStr) return;
+window.abrirGestorTC = function() {
+    let existing = document.getElementById('modal-gestor-tc');
+    if(existing) existing.remove();
 
-    // Filtra puntos, signos y letras, separando solo por espacios
-    let montosRaw = inputStr.replace(/[^0-9\s]/g, '').split(/\s+/).filter(x => x !== '');
-    if (montosRaw.length === 0) return;
+    let mAct = new Date().getMonth() + 1;
+    let aAct = new Date().getFullYear();
 
-    let montos = montosRaw.map(x => parseInt(x));
+    let html = `
+    <div id="modal-gestor-tc" style="position:fixed; inset:0; background:rgba(3,5,8,0.9); z-index:40000; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(5px);">
+        <div style="background:var(--bg-panel, #0d1117); border:1px solid var(--color-fuga, #f85149); border-radius:12px; padding:25px; width:90%; max-width:400px; box-shadow:0 0 30px rgba(248,81,73,0.3);">
+            <h3 style="color:var(--color-fuga, #f85149); margin-top:0; font-weight:900; letter-spacing:1px;">💳 GESTOR DE FACTURACIÓN</h3>
+            <p style="font-size:0.8rem; color:var(--text-muted, #8b949e);">Define el monto maestro que el banco te facturó para un mes específico.</p>
+            
+            <div style="display:flex; gap:10px; margin-bottom:15px;">
+                <div style="flex:1;">
+                    <label style="font-size:0.7rem; font-weight:bold; color:var(--text-muted, #8b949e); text-transform:uppercase;">Mes (1-12)</label>
+                    <input type="number" id="gtc-mes" value="${mAct}" min="1" max="12" style="width:100%; padding:10px; background:var(--input-bg, #010409); color:#fff; border:1px solid var(--border-color, #30363d); border-radius:6px; outline:none;">
+                </div>
+                <div style="flex:1;">
+                    <label style="font-size:0.7rem; font-weight:bold; color:var(--text-muted, #8b949e); text-transform:uppercase;">Año</label>
+                    <input type="number" id="gtc-anio" value="${aAct}" style="width:100%; padding:10px; background:var(--input-bg, #010409); color:#fff; border:1px solid var(--border-color, #30363d); border-radius:6px; outline:none;">
+                </div>
+            </div>
+            
+            <div style="margin-bottom:20px;">
+                <label style="font-size:0.7rem; font-weight:bold; color:var(--text-muted, #8b949e); text-transform:uppercase;">Monto Base Banco ($)</label>
+                <input type="text" id="gtc-monto" placeholder="Ej: 284454" oninput="if(typeof formatearEntradaNumerica === 'function') formatearEntradaNumerica(this); else { let v = this.value.replace(/\\D/g,''); this.value = v ? parseInt(v).toLocaleString('es-CL') : ''; }" style="width:100%; padding:12px; font-size:1.4rem; font-family:monospace; background:var(--input-bg, #010409); color:var(--color-fuga, #ff5252); border:1px solid var(--border-color, #30363d); border-radius:6px; font-weight:900; outline:none;">
+            </div>
+            
+            <div style="display:flex; gap:10px;">
+                <button onclick="document.getElementById('modal-gestor-tc').remove()" style="flex:1; padding:12px; background:transparent; border:1px solid var(--text-muted, #8b949e); color:var(--text-muted, #8b949e); border-radius:6px; font-weight:900; cursor:pointer;">CANCELAR</button>
+                <button onclick="guardarBaseTC()" style="flex:2; padding:12px; background:var(--color-fuga, #f85149); border:none; color:#fff; border-radius:6px; font-weight:900; cursor:pointer; box-shadow: 0 4px 15px rgba(248,81,73,0.4);">FIJAR BASE</button>
+            </div>
+            <hr style="border:0; border-top:1px dashed var(--border-color, #30363d); margin:20px 0;">
+            <button onclick="purgarTodaTC(this)" style="width:100%; padding:10px; background:transparent; border:1px dashed var(--color-fuga, #f85149); color:var(--color-fuga, #f85149); border-radius:6px; font-size:0.75rem; font-weight:900; cursor:pointer;">⚠️ RESETEAR MATRIZ COMPLETA</button>
+        </div>
+    </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', html);
+};
 
-    if (!confirm(`Se inyectarán ${montos.length} anclas base del banco.\n\n⚠️ ESTO PURGARÁ LA PROYECCIÓN OBSOLETA.\n(Se conservarán tus compras nuevas manuales 'En Tránsito').\n\n¿Proceder con la calibración?`)) return;
+window.guardarBaseTC = async function() {
+    let mes = document.getElementById('gtc-mes').value;
+    let anio = document.getElementById('gtc-anio').value;
+    let montoStr = document.getElementById('gtc-monto').value.replace(/[^0-9]/g, '');
+    let monto = parseInt(montoStr);
 
-    const batch = db.batch();
+    if(!mes || !anio || isNaN(monto)) return alert("Datos inválidos. Verifica el mes, año y monto.");
 
-    // 1. Purgar todo lo obsoleto
-    let snapshot = await db.collection("deuda_tc").get();
-    snapshot.forEach(doc => {
-        let data = doc.data();
-        // Borramos todo excepto lo que tú ingresaste manualmente y el banco aún no sabe
-        if (data.status !== "En Transito") {
-            batch.delete(doc.ref);
-        }
-    });
-
-    // 2. Inyectar las nuevas anclas matemáticas
-    let fechaHoy = new Date();
-    let m1 = fechaHoy.getMonth();
-    let a1 = fechaHoy.getFullYear();
-    let mesesNombres = ["ENERO", "FEBRERO", "MARZO", "ABRIL", "MAYO", "JUNIO", "JULIO", "AGOSTO", "SEPTIEMBRE", "OCTUBRE", "NOVIEMBRE", "DICIEMBRE"];
-
-    for (let i = 0; i < montos.length; i++) {
-        let mTarget = (m1 + i) % 12;
-        let aTarget = a1 + Math.floor((m1 + i) / 12);
-        let monto = montos[i];
-
-        if (monto > 0) {
-            let fCobro = new Date(aTarget, mTarget, 15).toISOString(); 
-            let docRef = db.collection("deuda_tc").doc(`BASE_BANCO_${aTarget}_${mTarget}`);
-            batch.set(docRef, {
-                nombre: `🏦 PROYECCIÓN BASE BANCO (${mesesNombres[mTarget]})`,
-                monto: monto,
-                cuota: "BASE",
-                mesCobro: fCobro,
-                status: "Proyectado" 
-            });
-        }
-    }
-
+    let mIndex = parseInt(mes) - 1;
+    let aIndex = parseInt(anio);
+    let fCobro = new Date(aIndex, mIndex, 15).toISOString(); 
+    
+    const docId = `BASE_BANCO_${aIndex}_${mIndex}`;
+    
     try {
+        await db.collection("deuda_tc").doc(docId).set({
+            nombre: `🏦 BASE FACTURADA BANCO`,
+            monto: monto,
+            cuota: "BASE",
+            mesCobro: fCobro,
+            status: "Facturado" 
+        });
+        document.getElementById('modal-gestor-tc').remove();
+        if(typeof mostrarToast === 'function') mostrarToast(`BASE FIJADA PARA ${mes}/${anio}`);
+    } catch(e) {
+        alert("Error de conexión: " + e.message);
+    }
+};
+
+window.purgarTodaTC = async function(btn) {
+    if(!confirm("⚠️ ¿ESTÁS SEGURO?\nEsto borrará TODA la matriz TC (Bases y compras en tránsito). La dejará en blanco para empezar de cero.")) return;
+    
+    btn.innerText = "BORRANDO...";
+    
+    try {
+        let snapshot = await db.collection("deuda_tc").get();
+        const batch = db.batch();
+        snapshot.forEach(doc => {
+            batch.delete(doc.ref);
+        });
+        
         await batch.commit();
-        if(typeof mostrarToast === 'function') mostrarToast("✔️ MATRIZ TC CALIBRADA EXACTA");
+        document.getElementById('modal-gestor-tc').remove();
+        if(typeof mostrarToast === 'function') mostrarToast("MATRIZ TC RESETEADA");
     } catch (e) {
-        alert("Error al calibrar la red satelital: " + e.message);
+        alert("Fallo al purgar la base de datos.");
     }
 };
