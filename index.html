@@ -846,7 +846,7 @@
             <div class="pv-subtitle" data-en="FEEDFORWARD CONTROL FOR">CONTROL PREALIMENTADO DE LIQUIDEZ MES DE <span id="pv-mes-label" style="color:#fff; font-weight:bold;">--</span></div>
         </div>
         
-       <div class="pv-tank-wrapper">
+        <div class="pv-tank-wrapper">
             <div class="pv-tank-label">
                 <span data-en="Hard Deductions">Deducciones Duras</span>
                 <span data-en="Net Maneuver Liquidity">Liquidez Neta de Maniobra</span>
@@ -867,46 +867,48 @@
 
         <div class="pv-body">
             <div class="pv-grid">
+                
+                <!-- COLUMNA 1: DEDUCCIONES CRÍTICAS -->
                 <div class="pv-section">
-    <div class="pv-section-title" style="color:var(--color-fuga);"><span style="font-size:1rem;">💳</span> Deducciones Críticas</div>
-    
-    <div class="pv-input-group" style="background:rgba(46,160,67,0.1); border-color:var(--color-saldo);">
-        <label style="color:var(--color-saldo);">Sueldo (Ingreso)</label>
-        <input type="text" id="pv-sueldo" class="pv-input" style="color:var(--color-saldo); border-color:var(--color-saldo);" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();">
-    </div>
-    
-    <div class="pv-input-group">
-        <label>TC Nacional</label>
-        <button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-tc-nac')">EST</button>
-        <input type="text" id="pv-tc-nac" class="pv-input" style="color:var(--color-fuga); width:100px;" placeholder="0" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();">
-    </div>
+                    <div class="pv-section-title" style="color:var(--color-fuga);"><span style="font-size:1rem;">💳</span> Deducciones Críticas</div>
+                    
+                    <div class="pv-input-group" style="background:rgba(46,160,67,0.1); border-color:var(--color-saldo);">
+                        <label style="color:var(--color-saldo);">Sueldo (Ingreso)</label>
+                        <input type="text" id="pv-sueldo" class="pv-input" style="color:var(--color-saldo); border-color:var(--color-saldo);" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();">
+                    </div>
+                    
+                    <div class="pv-input-group">
+                        <label>TC Nacional</label>
+                        <button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-tc-nac')">EST</button>
+                        <input type="text" id="pv-tc-nac" class="pv-input" style="color:var(--color-fuga); width:100px;" placeholder="0" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();">
+                    </div>
 
-    <!-- 🟢 AQUÍ ESTÁ EL NUEVO CAMPO: GASTOS EXTRA (COMODÍN) -->
-    <div class="pv-input-group" style="background:rgba(210,153,34,0.1); border: 1px dashed #d29922;">
-        <label style="color:#d29922;">Extra (Comodín)</label>
-        <button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-comodin')" style="border-color:#d29922; color:#d29922;">EST</button>
-        <input type="text" id="pv-comodin" class="pv-input" style="color:#d29922; width:100px;" placeholder="0" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();">
-    </div>
-    
-    <div style="display:flex; flex-direction:column; width:100%; background: rgba(0,0,0,0.3); border-radius: 12px; border: 1px solid rgba(248,81,73,0.3); margin-bottom: 10px; padding: 12px 14px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
-        <div style="display: flex; align-items: center; justify-content: space-between; gap:10px;">
-            <div style="flex:1;">
-                <label style="font-size: 0.8rem; font-weight: 900; color: var(--text-main); text-transform: uppercase;">TC Internacional</label>
-                <span id="lbl-dolar-actual" style="display:block; font-size:0.65rem; color:var(--text-muted); font-family:monospace; margin-top:4px;">Consultando USD...</span>
-            </div>
-            <button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-tc-int')">EST</button>
-            <input type="text" id="pv-tc-int" class="pv-input" style="color:var(--color-fuga); width:100px;" placeholder="US$ 0.00" data-estado="est" inputmode="decimal" oninput="this.value = this.value.replace(/[^0-9.,]/g, ''); calcularDiaCero();">
-        </div>
-        <div id="pv-tc-int-clp" style="text-align:right; font-size:0.85rem; color:var(--color-fuga); font-family:monospace; font-weight:900; margin-top:10px; border-top: 1px dashed rgba(248,81,73,0.3); padding-top: 10px;">~ $0 CLP</div>
-    </div>
-    
-    <div class="pv-input-group">
-        <label>Línea de Crédito</label>
-        <button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-linea')">EST</button>
-        <input type="text" id="pv-linea" class="pv-input" style="color:var(--color-fuga);" placeholder="Auto" data-estado="est" inputmode="numeric" pattern="[0-9]*" readonly>
-    </div>
-</div>
+                    <div class="pv-input-group" style="background:rgba(210,153,34,0.1); border: 1px dashed #d29922;">
+                        <label style="color:#d29922;">Extra (Comodín)</label>
+                        <button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-comodin')" style="border-color:#d29922; color:#d29922;">EST</button>
+                        <input type="text" id="pv-comodin" class="pv-input" style="color:#d29922; width:100px;" placeholder="0" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();">
+                    </div>
+                    
+                    <div style="display:flex; flex-direction:column; width:100%; background: rgba(0,0,0,0.3); border-radius: 12px; border: 1px solid rgba(248,81,73,0.3); margin-bottom: 10px; padding: 12px 14px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+                        <div style="display: flex; align-items: center; justify-content: space-between; gap:10px;">
+                            <div style="flex:1;">
+                                <label style="font-size: 0.8rem; font-weight: 900; color: var(--text-main); text-transform: uppercase;">TC Internacional</label>
+                                <span id="lbl-dolar-actual" style="display:block; font-size:0.65rem; color:var(--text-muted); font-family:monospace; margin-top:4px;">Consultando USD...</span>
+                            </div>
+                            <button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-tc-int')">EST</button>
+                            <input type="text" id="pv-tc-int" class="pv-input" style="color:var(--color-fuga); width:100px;" placeholder="US$ 0.00" data-estado="est" inputmode="decimal" oninput="this.value = this.value.replace(/[^0-9.,]/g, ''); calcularDiaCero();">
+                        </div>
+                        <div id="pv-tc-int-clp" style="text-align:right; font-size:0.85rem; color:var(--color-fuga); font-family:monospace; font-weight:900; margin-top:10px; border-top: 1px dashed rgba(248,81,73,0.3); padding-top: 10px;">~ $0 CLP</div>
+                    </div>
+                    
+                    <div class="pv-input-group">
+                        <label>Línea de Crédito</label>
+                        <button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-linea')">EST</button>
+                        <input type="text" id="pv-linea" class="pv-input" style="color:var(--color-fuga);" placeholder="Auto" data-estado="est" inputmode="numeric" pattern="[0-9]*" readonly>
+                    </div>
+                </div>
 
+                <!-- COLUMNA 2: CARGA ESTRUCTURAL -->
                 <div class="pv-section">
                     <div class="pv-section-title" style="color:var(--color-infra);"><span style="font-size:1rem;">🏢</span> Carga Estructural</div>
                     <div class="pv-input-group"><label>Arriendo</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-arriendo')">EST</button><input type="text" id="pv-arriendo" class="pv-input" value="330.000" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
@@ -914,6 +916,7 @@
                     <div class="pv-input-group"><label>CAE</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-cae')">EST</button><input type="text" id="pv-cae" class="pv-input" value="38.742" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
                 </div>
 
+                <!-- COLUMNA 3: SERV. BÁSICOS HOGAR -->
                 <div class="pv-section">
                     <div class="pv-section-title" style="color:#d29922;"><span style="font-size:1rem;">⚡</span> Serv. Básicos Hogar</div>
                     <div class="pv-input-group"><label>Gastos Comunes</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-ggcc')">EST</button><input type="text" id="pv-ggcc" class="pv-input" value="63.220" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
@@ -922,6 +925,7 @@
                     <div class="pv-input-group"><label>Gas</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-gas')">EST</button><input type="text" id="pv-gas" class="pv-input" value="0" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
                 </div>
 
+                <!-- COLUMNA 4: OP. COMPLEMENTARIA -->
                 <div class="pv-section">
                     <div class="pv-section-title" style="color:#58a6ff;"><span style="font-size:1rem;">📱</span> Op. Complementaria</div>
                     <div class="pv-input-group"><label>Celu Mio</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-celu')">EST</button><input type="text" id="pv-celu" class="pv-input" value="13.990" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
@@ -929,6 +933,7 @@
                     <div class="pv-input-group" title="YT Premium, Disney, Icloud, Google, Spotify, HBO"><label>Pack Subs</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-subs')">EST</button><input type="text" id="pv-subs" class="pv-input" value="20.540" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
                     <div class="pv-input-group"><label>Seguro Auto</label><button class="btn-estado est" onclick="toggleEstadoPV(this, 'pv-seguro')">EST</button><input type="text" id="pv-seguro" class="pv-input" value="38.300" data-estado="est" inputmode="numeric" pattern="[0-9]*" oninput="formatearEntradaNumerica(this); calcularDiaCero();"></div>
                 </div>
+                
             </div>
         </div>
         
@@ -938,8 +943,8 @@
         </div>
     </div>
 </div>
-
-<script>
+    
+</script>   
     function switchPCPanel(viewId) {
         document.querySelectorAll('.core-panel').forEach(p => p.classList.add('hidden'));
         document.querySelectorAll('.btn-sys').forEach(b => {
